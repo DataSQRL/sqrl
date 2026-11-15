@@ -21,6 +21,7 @@ import com.datasqrl.server.config.ServerConfig;
 import com.datasqrl.server.graphql.RootGraphQLModel;
 import com.datasqrl.server.mcp.VertxMcpTransport;
 import com.datasqrl.server.operation.ApiOperation;
+import com.datasqrl.server.operation.McpApp;
 import com.datasqrl.server.operation.McpMethodType;
 import com.datasqrl.util.JsonUtils;
 import com.datasqrl.util.ProjectConstants;
@@ -33,6 +34,7 @@ import io.modelcontextprotocol.common.McpTransportContext;
 import io.modelcontextprotocol.json.jackson2.JacksonMcpJsonMapper;
 import io.modelcontextprotocol.server.McpServer;
 import io.modelcontextprotocol.server.McpStatelessAsyncServer;
+import io.modelcontextprotocol.server.McpStatelessServerFeatures.AsyncResourceSpecification;
 import io.modelcontextprotocol.server.McpStatelessServerFeatures.AsyncToolSpecification;
 import io.modelcontextprotocol.spec.McpSchema;
 import io.modelcontextprotocol.spec.McpSchema.CallToolRequest;
@@ -43,8 +45,11 @@ import io.vertx.core.Promise;
 import io.vertx.ext.auth.authentication.AuthenticationProvider;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
 
@@ -52,6 +57,9 @@ import reactor.core.publisher.Mono;
  * Exposes the operations that are MCP tools over the Model Context Protocol, and executes each tool
  * call as its GraphQL operation. The protocol is handled by the stateless server of the MCP Java
  * SDK, which {@link VertxMcpTransport} serves on the MCP endpoint.
+ *
+ * <p>With MCP Apps support, it also serves the MCP apps of the model as resources, and links the
+ * tools to them as the MCP Apps extension ({@value McpApp#EXTENSION_ID}) defines.
  */
 @Slf4j
 public class McpBridgeVerticle extends AbstractBridgeVerticle {
@@ -60,7 +68,14 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
 
   private static final TypeReference<Map<String, Object>> MAP_TYPE = new TypeReference<>() {};
 
+  private static final String VISIBILITY_MODEL = "model";
+  private static final String VISIBILITY_APP = "app";
+
   private final List<ApiOperation> tools;
+
+  /** The MCP apps by name, or null if the model has no MCP Apps support. */
+  private final Map<String, McpApp> apps;
+
   private McpStatelessAsyncServer mcpServer;
 
   public McpBridgeVerticle(
@@ -71,10 +86,17 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
       List<AuthenticationProvider> authProviders,
       GraphQLServerVerticle graphQLServerVerticle) {
     super(router, config, modelVersion, model, authProviders, graphQLServerVerticle);
-    this.tools =
-        model.getOperations().stream()
-            .filter(op -> op.getMcpMethod() == McpMethodType.TOOL)
-            .toList();
+    this.tools = model.getOperations().stream().filter(ApiOperation::isMcpEndpoint).toList();
+    this.apps =
+        model.getMcpApps() == null
+            ? null
+            : model.getMcpApps().stream()
+                .collect(
+                    Collectors.toMap(
+                        McpApp::name,
+                        Function.identity(),
+                        (first, second) -> first,
+                        LinkedHashMap::new));
   }
 
   @Override
@@ -83,15 +105,23 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
     var jsonMapper = new JacksonMcpJsonMapper(new ObjectMapper());
     var transport = new VertxMcpTransport(jsonMapper);
     try {
-      mcpServer =
+      var capabilities = McpSchema.ServerCapabilities.builder().tools(false);
+      var server =
           McpServer.async(transport)
               .jsonMapper(jsonMapper)
               .serverInfo(SERVER_NAME, ProjectConstants.SQRL_VERSION)
-              .capabilities(McpSchema.ServerCapabilities.builder().tools(false).build())
               // The bridge validates the arguments, once it has removed optional nulls
               .validateToolInputs(false)
-              .tools(tools.stream().map(this::toolSpecification).toList())
-              .build();
+              .tools(tools.stream().map(this::toolSpecification).toList());
+      if (apps != null) {
+        capabilities
+            .resources(false, false)
+            .extensions(
+                Map.of(McpApp.EXTENSION_ID, Map.of("mimeTypes", List.of(McpApp.MIME_TYPE))));
+        server.resources(
+            apps.values().stream().map(McpBridgeVerticle::resourceSpecification).toList());
+      }
+      mcpServer = server.capabilities(capabilities.build()).build();
     } catch (RuntimeException e) {
       startPromise.fail(e);
       return;
@@ -107,9 +137,10 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
     router.get(endpoint).handler(transport::handleGet);
 
     log.info(
-        "MCP endpoint {} serves {} tool(s) with {} authentication provider(s)",
+        "MCP endpoint {} serves {} tool(s) and {} app(s) with {} authentication provider(s)",
         endpoint,
         tools.size(),
+        apps == null ? 0 : apps.size(),
         authProviders.size());
     startPromise.complete();
   }
@@ -142,9 +173,50 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
                 McpSchema.ToolAnnotations.builder()
                     .readOnlyHint(operationType != Operation.MUTATION)
                     .build())
+            .meta(toolMeta(operation))
             .build();
     return new AsyncToolSpecification(
         tool, (transportContext, request) -> callTool(transportContext, operation, request));
+  }
+
+  /**
+   * Returns the {@code _meta} of the tool with the MCP Apps fields: the {@code resourceUri} of its
+   * app, and its {@code visibility}. Without MCP Apps support, only an app-only tool has them.
+   */
+  private Map<String, Object> toolMeta(ApiOperation operation) {
+    var ui = new LinkedHashMap<String, Object>();
+    if (operation.getAppName() != null && apps != null) {
+      var app = apps.get(operation.getAppName());
+      if (app != null) {
+        ui.put("resourceUri", app.uri());
+      } else {
+        log.warn(
+            "MCP tool {} is linked to the unknown app {}",
+            operation.getName(),
+            operation.getAppName());
+      }
+    }
+    if (operation.getMcpMethod() == McpMethodType.APP) {
+      ui.put("visibility", List.of(VISIBILITY_APP));
+    } else if (apps != null) {
+      ui.put("visibility", List.of(VISIBILITY_MODEL, VISIBILITY_APP));
+    }
+    return ui.isEmpty() ? null : Map.of("ui", ui);
+  }
+
+  /** Serves the app, which was loaded with the model, as a resource. */
+  private static AsyncResourceSpecification resourceSpecification(McpApp app) {
+    var resource =
+        McpSchema.Resource.builder()
+            .uri(app.uri())
+            .name(app.name())
+            .mimeType(app.mimeType())
+            .build();
+    var contents =
+        new McpSchema.ReadResourceResult(
+            List.of(new McpSchema.TextResourceContents(app.uri(), app.mimeType(), app.content())));
+    return new AsyncResourceSpecification(
+        resource, (transportContext, request) -> Mono.just(contents));
   }
 
   private Mono<CallToolResult> callTool(

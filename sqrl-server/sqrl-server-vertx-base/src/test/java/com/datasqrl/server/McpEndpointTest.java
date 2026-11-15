@@ -27,6 +27,7 @@ import com.datasqrl.server.operation.ApiOperation;
 import com.datasqrl.server.operation.FunctionDefinition;
 import com.datasqrl.server.operation.FunctionDefinition.Argument;
 import com.datasqrl.server.operation.GraphQLQuery;
+import com.datasqrl.server.operation.McpApp;
 import com.datasqrl.server.operation.McpMethodType;
 import com.datasqrl.util.JsonUtils;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -131,6 +132,7 @@ class McpEndpointTest {
         assertThat(result.protocolVersion()).isEqualTo("2025-11-25");
         assertThat(result.capabilities().tools()).isNotNull();
         assertThat(result.capabilities().resources()).isNull();
+        assertThat(result.capabilities().extensions()).isNullOrEmpty();
       }
     }
 
@@ -158,6 +160,7 @@ class McpEndpointTest {
         var addReading = tool(tools, "AddReading");
         assertThat(addReading.description()).isEqualTo("Invokes AddReading mutation");
         assertThat(addReading.annotations().readOnlyHint()).isFalse();
+        assertThat(tools).allSatisfy(tool -> assertThat(tool.meta()).isNull());
       }
     }
 
@@ -359,6 +362,181 @@ class McpEndpointTest {
   }
 
   @Nested
+  class WithApps {
+
+    private static final String SALES_CHART =
+        "<!doctype html><html><body><script>render()</script></body></html>";
+
+    @BeforeEach
+    void startServer() {
+      var model = createModel();
+      var operations =
+          model.getOperations().stream()
+              .map(
+                  operation ->
+                      switch (operation.getName()) {
+                        case "GetSensors" -> operation.toBuilder().appName("SalesChart").build();
+                        case "AddReading" ->
+                            operation.toBuilder()
+                                .mcpMethod(McpMethodType.APP)
+                                .appName("SalesChart")
+                                .build();
+                        case "GetFailing" ->
+                            operation.toBuilder().mcpMethod(McpMethodType.APP).build();
+                        default -> operation;
+                      })
+              .toList();
+      McpEndpointTest.this.startServer(
+          new ServerConfig(),
+          List.of(),
+          RootGraphQLModel.builder()
+              .operations(operations)
+              .mcpApps(List.of(McpApp.of("SalesChart", SALES_CHART)))
+              .build());
+    }
+
+    @Test
+    void givenApps_whenInitializing_thenAdvertisesResourcesAndAppsExtension() {
+      try (var client = createClient(null)) {
+        var result = client.initialize();
+
+        assertThat(result.capabilities().resources()).isNotNull();
+        assertThat(result.capabilities().extensions())
+            .containsEntry(
+                "io.modelcontextprotocol/ui",
+                Map.of("mimeTypes", List.of("text/html;profile=mcp-app")));
+      }
+    }
+
+    @Test
+    void givenApps_whenListingTools_thenEmitsVisibilityAndResourceUriOfLinkedApp() {
+      try (var client = createClient(null)) {
+        client.initialize();
+
+        var tools = client.listTools().tools();
+
+        assertThat(tools)
+            .extracting(McpSchema.Tool::name)
+            .containsExactlyInAnyOrder("GetSensors", "AddReading", "GetFailing", "GetForbidden");
+        assertThat(tool(tools, "GetSensors").meta())
+            .isEqualTo(
+                Map.of(
+                    "ui",
+                    Map.of(
+                        "resourceUri",
+                        "ui://apps/SalesChart",
+                        "visibility",
+                        List.of("model", "app"))));
+        assertThat(tool(tools, "AddReading").meta())
+            .isEqualTo(
+                Map.of(
+                    "ui",
+                    Map.of("resourceUri", "ui://apps/SalesChart", "visibility", List.of("app"))));
+        assertThat(tool(tools, "GetFailing").meta())
+            .isEqualTo(Map.of("ui", Map.of("visibility", List.of("app"))));
+        assertThat(tool(tools, "GetForbidden").meta())
+            .isEqualTo(Map.of("ui", Map.of("visibility", List.of("model", "app"))));
+      }
+    }
+
+    @Test
+    void givenApps_whenListingResources_thenListsEachApp() {
+      try (var client = createClient(null)) {
+        client.initialize();
+
+        var resources = client.listResources().resources();
+
+        assertThat(resources)
+            .singleElement()
+            .satisfies(
+                resource -> {
+                  assertThat(resource.uri()).isEqualTo("ui://apps/SalesChart");
+                  assertThat(resource.name()).isEqualTo("SalesChart");
+                  assertThat(resource.mimeType()).isEqualTo("text/html;profile=mcp-app");
+                });
+      }
+    }
+
+    @Test
+    void givenAppUri_whenReadingResource_thenReturnsAppHtmlAsText() {
+      try (var client = createClient(null)) {
+        client.initialize();
+
+        var result = client.readResource(new McpSchema.ReadResourceRequest("ui://apps/SalesChart"));
+
+        assertThat(result.contents())
+            .singleElement()
+            .isInstanceOfSatisfying(
+                McpSchema.TextResourceContents.class,
+                contents -> {
+                  assertThat(contents.uri()).isEqualTo("ui://apps/SalesChart");
+                  assertThat(contents.mimeType()).isEqualTo("text/html;profile=mcp-app");
+                  assertThat(contents.text()).isEqualTo(SALES_CHART);
+                });
+      }
+    }
+
+    @Test
+    void givenUnknownUri_whenReadingResource_thenFails() {
+      try (var client = createClient(null)) {
+        client.initialize();
+
+        assertThatThrownBy(
+                () -> client.readResource(new McpSchema.ReadResourceRequest("ui://apps/Missing")))
+            .isInstanceOf(McpError.class);
+      }
+    }
+
+    @Test
+    void givenAppOnlyTool_whenCallingTool_thenExecutesOperation() {
+      try (var client = createClient(null)) {
+        client.initialize();
+
+        var result =
+            client.callTool(
+                new CallToolRequest("AddReading", Map.of("sensorId", 3, "temperature", 18.25)));
+
+        assertThat(result.isError()).isFalse();
+        assertThat(json(result))
+            .isEqualTo(JsonUtils.MAPPER.valueToTree(Map.of("sensorId", 3, "temperature", 18.25)));
+      }
+    }
+  }
+
+  @Nested
+  class WithAppToolWithoutAppsSupport {
+
+    @BeforeEach
+    void startServer() {
+      var operations =
+          createModel().getOperations().stream()
+              .map(
+                  operation ->
+                      operation.getName().equals("GetFailing")
+                          ? operation.toBuilder().mcpMethod(McpMethodType.APP).build()
+                          : operation)
+              .toList();
+      McpEndpointTest.this.startServer(
+          new ServerConfig(), List.of(), RootGraphQLModel.builder().operations(operations).build());
+    }
+
+    @Test
+    void givenAppOnlyTool_whenListingTools_thenOnlyItHasAppVisibility() {
+      try (var client = createClient(null)) {
+        var capabilities = client.initialize().capabilities();
+        var tools = client.listTools().tools();
+
+        assertThat(capabilities.resources()).isNull();
+        assertThat(tool(tools, "GetFailing").meta())
+            .isEqualTo(Map.of("ui", Map.of("visibility", List.of("app"))));
+        assertThat(tools)
+            .filteredOn(tool -> !tool.name().equals("GetFailing"))
+            .allSatisfy(tool -> assertThat(tool.meta()).isNull());
+      }
+    }
+  }
+
+  @Nested
   class WithAuth {
 
     private JWTAuth jwtAuth;
@@ -406,6 +584,12 @@ class McpEndpointTest {
 
   @SneakyThrows
   private void startServer(ServerConfig config, List<AuthenticationProvider> authProviders) {
+    startServer(config, authProviders, createModel());
+  }
+
+  @SneakyThrows
+  private void startServer(
+      ServerConfig config, List<AuthenticationProvider> authProviders, RootGraphQLModel model) {
     config.setServletConfig(new ServletConfig());
     var graphQLServerVerticle = mock(GraphQLServerVerticle.class);
     when(graphQLServerVerticle.getGraphQLEngine()).thenReturn(createGraphQL());
@@ -413,8 +597,7 @@ class McpEndpointTest {
     var router = Router.router(vertx);
     router.route().handler(BodyHandler.create());
     var verticle =
-        new McpBridgeVerticle(
-            router, config, "v1", createModel(), authProviders, graphQLServerVerticle);
+        new McpBridgeVerticle(router, config, "v1", model, authProviders, graphQLServerVerticle);
     await(vertx.deployVerticle(verticle));
     HttpServer server = await(vertx.createHttpServer().requestHandler(router).listen(0));
     baseUrl = "http://localhost:" + server.actualPort();
