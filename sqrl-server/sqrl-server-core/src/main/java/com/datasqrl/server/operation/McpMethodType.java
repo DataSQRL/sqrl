@@ -17,6 +17,5 @@ package com.datasqrl.server.operation;
 
 public enum McpMethodType {
   NONE,
-  TOOL,
-  RESOURCE;
+  TOOL;
 }

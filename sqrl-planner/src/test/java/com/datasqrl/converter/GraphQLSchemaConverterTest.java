@@ -23,6 +23,7 @@ import static graphql.Scalars.GraphQLInt;
 import static graphql.Scalars.GraphQLString;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.datasqrl.server.converter.GraphQLSchemaConverter;
 import com.datasqrl.server.converter.GraphQLSchemaConverterConfig;
@@ -271,7 +272,7 @@ public class GraphQLSchemaConverterTest {
     var schema =
         underTest.getSchema(
             """
-            enum _McpMethodType { NONE TOOL RESOURCE }
+            enum _McpMethodType { NONE TOOL }
             enum _RestMethodType { NONE GET POST }
             directive @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION
 
@@ -299,6 +300,30 @@ public class GraphQLSchemaConverterTest {
         .isEqualTo(RestMethodType.POST);
     assertThat(getOperation(functions, "AddAddVisible").getMcpMethod())
         .isEqualTo(McpMethodType.TOOL);
+  }
+
+  @Test
+  void givenResourceMcpMethod_whenConvertOperations_thenFailsWithSupportedValues() {
+    var schema =
+        underTest.getSchema(
+            """
+            enum _McpMethodType { NONE TOOL RESOURCE }
+            directive @api(mcp: _McpMethodType) on QUERY | MUTATION | FIELD_DEFINITION
+
+            type Query {
+              ping: String
+            }
+            """);
+
+    assertThatThrownBy(
+            () ->
+                underTest.convertOperations(
+                    "query Ping @api(mcp: RESOURCE) { ping }",
+                    GraphQLSchemaConverterConfig.DEFAULT,
+                    schema))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage(
+            "Unsupported value 'RESOURCE' for @api(mcp: ...), supported values are [NONE, TOOL]");
   }
 
   @Test

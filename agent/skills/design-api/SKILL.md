@@ -68,7 +68,7 @@ query GetPersonByAge($age: Int!)
 
 **`@api` Directive:**
 - `rest`: `NONE` | `GET` | `POST` (HTTP method or disable)
-- `mcp`: `NONE` | `TOOL` | `RESOURCE` (MCP exposure type)
+- `mcp`: `NONE` | `TOOL` (expose as MCP tool or not)
 - `uri`: RFC 6570 template (args in template = path params, others = payload requiring POST)
 
 **Rules:**
@@ -83,7 +83,7 @@ API consumers read these descriptions in GraphQL, REST (OpenAPI) and MCP. Each o
 |---|---|
 | Generated schema | The SQRL `/** ... */` doc-strings, with their `# Columns:` and `# Arguments:` sections (see `/implement-sqrl`, Comments & Doc-strings) |
 | Custom schema | The `"..."` or `"""..."""` descriptions in the schema file. A `#` line above a type, field, argument, input field or enum value without a `"..."` description also becomes its description. The SQRL doc-strings do not reach the API |
-| Custom operation | All `#` lines above the operation, back to the end of the previous operation or to the top of the file, joined with spaces into one text. So a `#` note between two operations, or in the file header, becomes part of the next operation's description. They describe the REST operation and the MCP tool or resource. A `#` line above a variable describes that argument in MCP, and in the REST request body of a `POST` operation. A `"""` description before an operation fails the compile with `Invalid syntax` |
+| Custom operation | All `#` lines above the operation, back to the end of the previous operation or to the top of the file, joined with spaces into one text. So a `#` note between two operations, or in the file header, becomes part of the next operation's description. They describe the REST operation and the MCP tool. A `#` line above a variable describes that argument in MCP, and in the REST request body of a `POST` operation. A `"""` description before an operation fails the compile with `Invalid syntax` |
 
 Write every description for the API consumer. Describe each field, argument, input field and enum value whose name does not show its full meaning. For a mutation field in a custom schema, state what it creates or changes and what it returns.
 

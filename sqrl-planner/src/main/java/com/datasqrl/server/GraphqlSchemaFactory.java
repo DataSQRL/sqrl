@@ -456,12 +456,7 @@ public class GraphqlSchemaFactory {
 
   private void addApiDirectiveTypes(GraphQLSchema.Builder graphQLSchemaBuilder) {
     var mcpMethodType =
-        GraphQLEnumType.newEnum()
-            .name("_McpMethodType")
-            .value("NONE")
-            .value("TOOL")
-            .value("RESOURCE")
-            .build();
+        GraphQLEnumType.newEnum().name("_McpMethodType").value("NONE").value("TOOL").build();
 
     var restMethodType =
         GraphQLEnumType.newEnum()

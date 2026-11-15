@@ -90,11 +90,9 @@ class McpValidationIT {
             sleep 5 &&
             echo "Testing tools/list..." &&
             npx @modelcontextprotocol/inspector --cli %s --method tools/list &&
-            echo "Testing resources/list..." &&
-            npx @modelcontextprotocol/inspector --cli %s --method resources/list &&
             echo "All MCP validations completed successfully"
             """,
-                    mcpUrl, mcpUrl, mcpUrl))
+                    mcpUrl, mcpUrl))
             .withLogConsumer(
                 new Slf4jLogConsumer(org.slf4j.LoggerFactory.getLogger("mcp-inspector")))
             .waitingFor(
@@ -154,12 +152,9 @@ class McpValidationIT {
             echo "=== Testing tools/list ===" &&
             npx @modelcontextprotocol/inspector --cli %s --method tools/list > /tmp/tools_result.txt 2>&1 &&
             cat /tmp/tools_result.txt &&
-            echo "=== Testing resources/list ===" &&
-            npx @modelcontextprotocol/inspector --cli %s --method resources/list > /tmp/resources_result.txt 2>&1 &&
-            cat /tmp/resources_result.txt &&
             echo "All detailed validations completed"
             """,
-                    mcpUrl, mcpUrl))
+                    mcpUrl))
             .withLogConsumer(
                 new Slf4jLogConsumer(org.slf4j.LoggerFactory.getLogger("mcp-detailed-validator")))
             .waitingFor(
@@ -219,7 +214,7 @@ class McpValidationIT {
       assertThat(initResponse.serverInfo().name()).isEqualTo("datasqrl-mcp-server");
       assertThat(initResponse.capabilities()).isNotNull();
       assertThat(initResponse.capabilities().tools()).isNotNull();
-      assertThat(initResponse.capabilities().resources()).isNotNull();
+      assertThat(initResponse.capabilities().resources()).isNull();
 
       // Test tools listing
       var tools = client.listTools();
@@ -232,14 +227,6 @@ class McpValidationIT {
       // Verify tool structure based on UDF test case
       var toolNames = tools.tools().stream().map(McpSchema.Tool::name).toList();
       log.info("Available tools: {}", toolNames);
-
-      // Test resources listing
-      var resources = client.listResources();
-      log.info("Successfully listed {} resources", resources.resources().size());
-
-      assertThat(resources).isNotNull();
-      assertThat(resources.resources()).isNotNull();
-      // Resources may be empty, which is valid
 
       var firstTool = tools.tools().get(0);
       log.info("Testing tool call for: {}", firstTool.name());
@@ -275,15 +262,11 @@ class McpValidationIT {
     assertThat(logs.contains("Testing tools/list") || logs.contains("tools"))
         .as("Should test tools/list method")
         .isTrue();
-    assertThat(logs.contains("Testing resources/list") || logs.contains("resources"))
-        .as("Should test resources/list method")
-        .isTrue();
   }
 
   @SneakyThrows
   private void validateMcpProtocolCompliance(String logs) {
     var foundValidToolsResponse = false;
-    var foundValidResourcesResponse = false;
 
     // Look for multi-line JSON blocks
     var jsonStart = logs.indexOf("{");
@@ -320,13 +303,6 @@ class McpValidationIT {
             }
           }
 
-          if (jsonResponse.has("resources")) {
-            foundValidResourcesResponse = true;
-            assertThat(jsonResponse.get("resources").isArray())
-                .as("Resources should be an array")
-                .isTrue();
-          }
-
           // Also check JSON-RPC 2.0 wrapped responses
           if (jsonResponse.has("jsonrpc") && "2.0".equals(jsonResponse.get("jsonrpc").asText())) {
             if (jsonResponse.has("result")) {
@@ -335,13 +311,6 @@ class McpValidationIT {
               if (result.has("tools")) {
                 foundValidToolsResponse = true;
                 assertThat(result.get("tools").isArray()).as("Tools should be an array").isTrue();
-              }
-
-              if (result.has("resources")) {
-                foundValidResourcesResponse = true;
-                assertThat(result.get("resources").isArray())
-                    .as("Resources should be an array")
-                    .isTrue();
               }
             }
           }
@@ -353,8 +322,6 @@ class McpValidationIT {
       jsonStart = logs.indexOf("{", jsonEnd + 1);
     }
 
-    assertThat(foundValidToolsResponse || foundValidResourcesResponse)
-        .as("Should find at least one valid MCP protocol response (tools or resources)")
-        .isTrue();
+    assertThat(foundValidToolsResponse).as("Should find a valid MCP tools/list response").isTrue();
   }
 }

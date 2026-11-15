@@ -121,13 +121,14 @@ class McpEndpointTest {
     }
 
     @Test
-    void givenClient_whenInitializing_thenReportsServerInfoAndToolsCapability() {
+    void givenClient_whenInitializing_thenReportsServerInfoAndOnlyToolsCapability() {
       try (var client = createClient(null)) {
         var result = client.initialize();
 
         assertThat(result.serverInfo().name()).isEqualTo("datasqrl-mcp-server");
         assertThat(result.protocolVersion()).isEqualTo("2025-11-25");
         assertThat(result.capabilities().tools()).isNotNull();
+        assertThat(result.capabilities().resources()).isNull();
       }
     }
 
@@ -268,9 +269,11 @@ class McpEndpointTest {
       assertThat(body(response).at("/result/protocolVersion").asText()).isEqualTo("2025-11-25");
     }
 
-    @Test
-    void givenUnknownMethod_whenRequesting_thenFailsWithMethodNotFound() {
-      var response = post("{\"jsonrpc\":\"2.0\",\"id\":5,\"method\":\"prompts/list\"}");
+    @ParameterizedTest
+    @ValueSource(
+        strings = {"prompts/list", "resources/list", "resources/templates/list", "resources/read"})
+    void givenUnsupportedMethod_whenRequesting_thenFailsWithMethodNotFound(String method) {
+      var response = post("{\"jsonrpc\":\"2.0\",\"id\":5,\"method\":\"%s\"}".formatted(method));
 
       assertThat(response.statusCode()).isEqualTo(200);
       assertThat(body(response).at("/id").asInt()).isEqualTo(5);

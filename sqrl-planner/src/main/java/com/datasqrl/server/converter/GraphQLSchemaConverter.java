@@ -682,7 +682,7 @@ public class GraphQLSchemaConverter {
     if (args == null || args.isEmpty()) return;
     Object v;
     if ((v = args.get("mcp")) != null) {
-      builder.mcpMethod(McpMethodType.valueOf(v.toString().toUpperCase()));
+      builder.mcpMethod(toMcpMethod(v));
     }
     if ((v = args.get("rest")) != null) {
       builder.restMethod(RestMethodType.valueOf(v.toString().toUpperCase()));
@@ -691,6 +691,18 @@ public class GraphQLSchemaConverter {
       builder.format(ResultFormat.valueOf(v.toString().toUpperCase()));
     }
     if ((v = args.get("uri")) != null) builder.uriTemplate(v.toString());
+  }
+
+  private static McpMethodType toMcpMethod(Object value) {
+    var name = value.toString().toUpperCase();
+    return Arrays.stream(McpMethodType.values())
+        .filter(type -> type.name().equals(name))
+        .findFirst()
+        .orElseThrow(
+            () ->
+                new IllegalArgumentException(
+                    "Unsupported value '%s' for @api(mcp: ...), supported values are %s"
+                        .formatted(value, Arrays.toString(McpMethodType.values()))));
   }
 
   private Map<String, Object> toArgMap(List<Directive> directives) {

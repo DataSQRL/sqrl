@@ -62,16 +62,10 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
   private static final String CT_JSON = "application/json";
   private static final String CT_SSE = "text/event-stream";
 
-  private static final String RESOURCES_RESULT_KEY = "resources";
-  private static final String RESOURCE_TEMPLATES_RESULT_KEY = "resourceTemplates";
-
   private final ConcurrentHashMap<String, SseConnection> sseConnections = new ConcurrentHashMap<>();
 
   private final Map<String, ApiOperation> tools;
   private final JsonObject toolsList;
-  private final List<ApiOperation> resources;
-  private final JsonObject resourceList;
-  private final JsonObject resourceTemplatesList;
 
   public McpBridgeVerticle(
       Router router,
@@ -86,22 +80,6 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
             .filter(op -> op.getMcpMethod() == McpMethodType.TOOL)
             .collect(Collectors.toMap(ApiOperation::getId, Function.identity()));
     this.toolsList = getToolsList(this.tools.values());
-    this.resources =
-        model.getOperations().stream()
-            .filter(op -> op.getMcpMethod() == McpMethodType.RESOURCE)
-            .toList();
-    this.resourceList =
-        getResourceList(
-            RESOURCES_RESULT_KEY,
-            resources.stream()
-                .filter(op -> op.getFunction().getParameters().getProperties().isEmpty())
-                .collect(Collectors.toList()));
-    this.resourceTemplatesList =
-        getResourceList(
-            RESOURCE_TEMPLATES_RESULT_KEY,
-            resources.stream()
-                .filter(op -> !op.getFunction().getParameters().getProperties().isEmpty())
-                .collect(Collectors.toList()));
   }
 
   @Override
@@ -109,7 +87,6 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
     var mcpRoutePrefix = config.getServletConfig().getMcpEndpoint(modelVersion);
     log.info("Starting McpBridgeVerticle with endpoint prefix: {}", mcpRoutePrefix);
     log.info("Available tools: {}", tools.keySet());
-    log.info("Available resources: {}", resources.size());
 
     // Debug: Log ALL incoming requests to help identify what the MCP client is doing
     router
@@ -313,19 +290,6 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
               log.info("Handling tools/call request");
               yield handleCallTool(ctx, params);
             }
-            case "resources/list" -> {
-              log.info(
-                  "Handling resources/list request - returning {} resources", resources.size());
-              yield Future.succeededFuture(resourceList);
-            }
-            case "resources/templates/list" -> {
-              log.info("Handling resources/templates/list request");
-              yield Future.succeededFuture(resourceTemplatesList);
-            }
-            case "resources/read" -> {
-              log.info("Handling resources/read request");
-              yield handleReadResource(ctx, params);
-            }
             case "ping" -> {
               log.debug("Handling ping request");
               yield Future.succeededFuture(new JsonObject());
@@ -405,10 +369,7 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
   private JsonObject handleInitialize(JsonNode params) {
     var protocolVersion = negotiateProtocolVersion(params);
     log.info("Initializing MCP server with protocol version: {}", protocolVersion);
-    var capabilities =
-        new JsonObject()
-            .put("tools", new JsonObject())
-            .put("resources", new JsonObject().put("subscribe", false).put("listChanged", false));
+    var capabilities = new JsonObject().put("tools", new JsonObject());
 
     var serverInfo =
         new JsonObject()
@@ -435,29 +396,6 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
       return requested;
     }
     return LATEST_PROTOCOL_VERSION;
-  }
-
-  /**
-   * Dummy implementation for now
-   *
-   * @param params
-   * @return
-   */
-  private Future<JsonObject> handleReadResource(RoutingContext ctx, JsonNode params) {
-    var uri = params.get("uri").asText();
-    if (uri == null) {
-      return Future.failedFuture(new McpException(-32602, "URI parameter required"));
-    }
-    if (uri.isBlank())
-      return Future.failedFuture(new McpException(-32602, "Resource not found: " + uri));
-    var contents =
-        new JsonArray()
-            .add(
-                new JsonObject()
-                    .put("uri", uri)
-                    .put("mimeType", "application/json")
-                    .put("text", new JsonObject().encodePrettily()));
-    return Future.succeededFuture(new JsonObject().put("contents", contents));
   }
 
   private Future<JsonObject> handleCallTool(RoutingContext ctx, JsonNode params) {
@@ -545,25 +483,6 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
       toolsArray.add(toolInfo);
     }
     return new JsonObject().put("tools", toolsArray);
-  }
-
-  private JsonObject getResourceList(
-      String resultKey, Collection<ApiOperation> resourceOperations) {
-    var resourcesArray = new JsonArray();
-    for (var resource : resourceOperations) {
-      var description = resource.getFunction().getDescription();
-      if (description == null) {
-        description = "Returns %s resource".formatted(resource.getFunction().getName());
-      }
-      var resourceDef =
-          new JsonObject()
-              .put("uri", resource.getUriTemplate())
-              .put("name", resource.getName())
-              .put("description", description)
-              .put("mimeType", "application/json");
-      resourcesArray.add(resourceDef);
-    }
-    return new JsonObject().put(resultKey, resourcesArray);
   }
 
   private JsonObject createResponse(Object id, JsonObject result) {

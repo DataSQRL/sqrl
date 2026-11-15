@@ -9,7 +9,7 @@ Based on the SQRL script, DataSQRL generates the interface for the compiled data
 
 * Data Lake and Database Views
 * GraphQL (Mutations, Queries, and Subscriptions)
-* MCP (Tooling and Resources)
+* MCP (Tools)
 * REST (GET and POST)
 
 For data lake and database views, DataSQRL generates view definitions as deployment assets in `build/deploy/plan` which can be queried directly.
@@ -187,15 +187,15 @@ DataSQRL exposes MCP and REST endpoints by converting GraphQL operations. With t
 * Generated queries are mapped to GET REST endpoints under `rest/queries`; generated mutations are mapped to POST REST endpoints under `rest/mutations`. For generated result sets, DataSQRL follows relationship fields up to the configured `max-result-depth` without loops.
 * When `add-prefix` is enabled (the default), generated query and mutation operations are named with `Get` and `Add` prefixes respectively. MCP exposes generated operations as tools. Nested input types, such as mutation inputs with nested rows or lists of rows, are passed to MCP tools as nested JSON objects and arrays. Add `@api(mcp: NONE)` to a query or mutation field in the GraphQL schema to omit its generated operation from MCP.
 
-For complete control over the exposed MCP tools and resources as well as REST endpoints, define named GraphQL queries or mutations in one or more `.graphql` files configured under `script.operations` (or a version's `script.api.<version>.operations`) in [`package.json`](configuration.md#source-files-script).
+For complete control over the exposed MCP tools and REST endpoints, define named GraphQL queries or mutations in one or more `.graphql` files configured under `script.operations` (or a version's `script.api.<version>.operations`) in [`package.json`](configuration.md#source-files-script).
 
 The GraphQL file defining the operations contains named queries or mutations.
 The name of the operation is the name of the MCP tool and REST endpoint and must be unique.
 
 Apply the `@api` directive to an operation to control how it is exposed:
 * `rest`: `NONE`, `GET`, or `POST` to configure the HTTP method or not expose as REST endpoint.
-* `mcp`: `NONE`, `TOOL`, or `RESOURCE` to configure how the query is exposed in MCP.
-* `uri`: AN RFC 6570 template to configure the REST path and MCP resource path. Any operation arguments that are not defined in the uri template are considered part of the payload for REST (and the method must be POST).
+* `mcp`: `NONE` or `TOOL` to configure whether the operation is exposed as an MCP tool.
+* `uri`: An RFC 6570 template to configure the REST path. Any operation arguments that are not defined in the uri template are considered part of the payload for REST (and the method must be POST).
 
 ```graphql
 # Returns up to 10 people of the given age.
@@ -209,7 +209,7 @@ query GetPersonByAge($age: Int!) @api(rest: GET, mcp: TOOL, uri: "/queries/perso
 
 This defines an operation `GetPersonByAge` which is the name of the MCP tool and REST endpoint with the path `/queries/personByAge/{age}` using GET method.
 
-The `#` comment lines above an operation are its REST (OpenAPI) description and its MCP tool or resource description. A `"""` description before an operation fails the compile with `Invalid syntax`. In the schema file, write descriptions with `"..."` or `"""..."""`.
+The `#` comment lines above an operation are its REST (OpenAPI) description and its MCP tool description. A `"""` description before an operation fails the compile with `Invalid syntax`. In the schema file, write descriptions with `"..."` or `"""..."""`.
 
 By default, DataSQRL adds explicit operations to the generated ones. Set `compiler.api.endpoints` to `OPS_ONLY` in the [`package.json`](configuration) to omit generated MCP and REST operations and restrict a public GraphQL endpoint to explicitly defined named operations. The server executes its stored operation definition, so clients cannot alter its selection set. Whether the GraphQL endpoint is publicly available is controlled independently by whether `compiler.api.protocols` includes `GRAPHQL`.
 

@@ -36,7 +36,7 @@ public class ApiOperation {
   McpMethodType mcpMethod; // The MCP endpoint type or NONE if no MCP
   RestMethodType restMethod; // The REST Method for the operation or NONE if no REST
 
-  /** RFC 6570 URI template for Resource endpoint (both MCP and REST) */
+  /** RFC 6570 URI template for the REST endpoint */
   String uriTemplate;
 
   ResultFormat format;
