@@ -568,6 +568,19 @@ class RestBridgeVerticleTest {
     verify(router).get("/v1/api/rest/queries/:sensorid/maxTemp");
   }
 
+  @Test
+  void givenOperation_whenValidatingRepeatedly_thenReusesCompiledParameterSchema() {
+    var operation = addOrderOperation();
+
+    var schema = restBridgeVerticle.parameterSchema(operation);
+    restBridgeVerticle.validateParameters(Map.of("id", 1, "entries", List.of()), operation);
+
+    assertThat(restBridgeVerticle.parameterSchema(operation)).isSameAs(schema);
+    assertThatThrownBy(() -> restBridgeVerticle.validateParameters(Map.of("id", 1), operation))
+        .isInstanceOf(AbstractBridgeVerticle.ValidationException.class)
+        .hasMessageContaining("entries");
+  }
+
   private ApiOperation getOperationByName(String name) {
     return model.getOperations().stream()
         .filter(op -> op.getName().equalsIgnoreCase(name))
