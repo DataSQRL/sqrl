@@ -23,6 +23,7 @@ import static graphql.Scalars.GraphQLInt;
 import static graphql.Scalars.GraphQLString;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.datasqrl.server.converter.GraphQLSchemaConverter;
 import com.datasqrl.server.converter.GraphQLSchemaConverterConfig;
@@ -329,6 +330,24 @@ public class GraphQLSchemaConverterTest {
 
     assertThat(getOperation(operations, "PlaceHiddenOrder").getMcpMethod())
         .isEqualTo(McpMethodType.NONE);
+  }
+
+  @Test
+  void givenMutationMarkedAsMcpResource_whenConvertOperations_thenFailsWithReadableError() {
+    var schema = underTest.getSchema(getTestSchema("nested-mutation.graphqls"));
+
+    assertThatThrownBy(
+            () ->
+                underTest.convertOperations(
+                    """
+                    mutation PlaceOrder($order: OrderInput!) @api(mcp: RESOURCE) {
+                      AddOrder(event: $order) { id }
+                    }
+                    """,
+                    GraphQLSchemaConverterConfig.DEFAULT,
+                    schema))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("'PlaceOrder' is a mutation and cannot be an MCP resource");
   }
 
   private static ApiOperation getOperation(List<ApiOperation> operations, String name) {

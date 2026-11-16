@@ -23,6 +23,7 @@
   },
   "publicGraphQLEndpointEnabled" : true,
   "onlyConfiguredGraphQLOperations" : false,
+  "mcpResourceUriPrefix" : "sqrl://{version}/",
   "gracefulShutdownTimeoutSeconds" : 15,
   "httpServerOptions" : {
     "acceptBacklog" : -1,

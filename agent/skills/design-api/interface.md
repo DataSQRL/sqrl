@@ -165,7 +165,7 @@ This defines an operation `GetPersonByAge` which is the name of the MCP tool and
 
 The `#` comment lines above an operation are its REST (OpenAPI) description and its MCP tool or resource description. A `"""` description before an operation fails the compile with `Invalid syntax`. In the schema file, write descriptions with `"..."` or `"""..."""`.
 
-An operation with `mcp: RESOURCE` is an MCP resource with the URI `sqrl://<version>/` followed by its `uri` template without the leading `/`, e.g. `sqrl://v1/queries/personByAge/{age}`; `compiler.api.mcp-resource-uri-prefix` changes the prefix. Operations without arguments are listed by `resources/list`, the others by `resources/templates/list`. `resources/read` runs the operation with the parameters from the URI and the caller's authentication, and returns its JSON result.
+Only a query can have `mcp: RESOURCE` (the compile fails for a mutation). It becomes an MCP resource with the URI `sqrl://<version>/` followed by its `uri` template without the leading `/`, e.g. `sqrl://v1/queries/personByAge/{age}`; `compiler.api.mcp-resource-uri-prefix` changes the prefix. Operations without arguments are listed by `resources/list`, the others by `resources/templates/list`. `resources/read` runs the operation with the parameters from the URI and the caller's authentication, and returns its JSON result.
 
 By default, DataSQRL adds explicit operations to the generated ones. Set `compiler.api.endpoints` to `OPS_ONLY` to omit generated REST/MCP operations and restrict a public GraphQL endpoint to explicitly defined named operations. The server executes its stored operation definition, so clients cannot alter its selection set.
 

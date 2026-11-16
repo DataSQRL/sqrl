@@ -143,7 +143,7 @@ public class GraphQLSchemaConverter {
       builder.resultDefinition(toResultDefinition(schema, opDef));
       config.setProtocolSupport(builder);
       applyApiArgs(toArgMap(opDef.getDirectives()), builder);
-      functions.add(builder.build());
+      functions.add(checkResourceIsQuery(builder.build()));
     } while (definition != null);
     return functions;
   }
@@ -359,7 +359,18 @@ public class GraphQLSchemaConverter {
     builder.resultDefinition(toResultDefinition(schema, apiQuery));
     config.setProtocolSupport(builder);
     applyApiArgs(toArgMap(fieldDef.getDirective("api")), builder);
-    return builder.build();
+    return checkResourceIsQuery(builder.build());
+  }
+
+  private static ApiOperation checkResourceIsQuery(ApiOperation operation) {
+    var operationType = operation.getApiQuery().operationType();
+    Preconditions.checkArgument(
+        operation.getMcpMethod() != McpMethodType.RESOURCE || operationType == Operation.QUERY,
+        "Operation '%s' is a %s and cannot be an MCP resource, because reading a resource must not"
+            + " change data. Use 'mcp: TOOL' instead.",
+        operation.getName(),
+        operationType.name().toLowerCase());
+    return operation;
   }
 
   private static String combineStrings(String prefix, String suffix) {

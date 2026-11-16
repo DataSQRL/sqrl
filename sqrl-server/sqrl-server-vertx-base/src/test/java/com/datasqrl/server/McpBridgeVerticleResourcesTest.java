@@ -31,6 +31,9 @@ import graphql.ExecutionResult;
 import graphql.ExecutionResultImpl;
 import graphql.GraphQL;
 import graphql.GraphqlErrorBuilder;
+import graphql.schema.idl.RuntimeWiring;
+import graphql.schema.idl.SchemaGenerator;
+import graphql.schema.idl.SchemaParser;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
@@ -72,6 +75,14 @@ class McpBridgeVerticleResourcesTest {
           "function": {"name": "GetPerson", "parameters": {"type": "object", "properties": {"limit": {"type": "integer"}}}},
           "apiQuery": {"query": "query GetPerson($limit: Int) { Person(limit: $limit) { name } }", "queryName": "GetPerson", "operationType": "QUERY"},
           "mcpMethod": "TOOL", "restMethod": "GET", "uriTemplate": "queries/GetPerson{?limit}"
+        },
+        {
+          "function": {
+            "name": "AddNote",
+            "parameters": {"type": "object", "properties": {"label": {"type": "string"}}, "required": ["label"]}
+          },
+          "apiQuery": {"query": "mutation AddNote($label: String!) { AddNote(label: $label) { label } }", "queryName": "AddNote", "operationType": "MUTATION"},
+          "mcpMethod": "RESOURCE", "restMethod": "POST", "uriTemplate": "mutations/AddNote"
         }
       ]
       """;
@@ -212,6 +223,49 @@ class McpBridgeVerticleResourcesTest {
     var error = request("resources/read", "{}").getJsonObject("error");
 
     assertThat(error.getInteger("code")).isEqualTo(-32602);
+  }
+
+  @Test
+  void givenTooLongUri_whenReading_thenReturnsInvalidParamsWithoutMatching() {
+    var uri =
+        "sqrl://v1/queries/personByAge/" + "1".repeat(McpBridgeVerticle.MAX_RESOURCE_URI_LENGTH);
+
+    assertThat(read(uri).getJsonObject("error").getInteger("code")).isEqualTo(-32602);
+    verify(graphQL, never()).executeAsync(any(ExecutionInput.class));
+  }
+
+  @Test
+  void givenMutationMarkedAsResource_whenListingAndReading_thenItIsNeitherListedNorRun() {
+    var templates =
+        request("resources/templates/list", null)
+            .getJsonObject("result")
+            .getJsonArray("resourceTemplates");
+
+    assertThat(templates.stream().map(t -> ((JsonObject) t).getString("name")))
+        .doesNotContain("AddNote");
+    assertThat(
+            read("sqrl://v1/mutations/AddNote?label=x").getJsonObject("error").getInteger("code"))
+        .isEqualTo(-32002);
+    verify(graphQL, never()).executeAsync(any(ExecutionInput.class));
+  }
+
+  @Test
+  void givenIntOutOfRange_whenReadingWithRealEngine_thenReturnsInvalidParams() {
+    var schema =
+        new SchemaGenerator()
+            .makeExecutableSchema(
+                new SchemaParser()
+                    .parse(
+                        "type Query { PersonByAge(age: Int!): [Person] } type Person { name: String }"),
+                RuntimeWiring.newRuntimeWiring().build());
+    var engine = GraphQL.newGraphQL(schema).build();
+    when(graphQL.executeAsync(any(ExecutionInput.class)))
+        .thenAnswer(invocation -> engine.executeAsync((ExecutionInput) invocation.getArgument(0)));
+
+    var error = read("sqrl://v1/queries/personByAge/3000000000").getJsonObject("error");
+
+    assertThat(error.getInteger("code")).isEqualTo(-32602);
+    assertThat(error.getString("message")).contains("age");
   }
 
   @Test

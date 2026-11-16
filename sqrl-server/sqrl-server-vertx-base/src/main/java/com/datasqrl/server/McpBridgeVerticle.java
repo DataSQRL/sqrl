@@ -25,6 +25,7 @@ import com.datasqrl.util.ProjectConstants;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
+import graphql.ErrorType;
 import graphql.ExecutionResult;
 import graphql.GraphQLError;
 import graphql.language.OperationDefinition.Operation;
@@ -76,6 +77,8 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
   static final int INVALID_PARAMS = -32602;
   static final int INTERNAL_ERROR = -32603;
   static final int RESOURCE_NOT_FOUND = -32002;
+  // Same as the default HTTP request-line limit that bounds REST URIs; templates match in O(n^2).
+  static final int MAX_RESOURCE_URI_LENGTH = 4096;
 
   private final ConcurrentHashMap<String, SseConnection> sseConnections = new ConcurrentHashMap<>();
 
@@ -110,6 +113,10 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
       }
       if (operation.getUriTemplate() == null) {
         log.warn("Skipping MCP resource {} - missing uriTemplate", operation.getName());
+        continue;
+      }
+      if (operation.getApiQuery().operationType() != Operation.QUERY) {
+        log.warn("Skipping MCP resource {} - only queries can be resources", operation.getName());
         continue;
       }
       var uriTemplate = toResourceUri(uriPrefix, operation.getUriTemplate());
@@ -481,6 +488,12 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
     if (uri == null || uri.isBlank()) {
       return Future.failedFuture(new McpException(INVALID_PARAMS, "URI parameter required"));
     }
+    if (uri.length() > MAX_RESOURCE_URI_LENGTH) {
+      return Future.failedFuture(
+          new McpException(
+              INVALID_PARAMS,
+              "Resource URI is longer than %d characters".formatted(MAX_RESOURCE_URI_LENGTH)));
+    }
 
     final Optional<ResourceMatch> match;
     try {
@@ -511,13 +524,22 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
 
     return execution.compose(
         executionResult -> {
-          if (!executionResult.getErrors().isEmpty()) {
+          var errors = executionResult.getErrors();
+          if (!errors.isEmpty()) {
             var messages =
-                executionResult.getErrors().stream()
-                    .map(GraphQLError::getMessage)
-                    .collect(Collectors.joining("; "));
+                errors.stream().map(GraphQLError::getMessage).collect(Collectors.joining("; "));
+            // Uncoercible variables (e.g. Int out of range) are bad parameters; a
+            // graphql.validation.ValidationError means the stored query itself is invalid
+            var invalidParams =
+                errors.stream()
+                    .anyMatch(
+                        e ->
+                            e.getErrorType() == ErrorType.ValidationError
+                                && !(e instanceof graphql.validation.ValidationError));
             return Future.failedFuture(
-                new McpException(INTERNAL_ERROR, "Resource query failed: " + messages));
+                invalidParams
+                    ? new McpException(INVALID_PARAMS, messages)
+                    : new McpException(INTERNAL_ERROR, "Resource query failed: " + messages));
           }
           try {
             var text =

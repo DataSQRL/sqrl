@@ -112,6 +112,7 @@ class McpResourcesContainerIT {
       assertThat(readError(client, "nothing")).isEqualTo(-32002);
       assertThat(readError(client, "sqrl://v1/queries/Unknown")).isEqualTo(-32002);
       assertThat(readError(client, "sqrl://v1/queries/personByAge/abc")).isEqualTo(-32602);
+      assertThat(readError(client, "sqrl://v1/queries/personByAge/3000000000")).isEqualTo(-32602);
       assertThat(readError(client, "sqrl://v1/queries/BrokenRows")).isEqualTo(-32603);
 
       var toolResult =
