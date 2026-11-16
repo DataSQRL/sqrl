@@ -573,9 +573,11 @@ Internal tables are managed by an SQRL engine selected through an `engine(...)` 
 | Connector option           | **omitted**                                                     | **required**                 |
 | Other `WITH (...)` options | Optional engine-specific options                                | Connector configuration      |
 | Engine hint                | **required**                                                    | Not used to select connector |
-| Metadata columns           | `METADATA FROM 'uuid'`, `'timestamp'` are recognised by planner | Passed through               |
+| Metadata columns           | `METADATA FROM 'uuid'`, `'timestamp'`, `'auth.<claim>'` only    | Passed through               |
 | Watermark spec             | **generated**                                                   | **required**                 |
 | Primary key                | *Unenforced* upsert semantics                                   | Same as Flink                |
+
+On an internal table, use only the metadata keys `'uuid'`, `'timestamp'` and `'auth.<claim>'`. DataSQRL fills in these columns, so they are not fields of the mutation input. A `METADATA` column without `FROM` uses its column name as the key. Any other key stops the compile with an `Unknown metadata key` error, for example a typing error such as `'auht.sub'` or a key of the Flink Kafka connector such as `'offset'`. Without this check, the column becomes a field of the mutation input and the client sets its value.
 
 With the `kafka` engine, `PARTITIONED BY (col, ...)` on an internal table without a primary key sets the Kafka message key of each record, both for the records that the server writes for a mutation and for the records that the pipeline exports into the table. Records with the same key go to the same Kafka partition, so their order is kept. The clause only declares the key; the table is not partitioned in Flink. The key can contain `METADATA FROM 'uuid'` and `METADATA FROM 'auth.<claim>'` columns, which the server fills in before it writes the record, but not the `METADATA FROM 'timestamp'` column, which is only known after the record is written.
 The Flink source of the table reads every column from the message value and ignores the key. Adding `PARTITIONED BY` to an existing table therefore keeps the records written before the table had a key, also when the pipeline reads the topic again from the earliest offset. This relies on the default `kafka-safe` connector; the plain `kafka` connector drops records that have no key.
@@ -653,8 +655,16 @@ CustomerByEmail(email STRING) := SELECT * FROM Customer WHERE email = :email;
 
 #### Accessing JWT Payload
 
-To access the JWT payload included in the Authorization HTTP header, you can use the `METADATA` expression within the
-function definition. The JWT payload is available via the auth object, and nested fields can be accessed directly.
+To access the JWT payload included in the Authorization HTTP header, you can use the `METADATA` expression within the function definition. The text after `auth.` is the name of a claim in the JWT payload:
+
+* `'auth.val'` reads the top-level claim `val`.
+* `'auth.org.id'` reads the field `id` of the object claim `org`. A path can go to any depth, for example `'auth.org.location.zip'`.
+* A key can contain dots, at the top level and inside an object, for example the namespaced claim `https://example.com/org`. At each level, the server uses the longest key that it finds, and then follows the rest of the path. So `'auth.https://example.com/org_id'` reads a top-level claim, and `'auth.https://example.com/org.id'` reads the field `id` of the claim `https://example.com/org`. In the same way, `'auth.resource_access.com.example.app.roles'` reads the field `roles` of the key `com.example.app` inside the claim `resource_access`.
+* A path can end on an array. In the SQRL script, declare the function argument with an `ARRAY<...>` type, for example `roles ARRAY<STRING> NOT NULL METADATA FROM 'auth.realm_access.roles'`.
+* Array indexing does not work. For example, `'auth.realm_access.roles.0'` does not read the first role. The server treats it as a missing claim. To check for one item, read the full array and use `array_contains` in the query.
+* Each segment of the path must have a name. A key with an empty segment, such as `'auth.org.'` or `'auth.org..id'`, stops the compile.
+* When the token has no claim at the path, a request fails with `403 Forbidden` for a `NOT NULL` argument. A nullable argument gets `null`.
+
 In the example below, the JWT payload contains a val field, which is an integer.
 
 ```sql
@@ -663,6 +673,10 @@ AuthFilter(mySecretId BIGINT NOT NULL METADATA FROM 'auth.val') :=
   FROM Customer c 
   WHERE c.customerId = :mySecretId;
 ```
+
+The server reads a claim only from a token that it checks. A script that reads a claim needs an auth provider in `engines.vertx.config`. This applies to a function argument and to a mutation column. The provider is an `auth` block with at least one issuer (see [Authentication Configuration](https://docs.datasqrl.com/docs/configuration-engine/vertx.md#authentication-configuration)). The deprecated `jwtAuth`, or `oauthConfig` with `oauth2Options.site`, also gives a provider. Without a provider, the server checks no token. The compile then fails with the error `The script reads JWT claims (...), but engines.vertx.config has no auth provider.`
+
+The check covers every function and mutation that reads a claim, including those from an inline `IMPORT script.*`. It also covers a function that a custom GraphQL schema leaves out. To keep such a function out of the API without a provider, start its name with `_`, for example `_MyOrders`. A function whose name starts with `_` is not exposed. The `/*+no_query*/` hint does not help here, because it works only on tables.
 
 ### Relationship Definition
 
@@ -840,7 +854,7 @@ Hints live in a `/*+ ... */` comment placed **immediately before** the definitio
 | Hint                        | Form                                                                                   | Applies to     | Effect                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 |-----------------------------|----------------------------------------------------------------------------------------|----------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | **primary_key**             | `primary_key(col, ...)`                                                                | table          | declare the primary key, overriding the inferred key. Required when the compile fails with `Could not determine primary key for table [...]`; does not deduplicate                                                                                                                                                                                                                                                                                                                                                                                                                      |
-| **index**                   | `index(type, col [ASC\|DESC], ...)` <br/> Multiple `index(...)` can be comma-separated | table          | override automatic index selection. `type` ∈ `HASH`, `BTREE`, `PBTREE`, `TEXT`, `VECTOR_COSINE`, `VECTOR_EUCLID`. `ASC` is the default. `DESC` is supported only for `BTREE` and `PBTREE` indexes. <br />`index` *alone* disables all automatic indexes                                                                                                                                                                                                     |
+| **index**                   | `index(type, col [ASC\|DESC], ...)` <br/> Multiple `index(...)` can be comma-separated | table          | override [automatic index selection](#automatic-index-selection). `type` ∈ `HASH`, `BTREE`, `PBTREE`, `TEXT`, `VECTOR_COSINE`, `VECTOR_EUCLID`. `ASC` is the default. `DESC` is supported only for `BTREE` and `PBTREE` indexes. <br />`index` *alone* disables all automatic indexes                                                                                                                                                                                                     |
 | **partition_key**           | `partition_key(col, ...)`                                                              | table          | define partition columns for sinks that support partitioning                                                                                                                                                                                                                                                                                                                                                                                                |
 | **vector_dim**              | `vector_dim(col, 1536)`                                                                | table          | declare fixed vector length. This is required when using vector indexes.                                                                                                                                                                                                                                                                                                                                                                                    |
 | **query_by_all**            | `query_by_all(col, ...)`                                                               | table          | generate interface with *required* filter arguments for all listed columns                                                                                                                                                                                                                                                                                                                                                                                  |
@@ -869,6 +883,27 @@ Specify the sort order for each column in a `BTREE` or `PBTREE` index with `ASC`
 /*+index(BTREE, event_time DESC, sensorid ASC) */
 RecentSensorReadings := SELECT ... ;
 ```
+
+### Automatic index selection
+
+Without an `index` hint, the compiler selects the PostgreSQL indexes for a table from the filters of the API queries that read it: the `WHERE` clauses of table functions and relationships, `query_by_*` arguments, the `JOIN ... ON` conditions for the table on the right side of the join, and the filters inside subqueries. An index on a column serves a filter only when the column stands alone on one side of `=`, `<`, `<=`, `>` or `>=`, like `customer_id = :customerId`. A comparison with an uncorrelated scalar subquery, like `customer_id = (SELECT MAX(customer_id) FROM ...)`, counts as a comparison with a parameter.
+
+In a correlated subquery, the columns of the outer query that the subquery compares with act like parameters. Which tables get an index depends on how PostgreSQL runs the subquery:
+
+- `EXISTS (...)` and `IN (SELECT ...)`, combined with the other conditions of the `WHERE` clause by `AND`: PostgreSQL joins the two tables. When the subquery compares its columns with the outer columns only by `=`, as an `IN` always does, PostgreSQL can start from either table, so both get an index. With any other comparison, like `o.ts > c.ts`, PostgreSQL starts from the outer table, and only the subquery's table gets an index.
+- `NOT EXISTS (...)`, `NOT IN (SELECT ...)`, a subquery that is part of an `OR`, and a correlated scalar subquery like `(SELECT COUNT(*) ...)`: PostgreSQL runs the subquery once, or for each row of the outer table. Only the subquery's table gets an index, and PostgreSQL reads every row of the outer table that its other conditions leave.
+
+When a filter wraps its column in an expression, PostgreSQL cannot use an index on the column. The compiler then creates no index for that filter and warns at the definition of the table function:
+
+```text
+The filter `agency_id + 1 = :agency` in `OrdersByAgency` cannot use an index on table `Orders_2`
+because column `agency_id` is wrapped in the expression `agency_id + 1`. Move the arithmetic to
+the other side of the comparison so that `agency_id` stands alone.
+```
+
+Rewrite the filter as the warning says: move arithmetic to the other side, like `agency_id = :agency - 1`, compare a column with a value of its own type instead of casting the column, and compute any other expression, like `LOWER(email)`, as a column of a table that Flink computes (`/*+engine(flink) */`). An expression from a table that PostgreSQL computes ends up in the filter of every query that reads the table, so the warning can show a `CAST` or a function that the query itself does not contain.
+
+An `index` hint replaces the automatic selection for its table, including these warnings.
 
 ### Testing
 
@@ -944,7 +979,9 @@ The following produce compile time errors:
 * Argument list problems (missing type, unused arg, unknown type).
 * `DISTINCT` must reference existing columns; `ORDER BY` column(s) must be monotonically increasing.
 * Basetable inference failure for relationships (see [base tables](https://docs.datasqrl.com/docs/interface.md#base-tables)).
-* Invalid or malformed hints (unknown name, wrong delimiter).
+* Malformed or invalid hints (wrong delimiter, other text in the hint block that is not a hint, invalid arguments to a known hint such as `ttl`, or more than one `query_by_*` or `no_query` hint on a table).
+
+An unknown hint name is not an error: the compiler prints the warning `Unrecognized hint: [<name>]` and ignores the hint, so a misspelled hint has no effect.
 
 ---
 
@@ -1146,6 +1183,8 @@ You can customize the GraphQL schema by:
 * Changing the type of fields to compatible types (e.g. `Person` to `SpecificPerson`)
 * Adding enums
 * Adding interfaces and structuring types with interfaces
+
+A custom schema can leave out queries, relationships, and subscriptions, but the compiler still computes them and writes the tables they read to the database or log. If no API version's schema uses an endpoint, the compiler prints a warning that lists it. Endpoints on Iceberg are not listed: an Iceberg table is a data product that other engines read from the catalog, so the API is not its only reader. Postgres tables exist to serve the API, so a Postgres endpoint is listed even when something reads its view directly. The [`test` command](https://docs.datasqrl.com/docs/compiler.md#test-command) uses the inferred schema unless `test-runner.use-inferred-schema` is `false`, so by default it does not warn. To stop computing an endpoint that nothing in the schema reads, remove it or start its name with `_`. If the table has to stay, because it is a mutation table or a relationship or table function in the schema returns its rows, hint it `/*+no_query*/` instead: the table stays, without a query endpoint of its own.
 
 Mutation input fields must match the column types of the table. A `String` column also accepts enum, `ID`, and `JSON` inputs, where JSON objects and arrays are stored as JSON text. Nullable columns can be omitted from the mutation input. If the mutation result type still includes them, those fields must be nullable and return `null`.
 
@@ -1560,7 +1599,20 @@ By default, the current project treats it as shared definitions: it owns the inc
 
 When the included project is deployed on its own, set `"standalone": true` on its include entry.
 That project then owns its internal Kafka tables, also when the current project imports them or exports into them.
-`kafka.json` lists their topics under `includedTopics` instead of `topics`, with only their names and `"include": "<namespace>"`, so the deployment leaves creating and configuring them, including their partition count, to the included project.
+
+The deployment of the included project also writes what its own statements write, so the current project does not write it again.
+Which statements those are follows from the `script.main` of the included project's package file, i.e. the `package` of the include entry: its deployment plans the main script and the scripts that the main script imports, transitively.
+
+- **Subscriptions:** the deployment writes the topics of the subscriptions that it exposes, i.e. of the `SUBSCRIBE` tables, and of the tables that `SUBSCRIBE` functions read, in the main script and in the scripts that it imports inline (`IMPORT script.*`), transitively.
+  The current project reads these topics for the subscriptions that it plans from these scripts, and for its own subscriptions on these tables, instead of computing the tables and writing them again.
+  It writes the topics of the other subscriptions itself, e.g. of a script that the main script imports with a namespace (`IMPORT script`), since the deployment does not expose those.
+- **Writes into shared sinks:** the deployment runs the `EXPORT` and `INSERT` statements of every script that it plans. The current project skips those that write into a sink that both deployments write: the log (`log.<name>`, and `logger.<name>` when the logger is `kafka`), the included project's internal Kafka tables, and external tables, i.e. tables with a connector.
+  It reports a notice for each statement that it skips.
+
+`kafka.json` lists the topics that the current project uses but does not write under `includedTopics` instead of `topics`, with only their names and `"include": "<namespace>"`, so the deployment leaves creating and configuring them, including their partition count, to the included project.
+
+Without a `script.main` in the included project's package file, the current project cannot tell which statements the included project's deployment runs: it warns and runs them itself.
+The topic of a subscription of the current project on a table of the included project, such as a `SUBSCRIBE` function on one of its internal tables, is named after that table. If the included project subscribes to the same table only in a script that the current project does not plan, both deployments write that topic.
 
 Package files are merged, so the package file of a deployment can mark an include standalone that the base package file declares.
 Every include entry requires `package`, so the deployment's entry repeats it.
@@ -1593,8 +1645,11 @@ Compiled with only `package.json`, e.g. for local tests, `reporting` owns the to
 
 > **Important**
 >
-> The current project still reads and writes the topics of a standalone include through its own `kafka-mutation` [connector template](#connector-templates-connectors), so it must resolve the same topic names and use the same key and value formats as the included project's deployment.
-> `standalone` does not cover internal Iceberg tables yet: the current project still owns those.
+> The current project still reads and writes the topics of a standalone include through its own `kafka-mutation` and `kafka` [connector templates](#connector-templates-connectors), so it must resolve the same topic names and use the same key and value formats as the included project's deployment.
+> A `topic` of the `kafka` template that uses `${sqrl:table-id}` differs between the projects, so the compilation fails when the current project reads a subscription topic of a standalone include.
+> The included project's deployment must expose its subscriptions, i.e. run Kafka and the server, for the current project to read their topics.
+> `standalone` does not cover internal Iceberg tables yet: the current project still owns those, and runs the included project's statements that write into them.
+> A project whose Flink job would write no table, because standalone includes write all the tables that it subscribes to, fails to compile: subscribe through the API of the included project's deployment instead.
 
 ## Test-Runner (`test-runner`)
 
@@ -1780,7 +1835,8 @@ Apache Kafka is a streaming data platform that serves as the log engine in DataS
 
 - Kafka topics are automatically created based on your SQRL table definitions
 - Topic configurations are generated during the compilation process
-- `kafka.json` lists the topics of internal Kafka tables that a [standalone included project](https://docs.datasqrl.com/docs/configuration.md#include-other-sources) defines under `includedTopics`, with only their names, because that project owns them and decides their settings
+- `kafka.json` lists the topics that a [standalone included project](https://docs.datasqrl.com/docs/configuration.md#standalone-includes) writes and the current project uses under `includedTopics`, with only their names, because that project owns them and decides their settings: the topics of its internal Kafka tables and of the subscriptions that its deployment exposes. Flink does not write those subscription topics, and the include's `EXPORT` and `INSERT` statements into the log, its internal Kafka tables and external tables don't run, because the included project's deployment runs them
+- Only the mutation table writes its Kafka topic. Another writer mixes its rows into the mutation, and a writer that reads the mutation reads its own output in an endless loop. When the `kafka` connector template gives a Kafka table that the compiler creates for Flink the topic of a mutation table, the compiler puts `<table-name>-subscription` in place of `${sqrl:table-name}` in the template's `topic` instead, so `acme-${sqrl:table-name}` gives `acme-Events-subscription`. If the template gives a mutation topic again, for example with a fixed `topic` without `${sqrl:table-name}`, the compile fails with an error. For example, a script defines the mutation table `Events` with `CREATE TABLE` and the `engine(kafka)` hint, and a `SUBSCRIBE` function reads `Events` directly. Flink then copies `Events` into a Kafka table for the subscription. With the default templates, the mutation topic is `Events` and the copy gets the topic `Events-subscription`. An `EXPORT` statement to `log.<name>` or `logger.<name>` that gets the topic of a mutation table fails with an error, for example `EXPORT Orders TO log.Events` when `Events` is a mutation table. Use a different name in the `EXPORT` statement. All other topics keep the name from the template. The compiler does not check an `EXPORT` statement that writes directly into a mutation table, such as `EXPORT _Echo TO Events`. When the exported query reads that mutation table, the export loops
 - Retention settings control how long data is stored in Kafka topics
 - Ensure `replication-factor` does not exceed the number of brokers in the target Kafka cluster
 - Watermarks are used for handling late-arriving events in stream processing
@@ -1831,7 +1887,7 @@ Eclipse Vert.x is a reactive server framework that serves as the GraphQL API ser
 
 | Key        | Type      | Default | Notes                                                    |
 |------------|-----------|---------|----------------------------------------------------------|
-| `authKind` | **array** | `[]`    | List of auth methods: `"JWT"`, `"OAUTH"`, or both        |
+| `authKind` | **array** | `[]`    | Not read by the server; `auth` needs no `authKind`       |
 | `config`   | **object**| see below| Vert.x-specific configuration including auth settings   |
 
 ## Basic Configuration
@@ -1839,9 +1895,7 @@ Eclipse Vert.x is a reactive server framework that serves as the GraphQL API ser
 ```json
 {
   "engines": {
-    "vertx": {
-      "authKind": []
-    }
+    "vertx": {}
   }
 }
 ```
@@ -1855,6 +1909,8 @@ The compiler generates the full server configuration from a built-in template an
 | `httpServerOptions.port` | HTTP port (default `8888`). Keep `8888` for the `test` command, whose test runner connects to that port |
 | `corsHandlerOptions` | CORS policy. Defaults allow all origins; restrict `allowedOrigin`/`allowedOrigins` in production |
 | `poolOptions.maxSize` | PostgreSQL connection pool size |
+| `poolOptions.maxLifetime` | Seconds before a pooled PostgreSQL connection is closed and replaced (default `600`), so connections rebalance across replicas; `0` keeps them forever |
+| `pgConnectOptions.cachePreparedStatements` | Cache prepared statements per connection so each query is planned once (default `true`) |
 | `servletConfig` | Endpoint paths (`graphQLEndpoint`, `restEndpoint`, `mcpEndpoint`, `graphiQLEndpoint`), prefixed with the API version, e.g. `/v1/graphql` |
 | `publicGraphQLEndpointEnabled` | Set to `false` to disable the public GraphQL endpoint; REST and MCP endpoints keep working |
 | `onlyConfiguredGraphQLOperations` | Set to `true` to only accept the predefined API operations instead of arbitrary GraphQL queries |
@@ -1879,7 +1935,297 @@ The compiler generates the full server configuration from a built-in template an
 
 For all settings and their defaults, see the [server configuration template](https://github.com/DataSQRL/sqrl/blob/main/sqrl-cli/src/main/resources/templates/server-config.json) or the generated `vertx-config.json` in your build output (`build/deploy/plan`), which contains the effective configuration with your overrides applied.
 
-## JWT Authentication Configuration
+## Query Logging
+
+The server has two independent query logs.
+
+### Slow-Query Logging
+
+`graphQLTailSampleTracingConfig` logs one structured `WARN` event (`sqrl.graphql.query.tail_trace`) for each API request that takes longer than its threshold or that fails. The decision is made after the request ends, so the event includes the timing of every query field the request ran. It is off by default.
+
+| Key | Default | Notes |
+|-----|---------|-------|
+| `enabled` | `false` | Turns the logging on |
+| `defaultThresholdMs` | `60000` | The threshold for fields without an entry in `thresholds` |
+| `thresholds` | `{}` | A threshold per field, keyed `Type.field`, e.g. `{"Query.OrdersByCustomer": 5000}`. A request uses the lowest threshold among the fields it runs |
+| `alwaysLogErrors` | `true` | Also logs failed requests |
+| `maxLoggedTracesPerMinute` | `60` | Limits the log volume during an incident |
+| `maxFieldTraces` | `50` | Maximum number of field timings in one event |
+
+### Large-Result Logging
+
+`jdbcStatementLogConfig` holds the logs about individual database queries, each with its own `enabled` flag. Its `largeResults` entry logs a `WARN` for each database query that returns at least `rowCountThreshold` rows, as soon as the rows arrive and before the server converts them to JSON. Converting a very large result blocks the server, so the warning is written even if the server is killed afterwards. It names the GraphQL field path, the row count, the elapsed time and the SQL (cut after 2000 characters), never the parameter values. The elapsed time includes any wait for a pool connection. It is off by default.
+
+| Key | Default | Notes |
+|-----|---------|-------|
+| `enabled` | `false` | Turns the warning on |
+| `rowCountThreshold` | `10000` | Warns when a query returns at least this many rows. `0` or less turns the warning off |
+
+Independently of both, the server always logs an `ERROR` when a query fails, with its GraphQL field path and SQL, and when it cannot convert the rows of a query to JSON, with the field path.
+
+```json
+{
+  "engines": {
+    "vertx": {
+      "config": {
+        "graphQLTailSampleTracingConfig": {
+          "enabled": true,
+          "defaultThresholdMs": 2000
+        },
+        "jdbcStatementLogConfig": {
+          "largeResults": {
+            "enabled": true,
+            "rowCountThreshold": 5000
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## Authentication Configuration
+
+Configure authentication with the `auth` block. It lists the token issuers the server trusts. Each issuer has its own
+signing keys and audiences, and a token is accepted only when its `iss`, its `aud` and its signature all match **the
+same** issuer. A token signed by one issuer can never be accepted under another issuer's name or for another issuer's
+audiences.
+
+```json
+{
+  "engines": {
+    "vertx": {
+      "config": {
+        "auth": {
+          "issuers": [
+            {
+              "issuer": "https://login.example.com/",
+              "audiences": ["https://app.example.com"]
+            },
+            {
+              "issuer": "https://tenant.auth0.com/",
+              "audiences": ["https://api.example.com/"]
+            }
+          ],
+          "resource": "https://api.example.com/v1/mcp",
+          "scopesSupported": ["mcp:tools", "mcp:resources"]
+        }
+      }
+    }
+  }
+}
+```
+
+The server creates one JWT validator per issuer and accepts a request when any of them accepts its bearer token. For
+MCP clients it publishes the issuers without inline `keys` whose `issuer` is a URL as `authorization_servers` at
+`/.well-known/oauth-protected-resource` (see [OAuth Discovery Endpoint](#oauth-discovery-endpoint)).
+
+### `auth` Reference
+
+| Key               | Type        | Required | Default                        | Description                                                                                         |
+|-------------------|-------------|----------|--------------------------------|-----------------------------------------------------------------------------------------------------|
+| `issuers`         | **array**   | Yes      |                                | The trusted issuers, see below. Must not be empty                                                   |
+| `leeway`          | **integer** | No       | `60`                           | Allowed clock skew in seconds for `exp`, `nbf` and `iat`, for every issuer that does not set its own |
+| `algorithms`      | **array**   | No       | no restriction                 | Accepted signature algorithms, for every issuer that does not set its own                           |
+| `resource`        | **string**  | No       | derived from the request       | Public URL of the MCP endpoint (RFC 9728), e.g. `https://api.example.com/v1/mcp`                    |
+| `scopesSupported` | **array**   | No       | `["mcp:tools", "mcp:resources"]` | Scopes advertised in the protected resource metadata                                              |
+
+Each entry of `issuers`:
+
+| Key          | Type        | Required | Description                                                                                                  |
+|--------------|-------------|----------|--------------------------------------------------------------------------------------------------------------|
+| `issuer`     | **string**  | Yes      | Must equal the token's `iss` claim exactly, including any trailing slash. Must be unique across `issuers`    |
+| `audiences`  | **array**   | Yes      | The token's `aud` claim must contain at least one of them. Must not be empty                                 |
+| `keys`       | **array**   | No       | Inline signing keys as JWK objects (RFC 7517)                                                                |
+| `jwksUri`    | **string**  | No       | URL of a JWK Set to fetch the signing keys from                                                              |
+| `leeway`     | **integer** | No       | Overrides `auth.leeway` for this issuer                                                                      |
+| `algorithms` | **array**   | No       | Overrides `auth.algorithms` for this issuer                                                                  |
+
+The effective leeway of an issuer is its own `leeway`, else `auth.leeway`, else 60 seconds. Negative values are rejected.
+
+Set at most one of `keys` and `jwksUri`. With neither, `issuer` must be an absolute http(s) URL, and the server uses
+OpenID Connect discovery: it fetches `<issuer>/.well-known/openid-configuration` (a trailing slash on the issuer is not
+doubled), checks that the document names the same `issuer`, and fetches the keys from its `jwks_uri`. Keys are fetched
+once at startup, and the server does not start if they cannot be fetched.
+
+Prefer discovery or `jwksUri`: inline `keys` cannot rotate, so every key change needs a configuration change and a
+redeploy. Keys fetched at startup are not refreshed while the server runs, so restart the server after the identity
+provider rotates its signing keys.
+
+Each key verifies tokens signed with its own `alg`, or, when it has none, with the default for its type: `RS256` for
+`RSA`, `ES256` for `EC`, `EdDSA` for `OKP` and `HS256` for `oct`. A token signed with any other algorithm finds no key
+and is rejected, so for example an `HS256` token cannot be accepted by an issuer that has only RSA keys. Keys marked
+`"use": "enc"` are ignored.
+
+Set `algorithms` to restrict this, or to use keys without `alg` for other algorithms: a key whose `alg` is not listed
+is ignored, and a key without `alg` is used with each listed algorithm that fits its type (`RSA` for `RS*`/`PS*`, `EC`
+for `ES*`, `oct` for `HS*`, `OKP` for `EdDSA`). For example, `"algorithms": ["PS256"]` lets an RSA key without `alg`
+verify `PS256` tokens. Supported algorithms are `HS256`, `HS384`, `HS512`, `RS256`, `RS384`, `RS512`, `PS256`,
+`PS384`, `PS512`, `ES256`, `ES384`, `ES512` and `EdDSA`.
+
+`sqrl compile` fails if none of an issuer's inline `keys` can verify signatures, because that issuer would accept
+unsigned tokens. Keys from a `jwksUri` or discovery are only known at startup, so the server runs the same check then
+and does not start.
+
+The server rejects these configurations at compile time and at startup: a missing or empty `issuers`, an issuer
+without `issuer` or `audiences`, an empty `audiences` or `keys`, both `keys` and `jwksUri`, a `jwksUri` or a discovery
+`issuer` that is not an absolute http(s) URL, a duplicate issuer, an unsupported algorithm, a negative leeway, and any
+unknown key in `auth` or in an issuer entry. A value with an unresolved `${...}` environment variable skips the URL
+check at compile time. At startup a resolved value is checked, and a variable that is still unset fails when its keys
+are fetched.
+
+For symmetric keys, for example in tests, use an inline `oct` JWK whose `k` is the base64url-encoded secret. A `k` in
+a fetched JWK Set is ignored, because a JWK Set is public:
+
+```json
+"auth": {
+  "issuers": [
+    {
+      "issuer": "my-test-issuer",
+      "audiences": ["my-test-audience"],
+      "keys": [{ "kty": "oct", "k": "<base64url-encoded signer secret>" }]
+    }
+  ]
+}
+```
+
+### Auth0 with a Custom Domain
+
+An Auth0 tenant with a custom domain issues tokens under two issuers: user logins through the custom domain, and
+machine-to-machine (client credentials) tokens through the tenant domain. Trust each one with the audiences it serves,
+and let both discover their keys:
+
+```json
+"auth": {
+  "issuers": [
+    {
+      "issuer": "https://login.example.com/",
+      "audiences": ["https://app.example.com", "https://admin.example.com"]
+    },
+    {
+      "issuer": "https://<your-tenant>.us.auth0.com/",
+      "audiences": ["https://api.example.com/"]
+    }
+  ]
+}
+```
+
+Auth0 issuers end with a trailing slash; keep it, because `issuer` must match the `iss` claim exactly.
+
+### OAuth Discovery Endpoint
+
+When `auth` has an issuer to advertise (or the deprecated `oauthConfig` is configured), the server exposes a discovery endpoint at `/.well-known/oauth-protected-resource` per RFC 9728.
+This enables MCP clients to discover the authorization server and scopes. With `auth`, the advertised `authorization_servers` are the issuers that use discovery, and the issuers with a `jwksUri` whose `issuer` is a URL. Issuers with inline `keys` sign their own tokens, are not OAuth authorization servers, and are not advertised.
+When an MCP request has no valid token, the server responds with `401` and a `WWW-Authenticate: Bearer resource_metadata="..."` header that points MCP clients to this endpoint.
+When `auth` has no issuer to advertise, the endpoint is not served and the `401` carries no `WWW-Authenticate` header.
+
+If `resource` is not set, the server derives both the `resource` value in the discovery metadata and the `resource_metadata` URL from each request: the scheme from the `X-Forwarded-Proto` header (or the request scheme), and the host from the `Host` header.
+If `resource` is set, the discovery metadata returns it unchanged, and the `resource_metadata` URL uses its origin.
+For example, `"resource": "https://api.example.com/v1/mcp"` makes the `401` header point to `https://api.example.com/.well-known/oauth-protected-resource`.
+
+Set `resource` when the server runs behind a reverse proxy or load balancer that terminates TLS, so MCP clients always receive `https` URLs.
+Use the exact URL MCP clients connect to: RFC 9728 requires clients to reject discovery metadata whose `resource` does not match that URL.
+The proxy must also route `/.well-known/oauth-protected-resource` on the same origin to the server.
+
+### Environment Variable Support
+
+You can use environment variables in string values of `auth` (and of the deprecated `oauthConfig`). They are
+resolved when the server starts:
+
+```json
+{
+  "auth": {
+    "issuers": [
+      {
+        "issuer": "${AUTH0_ISSUER}",
+        "audiences": ["${AUTH0_AUDIENCE}"]
+      }
+    ]
+  }
+}
+```
+
+### Layered Package Files
+
+Package files merge objects key by key, but an array in a later file replaces the earlier array whole. A later layer
+can therefore change `auth.leeway` or `auth.algorithms` alone and keep the earlier `issuers`, but it cannot change one
+field of one issuer: a layer that sets `auth.issuers` must list every issuer of that environment.
+
+`auth` cannot be combined with the deprecated `jwtAuth` or `oauthConfig`, including when they come from different
+layers. If a shared layer still sets one of them, set it to `null` in the layer that introduces `auth`:
+
+```json
+"config": {
+  "oauthConfig": null,
+  "auth": { "issuers": [ ... ] }
+}
+```
+
+### Migrating from `jwtAuth` and `oauthConfig`
+
+`jwtAuth` and `oauthConfig` still work but are deprecated, and the server logs a warning when either is set.
+`oauthConfig` checks neither the `iss` nor the `aud` claim, and with both blocks set a token that either one accepts is
+accepted. Move to `auth`, where every trusted issuer is listed with its audiences.
+
+`jwtAuth` with a shared secret:
+
+```json
+"jwtAuth": {
+  "pubSecKeys": [{ "algorithm": "HS256", "buffer": "<base64 secret>" }],
+  "jwtOptions": { "issuer": "my-issuer", "audience": ["my-api"], "leeway": 30 }
+}
+```
+
+becomes (note that `k` is base64url, not base64):
+
+```json
+"auth": {
+  "leeway": 30,
+  "issuers": [
+    {
+      "issuer": "my-issuer",
+      "audiences": ["my-api"],
+      "keys": [{ "kty": "oct", "k": "<base64url secret>" }]
+    }
+  ]
+}
+```
+
+`oauthConfig` with OIDC discovery:
+
+```json
+"oauthConfig": {
+  "oauth2Options": { "site": "https://<your-tenant>.auth0.com/" },
+  "authorizationServerUrl": "https://<your-tenant>.auth0.com/",
+  "resource": "https://api.example.com/v1/mcp"
+}
+```
+
+becomes the following, where `audiences` is the API identifier your tokens are issued for:
+
+```json
+"auth": {
+  "issuers": [
+    { "issuer": "https://<your-tenant>.auth0.com/", "audiences": ["https://api.example.com/"] }
+  ],
+  "resource": "https://api.example.com/v1/mcp"
+}
+```
+
+`authorizationServerUrl` has no equivalent: the authorization servers advertised to MCP clients are the issuers without
+inline `keys` whose `issuer` is a URL. If the server cannot reach the issuer URL itself (for example inside a Docker network), set `jwksUri` to a
+URL it can reach. A configuration with both `jwtAuth` and `oauthConfig` becomes one `auth` block with one entry per
+issuer.
+
+## JWT Authentication Configuration (deprecated)
+
+> **Warning: Deprecated**
+>
+> `jwtAuth` is deprecated. Use [`auth`](#authentication-configuration) instead, see [Migrating from `jwtAuth` and `oauthConfig`](#migrating-from-jwtauth-and-oauthconfig).
+
+`sqrl compile` fails if `jwtAuth` has no key that can verify signatures, for example with no `pubSecKeys`, `jwks` or
+`keyStore`, because such a configuration would accept unsigned tokens. The keys that `oauthConfig` discovers are only
+known at startup, so the server does not start if none of them can verify signatures.
 
 For secure APIs with JWT authentication:
 
@@ -1887,7 +2233,6 @@ For secure APIs with JWT authentication:
 {
   "engines": {
     "vertx": {
-      "authKind": ["JWT"],
       "config": {
         "jwtAuth": {
           "pubSecKeys": [
@@ -1923,7 +2268,11 @@ For example, for `ES256`, this would look something like this:
 }
 ```
 
-## OAuth 2.0 Authentication Configuration
+## OAuth 2.0 Authentication Configuration (deprecated)
+
+> **Warning: Deprecated**
+>
+> `oauthConfig` is deprecated: it checks neither the `iss` nor the `aud` claim of a token. Use [`auth`](#authentication-configuration) instead, see [Migrating from `jwtAuth` and `oauthConfig`](#migrating-from-jwtauth-and-oauthconfig).
 
 For OAuth 2.0 authentication with providers like Auth0 or Keycloak, use the `oauthConfig` section.
 This enables MCP (Model Context Protocol) clients like Claude Code to authenticate using OAuth.
@@ -1932,7 +2281,6 @@ This enables MCP (Model Context Protocol) clients like Claude Code to authentica
 {
   "engines": {
     "vertx": {
-      "authKind": ["OAUTH"],
       "config": {
         "oauthConfig": {
           "oauth2Options": {
@@ -1950,13 +2298,13 @@ This enables MCP (Model Context Protocol) clients like Claude Code to authentica
 
 ### Combined JWT and OAuth Authentication
 
-You can enable both authentication methods simultaneously:
+You can enable both deprecated authentication methods simultaneously. A token that either one accepts is accepted, so
+prefer one `auth` block that lists every issuer with its audiences:
 
 ```json
 {
   "engines": {
     "vertx": {
-      "authKind": ["JWT", "OAUTH"],
       "config": {
         "jwtAuth": { ... },
         "oauthConfig": { ... }
@@ -1985,35 +2333,6 @@ The `oauth2Options` object uses Vert.x's OAuth2Options class:
 |------------|------------|----------|-------------------------------------------------------|
 | `site`     | **string** | Yes      | OAuth issuer URL (e.g., `https://tenant.auth0.com`)   |
 | `clientId` | **string** | No       | OAuth client ID (defaults to `datasqrl-mcp`)          |
-
-### OAuth Discovery Endpoint
-
-When OAuth is configured, the server exposes a discovery endpoint at `/.well-known/oauth-protected-resource` per RFC 9728.
-This enables MCP clients to discover the authorization server and scopes.
-When an MCP request has no valid token, the server responds with `401` and a `WWW-Authenticate: Bearer resource_metadata="..."` header that points MCP clients to this endpoint.
-
-If `resource` is not set, the server derives both the `resource` value in the discovery metadata and the `resource_metadata` URL from each request: the scheme from the `X-Forwarded-Proto` header (or the request scheme), and the host from the `Host` header.
-If `resource` is set, the discovery metadata returns it unchanged, and the `resource_metadata` URL uses its origin.
-For example, `"resource": "https://api.example.com/v1/mcp"` makes the `401` header point to `https://api.example.com/.well-known/oauth-protected-resource`.
-
-Set `resource` when the server runs behind a reverse proxy or load balancer that terminates TLS, so MCP clients always receive `https` URLs.
-Use the exact URL MCP clients connect to: RFC 9728 requires clients to reject discovery metadata whose `resource` does not match that URL.
-The proxy must also route `/.well-known/oauth-protected-resource` on the same origin to the server.
-
-### Environment Variable Support
-
-You can use environment variables in the OAuth configuration:
-
-```json
-{
-  "oauthConfig": {
-    "oauth2Options": {
-      "site": "${AUTH0_ISSUER}"
-    },
-    "authorizationServerUrl": "${AUTH0_EXTERNAL_URL}"
-  }
-}
-```
 
 ### OAuth 2.0 with Auth0
 
@@ -2046,6 +2365,10 @@ If MCP clients authenticate on behalf of users, create a **Regular Web Applicati
 
 #### DataSQRL Configuration
 
+> **Tip**
+>
+> Prefer the [`auth`](#authentication-configuration) block, which also checks the issuer and audience of every token; see [Auth0 with a Custom Domain](#auth0-with-a-custom-domain). The rest of this section describes the deprecated `oauthConfig`.
+
 Set `site` and `authorizationServerUrl` to your Auth0 tenant URL.
 
 > **Warning**
@@ -2056,7 +2379,6 @@ Set `site` and `authorizationServerUrl` to your Auth0 tenant URL.
 {
   "engines": {
     "vertx": {
-      "authKind": ["OAUTH"],
       "config": {
         "oauthConfig": {
           "oauth2Options": {
@@ -2077,7 +2399,6 @@ Using environment variables (recommended so credentials stay out of source contr
 {
   "engines": {
     "vertx": {
-      "authKind": ["OAUTH"],
       "config": {
         "oauthConfig": {
           "oauth2Options": {
@@ -2122,7 +2443,7 @@ The `audience` field is **required** for Auth0 client credentials requests. With
 - **Trailing slash on issuer** — Auth0's issuer is always `https://<tenant>.auth0.com/` (with the slash). Use that exact value for `authorizationServerUrl`.
 - **Issuer and audience claims** — With `oauthConfig`, the server only verifies the token signature against the tenant's signing keys; it does not check the `iss` or `aud` claims. Any valid token issued by the tenant is accepted, including tokens issued for other APIs of the same tenant.
 - **JWKS endpoint** — Auth0 publishes signing keys at `https://<tenant>.auth0.com/.well-known/jwks.json`. The server discovers them from the OIDC discovery document (`/.well-known/openid-configuration`) and fetches them once at startup. Restart the server after Auth0 rotates its signing keys.
-- **Custom domains** — If your Auth0 tenant uses a custom domain (e.g. `https://auth.example.com/`), use that URL as both `site` and `authorizationServerUrl`.
+- **Custom domains** — If your Auth0 tenant uses a custom domain (e.g. `https://auth.example.com/`), use that URL as both `site` and `authorizationServerUrl`. Tokens issued through the custom domain and through the tenant domain carry different `iss` values; to accept both, use `auth` with one issuer entry each.
 
 ## Cloud Deployment
 
@@ -3141,7 +3462,7 @@ public class TitleCase extends ScalarFunction {
 }
 ```
 
-DataSQRL compiles all eligible JBang scripts in the project into a deployable JAR and discovers their functions automatically. No `@AutoService` annotation or manual JAR build is required. It caches the result as `jbang-udfs.jar` in the UDF script directory and rebuilds it when a script changes. Delete `jbang-udfs.jar` to force a rebuild.
+DataSQRL compiles all eligible JBang scripts in the project into a deployable JAR and discovers their functions automatically. No `@AutoService` annotation or manual JAR build is required. It caches the result as `jbang-udfs.jar` in the deepest directory that contains all JBang scripts of the project and rebuilds it when a script changes. Delete `jbang-udfs.jar` to force a rebuild. An [included project](https://docs.datasqrl.com/docs/configuration.md#include-other-sources) with JBang scripts gets its own JAR, deployed as `jbang-udfs-<namespace>.jar`. Since each JAR bundles its own dependencies, the compiler warns when the project and its included projects outside of the project folder deploy more than one JBang JAR, as different versions of the same dependency can cause failures at runtime. The compilation fails if two projects define different JBang UDFs with the same class name, because only one of them can be loaded at runtime, so give them distinct names or packages.
 
 ### Java Projects
 
@@ -3423,13 +3744,17 @@ docker run --rm -v $PWD/<project-folder>:/workspace datasqrl/cmd add-func -h
 ```
 
 ```
-Usage: sqrl add-func [-hV] [--aggregate] <fnName>
+Usage: sqrl add-func [-hV] [--aggregate] [-r=<projectRoot>] <fnName>
 Adds a new function definition into the 'functions' folder of an existing
 project.
       <fnName>      Name of the function.
       --aggregate   Adds an aggregate function instead of the default scalar
                       one.
   -h, --help        Show this help message and exit.
+  -r, --project-root=<projectRoot>
+                    Project root folder. Must be a relative path. If omitted,
+                      it is inferred from the package path(s), or is
+                      "/workspace" for a command that takes none.
   -V, --version     Print version information and exit.
 ```
 
@@ -3446,6 +3771,12 @@ docker run --rm -v $PWD:/workspace datasqrl/cmd compile my-project-test-package.
 
 This creates a new scalar function template in the `functions/` directory, which the `compile` command builds with JBang.
 Use `--aggregate` to create an aggregate function instead.
+
+To add a function without changing into the project folder, pass the project root with `-r`. It is relative to the mounted directory and must exist:
+
+```bash
+docker run --rm -v $PWD:/workspace datasqrl/cmd add-func -r my-project MyAwesomeFunction
+```
 
 The template is a [JBang UDF](https://docs.datasqrl.com/docs/functions.md#jbang-scripts) that already declares `//DEPS org.apache.flink:flink-table-common:<version>` with the Flink version of the CLI.
 Keep this line and declare additional dependencies with further `//DEPS` lines.
@@ -3482,7 +3813,7 @@ Compiles an SQRL project and produces all build artifacts.
   -r, --project-root=<projectRoot>
                             Project root folder. Must be a relative path. If
                               omitted, it is inferred from the package path(s),
-                              falling back to "/workspace".
+                              or is "/workspace" for a command that takes none.
   -t, --target=<targetFolder>
                             Folder for deployment artifacts and plans. The
                               value must be a relative path that remains within
@@ -3519,6 +3850,18 @@ Upon successful compilation, the compiler writes:
 
 See [Compilation Output](https://docs.datasqrl.com/docs/compilation-output.md) to learn more about the files the compiler produces and how to use them to validate a pipeline or learn how to [deploy those files](https://docs.datasqrl.com/docs/deployment.md).
 
+### Errors
+
+The compiler reports all errors of a script in one run, each with its position, so you can fix them together. Compilation fails if there is any error.
+
+To avoid knock-on errors, the compiler does not report the errors that only follow from a failed statement:
+- If a table, column or function is not found because its definition failed, that error is not reported. The compiler stops at the first error of a statement, so the other errors of the statement can only show up once that definition is fixed.
+- A column that failed is also missing from the tables that select all columns of its table, so the compiler recognizes it by its name: no column of that name is reported as not found, in any table, until its definition is fixed.
+- If the package of an `IMPORT package.*` cannot be loaded, no table or function is reported as not found, since the compiler cannot tell which ones the package has. If only some of its tables fail, the others are still imported.
+- If you import tables from a script that fails to parse, only the parse errors of the script are reported, not each import of its tables.
+- A statement that adds a column to, exports or inserts into a table whose definition failed is skipped, and so is a passthrough definition (with `RETURNS`) whose query reads from it.
+- After a `USE` statement fails, the rest of the script is skipped, since it would run in another catalog or database. In an imported script, that is the rest of the imported script, and if the script is imported inline (`IMPORT package.script.*`), also the rest of the importing script.
+
 ## Run Command
 
 The `run` command compiles and runs the generated data pipeline in Docker.
@@ -3548,7 +3891,7 @@ Compiles, then runs a SQRL project in a lightweight, standalone environment.
   -r, --project-root=<projectRoot>
                             Project root folder. Must be a relative path. If
                               omitted, it is inferred from the package path(s),
-                              falling back to "/workspace".
+                              or is "/workspace" for a command that takes none.
   -t, --target=<targetFolder>
                             Folder for deployment artifacts and plans. The
                               value must be a relative path that remains within
@@ -3659,7 +4002,7 @@ Compiles, then tests a SQRL project.
   -r, --project-root=<projectRoot>
                             Project root folder. Must be a relative path. If
                               omitted, it is inferred from the package path(s),
-                              falling back to "/workspace".
+                              or is "/workspace" for a command that takes none.
   -t, --target=<targetFolder>
                             Folder for deployment artifacts and plans. The
                               value must be a relative path that remains within
@@ -3735,8 +4078,8 @@ Executes an already compiled SQRL script using its existing build artifacts.
   -h, --help      Show this help message and exit.
   -r, --project-root=<projectRoot>
                   Project root folder. Must be a relative path. If omitted, it
-                    is inferred from the package path(s), falling back to
-                    "/workspace".
+                    is inferred from the package path(s), or is "/workspace"
+                    for a command that takes none.
   -t, --target=<targetFolder>
                   Folder for deployment artifacts and plans. The value must be
                     a relative path that remains within "<project-root>".
@@ -3837,7 +4180,7 @@ The `build/deploy/flink` folder contains the data files that sources read locall
 
 | File         | Contents                                                                                                                             |
 |--------------|--------------------------------------------------------------------------------------------------------------------------------------|
-| `kafka.json` | The topics the pipeline creates, with name, partitions, replication factor, and configuration, plus the topics the test runner uses. The topics of internal Kafka tables that a standalone included project defines are listed separately under `includedTopics`, by name only, because that project creates them. |
+| `kafka.json` | The topics the pipeline creates, with name, partitions, replication factor, and configuration, plus the topics the test runner uses. The topics that a standalone included project writes, i.e. of its internal Kafka tables and of the subscriptions that its deployment exposes, are listed separately under `includedTopics`, by name only, because that project creates them. |
 
 ### PostgreSQL
 
@@ -3880,7 +4223,7 @@ The deployment outputs show the physical plan, the most detailed level. Use them
 
 - **`flink-explained-plan.txt`** shows how Flink executes each table. Check that deduplications use the expected rank strategy, that joins are temporal or interval joins where expected rather than regular joins with unbounded state, and that watermarks are assigned with the intended delay.
 - **`flink-compiled-plan.json`** is the exact plan that runs. Compare it between versions to detect changes that are incompatible with existing savepoints (see [Upgrading from a Savepoint](#upgrading-from-a-savepoint)).
-- **`postgres-schema.sql`** and **`postgres-views.sql`** show which tables are materialized, which are computed at query time, and which indexes the compiler selected. Check that the API queries in `vertx.json` are served by an index.
+- **`postgres-schema.sql`** and **`postgres-views.sql`** show which tables are materialized, which are computed at query time, and which indexes the compiler selected. Check that the API queries in `vertx.json` are served by an index. The compiler warns about a filter that no index can serve because it wraps its column in an expression (see [Automatic index selection](https://docs.datasqrl.com/docs/sqrl-language.md#automatic-index-selection)).
 - **`vertx.json`** and the OpenAPI specification show exactly which SQL each API endpoint executes. Use them to review the cost of queries and to verify that filters and access restrictions are applied.
 - **`flink-config.yaml`**, **`kafka.json`**, and **`vertx-config.json`** show the operational settings. Validate them against your deployment requirements, such as checkpoint intervals, topic retention, and partitioning.
 
@@ -3920,6 +4263,7 @@ Every deployment consists of the same components, regardless of where they run:
 | API server    | `vertx.json`, `vertx-config.json`                                     | The [`datasqrl/sqrl-server`](https://hub.docker.com/r/datasqrl/sqrl-server) Docker image, which serves GraphQL, REST, and MCP |
 
 A deployment creates the Kafka topics and database schemas first, then starts the API server and the Flink job. Only the components for the engines enabled in your [configuration](https://docs.datasqrl.com/docs/configuration.md) are generated.
+The topics under `includedTopics` in `kafka.json` belong to a [standalone included project](https://docs.datasqrl.com/docs/configuration.md#standalone-includes), whose own deployment creates and writes them, so deploy that project first.
 
 ## Option A: Managed Cloud Services
 
@@ -3939,7 +4283,7 @@ Kubernetes gives you the most control over the deployment, and it runs the same 
 - **Kafka:** [Strimzi](https://strimzi.io/) or the Redpanda operator.
 - **PostgreSQL:** [CloudNativePG](https://cloudnative-pg.io/) runs highly available PostgreSQL clusters with replication and backups.
 - **Iceberg:** object storage and an Iceberg REST catalog, with the query engine running in the cluster or as a managed service.
-- **API server:** a standard `Deployment` and `Service` for the server image, scaled horizontally since the server is stateless. It exposes `/health` for probes and, when enabled, `/metrics` for Prometheus.
+- **API server:** a standard `Deployment` and `Service` for the server image, scaled horizontally since the server is stateless. It exposes `/health` for probes and, when enabled, `/metrics` for Prometheus. The server logs a `WARN` with the reason when `/health` first reports a check as failing, and an `INFO` when the check recovers.
 
 You can also mix both options, for example running Flink and the API server on Kubernetes against managed Kafka and PostgreSQL services.
 

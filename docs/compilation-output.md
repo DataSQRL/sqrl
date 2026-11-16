@@ -72,7 +72,7 @@ The `build/deploy/flink` folder contains the data files that sources read locall
 
 | File         | Contents                                                                                                                             |
 |--------------|--------------------------------------------------------------------------------------------------------------------------------------|
-| `kafka.json` | The topics the pipeline creates, with name, partitions, replication factor, and configuration, plus the topics the test runner uses. The topics of internal Kafka tables that a standalone included project defines are listed separately under `includedTopics`, by name only, because that project creates them. |
+| `kafka.json` | The topics the pipeline creates, with name, partitions, replication factor, and configuration, plus the topics the test runner uses. The topics that a standalone included project writes, i.e. of its internal Kafka tables and of the subscriptions that its deployment exposes, are listed separately under `includedTopics`, by name only, because that project creates them. |
 
 ### PostgreSQL
 
@@ -115,7 +115,7 @@ The deployment outputs show the physical plan, the most detailed level. Use them
 
 - **`flink-explained-plan.txt`** shows how Flink executes each table. Check that deduplications use the expected rank strategy, that joins are temporal or interval joins where expected rather than regular joins with unbounded state, and that watermarks are assigned with the intended delay.
 - **`flink-compiled-plan.json`** is the exact plan that runs. Compare it between versions to detect changes that are incompatible with existing savepoints (see [Upgrading from a Savepoint](#upgrading-from-a-savepoint)).
-- **`postgres-schema.sql`** and **`postgres-views.sql`** show which tables are materialized, which are computed at query time, and which indexes the compiler selected. Check that the API queries in `vertx.json` are served by an index.
+- **`postgres-schema.sql`** and **`postgres-views.sql`** show which tables are materialized, which are computed at query time, and which indexes the compiler selected. Check that the API queries in `vertx.json` are served by an index. The compiler warns about a filter that no index can serve because it wraps its column in an expression (see [Automatic index selection](https://docs.datasqrl.com/docs/sqrl-language.md#automatic-index-selection)).
 - **`vertx.json`** and the OpenAPI specification show exactly which SQL each API endpoint executes. Use them to review the cost of queries and to verify that filters and access restrictions are applied.
 - **`flink-config.yaml`**, **`kafka.json`**, and **`vertx-config.json`** show the operational settings. Validate them against your deployment requirements, such as checkpoint intervals, topic retention, and partitioning.
 

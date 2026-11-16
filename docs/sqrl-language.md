@@ -109,9 +109,11 @@ Internal tables are managed by an SQRL engine selected through an `engine(...)` 
 | Connector option           | **omitted**                                                     | **required**                 |
 | Other `WITH (...)` options | Optional engine-specific options                                | Connector configuration      |
 | Engine hint                | **required**                                                    | Not used to select connector |
-| Metadata columns           | `METADATA FROM 'uuid'`, `'timestamp'` are recognised by planner | Passed through               |
+| Metadata columns           | `METADATA FROM 'uuid'`, `'timestamp'`, `'auth.<claim>'` only    | Passed through               |
 | Watermark spec             | **generated**                                                   | **required**                 |
 | Primary key                | *Unenforced* upsert semantics                                   | Same as Flink                |
+
+On an internal table, use only the metadata keys `'uuid'`, `'timestamp'` and `'auth.<claim>'`. DataSQRL fills in these columns, so they are not fields of the mutation input. A `METADATA` column without `FROM` uses its column name as the key. Any other key stops the compile with an `Unknown metadata key` error, for example a typing error such as `'auht.sub'` or a key of the Flink Kafka connector such as `'offset'`. Without this check, the column becomes a field of the mutation input and the client sets its value.
 
 With the `kafka` engine, `PARTITIONED BY (col, ...)` on an internal table without a primary key sets the Kafka message key of each record, both for the records that the server writes for a mutation and for the records that the pipeline exports into the table. Records with the same key go to the same Kafka partition, so their order is kept. The clause only declares the key; the table is not partitioned in Flink. The key can contain `METADATA FROM 'uuid'` and `METADATA FROM 'auth.<claim>'` columns, which the server fills in before it writes the record, but not the `METADATA FROM 'timestamp'` column, which is only known after the record is written.
 The Flink source of the table reads every column from the message value and ignores the key. Adding `PARTITIONED BY` to an existing table therefore keeps the records written before the table had a key, also when the pipeline reads the topic again from the earliest offset. This relies on the default `kafka-safe` connector; the plain `kafka` connector drops records that have no key.
@@ -189,8 +191,16 @@ CustomerByEmail(email STRING) := SELECT * FROM Customer WHERE email = :email;
 
 #### Accessing JWT Payload
 
-To access the JWT payload included in the Authorization HTTP header, you can use the `METADATA` expression within the
-function definition. The JWT payload is available via the auth object, and nested fields can be accessed directly.
+To access the JWT payload included in the Authorization HTTP header, you can use the `METADATA` expression within the function definition. The text after `auth.` is the name of a claim in the JWT payload:
+
+* `'auth.val'` reads the top-level claim `val`.
+* `'auth.org.id'` reads the field `id` of the object claim `org`. A path can go to any depth, for example `'auth.org.location.zip'`.
+* A key can contain dots, at the top level and inside an object, for example the namespaced claim `https://example.com/org`. At each level, the server uses the longest key that it finds, and then follows the rest of the path. So `'auth.https://example.com/org_id'` reads a top-level claim, and `'auth.https://example.com/org.id'` reads the field `id` of the claim `https://example.com/org`. In the same way, `'auth.resource_access.com.example.app.roles'` reads the field `roles` of the key `com.example.app` inside the claim `resource_access`.
+* A path can end on an array. In the SQRL script, declare the function argument with an `ARRAY<...>` type, for example `roles ARRAY<STRING> NOT NULL METADATA FROM 'auth.realm_access.roles'`.
+* Array indexing does not work. For example, `'auth.realm_access.roles.0'` does not read the first role. The server treats it as a missing claim. To check for one item, read the full array and use `array_contains` in the query.
+* Each segment of the path must have a name. A key with an empty segment, such as `'auth.org.'` or `'auth.org..id'`, stops the compile.
+* When the token has no claim at the path, a request fails with `403 Forbidden` for a `NOT NULL` argument. A nullable argument gets `null`.
+
 In the example below, the JWT payload contains a val field, which is an integer.
 
 ```sql
@@ -199,6 +209,10 @@ AuthFilter(mySecretId BIGINT NOT NULL METADATA FROM 'auth.val') :=
   FROM Customer c 
   WHERE c.customerId = :mySecretId;
 ```
+
+The server reads a claim only from a token that it checks. A script that reads a claim needs an auth provider in `engines.vertx.config`. This applies to a function argument and to a mutation column. The provider is an `auth` block with at least one issuer (see [Authentication Configuration](https://docs.datasqrl.com/docs/configuration-engine/vertx.md#authentication-configuration)). The deprecated `jwtAuth`, or `oauthConfig` with `oauth2Options.site`, also gives a provider. Without a provider, the server checks no token. The compile then fails with the error `The script reads JWT claims (...), but engines.vertx.config has no auth provider.`
+
+The check covers every function and mutation that reads a claim, including those from an inline `IMPORT script.*`. It also covers a function that a custom GraphQL schema leaves out. To keep such a function out of the API without a provider, start its name with `_`, for example `_MyOrders`. A function whose name starts with `_` is not exposed. The `/*+no_query*/` hint does not help here, because it works only on tables.
 
 ### Relationship Definition
 
@@ -376,7 +390,7 @@ Hints live in a `/*+ ... */` comment placed **immediately before** the definitio
 | Hint                        | Form                                                                                   | Applies to     | Effect                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 |-----------------------------|----------------------------------------------------------------------------------------|----------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | **primary_key**             | `primary_key(col, ...)`                                                                | table          | declare the primary key, overriding the inferred key. Required when the compile fails with `Could not determine primary key for table [...]`; does not deduplicate                                                                                                                                                                                                                                                                                                                                                                                                                      |
-| **index**                   | `index(type, col [ASC\|DESC], ...)` <br/> Multiple `index(...)` can be comma-separated | table          | override automatic index selection. `type` ∈ `HASH`, `BTREE`, `PBTREE`, `TEXT`, `VECTOR_COSINE`, `VECTOR_EUCLID`. `ASC` is the default. `DESC` is supported only for `BTREE` and `PBTREE` indexes. <br />`index` *alone* disables all automatic indexes                                                                                                                                                                                                     |
+| **index**                   | `index(type, col [ASC\|DESC], ...)` <br/> Multiple `index(...)` can be comma-separated | table          | override [automatic index selection](#automatic-index-selection). `type` ∈ `HASH`, `BTREE`, `PBTREE`, `TEXT`, `VECTOR_COSINE`, `VECTOR_EUCLID`. `ASC` is the default. `DESC` is supported only for `BTREE` and `PBTREE` indexes. <br />`index` *alone* disables all automatic indexes                                                                                                                                                                                                     |
 | **partition_key**           | `partition_key(col, ...)`                                                              | table          | define partition columns for sinks that support partitioning                                                                                                                                                                                                                                                                                                                                                                                                |
 | **vector_dim**              | `vector_dim(col, 1536)`                                                                | table          | declare fixed vector length. This is required when using vector indexes.                                                                                                                                                                                                                                                                                                                                                                                    |
 | **query_by_all**            | `query_by_all(col, ...)`                                                               | table          | generate interface with *required* filter arguments for all listed columns                                                                                                                                                                                                                                                                                                                                                                                  |
@@ -405,6 +419,27 @@ Specify the sort order for each column in a `BTREE` or `PBTREE` index with `ASC`
 /*+index(BTREE, event_time DESC, sensorid ASC) */
 RecentSensorReadings := SELECT ... ;
 ```
+
+### Automatic index selection
+
+Without an `index` hint, the compiler selects the PostgreSQL indexes for a table from the filters of the API queries that read it: the `WHERE` clauses of table functions and relationships, `query_by_*` arguments, the `JOIN ... ON` conditions for the table on the right side of the join, and the filters inside subqueries. An index on a column serves a filter only when the column stands alone on one side of `=`, `<`, `<=`, `>` or `>=`, like `customer_id = :customerId`. A comparison with an uncorrelated scalar subquery, like `customer_id = (SELECT MAX(customer_id) FROM ...)`, counts as a comparison with a parameter.
+
+In a correlated subquery, the columns of the outer query that the subquery compares with act like parameters. Which tables get an index depends on how PostgreSQL runs the subquery:
+
+- `EXISTS (...)` and `IN (SELECT ...)`, combined with the other conditions of the `WHERE` clause by `AND`: PostgreSQL joins the two tables. When the subquery compares its columns with the outer columns only by `=`, as an `IN` always does, PostgreSQL can start from either table, so both get an index. With any other comparison, like `o.ts > c.ts`, PostgreSQL starts from the outer table, and only the subquery's table gets an index.
+- `NOT EXISTS (...)`, `NOT IN (SELECT ...)`, a subquery that is part of an `OR`, and a correlated scalar subquery like `(SELECT COUNT(*) ...)`: PostgreSQL runs the subquery once, or for each row of the outer table. Only the subquery's table gets an index, and PostgreSQL reads every row of the outer table that its other conditions leave.
+
+When a filter wraps its column in an expression, PostgreSQL cannot use an index on the column. The compiler then creates no index for that filter and warns at the definition of the table function:
+
+```text
+The filter `agency_id + 1 = :agency` in `OrdersByAgency` cannot use an index on table `Orders_2`
+because column `agency_id` is wrapped in the expression `agency_id + 1`. Move the arithmetic to
+the other side of the comparison so that `agency_id` stands alone.
+```
+
+Rewrite the filter as the warning says: move arithmetic to the other side, like `agency_id = :agency - 1`, compare a column with a value of its own type instead of casting the column, and compute any other expression, like `LOWER(email)`, as a column of a table that Flink computes (`/*+engine(flink) */`). An expression from a table that PostgreSQL computes ends up in the filter of every query that reads the table, so the warning can show a `CAST` or a function that the query itself does not contain.
+
+An `index` hint replaces the automatic selection for its table, including these warnings.
 
 ### Testing
 
@@ -480,7 +515,9 @@ The following produce compile time errors:
 * Argument list problems (missing type, unused arg, unknown type).
 * `DISTINCT` must reference existing columns; `ORDER BY` column(s) must be monotonically increasing.
 * Basetable inference failure for relationships (see [base tables](https://docs.datasqrl.com/docs/interface.md#base-tables)).
-* Invalid or malformed hints (unknown name, wrong delimiter).
+* Malformed or invalid hints (wrong delimiter, other text in the hint block that is not a hint, invalid arguments to a known hint such as `ttl`, or more than one `query_by_*` or `no_query` hint on a table).
+
+An unknown hint name is not an error: the compiler prints the warning `Unrecognized hint: [<name>]` and ignores the hint, so a misspelled hint has no effect.
 
 ---
 
