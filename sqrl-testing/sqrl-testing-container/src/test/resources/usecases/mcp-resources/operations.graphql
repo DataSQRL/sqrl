@@ -1,0 +1,31 @@
+query AllPeople @api(mcp: RESOURCE) {
+  Person(limit: 10) {
+    name
+    age
+  }
+}
+
+query PersonByAge($age: Int!) @api(mcp: RESOURCE, uri: "/queries/personByAge/{age}") {
+  PersonByAge(age: $age, limit: 10) {
+    name
+  }
+}
+
+query People($limit: Int = 10, $offset: Int = 0) @api(mcp: RESOURCE) {
+  Person(limit: $limit, offset: $offset) {
+    name
+  }
+}
+
+query CallerNotes @api(mcp: RESOURCE) {
+  MyNotes(limit: 10) {
+    owner
+    label
+  }
+}
+
+query BrokenRows @api(mcp: RESOURCE) {
+  Broken(limit: 10) {
+    id
+  }
+}

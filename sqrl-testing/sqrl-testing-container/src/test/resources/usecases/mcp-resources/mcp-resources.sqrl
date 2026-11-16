@@ -1,0 +1,11 @@
+Person := SELECT name, age FROM (VALUES ('Ada', 30), ('Bob', 30), ('Cy', 40)) AS t(name, age);
+
+Notes := SELECT owner, label FROM (VALUES (1, 'one-a'), (1, 'one-b'), (2, 'two')) AS t(owner, label);
+
+/* The test does not create this table in Postgres, so querying it fails. */
+Broken := SELECT id FROM (VALUES (1)) AS t(id);
+
+PersonByAge(age INT NOT NULL) := SELECT * FROM Person WHERE age = :age ORDER BY name ASC;
+
+MyNotes(owner BIGINT NOT NULL METADATA FROM 'auth.val') :=
+    SELECT * FROM Notes WHERE owner = :owner ORDER BY label ASC;

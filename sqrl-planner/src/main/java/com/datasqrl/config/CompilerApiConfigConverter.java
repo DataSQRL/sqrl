@@ -33,5 +33,6 @@ public class CompilerApiConfigConverter implements ServerConfigConverter {
     // Make sure prop names matching with ServerConfig
     serverConfig.put("publicGraphQLEndpointEnabled", protocols.contains(ApiProtocol.GRAPHQL));
     serverConfig.put("onlyConfiguredGraphQLOperations", apiConfig.isOperationsOnly());
+    serverConfig.put("mcpResourceUriPrefix", apiConfig.getMcpResourceUriPrefix());
   }
 }

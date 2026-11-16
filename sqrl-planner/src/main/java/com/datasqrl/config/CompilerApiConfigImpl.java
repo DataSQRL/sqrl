@@ -18,10 +18,16 @@ package com.datasqrl.config;
 import com.datasqrl.config.PackageJson.CompilerApiConfig;
 import com.datasqrl.server.operation.ApiProtocol;
 import java.util.EnumSet;
+import java.util.Locale;
+import java.util.regex.Pattern;
 import lombok.AllArgsConstructor;
 
 @AllArgsConstructor
 public class CompilerApiConfigImpl implements CompilerApiConfig {
+
+  // RFC 3986 scheme followed by ':'
+  private static final Pattern URI_SCHEME = Pattern.compile("^[A-Za-z][A-Za-z0-9+.-]*:");
+  private static final String MCP_APPS_SCHEME = "ui:";
 
   private final SqrlConfig sqrlConfig;
 
@@ -50,6 +56,19 @@ public class CompilerApiConfigImpl implements CompilerApiConfig {
   @Override
   public boolean isAddOperationsPrefix() {
     return sqrlConfig.asBool("add-prefix").get();
+  }
+
+  @Override
+  public String getMcpResourceUriPrefix() {
+    return sqrlConfig
+        .asString("mcp-resource-uri-prefix")
+        .validate(
+            prefix -> URI_SCHEME.matcher(prefix).find(),
+            "It must start with a URI scheme, such as 'sqrl://{version}/'.")
+        .validate(
+            prefix -> !prefix.toLowerCase(Locale.ROOT).startsWith(MCP_APPS_SCHEME),
+            "The 'ui://' scheme is reserved for MCP Apps.")
+        .get();
   }
 
   @Override

@@ -316,6 +316,7 @@ Configuration options that control the compiler, such as where logging output is
       ],
       "endpoints": "FULL",         // endpoint strategy: "FULL", "GRAPHQL", or "OPS_ONLY" (explicit operations only)
       "add-prefix": true,          // add an operation-type prefix to function names to ensure uniqueness
+      "mcp-resource-uri-prefix": "sqrl://{version}/", // prefix of MCP resource URIs
       "max-result-depth": 3,       // maximum depth of graph traversal when generating operations from a schema
       "default-limit": 10,         // default query result limit
       "paginated-results": false   // wrap generated query results in a page with pagination metadata
@@ -329,6 +330,8 @@ Configuration options that control the compiler, such as where logging output is
 ```
 
 `compiler.api.protocols` controls which public API routes are registered. The default enables `GRAPHQL`, `REST`, and `MCP`. Omitting `GRAPHQL` removes the versioned GraphQL HTTP, WebSocket, and GraphiQL routes while retaining the internal GraphQL execution engine used by REST and MCP. `REST` and `MCP` only register endpoints for operations that support those protocols.
+
+`compiler.api.mcp-resource-uri-prefix` is put in front of the path of every [MCP resource](interface.md#mcp-and-rest), and `{version}` in it is replaced with the API version, such as `v1`. The prefix must start with a URI scheme, such as `sqrl:` or `https:`, and must not use the `ui://` scheme, which is reserved for MCP Apps. Otherwise the compile fails. End the prefix with `/` or `:`, because the path follows it directly.
 
 `compiler.api.endpoints` controls operation generation and GraphQL flexibility. `FULL` generates operations from every query and mutation, `GRAPHQL` keeps the GraphQL endpoint flexible but exposes only explicitly defined REST and MCP operations, and `OPS_ONLY` accepts only explicitly defined named operations through a public GraphQL endpoint.
 

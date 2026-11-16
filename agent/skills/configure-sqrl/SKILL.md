@@ -335,6 +335,7 @@ Note that these connector templates apply to table definition managed by DataSQR
       "protocols": ["GRAPHQL", "REST", "MCP"],
       "endpoints": "FULL",
       "add-prefix": true,
+      "mcp-resource-uri-prefix": "sqrl://{version}/",
       "max-result-depth": 3,
       "default-limit": 10,
       "paginated-results": false
@@ -364,7 +365,7 @@ DataSQRL's authoritative API model is GraphQL; REST and MCP are generated from i
 * `GRAPHQL`: flexible GraphQL but only explicit operations for other protocols.
 * `OPS_ONLY`: explicit GraphQL operations only.
 
-`add-prefix` prefixes generated operation names to avoid collisions. `max-result-depth` controls generated REST/MCP result traversal depth, `default-limit` is the generated query limit, and `paginated-results: true` wraps multi-row query results in a page with pagination metadata.
+`add-prefix` prefixes generated operation names to avoid collisions. `mcp-resource-uri-prefix` is put in front of the path of every MCP resource; it must start with a URI scheme other than `ui://`, and `{version}` is replaced with the API version. `max-result-depth` controls generated REST/MCP result traversal depth, `default-limit` is the generated query limit, and `paginated-results: true` wraps multi-row query results in a page with pagination metadata.
 
 ### Tags (`compiler.tags`)
 

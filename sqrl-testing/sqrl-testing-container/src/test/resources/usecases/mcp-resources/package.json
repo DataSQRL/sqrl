@@ -1,0 +1,27 @@
+{
+  "version": "1",
+  "script": {
+    "main": "mcp-resources.sqrl",
+    "operations": ["operations.graphql"]
+  },
+  "engines": {
+    "vertx": {
+      "config": {
+        "auth": {
+          "issuers": [
+            {
+              "issuer": "my-test-issuer",
+              "audiences": ["my-test-audience"],
+              "keys": [
+                {
+                  "kty": "oct",
+                  "k": "dGVzdFNlY3JldFRoYXRJc0F0TGVhc3QyNTZCaXRzTG9uZzMyQ2hhcnM"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  }
+}

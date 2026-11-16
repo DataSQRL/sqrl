@@ -54,6 +54,8 @@ import lombok.extern.slf4j.Slf4j;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ServerConfig {
 
+  public static final String DEFAULT_MCP_RESOURCE_URI_PREFIX = "sqrl://{version}/";
+
   @Getter(AccessLevel.NONE)
   private final ObjectMapper MAPPER = JsonUtils.getMapperWithEnvVarResolver(null);
 
@@ -62,6 +64,7 @@ public class ServerConfig {
   private GraphiQLHandlerOptions graphiQLHandlerOptions;
   private boolean publicGraphQLEndpointEnabled = true;
   private boolean onlyConfiguredGraphQLOperations;
+  private String mcpResourceUriPrefix = DEFAULT_MCP_RESOURCE_URI_PREFIX;
   private long gracefulShutdownTimeoutSeconds = 15;
 
   @JsonSerialize(using = HttpServerOptionsSerializer.class)

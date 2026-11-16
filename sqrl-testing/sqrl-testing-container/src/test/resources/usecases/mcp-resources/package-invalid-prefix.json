@@ -1,0 +1,7 @@
+{
+  "compiler": {
+    "api": {
+      "mcp-resource-uri-prefix": "queries/"
+    }
+  }
+}

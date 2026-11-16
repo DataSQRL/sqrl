@@ -131,6 +131,9 @@
             "add-prefix": {
               "type": "boolean"
             },
+            "mcp-resource-uri-prefix": {
+              "type": "string"
+            },
             "max-result-depth": {
               "type": "integer"
             },

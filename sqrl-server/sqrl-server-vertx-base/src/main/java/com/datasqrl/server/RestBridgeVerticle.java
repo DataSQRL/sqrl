@@ -38,7 +38,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -50,11 +49,6 @@ import lombok.extern.slf4j.Slf4j;
 public class RestBridgeVerticle extends AbstractBridgeVerticle {
 
   private static final String RESULT_DATA_KEY = "data";
-
-  // Pattern for RFC 6570 URI template query parameters: {?param1,param2}
-  private static final Pattern QUERY_PARAMS_PATTERN = Pattern.compile("\\{\\?([^}]+)\\}");
-  // Pattern for RFC 6570 URI template path parameters: {param}
-  private static final Pattern PATH_PARAMS_PATTERN = Pattern.compile("\\{([^}?]+)\\}");
 
   private final Path openApiArtifact;
 
@@ -257,19 +251,8 @@ public class RestBridgeVerticle extends AbstractBridgeVerticle {
    * -> "/mutations/SensorReading" - "users/{userId}/posts" -> "/users/:userId/posts"
    */
   private String convertUriTemplateToRoute(String uriTemplate) {
-    // Remove query parameters pattern {?param1,param2}
-    var route = QUERY_PARAMS_PATTERN.matcher(uriTemplate).replaceAll("");
-
-    // Convert path parameters {param} to :param
-    route = PATH_PARAMS_PATTERN.matcher(route).replaceAll(":$1");
-
-    // Ensure route starts with /
-    if (!route.startsWith("/")) {
-      route = "/" + route;
-    }
-    // Ensure route starts with REST prefix
-    route = config.getServletConfig().getRestEndpoint(modelVersion) + route;
-    return route;
+    return config.getServletConfig().getRestEndpoint(modelVersion)
+        + UriTemplateMatcher.toRoutePath(uriTemplate);
   }
 
   protected static Map<String, Object> extractParameters(

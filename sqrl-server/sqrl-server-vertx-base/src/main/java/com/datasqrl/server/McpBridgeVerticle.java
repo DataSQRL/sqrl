@@ -25,6 +25,8 @@ import com.datasqrl.util.ProjectConstants;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
+import graphql.ExecutionResult;
+import graphql.GraphQLError;
 import graphql.language.OperationDefinition.Operation;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
@@ -41,10 +43,16 @@ import io.vertx.ext.web.handler.AuthenticationHandler;
 import io.vertx.ext.web.handler.ChainAuthHandler;
 import io.vertx.ext.web.handler.JWTAuthHandler;
 import io.vertx.ext.web.handler.OAuth2AuthHandler;
+import jakarta.annotation.Nullable;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
@@ -65,11 +73,16 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
   private static final String RESOURCES_RESULT_KEY = "resources";
   private static final String RESOURCE_TEMPLATES_RESULT_KEY = "resourceTemplates";
 
+  static final int INVALID_PARAMS = -32602;
+  static final int INTERNAL_ERROR = -32603;
+  static final int RESOURCE_NOT_FOUND = -32002;
+
   private final ConcurrentHashMap<String, SseConnection> sseConnections = new ConcurrentHashMap<>();
 
   private final Map<String, ApiOperation> tools;
   private final JsonObject toolsList;
-  private final List<ApiOperation> resources;
+  private final Map<String, McpResource> staticResources = new LinkedHashMap<>();
+  private final List<McpResource> resourceTemplates = new ArrayList<>();
   private final JsonObject resourceList;
   private final JsonObject resourceTemplatesList;
 
@@ -86,22 +99,42 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
             .filter(op -> op.getMcpMethod() == McpMethodType.TOOL)
             .collect(Collectors.toMap(ApiOperation::getId, Function.identity()));
     this.toolsList = getToolsList(this.tools.values());
-    this.resources =
-        model.getOperations().stream()
-            .filter(op -> op.getMcpMethod() == McpMethodType.RESOURCE)
-            .toList();
-    this.resourceList =
-        getResourceList(
-            RESOURCES_RESULT_KEY,
-            resources.stream()
-                .filter(op -> op.getFunction().getParameters().getProperties().isEmpty())
-                .collect(Collectors.toList()));
+
+    var uriPrefix =
+        Objects.requireNonNullElse(
+                config.getMcpResourceUriPrefix(), ServerConfig.DEFAULT_MCP_RESOURCE_URI_PREFIX)
+            .replace("{version}", modelVersion);
+    for (var operation : model.getOperations()) {
+      if (operation.getMcpMethod() != McpMethodType.RESOURCE) {
+        continue;
+      }
+      if (operation.getUriTemplate() == null) {
+        log.warn("Skipping MCP resource {} - missing uriTemplate", operation.getName());
+        continue;
+      }
+      var uriTemplate = toResourceUri(uriPrefix, operation.getUriTemplate());
+      var resource = new McpResource(operation, uriTemplate, new UriTemplateMatcher(uriTemplate));
+      if (hasParameters(operation)) {
+        resourceTemplates.add(resource);
+      } else {
+        staticResources.putIfAbsent(uriTemplate, resource);
+      }
+    }
+    this.resourceList = getResourceList(RESOURCES_RESULT_KEY, "uri", staticResources.values());
     this.resourceTemplatesList =
-        getResourceList(
-            RESOURCE_TEMPLATES_RESULT_KEY,
-            resources.stream()
-                .filter(op -> !op.getFunction().getParameters().getProperties().isEmpty())
-                .collect(Collectors.toList()));
+        getResourceList(RESOURCE_TEMPLATES_RESULT_KEY, "uriTemplate", resourceTemplates);
+  }
+
+  /** Puts the prefix in front of the operation's path template, without its leading slash. */
+  static String toResourceUri(String uriPrefix, String pathTemplate) {
+    return uriPrefix + (pathTemplate.startsWith("/") ? pathTemplate.substring(1) : pathTemplate);
+  }
+
+  private static boolean hasParameters(ApiOperation operation) {
+    var parameters = operation.getFunction().getParameters();
+    return parameters != null
+        && parameters.getProperties() != null
+        && !parameters.getProperties().isEmpty();
   }
 
   @Override
@@ -109,7 +142,10 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
     var mcpRoutePrefix = config.getServletConfig().getMcpEndpoint(modelVersion);
     log.info("Starting McpBridgeVerticle with endpoint prefix: {}", mcpRoutePrefix);
     log.info("Available tools: {}", tools.keySet());
-    log.info("Available resources: {}", resources.size());
+    log.info(
+        "Available resources: {}, resource templates: {}",
+        staticResources.keySet(),
+        resourceTemplates.stream().map(McpResource::uriTemplate).toList());
 
     // Debug: Log ALL incoming requests to help identify what the MCP client is doing
     router
@@ -315,7 +351,8 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
             }
             case "resources/list" -> {
               log.info(
-                  "Handling resources/list request - returning {} resources", resources.size());
+                  "Handling resources/list request - returning {} resources",
+                  staticResources.size());
               yield Future.succeededFuture(resourceList);
             }
             case "resources/templates/list" -> {
@@ -351,8 +388,9 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
                     error);
                 var errorResponse =
                     error instanceof McpException e
-                        ? createErrorResponse(id, e.code, e.getMessage())
-                        : createErrorResponse(id, -32603, "Internal error: " + error.getMessage());
+                        ? createErrorResponse(id, e.code, e.getMessage(), e.data)
+                        : createErrorResponse(
+                            id, INTERNAL_ERROR, "Internal error: " + error.getMessage(), null);
 
                 // Enhanced debugging for tool call errors
                 if ("tools/call".equals(method)) {
@@ -373,7 +411,8 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
       var response = createResponse(id, json);
       return Future.succeededFuture(response);
     } catch (Exception e) {
-      var errorResponse = createErrorResponse(id, -32603, "Internal error: " + e.getMessage());
+      var errorResponse =
+          createErrorResponse(id, INTERNAL_ERROR, "Internal error: " + e.getMessage(), null);
       log.error("Request error: {}", errorResponse.encode());
       return Future.succeededFuture(errorResponse);
     }
@@ -437,27 +476,79 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
     return LATEST_PROTOCOL_VERSION;
   }
 
-  /**
-   * Dummy implementation for now
-   *
-   * @param params
-   * @return
-   */
   private Future<JsonObject> handleReadResource(RoutingContext ctx, JsonNode params) {
-    var uri = params.get("uri").asText();
-    if (uri == null) {
-      return Future.failedFuture(new McpException(-32602, "URI parameter required"));
+    var uri = params == null ? null : params.path("uri").asText(null);
+    if (uri == null || uri.isBlank()) {
+      return Future.failedFuture(new McpException(INVALID_PARAMS, "URI parameter required"));
     }
-    if (uri.isBlank())
-      return Future.failedFuture(new McpException(-32602, "Resource not found: " + uri));
-    var contents =
-        new JsonArray()
-            .add(
-                new JsonObject()
-                    .put("uri", uri)
-                    .put("mimeType", "application/json")
-                    .put("text", new JsonObject().encodePrettily()));
-    return Future.succeededFuture(new JsonObject().put("contents", contents));
+
+    final Optional<ResourceMatch> match;
+    try {
+      match = findResource(uri);
+    } catch (IllegalArgumentException e) {
+      return Future.failedFuture(
+          new McpException(INVALID_PARAMS, "Invalid resource URI: " + e.getMessage()));
+    }
+    if (match.isEmpty()) {
+      return Future.failedFuture(
+          new McpException(
+              RESOURCE_NOT_FOUND, "Resource not found", new JsonObject().put("uri", uri)));
+    }
+
+    var operation = match.get().resource().operation();
+    var variables = new HashMap<String, Object>();
+    final Future<ExecutionResult> execution;
+    try {
+      extractUriParameters(
+          operation,
+          match.get().parameters().queryParameters(),
+          match.get().parameters().pathParameters(),
+          variables);
+      execution = bridgeRequestToGraphQL(ctx, operation, variables);
+    } catch (ValidationException e) {
+      return Future.failedFuture(new McpException(INVALID_PARAMS, e.getMessage()));
+    }
+
+    return execution.compose(
+        executionResult -> {
+          if (!executionResult.getErrors().isEmpty()) {
+            var messages =
+                executionResult.getErrors().stream()
+                    .map(GraphQLError::getMessage)
+                    .collect(Collectors.joining("; "));
+            return Future.failedFuture(
+                new McpException(INTERNAL_ERROR, "Resource query failed: " + messages));
+          }
+          try {
+            var text =
+                JsonUtils.MAPPER.writeValueAsString(getExecutionData(executionResult, operation));
+            var contents =
+                new JsonArray()
+                    .add(
+                        new JsonObject()
+                            .put("uri", uri)
+                            .put("mimeType", CT_JSON)
+                            .put("text", text));
+            return Future.succeededFuture(new JsonObject().put("contents", contents));
+          } catch (JsonProcessingException e) {
+            return Future.failedFuture(e);
+          }
+        });
+  }
+
+  private Optional<ResourceMatch> findResource(String uri) {
+    var staticResource = staticResources.get(uri);
+    if (staticResource != null) {
+      return Optional.of(
+          new ResourceMatch(staticResource, new UriTemplateMatcher.Match(Map.of(), Map.of())));
+    }
+    for (var template : resourceTemplates) {
+      var parameters = template.matcher().match(uri);
+      if (parameters.isPresent()) {
+        return Optional.of(new ResourceMatch(template, parameters.get()));
+      }
+    }
+    return Optional.empty();
   }
 
   private Future<JsonObject> handleCallTool(RoutingContext ctx, JsonNode params) {
@@ -547,20 +638,21 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
     return new JsonObject().put("tools", toolsArray);
   }
 
-  private JsonObject getResourceList(
-      String resultKey, Collection<ApiOperation> resourceOperations) {
+  private static JsonObject getResourceList(
+      String resultKey, String uriKey, Collection<McpResource> resources) {
     var resourcesArray = new JsonArray();
-    for (var resource : resourceOperations) {
-      var description = resource.getFunction().getDescription();
+    for (var resource : resources) {
+      var function = resource.operation().getFunction();
+      var description = function.getDescription();
       if (description == null) {
-        description = "Returns %s resource".formatted(resource.getFunction().getName());
+        description = "Returns %s resource".formatted(function.getName());
       }
       var resourceDef =
           new JsonObject()
-              .put("uri", resource.getUriTemplate())
-              .put("name", resource.getName())
+              .put(uriKey, resource.uriTemplate())
+              .put("name", resource.operation().getName())
               .put("description", description)
-              .put("mimeType", "application/json");
+              .put("mimeType", CT_JSON);
       resourcesArray.add(resourceDef);
     }
     return new JsonObject().put(resultKey, resourcesArray);
@@ -570,8 +662,12 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
     return new JsonObject().put("jsonrpc", JSONRPC_VERSION).put("id", id).put("result", result);
   }
 
-  private JsonObject createErrorResponse(Object id, int code, String message) {
+  private JsonObject createErrorResponse(
+      Object id, int code, String message, @Nullable JsonObject data) {
     var error = new JsonObject().put("code", code).put("message", message);
+    if (data != null) {
+      error.put("data", data);
+    }
     return new JsonObject().put("jsonrpc", JSONRPC_VERSION).put("id", id).put("error", error);
   }
 
@@ -695,12 +791,23 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
 
   private record SseConnection(String id, HttpServerResponse response) {}
 
+  private record McpResource(
+      ApiOperation operation, String uriTemplate, UriTemplateMatcher matcher) {}
+
+  private record ResourceMatch(McpResource resource, UriTemplateMatcher.Match parameters) {}
+
   static class McpException extends RuntimeException {
     final int code;
+    @Nullable final JsonObject data;
 
     McpException(int code, String message) {
+      this(code, message, null);
+    }
+
+    McpException(int code, String message, @Nullable JsonObject data) {
       super(message);
       this.code = code;
+      this.data = data;
     }
   }
 }

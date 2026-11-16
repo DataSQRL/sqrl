@@ -22,6 +22,7 @@ The following is the [default configuration file](https://raw.githubusercontent.
       "protocols": ["GRAPHQL", "REST", "MCP"],
       "endpoints": "FULL",
       "add-prefix": true,
+      "mcp-resource-uri-prefix": "sqrl://{version}/",
       "max-result-depth": 3,
       "default-limit": 10,
       "paginated-results": false

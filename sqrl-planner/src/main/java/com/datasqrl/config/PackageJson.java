@@ -95,6 +95,8 @@ public interface PackageJson {
 
     boolean isAddOperationsPrefix();
 
+    String getMcpResourceUriPrefix();
+
     int getMaxResultDepth();
 
     int getDefaultLimit();

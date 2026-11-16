@@ -206,42 +206,42 @@ public abstract class AbstractBridgeVerticle extends AbstractVerticle {
 
   protected static void extractUriParameters(
       RoutingContext ctx, ApiOperation operation, Map<String, Object> variables) {
-    var request = ctx.request();
-    var functionParams = operation.getFunction().getParameters();
+    var requestParams = ctx.request().params();
+    var queryParams = new LinkedHashMap<String, String>();
+    requestParams.names().forEach(name -> queryParams.put(name, requestParams.get(name)));
+    extractUriParameters(operation, queryParams, ctx.pathParams(), variables);
+  }
 
-    if (functionParams == null || functionParams.getProperties() == null) {
-      return;
-    }
-
-    var properties = functionParams.getProperties();
-    var queryParams = request.params();
-
-    for (String key : queryParams.names()) {
-      var argument = properties.get(key);
-      if (argument != null) {
-        variables.put(key, convertParameterValue(queryParams.get(key), argument));
-      }
-    }
-
-    // Merge query and path parameters, giving precedence to path params
-    extractPathParameters(ctx, operation, variables);
+  /** Path parameters take precedence over query parameters of the same name. */
+  protected static void extractUriParameters(
+      ApiOperation operation,
+      Map<String, String> queryParams,
+      Map<String, String> pathParams,
+      Map<String, Object> variables) {
+    putParameters(operation, queryParams, variables);
+    putParameters(operation, pathParams, variables);
   }
 
   protected static void extractPathParameters(
       RoutingContext ctx, ApiOperation operation, Map<String, Object> variables) {
+    putParameters(operation, ctx.pathParams(), variables);
+  }
+
+  private static void putParameters(
+      ApiOperation operation, Map<String, String> params, Map<String, Object> variables) {
     var functionParams = operation.getFunction().getParameters();
     if (functionParams == null || functionParams.getProperties() == null) {
       return;
     }
 
     var properties = functionParams.getProperties();
-    for (var pathParameter : ctx.pathParams().entrySet()) {
-      var argument = properties.get(pathParameter.getKey());
-      if (argument != null) {
-        variables.put(
-            pathParameter.getKey(), convertParameterValue(pathParameter.getValue(), argument));
-      }
-    }
+    params.forEach(
+        (name, value) -> {
+          var argument = properties.get(name);
+          if (argument != null) {
+            variables.put(name, convertParameterValue(value, argument));
+          }
+        });
   }
 
   protected static void extractBodyParameters(RoutingContext ctx, Map<String, Object> variables) {
