@@ -105,6 +105,7 @@ import com.datasqrl.planner.tables.AccessVisibility;
 import com.datasqrl.planner.tables.FlinkTableBuilder;
 import com.datasqrl.planner.tables.SourceSinkTableAnalysis;
 import com.datasqrl.planner.tables.SqrlTableFunction;
+import com.datasqrl.planner.util.Documented.Documentation;
 import com.datasqrl.planner.util.SqlScriptPlannerUtil;
 import com.datasqrl.planner.util.SqlScriptWriter;
 import com.datasqrl.planner.util.SqlTableNameExtractor;
@@ -730,7 +731,14 @@ public class SqlScriptPlanner {
 
     var tableAnalysis = sqrlEnv.addView(viewSql, hintsAndDoc, mustDeclareTags, errors);
     try {
-      addTableToDag(tableAnalysis, hintsAndDoc, visibility, subscribingInclude, false, sqrlEnv);
+      addTableToDag(
+          tableAnalysis,
+          hintsAndDoc,
+          hintsAndDoc.getDocumentation(),
+          visibility,
+          subscribingInclude,
+          false,
+          sqrlEnv);
     } catch (RuntimeException e) {
       // Unlike a new table, a column replaces the view of a table that is in the DAG
       if (dagBuilder.getNode(tableAnalysis.getIdentifier()).isEmpty()) {
@@ -749,14 +757,7 @@ public class SqlScriptPlanner {
 
     var comments = statement.getComments();
     var hints = PlannerHints.from(comments, inheritedHints, errors);
-    var documentation =
-        comments.documentation().isEmpty()
-            ? Optional.<String>empty()
-            : Optional.of(
-                comments.documentation().stream()
-                    .map(ParsedObject::get)
-                    .map(String::trim)
-                    .collect(Collectors.joining("\n")));
+    var documentation = comments.docString();
 
     documentation.ifPresent(doc -> sqrlEnv.getTagAnalyzer().validateTags(doc, errors));
 
@@ -913,7 +914,17 @@ public class SqlScriptPlanner {
             false,
             true,
             isHidden);
-    addTableToDag(tableAnalysis, hintsAndDoc, visibility, Optional.empty(), true, sqrlEnv);
+
+    // The analysis of a created table has its documentation: the doc string, or the one of the
+    // table its LIKE clause copies, with the column comments
+    addTableToDag(
+        tableAnalysis,
+        hintsAndDoc,
+        tableAnalysis.getDocumentation(),
+        visibility,
+        Optional.empty(),
+        true,
+        sqrlEnv);
   }
 
   /**
@@ -921,7 +932,8 @@ public class SqlScriptPlanner {
    * and provided hints.
    *
    * @param tableAnalysis
-   * @param hintsAndDoc
+   * @param hintsAndDoc the hints and doc string of the statement that defines the table
+   * @param documentation the documentation of the table's access function
    * @param visibility
    * @param subscribingInclude the standalone include whose script declares the table as a
    *     subscription, or empty
@@ -930,6 +942,7 @@ public class SqlScriptPlanner {
   private void addTableToDag(
       TableAnalysis tableAnalysis,
       HintsAndDoc hintsAndDoc,
+      Documentation documentation,
       AccessVisibility visibility,
       Optional<String> subscribingInclude,
       boolean isSource,
@@ -978,10 +991,7 @@ public class SqlScriptPlanner {
               scriptContext.toIdentifier(fnName), relBuilder.build(), parameters, tableAnalysis);
       fnBuilder.fullPath(NamePath.of(tableName));
       fnBuilder.visibility(visibility);
-      // The analysis of a created table has its consolidated docs: the doc string, or the one of
-      // the table its LIKE clause copies, with the column comments
-      fnBuilder.documentation(
-          isSource ? tableAnalysis.getDocumentation() : hintsAndDoc.getDocumentation());
+      fnBuilder.documentation(documentation);
       fnBuilder.cacheDuration(getCacheDuration(hintsAndDoc));
       addFunctionToDag(
           fnBuilder.build(), hintsAndDoc.dropHints()); // hints don't apply to the function access
@@ -1286,7 +1296,6 @@ public class SqlScriptPlanner {
                       standaloneInclude)));
           mutationBuilder.name(Name.system(origTableName));
           mutationBuilder.insertType(insertType);
-          mutationBuilder.documentation(hintsAndDoc.getDocumentation());
           mutationBuilder.tableBuilder(tableBuilder);
           // UUID and TIMESTAMP are special cases
           tableBuilder

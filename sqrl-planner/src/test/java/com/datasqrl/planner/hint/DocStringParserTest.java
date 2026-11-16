@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.entry;
 
 import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.planner.util.Documented;
 import com.datasqrl.planner.util.Documented.Documentation;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
@@ -479,19 +480,34 @@ class DocStringParserTest {
   }
 
   @Test
-  void givenDocCommentWithLineDecoration_whenParse_thenRemovesDecoration() {
+  void givenListWithoutBullets_whenParse_thenDocumentsColumns() {
     var docString =
-        "Customer profiles @pii=raw\n * # Columns:\n * - address: The address\n"
-            + " *   - street: The street\n *\n * More about **customers**";
+        """
+        # Columns:
+        id: The customer id
+        address: The address
+          street: The street
+        email: The contact email""";
 
     var result = DocStringParser.parse(docString);
 
-    assertThat(result.docString())
-        .isEqualTo("Customer profiles @pii=raw\nMore about **customers**");
+    assertThat(result.docString()).isNull();
     assertThat(result.columnDocs())
         .containsExactly(
+            entry(NamePath.of("id"), "The customer id"),
             entry(NamePath.of("address"), "The address"),
-            entry(NamePath.of("address", "street"), "The street"));
+            entry(NamePath.of("address", "street"), "The street"),
+            entry(NamePath.of("email"), "The contact email"));
+  }
+
+  @Test
+  void givenLineWithoutBulletAfterBulletedList_whenParse_thenItIsDescription() {
+    var docString = "Customers\n# Columns:\n- id: The customer id\nNote: ids are unique";
+
+    var result = DocStringParser.parse(docString);
+
+    assertThat(result.docString()).isEqualTo("Customers\nNote: ids are unique");
+    assertThat(result.columnDocs()).containsOnlyKeys(NamePath.of("id"));
   }
 
   @Test
@@ -524,6 +540,14 @@ class DocStringParserTest {
             .withColumnDocsIfAbsent(Map.of("email", "Overridden", "phone", "The phone number"));
 
     assertThat(result.getColumnOpt("email")).contains("The contact email");
+    assertThat(result.getColumnOpt("phone")).contains("The phone number");
+  }
+
+  @Test
+  void givenNoDocString_whenColumnDocsAddedIfAbsent_thenTheyDocumentTheColumns() {
+    var result = Documented.EMPTY.withColumnDocsIfAbsent(Map.of("phone", "The phone number"));
+
+    assertThat(result.docString()).isNull();
     assertThat(result.getColumnOpt("phone")).contains("The phone number");
   }
 }

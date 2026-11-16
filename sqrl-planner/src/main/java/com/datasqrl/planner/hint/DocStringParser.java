@@ -19,10 +19,8 @@ import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.planner.util.Documented.Documentation;
 import java.util.ArrayDeque;
-import java.util.Arrays;
 import java.util.Deque;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 import lombok.AccessLevel;
@@ -33,8 +31,10 @@ import lombok.NoArgsConstructor;
  *
  * <p>Supports headers like "Columns", "Column", "Arguments", "Argument" (case-insensitive),
  * optionally followed by punctuation. Under each header, items are specified as "- name:
- * description" pairs. An item that is indented more than the item above it documents a field nested
- * in that item, to any depth.
+ * description" pairs, also with {@code *} as the bullet. An item that is indented more than the
+ * item above it documents a field nested in that item, to any depth. The items of a list whose
+ * first item has no bullet need none, like "name: description" in a doc comment that starts each
+ * line with {@code *}, after the comment parser removed that {@code *}.
  *
  * <p>Example:
  *
@@ -51,10 +51,6 @@ import lombok.NoArgsConstructor;
  * # Arguments
  * - limit: Maximum number of results
  * }</pre>
- *
- * <p>When every line after the first starts with an indented {@code *}, as in a {@code /** ...
- * *}{@code /} comment that starts each line with {@code " * "}, that {@code *} and the space after
- * it are removed from each line first.
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class DocStringParser {
@@ -62,20 +58,9 @@ public final class DocStringParser {
   private static final Pattern SECTION_HEADER_PATTERN =
       Pattern.compile("^\\s*#*\\s*(columns?|arguments?)\\s*[:\\-]?\\s*$", Pattern.CASE_INSENSITIVE);
 
+  /** A list item: its indentation, its optional bullet, its name and its description. */
   private static final Pattern LIST_ITEM_PATTERN =
-      Pattern.compile("^(\\s*)[-*]\\s*([\\w]+)\\s*:\\s*(.+)$");
-
-  /**
-   * The {@code *} that starts a line of a doc comment, with the space after it. It is followed by a
-   * space or ends the line, so Markdown bold ({@code **}) is not one.
-   */
-  private static final Pattern LINE_DECORATION_PATTERN = Pattern.compile("^\\s*\\*(?: |$)");
-
-  /**
-   * A line of a doc comment that starts with the decoration. The decoration is indented, as in
-   * {@code " * "}, unlike a {@code *} list item that starts the line.
-   */
-  private static final Pattern DECORATED_LINE_PATTERN = Pattern.compile("^\\s+\\*(?: |$)");
+      Pattern.compile("^(\\s*)([-*]\\s*)?(\\w+)\\s*:\\s*(.+)$");
 
   private static final int TAB_WIDTH = 4;
 
@@ -104,11 +89,13 @@ public final class DocStringParser {
     var argumentDocs = new LinkedHashMap<NamePath, String>();
     var remainingDoc = new StringBuilder();
 
-    var lines = removeLineDecoration(Arrays.asList(docString.split("\\r?\\n")));
+    var lines = docString.split("\\r?\\n");
     var currentSection = SectionType.NONE;
     boolean inDefinitionBlock = false;
     // The items above the current one that it may be nested in, the innermost on top
     Deque<ListItem> parents = new ArrayDeque<>();
+    // Whether the items of the current list start with a bullet
+    boolean bulletedList = true;
 
     for (var line : lines) {
       var detectedSection = detectSectionHeader(line);
@@ -122,15 +109,21 @@ public final class DocStringParser {
 
       if (inDefinitionBlock) {
         var itemMatch = LIST_ITEM_PATTERN.matcher(line);
-        if (itemMatch.matches()) {
+        var matches = itemMatch.matches();
+        var hasBullet = matches && itemMatch.group(2) != null;
+        if (matches && parents.isEmpty()) {
+          // The first item of a list decides whether its items start with a bullet
+          bulletedList = hasBullet;
+        }
+        if (matches && (hasBullet || !bulletedList)) {
           var indentation = indentation(itemMatch.group(1));
           while (!parents.isEmpty() && parents.peek().indentation() >= indentation) {
             parents.pop();
           }
           var parent = parents.isEmpty() ? NamePath.ROOT : parents.peek().path();
-          var path = parent.concat(Name.system(itemMatch.group(2).trim()));
+          var path = parent.concat(Name.system(itemMatch.group(3).trim()));
           parents.push(new ListItem(indentation, path));
-          var description = itemMatch.group(3).trim();
+          var description = itemMatch.group(4).trim();
 
           if (currentSection == SectionType.COLUMN) {
             columnDocs.put(path, description);
@@ -161,26 +154,6 @@ public final class DocStringParser {
 
     return new Documentation(
         finalDocString.isEmpty() ? null : finalDocString, columnDocs, argumentDocs);
-  }
-
-  /**
-   * Removes the {@code *} that starts each line of a doc comment, if every line after the first,
-   * other than blank lines, starts with an indented one. The first line has no indentation, since
-   * the doc string is trimmed.
-   */
-  private static List<String> removeLineDecoration(List<String> lines) {
-    var decorated =
-        lines.size() > 1
-            && lines.stream()
-                .skip(1)
-                .filter(line -> !line.isBlank())
-                .allMatch(line -> DECORATED_LINE_PATTERN.matcher(line).lookingAt());
-    if (!decorated) {
-      return lines;
-    }
-    return lines.stream()
-        .map(line -> LINE_DECORATION_PATTERN.matcher(line).replaceFirst(""))
-        .toList();
   }
 
   /** Returns the width of the indentation, with a tab as {@value #TAB_WIDTH} spaces. */

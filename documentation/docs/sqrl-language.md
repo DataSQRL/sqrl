@@ -530,7 +530,7 @@ CREATE TABLE CustomerProfiles (
 );
 ```
 
-A column of a `CREATE TABLE` that the doc-string doesn't document gets its `COMMENT` as its documentation, like `id` above. Flink SQL keeps the comments of top-level columns only, so document nested fields in the doc-string.
+For compatibility with Flink SQL, a column of a `CREATE TABLE` that the doc-string doesn't document gets its `COMMENT` as its documentation, like `id` above. Prefer the doc-string: Flink SQL keeps the comments of top-level columns only, and a doc-string entry overrides the column's `COMMENT`.
 
 ---
 

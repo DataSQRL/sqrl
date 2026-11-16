@@ -22,6 +22,7 @@ import com.datasqrl.planner.analyzer.TableOrFunctionAnalysis;
 import com.datasqrl.planner.hint.DeclassifyHint;
 import com.datasqrl.planner.util.Documented.Documentation;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.Function;
@@ -36,8 +37,9 @@ import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
  *
  * <ul>
  *   <li>The <b>inherited</b> tags are the tags of all input tables, with the highest value per tag.
- *   <li>The <b>declared</b> tags are the tags in the table's documentation. A created table
- *       declares tags in its column comments too, see {@link #declaredTags}.
+ *   <li>The <b>declared</b> tags are the tags in the table's documentation. For a created table,
+ *       that includes the comments of the columns that its doc string doesn't document, see {@link
+ *       #declaredTags}.
  *   <li>The <b>effective</b> tags are the inherited tags that are not declassified with the {@code
  *       declassify} hint, combined with the declared tags, with the highest value per tag.
  *       Downstream tables inherit the effective tags, and the deployment assets list them.
@@ -160,8 +162,40 @@ public class TagAnalyzer {
             documentation.columnDocs().values().stream(),
             documentation.argumentDocs().values().stream())
         .flatMap(Function.identity())
-        .map(text -> definitions.parse(text, invalidTag -> {}))
+        .map(this::validTagsIn)
         .reduce(TableTags.EMPTY, TableTags::merge);
+  }
+
+  /**
+   * Warns about each tag in the comment of a created table's column that the table doesn't declare.
+   * The doc string takes precedence over the comment of a column that it documents, so the tags in
+   * that comment are not declared unless the doc string declares them too.
+   *
+   * @param table the name of the table
+   * @param columnComments the comments of the table's columns, by column name
+   * @param declared the tags that the table declares
+   */
+  public void checkCommentTagsDeclared(
+      String table, Map<String, String> columnComments, TableTags declared, ErrorCollector errors) {
+
+    columnComments.forEach(
+        (column, comment) ->
+            validTagsIn(comment).values().stream()
+                .filter(
+                    tag ->
+                        declared.get(tag.name()).filter(found -> !found.isLowerThan(tag)).isEmpty())
+                .forEach(
+                    tag ->
+                        errors.warn(
+                            "Table [%s] does not declare tag [%s] from the comment of column [%s],"
+                                + " because the doc string documents the column: declare the tag in"
+                                + " the doc string",
+                            table, tag, column)));
+  }
+
+  /** The valid tags in a text. Invalid tags are ignored, see {@link #validateTags}. */
+  private TableTags validTagsIn(String text) {
+    return definitions.parse(text, invalidTag -> {});
   }
 
   private static TableTags inheritedTags(List<? extends TableOrFunctionAnalysis> inputs) {

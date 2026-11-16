@@ -33,7 +33,6 @@ import com.datasqrl.planner.dag.plan.MutationTable;
 import com.datasqrl.planner.parser.AccessModifier;
 import com.datasqrl.planner.tables.SqrlFunctionParameter;
 import com.datasqrl.planner.tables.SqrlTableFunction;
-import com.datasqrl.planner.util.Documented;
 import com.datasqrl.planner.util.Documented.Lookup;
 import com.datasqrl.server.graphql.CustomScalars;
 import com.datasqrl.server.util.GraphqlSchemaUtil;
@@ -44,6 +43,7 @@ import graphql.schema.GraphQLArgument;
 import graphql.schema.GraphQLDirective;
 import graphql.schema.GraphQLEnumType;
 import graphql.schema.GraphQLFieldDefinition;
+import graphql.schema.GraphQLInputType;
 import graphql.schema.GraphQLNonNull;
 import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLOutputType;
@@ -60,7 +60,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.rel.type.RelDataTypeField;
-import org.apache.calcite.schema.FunctionParameter;
 import org.apache.commons.collections.ListUtils;
 import org.springframework.stereotype.Component;
 
@@ -357,49 +356,36 @@ public class GraphqlSchemaFactory {
   }
 
   private List<GraphQLArgument> createArguments(SqrlTableFunction tableFunction) {
-    List<FunctionParameter> parameters =
+    var argumentDocs = tableFunction.getDocumentation().getArgumentLookup();
+    var parametersArguments =
         tableFunction.getParameters().stream()
             .filter(parameter -> ((SqrlFunctionParameter) parameter).isExternalArgument())
+            .flatMap(
+                parameter ->
+                    GraphqlSchemaUtil.getGraphQLInputType(
+                        parameter.getType(null),
+                        NamePath.of(parameter.getName()),
+                        extendedScalarTypes,
+                        argumentDocs.nested(parameter.getName()))
+                        .map(type -> createArgument(parameter.getName(), type, argumentDocs))
+                        .stream())
             .toList();
 
-    final List<GraphQLArgument> parametersArguments =
-        parameters.stream()
-            .filter(
-                p ->
-                    GraphqlSchemaUtil.getGraphQLInputType(
-                            p.getType(null),
-                            NamePath.of(p.getName()),
-                            extendedScalarTypes,
-                            Documented.NO_LOOKUP)
-                        .isPresent())
-            .map(
-                parameter -> {
-                  var builder =
-                      GraphQLArgument.newArgument()
-                          .name(parameter.getName())
-                          .type(
-                              GraphqlSchemaUtil.getGraphQLInputType(
-                                      parameter.getType(null),
-                                      NamePath.of(parameter.getName()),
-                                      extendedScalarTypes,
-                                      tableFunction
-                                          .getDocumentation()
-                                          .getArgumentLookup()
-                                          .nested(parameter.getName()))
-                                  .get());
-                  tableFunction
-                      .getDocumentation()
-                      .getArgumentOpt(parameter.getName())
-                      .ifPresent(builder::description);
-                  return builder.build();
-                })
-            .collect(Collectors.toList());
-    List<GraphQLArgument> limitAndOffsetArguments = List.of();
+    var limitAndOffsetArguments = List.<GraphQLArgument>of();
     if (tableFunction.getVisibility().access() != AccessModifier.SUBSCRIPTION
         && tableFunction.getMultiplicity() == Multiplicity.MANY) {
       limitAndOffsetArguments = generateLimitAndOffsetArguments(tableFunction);
     }
     return ListUtils.union(parametersArguments, limitAndOffsetArguments);
+  }
+
+  private static GraphQLArgument createArgument(
+      String name, GraphQLInputType type, Lookup argumentDocs) {
+
+    var builder = GraphQLArgument.newArgument().name(name).type(type);
+    argumentDocs.getDocsFor(name).ifPresent(builder::description);
+
+    return builder.build();
   }
 
   private List<GraphQLArgument> generateLimitAndOffsetArguments(SqrlTableFunction tableFunction) {

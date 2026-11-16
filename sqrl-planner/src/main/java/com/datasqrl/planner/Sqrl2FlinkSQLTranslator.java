@@ -56,6 +56,7 @@ import com.datasqrl.planner.tables.SqrlTableFunction;
 import com.datasqrl.planner.tags.TableTags;
 import com.datasqrl.planner.tags.TagAnalyzer;
 import com.datasqrl.planner.tags.TagDefinitions;
+import com.datasqrl.planner.util.Documented.Documentation;
 import com.datasqrl.server.MetadataType;
 import com.datasqrl.server.exec.FlinkExecFunction;
 import com.datasqrl.server.exec.FlinkExecFunctionFactory;
@@ -984,7 +985,9 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
     var tableBuilder = viewAnalysis.tableAnalysis();
     tableBuilder
         .objectIdentifier(addResult.baseTableIdentifier)
-        .originalSql(addResult.completeCreateTableSql);
+        .originalSql(addResult.completeCreateTableSql)
+        // The view analysis documents the table from its doc string, without the column comments
+        .documentation(addResult.documentation);
 
     // Remove trivial LogicalProject so that subsequent references match
     var relNode = tableBuilder.build().getOriginalRelnode();
@@ -1004,6 +1007,10 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
   /**
    * @param tableName the name of the table in Flink, which has a suffix for an export
    * @param statementName the name of the table in its {@code CREATE TABLE} statement
+   * @param hintsAndDoc the hints and doc string of the statement, with the doc string of the table
+   *     that its LIKE clause copies if it has none
+   * @param documentation the documentation of the table: its doc string, with the comments of the
+   *     columns that the doc string doesn't document
    */
   public record AddTableResult(
       String tableName,
@@ -1013,7 +1020,8 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
       TableAnalysis tableAnalysis,
       SqlCreateTable createdTable,
       String completeCreateTableSql,
-      HintsAndDoc hintsAndDoc) {}
+      HintsAndDoc hintsAndDoc,
+      Documentation documentation) {}
 
   /**
    * Adds a table to Flink and analyzes the table for schema and primary key definition. If the
@@ -1097,11 +1105,11 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
     // Create table analysis
     var flinkSchema = tableOp.getCatalogTable().getResolvedSchema();
     var tableId = tableOp.getTableIdentifier();
-    // The column comments document the columns that the doc string doesn't, also for the tags
-    var tableHintsAndDoc =
-        updateDocumentationFromLike(tableId, fullTable, hintsAndDoc)
-            .withColumnComments(columnComments(flinkSchema));
-    var tags = getDeclaredTags(fullTable, tableHintsAndDoc, errors);
+    var tableHintsAndDoc = updateDocumentationFromLike(tableId, fullTable, hintsAndDoc);
+    // The comment of a column that the doc string doesn't document is its documentation
+    var columnComments = columnComments(flinkSchema);
+    var documentation = tableHintsAndDoc.getDocumentation().withColumnDocsIfAbsent(columnComments);
+    var tags = getDeclaredTags(origTableName, fullTable, columnComments, documentation, errors);
     // Map primary key
     var pk =
         flinkSchema
@@ -1149,7 +1157,7 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
       mutationBld.inputDataType(inputType.build());
       mutationBld.outputDataType(outputType.build());
       mutationBld.tags(tags);
-      mutationBld.documentation(tableHintsAndDoc.getDocumentation());
+      mutationBld.documentation(documentation);
     }
     var connector =
         new FlinkConnectorConfigWrapper(
@@ -1173,7 +1181,8 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
         tableAnalysis,
         fullTable,
         completeCreateTableSql,
-        tableHintsAndDoc);
+        tableHintsAndDoc,
+        documentation);
   }
 
   /**
@@ -1181,15 +1190,26 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
    * the comments of the columns that its doc string doesn't document, also of the columns that a
    * LIKE clause copies. All comments of the columns that the statement declares are validated,
    * since the comments that a LIKE clause copies are validated on the table that declares them.
+   *
+   * @param tableName the name of the table in its {@code CREATE TABLE} statement
+   * @param columnComments the comments of all columns of the table, by column name
+   * @param documentation the documentation of the table
    */
   private TableTags getDeclaredTags(
-      SqlCreateTable createdTable, HintsAndDoc hintsAndDoc, ErrorCollector errors) {
+      String tableName,
+      SqlCreateTable createdTable,
+      Map<String, String> columnComments,
+      Documentation documentation,
+      ErrorCollector errors) {
 
     createdTable.getColumnList().stream()
         .map(column -> ((SqlTableColumn) column).getComment())
         .forEach(comment -> tagAnalyzer.validateTags(comment, errors));
 
-    return tagAnalyzer.declaredTags(hintsAndDoc.getDocumentation());
+    var declared = tagAnalyzer.declaredTags(documentation);
+    tagAnalyzer.checkCommentTagsDeclared(tableName, columnComments, declared, errors);
+
+    return declared;
   }
 
   /** The comments of the table's columns, by column name. */

@@ -31,6 +31,7 @@ import com.datasqrl.planner.parser.ParsedObject;
 import com.datasqrl.planner.parser.SqrlComments;
 import com.datasqrl.planner.tags.TagDefinition.RequiredColumn;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -125,6 +126,31 @@ class TagAnalyzerTest {
     var tags = analyzer.declaredTags(documentation);
 
     assertThat(tags).hasToString("");
+  }
+
+  @Test
+  void givenCommentTagsThatTableDoesNotDeclare_whenCheckCommentTagsDeclared_thenWarnsAboutEach() {
+    var declared = DEFINITIONS.parse("@pii=raw @classification=secret", invalid -> {});
+    var comments = new LinkedHashMap<String, String>();
+    comments.put("email", "Contact email @gdpr @pii=masked");
+    comments.put("level", "Clearance @classification=top_secret @undefined");
+    comments.put("id", "The id @classification=secret");
+
+    analyzer.checkCommentTagsDeclared("Contacts", comments, declared, errors);
+
+    assertThat(all())
+        .extracting(ErrorMessage::getSeverity, ErrorMessage::getMessage)
+        .containsExactly(
+            tuple(
+                Severity.WARN,
+                "Table [Contacts] does not declare tag [@gdpr] from the comment of column [email],"
+                    + " because the doc string documents the column: declare the tag in the doc"
+                    + " string"),
+            tuple(
+                Severity.WARN,
+                "Table [Contacts] does not declare tag [@classification=top_secret] from the comment"
+                    + " of column [level], because the doc string documents the column: declare"
+                    + " the tag in the doc string"));
   }
 
   @Test
