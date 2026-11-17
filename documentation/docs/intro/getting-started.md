@@ -1,6 +1,6 @@
 ---
 title: "Getting Started with DataSQRL"
-description: "Run the DataSQRL agent for operational data engineering with Docker and an LLM API key, or install the DataSQRL plugin for Claude Code, Codex, Cursor, or GitHub Copilot."
+description: "Run the DataSQRL agent for operational data engineering with Docker and an LLM API key, or run the advanced agent from Claude Code, Codex, Cursor, or GitHub Copilot with the DataSQRL plugin."
 ---
 
 import Tabs from '@theme/Tabs';
@@ -78,11 +78,13 @@ Once the Pi terminal is running, give the coding agent a prompt like:
 
 The [agent README on GitHub](https://github.com/DataSQRL/sqrl/blob/main/agent/README.md) shows how to customize the core agent to use a different coding agent, skills, AGENTS.md, and more.
 
-## DataSQRL Plugin
+## DataSQRL Advanced Agent
 
-You can also install the DataSQRL harness into your existing coding agent as the DataSQRL plugin, with planning mode, iterative improvement, and deployment workflows. It plugs into Claude Code, Codex, Cursor, or GitHub Copilot and GitHub to act as your data engineering sidekick.
+The advanced agent extends the core agent with verifiers, judges, and implementation loops, plus planning and deployment workflows. You run it from your existing coding agent (Claude Code, Codex, Cursor, or GitHub Copilot) through the DataSQRL plugin, which works with GitHub to act as your data engineering sidekick.
 
-Install the DataSQRL plugin, describe the pipeline you want in plain English, review the plan, and let the DataSQRL agent build it. The DataSQRL agent implements, compiles, tests, verifies, and refines the pipeline until the tests pass. It is more thorough and complete than the core agent but takes more time and resources to run.
+Install the DataSQRL plugin, describe the pipeline you want in plain English, review the plan, and let the advanced agent build it. It implements, compiles, tests, verifies, and refines the pipeline until the tests pass. It is more thorough and complete than the core agent but takes more time and resources to run.
+
+The plugin also runs the **pro agent**, the commercial DataSQRL offering that extends the advanced agent with enterprise features, for teams that have access to it.
 
 ### Prerequisites
 
@@ -150,11 +152,11 @@ Your agent asks clarifying questions about sources, payloads, entities, time sem
 
 #### 3. Review the plan
 
-The DataSQRL agent turns the requirements into a checkbox-tracked plan at `adr/plan_<ts>.md`. Read through it. This is the point where you steer the design, before anything is built. Ask for changes, or tell your agent the plan looks good to proceed.
+The advanced agent turns the requirements into a checkbox-tracked plan at `adr/plan_<ts>.md`. Read through it. This is the point where you steer the design, before anything is built. Ask for changes, or tell your agent the plan looks good to proceed.
 
 #### 4. Let the agent implement
 
-Once you approve the plan, the DataSQRL agent runs the full implement → compile → test → verify → refine loop. An implementation run takes 30–60+ minutes, so it runs **detached**:
+Once you approve the plan, the advanced agent runs the full implement → compile → test → verify → refine loop. An implementation run takes 30–60+ minutes, so it runs **detached**:
 
 - The run belongs to Docker, not to your session. You can close the session, interrupt your agent, or restart your editor, and the run still finishes.
 - The launch prints a `tail -f` command you can run in another terminal to follow the agent's progress live.
@@ -178,7 +180,7 @@ To run the pipeline and its API locally, use the [`run` command](/docs/compiler#
 
 ### Make Changes
 
-For a small, well-scoped change to an existing project, you don't need the full requirements and planning workflow. Ask your agent for a patch (`/datasqrl:patch` in Claude Code). It sends the request straight to the implementing agent, which makes the change, updates the affected tests and documentation, and runs the tests until they pass.
+For a small, well-scoped change to an existing project, you don't need the full requirements and planning workflow. Ask your agent for a patch (`/datasqrl:patch` in Claude Code). It sends the request straight to the advanced agent, which makes the change, updates the affected tests and documentation, and runs the tests until they pass.
 
 > Add an endpoint that returns the total order count and the timestamp of the most recent order.
 

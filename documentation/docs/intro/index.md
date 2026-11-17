@@ -30,7 +30,7 @@ For the full design, read the [harness architecture](/blog/agentic-data-engineer
 
 | I want to… | Go to |
 |---|---|
-| Try it on my own data | [Getting Started](getting-started): run the core agent in Docker, or install the DataSQRL plugin for Claude Code, Codex, Cursor, or Copilot |
+| Try it on my own data | [Getting Started](getting-started): run the core agent in Docker, or the advanced agent from Claude Code, Codex, Cursor, or Copilot through the DataSQRL plugin |
 | See what it can build | [Examples](examples): data products for a retail bank, plus self-contained pipelines across many use cases |
 | Compare DataSQRL to dbt, Flink, streaming databases, and other tools | [How DataSQRL Compares](comparison): analytics versus operational data engineering, and when to use which |
 | Get short answers to common questions | [FAQ](faq): scope, infrastructure, lock-in, extensibility, and policies |

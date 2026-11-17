@@ -491,8 +491,9 @@ ls build/deploy/plan`}
                     You get SQL scripts with tests that you can read, run, and verify.
                   </p>
                   <p>
-                    Want planning, iterative refinement, and deployment workflows? <Link to="https://github.com/DataSQRL/datasqrl-plugin">Install the
-                    DataSQRL plugin</Link> for Claude Code, Codex, Cursor, or GitHub Copilot.
+                    Want verifiers, judges, and implementation loops? Run the advanced agent from Claude
+                    Code, Codex, Cursor, or GitHub Copilot with the <Link to="https://github.com/DataSQRL/datasqrl-plugin">DataSQRL
+                    plugin</Link>.
                   </p>
                   <Link className="button button--primary button--lg margin-right--sm margin-bottom--sm"
                         to="/docs/intro/getting-started">Getting Started Guide</Link>
