@@ -391,7 +391,7 @@ Write a tag as `@name` or `@name=value` in the doc string of a table, preceded b
 CustomerProfiles := SELECT id, email, state FROM Customers;
 ```
 
-A table's declared tags are all tags in its doc string, including column documentation, and in the comments of its columns in `CREATE TABLE` (e.g. `email STRING COMMENT 'Contact email @gdpr'`). A `CREATE TABLE ... LIKE` also gets the tags in the comments of the columns it copies. Tags count toward the whole table, also when they are written on a column. If a tag appears more than once, the highest value counts. Tags stay part of the doc string, so they also appear in the generated API documentation.
+A table's declared tags are all tags in its doc string, including column documentation. In `CREATE TABLE`, a column that the doc string doesn't document is documented by its comment (e.g. `email STRING COMMENT 'Contact email @gdpr'`), so the tags in that comment are declared too. The comment of a column that the doc string documents is not used, and neither are its tags: the compiler warns about each tag in such a comment that the table doesn't declare otherwise. A `CREATE TABLE ... LIKE` gets the comments of the columns it copies the same way. Tags count toward the whole table, also when they are written on a column. If a tag appears more than once, the highest value counts. Tags stay part of the doc string, so they also appear in the generated API documentation.
 
 #### Propagation and validation
 

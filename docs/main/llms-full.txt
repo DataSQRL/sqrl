@@ -990,6 +990,29 @@ NEXT_BATCH;
 * `/* ... */` multi-line comment
 * `/** ... */` **doc-string**: attached to the next definition and propagated to generated API docs. When [`compiler.tags`](https://docs.datasqrl.com/docs/main/configuration.md#tags-compilertags) is configured, its `@name` and `@name=value` words are tags that the compiler validates and propagates to the tables that read the definition.
 
+A `# Columns` or `# Arguments` section in a doc-string documents the columns or arguments of the definition, as `- name: description` list items. An item that is indented more than the item above it documents a field nested in that item, to any depth: the fields of a `ROW` column, or of the rows of an `ARRAY<ROW<...>>` column. The `*` that starts each line of a doc-string is optional.
+
+```sql
+/** Profiles that customers submit
+ * # Columns:
+ * - email: The contact email
+ * - address: The postal address
+ *   - street: The street and house number
+ *   - geo: The location of the address
+ *     - lat: The latitude
+ * - orders: The orders of the customer
+ *   - total: The order total
+ */
+CREATE TABLE CustomerProfiles (
+  id BIGINT NOT NULL COMMENT 'The customer id',
+  email STRING NOT NULL,
+  address ROW<street STRING, geo ROW<lat DOUBLE, lon DOUBLE>>,
+  orders ARRAY<ROW<orderId BIGINT, total DOUBLE>>
+);
+```
+
+For compatibility with Flink SQL, a column of a `CREATE TABLE` that the doc-string doesn't document gets its `COMMENT` as its documentation, like `id` above. Prefer the doc-string: Flink SQL keeps the comments of top-level columns only, and a doc-string entry overrides the column's `COMMENT`.
+
 ---
 
 ## Validation Rules
@@ -1799,7 +1822,7 @@ Write a tag as `@name` or `@name=value` in the doc string of a table, preceded b
 CustomerProfiles := SELECT id, email, state FROM Customers;
 ```
 
-A table's declared tags are all tags in its doc string, including column documentation, and in the comments of its columns in `CREATE TABLE` (e.g. `email STRING COMMENT 'Contact email @gdpr'`). A `CREATE TABLE ... LIKE` also gets the tags in the comments of the columns it copies. Tags count toward the whole table, also when they are written on a column. If a tag appears more than once, the highest value counts. Tags stay part of the doc string, so they also appear in the generated API documentation.
+A table's declared tags are all tags in its doc string, including column documentation. In `CREATE TABLE`, a column that the doc string doesn't document is documented by its comment (e.g. `email STRING COMMENT 'Contact email @gdpr'`), so the tags in that comment are declared too. The comment of a column that the doc string documents is not used, and neither are its tags: the compiler warns about each tag in such a comment that the table doesn't declare otherwise. A `CREATE TABLE ... LIKE` gets the comments of the columns it copies the same way. Tags count toward the whole table, also when they are written on a column. If a tag appears more than once, the highest value counts. Tags stay part of the doc string, so they also appear in the generated API documentation.
 
 #### Propagation and validation
 
