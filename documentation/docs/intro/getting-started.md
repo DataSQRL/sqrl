@@ -10,9 +10,9 @@ import TabItem from '@theme/TabItem';
 
 You will have an agent build a real-time pipeline with a data API, then verify it.
 
-## Basic DataSQRL Agent
+## DataSQRL Core Agent
 
-The basic DataSQRL agent runs as a Docker image on your local machine. It wraps the Pi coding agent with the DataSQRL framework, an `AGENTS.md` file, and skills.
+The DataSQRL core agent runs as the `datasqrl/core-agent` Docker image on your local machine. It wraps the Pi coding agent with the DataSQRL harness, an `AGENTS.md` file, and skills.
 All you need is a recent version of [Docker](https://www.docker.com/products/docker-desktop/) and an API key from the LLM provider you'd like to use. If you don't have an API key or want to see how the agent works step-by-step, [follow this tutorial](getting-started-no-key) instead.
 
 <Tabs groupId="os">
@@ -76,13 +76,13 @@ Once the Pi terminal is running, give the coding agent a prompt like:
 
 > Build a pipeline that ingests our order data from Kafka in real time and serves hourly revenue per product through an API.
 
-The [agent README on GitHub](https://github.com/DataSQRL/sqrl/blob/main/agent/README.md) shows how to customize the basic agent to use a different coding agent, skills, AGENTS.md, and more.
+The [agent README on GitHub](https://github.com/DataSQRL/sqrl/blob/main/agent/README.md) shows how to customize the core agent to use a different coding agent, skills, AGENTS.md, and more.
 
-## Advanced DataSQRL Agent
+## DataSQRL Plugin
 
-You can also run DataSQRL as a sub-agent with planning mode, iterative improvement, and deployment workflows. It plugs into your existing coding agent and GitHub to act as your data engineering sidekick.
+You can also install the DataSQRL harness into your existing coding agent as the DataSQRL plugin, with planning mode, iterative improvement, and deployment workflows. It plugs into Claude Code, Codex, Cursor, or GitHub Copilot and GitHub to act as your data engineering sidekick.
 
-Install the DataSQRL plugin, describe the pipeline you want in plain English, review the plan, and let the DataSQRL agent build it. The DataSQRL agent implements, compiles, tests, verifies, and refines the pipeline until the tests pass. It is more thorough and complete than the basic agent but takes more time and resources to run.
+Install the DataSQRL plugin, describe the pipeline you want in plain English, review the plan, and let the DataSQRL agent build it. The DataSQRL agent implements, compiles, tests, verifies, and refines the pipeline until the tests pass. It is more thorough and complete than the core agent but takes more time and resources to run.
 
 ### Prerequisites
 

@@ -480,7 +480,7 @@ ls build/deploy/plan`}
                 <div className="col col--5 col--offset-1 text--left">
                   <h2>Getting Started</h2>
                   <p className="hero__subtitle">
-                    The agent wraps the Pi coding agent with the DataSQRL harness and skills. Once
+                    The DataSQRL core agent wraps the Pi coding agent with the DataSQRL harness and skills. Once
                     it is running, tell it what you need in plain English:
                   </p>
                   <blockquote>
@@ -492,8 +492,7 @@ ls build/deploy/plan`}
                   </p>
                   <p>
                     Want planning, iterative refinement, and deployment workflows? <Link to="https://github.com/DataSQRL/datasqrl-plugin">Install the
-                    advanced DataSQRL agent</Link> as a plugin for Claude Code, Codex, Cursor, or GitHub
-                    Copilot.
+                    DataSQRL plugin</Link> for Claude Code, Codex, Cursor, or GitHub Copilot.
                   </p>
                   <Link className="button button--primary button--lg margin-right--sm margin-bottom--sm"
                         to="/docs/intro/getting-started">Getting Started Guide</Link>

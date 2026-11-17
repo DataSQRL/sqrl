@@ -1,8 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 460" width="960" height="460" role="img" aria-label="DataSQRL harness toolkit: your skills and policies plus a coding agent plus the DataSQRL framework, packaged as one data engineering agent that produces one readable SQL file compiled into pipelines, data APIs, data products and operational data">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 460" width="960" height="460" role="img" aria-label="DataSQRL harness: your skills and policies plus a coding agent plus the DataSQRL compiler, validator, and simulator, packaged as one DataSQRL agent that produces one readable SQL file compiled into pipelines, data APIs, data products and operational data">
 <defs><marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#1d3557"/></marker></defs>
 <rect x="1" y="1" width="958" height="458" rx="16" fill="#ffffff" stroke="#e0e0e0"/>
 <rect x="24" y="24" width="500" height="412" rx="14" fill="#fbf9fe" stroke="#a46ee0" stroke-width="2" stroke-dasharray="7 5"/>
-<text x="44" y="54" font-size="14" font-weight="800" letter-spacing="0.8" fill="#6d38a3" font-family="Inter, -apple-system, Segoe UI, Helvetica, Arial, sans-serif">YOUR DATA ENGINEERING AGENT</text>
+<text x="44" y="54" font-size="14" font-weight="800" letter-spacing="0.8" fill="#6d38a3" font-family="Inter, -apple-system, Segoe UI, Helvetica, Arial, sans-serif">YOUR DATASQRL AGENT</text>
 <text x="504" y="54" text-anchor="end" font-size="12" fill="#6d38a3" font-family="Inter, -apple-system, Segoe UI, Helvetica, Arial, sans-serif">one Docker container</text>
 
 <rect x="44" y="74" width="460" height="96" rx="10" fill="#f3ecfb" stroke="#c89df4"/>

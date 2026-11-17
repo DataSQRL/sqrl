@@ -101,7 +101,7 @@ Multi-module Maven project (versions live in the root `pom.xml` properties, not 
 - **sqrl-testing/** - Integration and end-to-end tests:
   - `sqrl-testing-integration/` - Compiler and pipeline integration tests, including snapshot tests
   - `sqrl-testing-container/` - Docker image end-to-end tests
-- **agent/** - DataSQRL data engineering agent image and its skills
+- **agent/** - DataSQRL core agent image (`datasqrl/core-agent`) and its skills
 - **documentation/** - User documentation site
 
 ## Development Workflow
