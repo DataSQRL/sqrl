@@ -1,4 +1,4 @@
-# DataSQRL: Agentic Data Engineering Harness
+# DataSQRL: Agentic Data Engineering for Operational Data
 
 [![CircleCI](https://dl.circleci.com/status-badge/img/gh/DataSQRL/sqrl/tree/main.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/gh/DataSQRL/sqrl/tree/main)
 [![Docs](https://img.shields.io/badge/docs-available-brightgreen.svg)](http://docs.datasqrl.com)
@@ -7,14 +7,29 @@
 [![Docker Image Version](https://img.shields.io/docker/v/datasqrl/cmd?sort=semver)](https://hub.docker.com/r/datasqrl/cmd/tags)
 [![Maven Central](https://img.shields.io/maven-central/v/com.datasqrl/sqrl-root)](https://repo1.maven.org/maven2/com/datasqrl/sqrl-root/)
 
-**DataSQRL is an open-source harness for building data engineering agents designed around human control, correctness, and safety.**
+**DataSQRL is an open-source harness for agentic data engineering on operational data: agents build real-time pipelines, data APIs, and data products; a compiler verifies them.**
 
-It extends your coding agent of choice with a SQL compiler, validator, event-time simulator, and your own skills and policies. The result is a data engineering agent you can trust with pipelines, batch jobs, data APIs (REST, GraphQL, MCP), data products, and operational data.
+It extends your coding agent with a SQL compiler, validator, and event-time simulator, so the agent can build real-time pipelines, data APIs (REST, GraphQL, MCP), and data products, and verify them before anything is deployed. Add your own skills and policies to make it your organization's DataSQRL agent.
 
 ![DataSQRL harness toolkit: your skills and policies, a coding agent, and the DataSQRL framework packaged as one data engineering agent](documentation/static/img/diagrams/agentic/harness_toolkit.svg)
 
 
+## When to use DataSQRL
+
+- You need a data API (GraphQL, REST, or MCP) over operational data.
+- You build an operational data product with data quality and observability.
+- Kafka is in the pipeline, as source, sink, or both.
+- Results are needed in seconds or minutes, not after the next batch run.
+- An application, a customer, or an AI agent consumes the output, not only a dashboard.
+- You are capturing changes from operational systems into data streams or data lakes.
+
+It is not the fit when the work is dbt models on a schedule inside Snowflake, BigQuery, or Databricks.
+
+Working in dbt and a warehouse? [See how DataSQRL differs](https://docs.datasqrl.com/docs/intro/comparison).
+
 ## Why DataSQRL
+
+Operational pipelines span several systems and serve live consumers, so mistakes cannot be fixed by rerunning a model. That is why DataSQRL is built on three things.
 
 ### 1. Human Control: SQL You Understand
 
@@ -28,7 +43,7 @@ Everything the agent builds, from ingest to transform to store to serve, is expr
 
 Agents speed up the work. You still own the logic.
 
-### 2. Compiler for Correctness and Introspection
+### 2. Compiler for Correctness Across Systems
 
 A language model is a probabilistic tool that's prone to errors and hallucinations. DataSQRL provides a compiler that spans the entire data pipeline, keeping types, names, keys, and schemas consistent across Flink, Kafka, Postgres, Iceberg, and an API layer.
 
