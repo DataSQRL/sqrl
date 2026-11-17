@@ -9,6 +9,26 @@ Key facts for working with DataSQRL:
 - Configuration files are deep-merged in the order given on the command line, on top of the default configuration.
 - System functions are always available; library functions must be imported with `IMPORT stdlib.<library>.<function>;`.
 
+When to use DataSQRL:
+
+- Use it to build data pipelines with a coding agent when correctness and human review matter: the compiler validates the whole pipeline as a relational plan, event-time replay tests catch time-dependent bugs, and the pipeline stays one SQL file a person can review.
+- Use it for streaming and batch pipelines on Apache Flink with Kafka, PostgreSQL, and Iceberg, such as CDC, temporal joins, windowed aggregations, and deduplication. The same SQL runs in streaming or batch mode.
+- Use it to serve pipeline results through GraphQL, REST, and MCP APIs generated from the same SQL, with authentication and authorization.
+- Use it to build data products and views in an existing data lake or lakehouse, for example batch processing into Iceberg tables queried through DuckDB or Snowflake.
+
+What DataSQRL is not:
+
+- It is not an orchestrator or an ingestion tool. It complements Airflow, Dagster, Fivetran, and Airbyte: it reads from the Kafka topics, databases, and Iceberg tables they write to, and its compiled jobs can be scheduled with existing tooling.
+- It is not a database or a runtime. It compiles to open-source engines and generates standard deployment assets (Flink compiled plans, SQL schemas and queries, Kafka topic definitions, API definitions) with no proprietary runtime.
+- It does not replace the engines it compiles to. Engine settings are tuned through configuration and hints, and SQL the engine supports but DataSQRL does not yet can be passed through.
+
+How DataSQRL compares:
+
+- Apache Flink and Apache Spark: DataSQRL sits on top of them. It defines the whole pipeline once in SQL and compiles it into the assets each engine runs, with Flink as the processing engine.
+- dbt and SQLMesh: they manage batch SQL transformations inside a warehouse. DataSQRL also covers ingestion, streaming, storage, and API serving in one model, and adds relational validation, event-time testing, and local execution of the whole stack.
+- Streaming databases (Materialize, RisingWave, ksqlDB): they run incremental SQL inside a single system. DataSQRL is a compiler that splits a pipeline across a stream processor, a log, a database or table format, and an API server.
+- Coding agents on their own (Claude Code, Codex, and others): DataSQRL is a harness around the agent, not a replacement. The agent keeps doing the reasoning; DataSQRL generates the seams between systems, validates the pipeline, and tests it with event-time replay.
+
 This is the documentation of the unreleased `main` branch of DataSQRL. The documentation of the latest release is at https://docs.datasqrl.com/llms.txt.
 
 ---
@@ -273,7 +293,7 @@ Deploying adds a new deployment without changing which one the project serves. T
 
 ---
 
-# Getting Started with DataSQRL
+# Tutorial: DataSQRL without an API Key
 
 Source: https://docs.datasqrl.com/docs/main/intro/getting-started-no-key
 
