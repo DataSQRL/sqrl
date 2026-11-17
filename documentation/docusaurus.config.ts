@@ -221,7 +221,12 @@ const config: Config = {
             {
               label: 'User Documentation',
               to: '/docs/intro',
-            }
+            },
+            {
+              // Index of the docs for LLMs and agents (https://llmstxt.org), see scripts/generate-llms-txt.mjs
+              label: 'llms.txt',
+              to: 'pathname:///llms.txt',
+            },
           ],
         },
         {
