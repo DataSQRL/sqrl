@@ -16,6 +16,8 @@
 package com.datasqrl.planner.util;
 
 import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.canonicalizer.NamePath;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 
@@ -27,36 +29,62 @@ public interface Documented {
 
   Documentation getDocumentation();
 
+  /** Looks up the docs of fields by name. */
   interface Lookup {
 
     Optional<String> getDocsFor(String name);
+
+    /** Returns the lookup for the fields nested in the field with the given name. */
+    default Lookup nested(String name) {
+      return NO_LOOKUP;
+    }
   }
 
+  /**
+   * The doc string of a table or function and the docs of its columns and arguments, by path. A
+   * top-level column or argument has a path of one name, and a field nested in it has the path of
+   * the column followed by the name of the field.
+   */
   record Documentation(
-      String docString, Map<Name, String> columnDocs, Map<Name, String> argumentDocs) {
+      String docString, Map<NamePath, String> columnDocs, Map<NamePath, String> argumentDocs) {
 
     public String getColumn(String columnName, String defaultValue) {
-      return columnDocs.getOrDefault(Name.system(columnName), defaultValue);
+      return getColumnOpt(columnName).orElse(defaultValue);
     }
 
     public Lookup getColumnLookup() {
-      return this::getColumnOpt;
+      return lookup(columnDocs, NamePath.ROOT);
     }
 
     public Optional<String> getColumnOpt(String columnName) {
-      return Optional.ofNullable(columnDocs.get(Name.system(columnName)));
+      return getColumnLookup().getDocsFor(columnName);
     }
 
     public String getArgument(String argName, String defaultValue) {
-      return argumentDocs.getOrDefault(Name.system(argName), defaultValue);
+      return getArgumentOpt(argName).orElse(defaultValue);
     }
 
     public Optional<String> getArgumentOpt(String argName) {
-      return Optional.ofNullable(argumentDocs.get(Name.system(argName)));
+      return getArgumentLookup().getDocsFor(argName);
     }
 
     public Lookup getArgumentLookup() {
-      return this::getArgumentOpt;
+      return lookup(argumentDocs, NamePath.ROOT);
+    }
+
+    /**
+     * Returns this documentation with the given docs for the top-level columns that it doesn't
+     * document, so that its own column docs take precedence.
+     *
+     * @param docs the docs by column name
+     */
+    public Documentation withColumnDocsIfAbsent(Map<String, String> docs) {
+      if (docs.isEmpty()) {
+        return this;
+      }
+      var merged = new LinkedHashMap<>(columnDocs);
+      docs.forEach((column, doc) -> merged.putIfAbsent(NamePath.of(column), doc));
+      return new Documentation(docString, merged, argumentDocs);
     }
 
     public boolean isEmpty() {
@@ -79,6 +107,20 @@ public interface Documented {
     public Optional<String> getDocStringOpt() {
       if (hasDocString()) return Optional.of(docString);
       return Optional.empty();
+    }
+
+    private static Lookup lookup(Map<NamePath, String> docs, NamePath parent) {
+      return new Lookup() {
+        @Override
+        public Optional<String> getDocsFor(String name) {
+          return Optional.ofNullable(docs.get(parent.concat(Name.system(name))));
+        }
+
+        @Override
+        public Lookup nested(String name) {
+          return lookup(docs, parent.concat(Name.system(name)));
+        }
+      };
     }
   }
 }

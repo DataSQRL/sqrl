@@ -17,9 +17,13 @@ package com.datasqrl.planner.parser;
 
 import com.google.common.base.Strings;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Represents the comments on a SQRL statement which are either hints or doc-strings. Other columns
@@ -35,6 +39,34 @@ public record SqrlComments(
   public static final Pattern COMMENT_PATTERN = Pattern.compile(SqrlStatementParser.COMMENT_REGEX);
   public static final String HINT_PREFIX = "/*+";
   public static final String DOC_PREFIX = "/**";
+
+  /**
+   * The {@code *} that starts a line of a doc comment, with its indentation and the space after it.
+   * It is indented, unlike a {@code *} list bullet that starts the line, and followed by a space or
+   * the end of the line, so Markdown bold ({@code **}) is not one.
+   */
+  private static final Pattern LINE_DECORATION_PATTERN = Pattern.compile("^\\s+\\*(?: |$)");
+
+  /**
+   * Returns the text of the doc comments, each trimmed, one after the other on separate lines, or
+   * empty if there are none.
+   *
+   * <p>A doc comment that starts every line after the first with an indented {@code *}, as in a
+   * comment that starts each line with {@code " * "}, has that {@code *} and the space after it
+   * removed from those lines.
+   */
+  public Optional<String> docString() {
+    if (documentation.isEmpty()) {
+      return Optional.empty();
+    }
+
+    return Optional.of(
+        documentation.stream()
+            .map(ParsedObject::get)
+            .map(SqrlComments::removeLineDecoration)
+            .map(String::trim)
+            .collect(Collectors.joining("\n")));
+  }
 
   public SqrlComments removeHintsByName(Predicate<String> remove) {
     return new SqrlComments(
@@ -75,5 +107,30 @@ public record SqrlComments(
       }
     }
     return new SqrlComments(docComments, hintComments);
+  }
+
+  /**
+   * Removes the {@code *} that starts each line of a doc comment after the first, if every one of
+   * these lines other than blank lines starts with an indented one. The first line is the one that
+   * the comment opens on.
+   */
+  private static String removeLineDecoration(String comment) {
+    var lines = comment.split("\\r?\\n", -1);
+    var nextLines = Arrays.stream(lines).skip(1).filter(line -> !line.isBlank()).toList();
+    var decorated =
+        !nextLines.isEmpty()
+            && nextLines.stream()
+                .allMatch(line -> LINE_DECORATION_PATTERN.matcher(line).lookingAt());
+
+    if (!decorated) {
+      return comment;
+    }
+
+    return Stream.concat(
+            Stream.of(lines[0]),
+            Arrays.stream(lines)
+                .skip(1)
+                .map(line -> LINE_DECORATION_PATTERN.matcher(line).replaceFirst("")))
+        .collect(Collectors.joining("\n"));
   }
 }

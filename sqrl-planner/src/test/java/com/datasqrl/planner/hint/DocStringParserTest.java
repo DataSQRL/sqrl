@@ -16,9 +16,12 @@
 package com.datasqrl.planner.hint;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.entry;
 
-import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.planner.util.Documented;
 import com.datasqrl.planner.util.Documented.Documentation;
+import java.util.Map;
 import org.junit.jupiter.api.Test;
 
 class DocStringParserTest {
@@ -89,8 +92,8 @@ class DocStringParserTest {
 
     assertThat(result.docString()).isNull();
     assertThat(result.columnDocs()).hasSize(2);
-    assertThat(result.columnDocs().get(Name.system("id"))).isEqualTo("The unique identifier");
-    assertThat(result.columnDocs().get(Name.system("name"))).isEqualTo("The entity name");
+    assertThat(result.columnDocs().get(NamePath.of("id"))).isEqualTo("The unique identifier");
+    assertThat(result.columnDocs().get(NamePath.of("name"))).isEqualTo("The entity name");
     assertThat(result.argumentDocs()).isEmpty();
   }
 
@@ -105,8 +108,8 @@ class DocStringParserTest {
     Documentation result = DocStringParser.parse(docString);
 
     assertThat(result.columnDocs()).hasSize(2);
-    assertThat(result.columnDocs().get(Name.system("id"))).isEqualTo("The unique identifier");
-    assertThat(result.columnDocs().get(Name.system("name"))).isEqualTo("The entity name");
+    assertThat(result.columnDocs().get(NamePath.of("id"))).isEqualTo("The unique identifier");
+    assertThat(result.columnDocs().get(NamePath.of("name"))).isEqualTo("The entity name");
   }
 
   @Test
@@ -119,7 +122,7 @@ class DocStringParserTest {
     Documentation result = DocStringParser.parse(docString);
 
     assertThat(result.columnDocs()).hasSize(1);
-    assertThat(result.columnDocs().get(Name.system("id"))).isEqualTo("The unique identifier");
+    assertThat(result.columnDocs().get(NamePath.of("id"))).isEqualTo("The unique identifier");
   }
 
   @Test
@@ -135,9 +138,9 @@ class DocStringParserTest {
     assertThat(result.docString()).isNull();
     assertThat(result.columnDocs()).isEmpty();
     assertThat(result.argumentDocs()).hasSize(2);
-    assertThat(result.argumentDocs().get(Name.system("limit")))
+    assertThat(result.argumentDocs().get(NamePath.of("limit")))
         .isEqualTo("Maximum number of results");
-    assertThat(result.argumentDocs().get(Name.system("offset"))).isEqualTo("Starting position");
+    assertThat(result.argumentDocs().get(NamePath.of("offset"))).isEqualTo("Starting position");
   }
 
   @Test
@@ -150,7 +153,7 @@ class DocStringParserTest {
     Documentation result = DocStringParser.parse(docString);
 
     assertThat(result.argumentDocs()).hasSize(1);
-    assertThat(result.argumentDocs().get(Name.system("limit")))
+    assertThat(result.argumentDocs().get(NamePath.of("limit")))
         .isEqualTo("Maximum number of results");
   }
 
@@ -189,15 +192,15 @@ class DocStringParserTest {
 
     assertThat(result.docString()).isEqualTo("This table stores customer orders.");
     assertThat(result.columnDocs()).hasSize(3);
-    assertThat(result.columnDocs().get(Name.system("orderId")))
+    assertThat(result.columnDocs().get(NamePath.of("orderId")))
         .isEqualTo("The unique order identifier");
-    assertThat(result.columnDocs().get(Name.system("customerId")))
+    assertThat(result.columnDocs().get(NamePath.of("customerId")))
         .isEqualTo("Reference to the customer");
-    assertThat(result.columnDocs().get(Name.system("total"))).isEqualTo("Order total amount");
+    assertThat(result.columnDocs().get(NamePath.of("total"))).isEqualTo("Order total amount");
     assertThat(result.argumentDocs()).hasSize(2);
-    assertThat(result.argumentDocs().get(Name.system("status")))
+    assertThat(result.argumentDocs().get(NamePath.of("status")))
         .isEqualTo("Filter by order status");
-    assertThat(result.argumentDocs().get(Name.system("limit")))
+    assertThat(result.argumentDocs().get(NamePath.of("limit")))
         .isEqualTo("Maximum results to return");
   }
 
@@ -214,7 +217,7 @@ class DocStringParserTest {
 
     assertThat(result.docString()).isEqualTo("This is the table description that comes after.");
     assertThat(result.columnDocs()).hasSize(1);
-    assertThat(result.columnDocs().get(Name.system("id"))).isEqualTo("The identifier");
+    assertThat(result.columnDocs().get(NamePath.of("id"))).isEqualTo("The identifier");
   }
 
   @Test
@@ -253,8 +256,8 @@ class DocStringParserTest {
     Documentation result = DocStringParser.parse(docString);
 
     assertThat(result.columnDocs()).hasSize(2);
-    assertThat(result.columnDocs().get(Name.system("id"))).isEqualTo("The identifier");
-    assertThat(result.columnDocs().get(Name.system("name"))).isEqualTo("The name");
+    assertThat(result.columnDocs().get(NamePath.of("id"))).isEqualTo("The identifier");
+    assertThat(result.columnDocs().get(NamePath.of("name"))).isEqualTo("The name");
   }
 
   @Test
@@ -267,7 +270,7 @@ class DocStringParserTest {
     Documentation result = DocStringParser.parse(docString);
 
     assertThat(result.columnDocs()).hasSize(1);
-    assertThat(result.columnDocs().get(Name.system("id"))).isEqualTo("The identifier");
+    assertThat(result.columnDocs().get(NamePath.of("id"))).isEqualTo("The identifier");
   }
 
   @Test
@@ -296,7 +299,7 @@ class DocStringParserTest {
     Documentation result = DocStringParser.parse(docString);
 
     assertThat(result.columnDocs()).hasSize(1);
-    assertThat(result.columnDocs().get(Name.system("id")))
+    assertThat(result.columnDocs().get(NamePath.of("id")))
         .isEqualTo("The identifier with extra spaces");
   }
 
@@ -336,9 +339,9 @@ class DocStringParserTest {
     Documentation result = DocStringParser.parse(docString);
 
     assertThat(result.columnDocs()).hasSize(2);
-    assertThat(result.columnDocs().get(Name.system("customer_id")))
+    assertThat(result.columnDocs().get(NamePath.of("customer_id")))
         .isEqualTo("The customer identifier");
-    assertThat(result.columnDocs().get(Name.system("order_date")))
+    assertThat(result.columnDocs().get(NamePath.of("order_date")))
         .isEqualTo("When the order was placed");
   }
 
@@ -352,7 +355,7 @@ class DocStringParserTest {
     Documentation result = DocStringParser.parse(docString);
 
     assertThat(result.columnDocs()).hasSize(1);
-    assertThat(result.columnDocs().get(Name.system("id")))
+    assertThat(result.columnDocs().get(NamePath.of("id")))
         .isEqualTo("The identifier: this includes colons in the description");
   }
 
@@ -396,21 +399,155 @@ class DocStringParserTest {
         .contains("This function returns all orders associated with the given customer");
 
     assertThat(result.columnDocs()).hasSize(4);
-    assertThat(result.columnDocs().get(Name.system("orderId")))
+    assertThat(result.columnDocs().get(NamePath.of("orderId")))
         .isEqualTo("Unique identifier for the order");
-    assertThat(result.columnDocs().get(Name.system("status")))
+    assertThat(result.columnDocs().get(NamePath.of("status")))
         .isEqualTo("Current order status (pending, shipped, delivered)");
-    assertThat(result.columnDocs().get(Name.system("createdAt")))
+    assertThat(result.columnDocs().get(NamePath.of("createdAt")))
         .isEqualTo("Timestamp when order was created");
-    assertThat(result.columnDocs().get(Name.system("totalAmount")))
+    assertThat(result.columnDocs().get(NamePath.of("totalAmount")))
         .isEqualTo("Total order value in cents");
 
     assertThat(result.argumentDocs()).hasSize(3);
-    assertThat(result.argumentDocs().get(Name.system("customerId")))
+    assertThat(result.argumentDocs().get(NamePath.of("customerId")))
         .isEqualTo("The customer to retrieve orders for");
-    assertThat(result.argumentDocs().get(Name.system("status")))
+    assertThat(result.argumentDocs().get(NamePath.of("status")))
         .isEqualTo("Optional status filter");
-    assertThat(result.argumentDocs().get(Name.system("limit")))
+    assertThat(result.argumentDocs().get(NamePath.of("limit")))
         .isEqualTo("Maximum number of orders to return (default: 100)");
+  }
+
+  @Test
+  void givenNestedColumnList_whenParse_thenDocumentsNestedFieldsToAnyDepth() {
+    var docString =
+        """
+        Customer profiles
+
+        # Columns:
+        - id: The customer id
+        - address: The postal address
+          - street: The street and house number
+          - geo: The location
+            - lat: The latitude
+            - lon: The longitude
+          - city: The city
+        - orders: The orders
+          - total: The order total""";
+
+    var result = DocStringParser.parse(docString);
+
+    assertThat(result.docString()).isEqualTo("Customer profiles");
+    assertThat(result.columnDocs())
+        .containsExactly(
+            entry(NamePath.of("id"), "The customer id"),
+            entry(NamePath.of("address"), "The postal address"),
+            entry(NamePath.of("address", "street"), "The street and house number"),
+            entry(NamePath.of("address", "geo"), "The location"),
+            entry(NamePath.of("address", "geo", "lat"), "The latitude"),
+            entry(NamePath.of("address", "geo", "lon"), "The longitude"),
+            entry(NamePath.of("address", "city"), "The city"),
+            entry(NamePath.of("orders"), "The orders"),
+            entry(NamePath.of("orders", "total"), "The order total"));
+  }
+
+  @Test
+  void givenNestedArgumentList_whenParse_thenDocumentsNestedArguments() {
+    var docString =
+        """
+        # Arguments:
+        - filter: The filter
+          - minTotal: The minimum total
+        - limit: The maximum number of results""";
+
+    var result = DocStringParser.parse(docString);
+
+    assertThat(result.argumentDocs())
+        .containsExactly(
+            entry(NamePath.of("filter"), "The filter"),
+            entry(NamePath.of("filter", "minTotal"), "The minimum total"),
+            entry(NamePath.of("limit"), "The maximum number of results"));
+  }
+
+  @Test
+  void givenNestedListIndentedWithTabs_whenParse_thenNestsByIndentation() {
+    var docString = "# Columns:\n- address: The address\n\t- street: The street\n- id: The id";
+
+    var result = DocStringParser.parse(docString);
+
+    assertThat(result.columnDocs())
+        .containsOnlyKeys(
+            NamePath.of("address"), NamePath.of("address", "street"), NamePath.of("id"));
+  }
+
+  @Test
+  void givenListWithoutBullets_whenParse_thenDocumentsColumns() {
+    var docString =
+        """
+        # Columns:
+        id: The customer id
+        address: The address
+          street: The street
+        email: The contact email""";
+
+    var result = DocStringParser.parse(docString);
+
+    assertThat(result.docString()).isNull();
+    assertThat(result.columnDocs())
+        .containsExactly(
+            entry(NamePath.of("id"), "The customer id"),
+            entry(NamePath.of("address"), "The address"),
+            entry(NamePath.of("address", "street"), "The street"),
+            entry(NamePath.of("email"), "The contact email"));
+  }
+
+  @Test
+  void givenLineWithoutBulletAfterBulletedList_whenParse_thenItIsDescription() {
+    var docString = "Customers\n# Columns:\n- id: The customer id\nNote: ids are unique";
+
+    var result = DocStringParser.parse(docString);
+
+    assertThat(result.docString()).isEqualTo("Customers\nNote: ids are unique");
+    assertThat(result.columnDocs()).containsOnlyKeys(NamePath.of("id"));
+  }
+
+  @Test
+  void givenStarListItems_whenParse_thenKeepsThemAsItems() {
+    var docString = "Customers\n# Columns:\n* id: The id\n* name: The name";
+
+    var result = DocStringParser.parse(docString);
+
+    assertThat(result.columnDocs()).containsOnlyKeys(NamePath.of("id"), NamePath.of("name"));
+  }
+
+  @Test
+  void givenNestedColumnDocs_whenLookingUpNestedFields_thenFindsThem() {
+    var result =
+        DocStringParser.parse("# Columns:\n- address: The address\n  - street: The street");
+
+    var lookup = result.getColumnLookup();
+
+    assertThat(lookup.getDocsFor("address")).contains("The address");
+    assertThat(lookup.nested("address").getDocsFor("street")).contains("The street");
+    assertThat(lookup.getDocsFor("street")).isEmpty();
+    assertThat(lookup.nested("address").nested("street").getDocsFor("any")).isEmpty();
+    assertThat(result.getColumnOpt("address")).contains("The address");
+  }
+
+  @Test
+  void givenColumnComments_whenAddedIfAbsent_thenDocStringTakesPrecedence() {
+    var result =
+        DocStringParser.parse("# Columns:\n- email: The contact email")
+            .withColumnDocsIfAbsent(Map.of("email", "Overridden", "phone", "The phone number"));
+
+    assertThat(result.getColumnOpt("email")).contains("The contact email");
+    assertThat(result.getColumnOpt("phone")).contains("The phone number");
+  }
+
+  @Test
+  void givenNoDocString_whenColumnDocsAddedIfAbsent_thenTheyDocumentTheColumns() {
+    var result = Documented.EMPTY.withColumnDocsIfAbsent(Map.of("phone", "The phone number"));
+
+    assertThat(result.docString()).isNull();
+    assertThat(result.getColumnOpt("phone")).contains("The phone number");
   }
 }

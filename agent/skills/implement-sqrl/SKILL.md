@@ -694,6 +694,7 @@ How DataSQRL publishes a doc-string:
 * A definition without a doc-string takes the doc-string of its base table as its type description. This includes a hidden `_` table.
 * A `CREATE TABLE` doc-string describes the type, the generated query and the mutation.
 * A `# Columns:` section describes the columns of the type that the definition creates. A `# Arguments:` section describes the arguments of a function. Each section has one `- name: text` line for each column or argument. A column note becomes the GraphQL field description and the field description in the REST response schema. An argument note becomes the GraphQL argument description and the MCP parameter description.
+* A line indented under a column describes a field nested in it, to any depth: the fields of a `ROW` column, or of the rows of an `ARRAY<ROW<...>>` column (e.g. `- address: ...` and below it `  - street: ...`).
 
 ```sql
 /** A registered person.
@@ -719,7 +720,7 @@ When the package configuration defines tags under `compiler.tags`, the `@name` a
 
 * Use only the tags and values defined in `compiler.tags`. A boolean tag is written `@name`; an ordered tag needs a value, e.g. `@pii=raw`.
 * A table inherits the tags of every table it reads, including joined and subquery tables. A public table or function must repeat each inherited tag in its doc-string with the same or a higher value, or the compile fails. Copy the tags from the compile error's `inherited from [...]` tables. Hidden tables, relationships and test tables carry their inherited tags without declaring them.
-* Tags in `# Columns:` notes and in `CREATE TABLE` column `COMMENT`s count toward the whole table.
+* Tags in `# Columns:` notes, including nested ones, count toward the whole table.
 * A tag with `required-columns` in `compiler.tags` requires those columns, with a compatible type, in every table that carries the tag, including hidden tables and tables that are only written into. Keep the column in the `SELECT`, or declassify the tag when the requirements allow it.
 * A `CREATE TABLE` that `INSERT INTO` or `EXPORT` writes into must declare the tags of the written data when other tables read it or it is an internal table with an `engine` hint (e.g. an Iceberg or Kafka table in a separate script).
 * To drop or lower an inherited tag, e.g. for an aggregate that no longer contains personal data, add `/*+declassify(tag, ...) */` and declare the lower value or none. Only declassify when the requirements say the data allows it.

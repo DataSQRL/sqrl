@@ -140,6 +140,23 @@ public class UseCaseCompileTest {
     assertThat(includingProject.own()).doesNotContainAnyElementsOf(include.own());
   }
 
+  @Test
+  void givenTagsInCommentsOfColumnsThatDocStringsDocument_whenCompile_thenWarnsAboutEach() {
+    var hook =
+        snapshotExtension.execute(
+            USECASE_DIR.resolve("nested-column-docs"), "compile", "package.json");
+
+    assertThat(hook.isSuccess()).as(hook.getMessages()).isTrue();
+    assertThat(hook.getMessages())
+        .contains(
+            "Table [CustomerProfiles] does not declare tag [@financial] from the comment of column"
+                + " [email], because the doc string documents the column: declare the tag in the"
+                + " doc string",
+            "Table [Contacts] does not declare tag [@gdpr] from the comment of column [email],"
+                + " because the doc string documents the column: declare the tag in the doc"
+                + " string");
+  }
+
   private KafkaTopics compileKafkaTopics(Path useCase, String packageFile) throws IOException {
     var hook = snapshotExtension.execute(useCase, "compile", packageFile);
     assertThat(hook.isSuccess()).as(hook.getMessages()).isTrue();

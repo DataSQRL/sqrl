@@ -1,0 +1,49 @@
+-- The doc string documents nested fields by indentation. A column that it doesn't document gets
+-- its COMMENT, and the tags in that comment are declared: @gdpr from phone. The comment of email is
+-- overridden by the doc string, so its @financial is not declared, and the compiler warns about it.
+/** Profiles that customers submit @pii=raw
+ * # Columns:
+ * - email: The contact email
+ * - address: The postal address
+ *   - street: The street and house number
+ *   - geo: The location of the address
+ *     - lat: The latitude
+ *     - lon: The longitude
+ * - orders: The orders of the customer
+ *   - total: The order total
+ */
+/*+engine(kafka) */
+CREATE TABLE CustomerProfiles (
+  id BIGINT NOT NULL COMMENT 'The customer id',
+  email STRING NOT NULL COMMENT 'Overridden by the doc string @financial',
+  phone STRING COMMENT 'The phone number @gdpr',
+  address ROW<street STRING, geo ROW<lat DOUBLE, lon DOUBLE>>,
+  orders ARRAY<ROW<orderId BIGINT, total DOUBLE>>,
+  event_time TIMESTAMP_LTZ(3) METADATA FROM 'timestamp'
+);
+
+-- Without a doc string of its own, the deduplicated table takes the consolidated documentation,
+-- with the nested docs, the comments and their tags
+LatestProfiles := DISTINCT CustomerProfiles ON id ORDER BY event_time DESC;
+
+-- Nested arguments document the fields of a ROW argument. The query doesn't use the argument: the
+-- database stores ROW columns as JSON, so it can't compare them with a ROW argument.
+/** The profiles at a location @pii=raw @gdpr
+ * # Arguments:
+ * - location: The location to look up
+ *   - lat: The latitude
+ *   - lon: The longitude
+ */
+ProfilesAt(location ROW<lat DOUBLE, lon DOUBLE> NOT NULL) := SELECT * FROM LatestProfiles;
+
+-- The * that starts each line is also the bullet of each column. The doc string documents email,
+-- so the @gdpr in its comment is not declared, and the compiler warns about it.
+/** # Columns:
+ * id: The contact id
+ * email: The contact email
+ */
+/*+engine(kafka) */
+CREATE TABLE Contacts (
+  id BIGINT NOT NULL,
+  email STRING COMMENT 'Contact email @gdpr'
+);

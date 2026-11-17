@@ -31,7 +31,9 @@ import com.datasqrl.planner.parser.ParsedObject;
 import com.datasqrl.planner.parser.SqrlComments;
 import com.datasqrl.planner.tags.TagDefinition.RequiredColumn;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import org.apache.calcite.plan.RelOptCluster;
 import org.apache.calcite.plan.volcano.VolcanoPlanner;
@@ -107,11 +109,59 @@ class TagAnalyzerTest {
   @Test
   void givenTagsInColumnDocsAndComments_whenDeclaredTags_thenTheyAreDeclared() {
     var documentation =
-        DocStringParser.parse("Customers\n# Columns:\n- id: The id @classification=secret");
+        DocStringParser.parse("Customers\n# Columns:\n- id: The id @classification=secret")
+            .withColumnDocsIfAbsent(Map.of("email", "Contact email @pii=raw"));
 
-    var tags = analyzer.declaredTags(documentation, List.of("Contact email @pii=raw"));
+    var tags = analyzer.declaredTags(documentation);
 
     assertThat(tags).hasToString("@classification=secret @pii=raw");
+  }
+
+  @Test
+  void givenTagInCommentOfColumnThatDocStringDocuments_whenDeclaredTags_thenItIsNotDeclared() {
+    var documentation =
+        DocStringParser.parse("Customers\n# Columns:\n- email: The contact email")
+            .withColumnDocsIfAbsent(Map.of("email", "Contact email @pii=raw"));
+
+    var tags = analyzer.declaredTags(documentation);
+
+    assertThat(tags).hasToString("");
+  }
+
+  @Test
+  void givenCommentTagsThatTableDoesNotDeclare_whenCheckCommentTagsDeclared_thenWarnsAboutEach() {
+    var declared = DEFINITIONS.parse("@pii=raw @classification=secret", invalid -> {});
+    var comments = new LinkedHashMap<String, String>();
+    comments.put("email", "Contact email @gdpr @pii=masked");
+    comments.put("level", "Clearance @classification=top_secret @undefined");
+    comments.put("id", "The id @classification=secret");
+
+    analyzer.checkCommentTagsDeclared("Contacts", comments, declared, errors);
+
+    assertThat(all())
+        .extracting(ErrorMessage::getSeverity, ErrorMessage::getMessage)
+        .containsExactly(
+            tuple(
+                Severity.WARN,
+                "Table [Contacts] does not declare tag [@gdpr] from the comment of column [email],"
+                    + " because the doc string documents the column: declare the tag in the doc"
+                    + " string"),
+            tuple(
+                Severity.WARN,
+                "Table [Contacts] does not declare tag [@classification=top_secret] from the comment"
+                    + " of column [level], because the doc string documents the column: declare"
+                    + " the tag in the doc string"));
+  }
+
+  @Test
+  void givenTagInNestedColumnDoc_whenDeclaredTags_thenItIsDeclared() {
+    var documentation =
+        DocStringParser.parse(
+            "Customers\n# Columns:\n- address: The address\n  - street: The street @pii=raw");
+
+    var tags = analyzer.declaredTags(documentation);
+
+    assertThat(tags).hasToString("@pii=raw");
   }
 
   @Test
