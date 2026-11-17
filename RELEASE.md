@@ -7,6 +7,14 @@ The `main` branch points to the next upcoming minor (or major) version.
 ## Release Steps
 
 1. If you release a patch version, make sure all the necessary commits are present on the relevant `release-x.y` branch
+   If you release a new minor or major version, first update `main`:
+   - [`SECURITY.md`](SECURITY.md): list `x.y.x` as supported, and `< ` the oldest supported version as unsupported
+   - [`documentation/docs/compatibility.md`](documentation/docs/compatibility.md): add an `x.y.x` row to the compatibility table
+
+   The [Release docs](.github/workflows/release-docs.yml) workflow fails while either file does not cover the latest release line,
+   or while the Flink, Postgres or Iceberg versions in the compatibility table row of a supported version differ from its release.
+   On `main` it checks these rows against the latest release tag of each version, on `release-x.y` branches and release tags against their own build files.
+   So if a patch release bumps one of these versions, update the row on its `release-x.y` branch and on `main`.
 2. Create a new signed **tag** using [SemVer](https://semver.org/) (for example `1.0.0`, or `1.0.0-alpha.1`)
    ```sh
    git tag -s 1.0.0 -m 'Release version 1.0.0'
