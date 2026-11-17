@@ -1,4 +1,4 @@
-# Tutorial: DataSQRL without an API Key
+# Getting Started with DataSQRL
 
 This tutorial demonstrates how the DataSQRL data engineering harness works without an LLM API key. That means we won't be running an agent that autonomously uses the harness to build data projects, but walk an agent through the steps and use the harness to ensure correct, safe, and easy to understand results.
 
