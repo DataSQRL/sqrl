@@ -84,8 +84,6 @@ The advanced agent extends the core agent with verifiers, judges, and implementa
 
 Install the DataSQRL plugin, describe the pipeline you want in plain English, review the plan, and let the advanced agent build it. It implements, compiles, tests, verifies, and refines the pipeline until the tests pass. It is more thorough and complete than the core agent but takes more time and resources to run.
 
-The plugin also runs the **pro agent**, the commercial DataSQRL offering that extends the advanced agent with enterprise features, for teams that have access to it.
-
 ### Prerequisites
 
 - **Docker**, installed and running locally. The agent image is fetched automatically on first use, so there is no manual `docker pull`.

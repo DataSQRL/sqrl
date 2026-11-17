@@ -2,7 +2,7 @@
 
 DataSQRL is an open-source harness for agentic data engineering on operational data: agents build real-time pipelines, data APIs, and data products; a compiler verifies them.
 
-This directory defines the DataSQRL core agent (`datasqrl/core-agent`), a baseline interactive coding agent for DataSQRL projects. The advanced agent extends it with verifiers, judges, and implementation loops, and the commercial pro agent extends the advanced agent with enterprise features. It combines the DataSQRL CLI with [Pi](https://pi.dev), DataSQRL-specific instructions, and skills for building data pipelines, connectors, configuration, and APIs.
+This directory defines the DataSQRL core agent (`datasqrl/core-agent`), a baseline interactive coding agent for DataSQRL projects. The advanced agent extends it with verifiers, judges, and implementation loops. It combines the DataSQRL CLI with [Pi](https://pi.dev), DataSQRL-specific instructions, and skills for building data pipelines, connectors, configuration, and APIs.
 
 The image starts Pi in `/workspace`. Mount a project there, provide a model-provider API key, and work with the agent from the terminal.
 

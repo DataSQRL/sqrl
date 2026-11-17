@@ -102,7 +102,7 @@ Then tell the agent what you need in plain English:
 
 You get SQL scripts with tests that you can read, run, and verify.
 
-The **advanced agent** extends the core agent with verifiers, judges, and implementation loops, plus planning and deployment workflows. Run it from Claude Code, Codex, Cursor, or GitHub Copilot with the [DataSQRL plugin](https://github.com/DataSQRL/datasqrl-plugin). The **pro agent**, the commercial DataSQRL offering, extends the advanced agent with enterprise features. The [Getting Started guide](https://docs.datasqrl.com/docs/intro/getting-started) covers the core and advanced agents in detail.
+The **advanced agent** extends the core agent with verifiers, judges, and implementation loops, plus planning and deployment workflows. Run it from Claude Code, Codex, Cursor, or GitHub Copilot with the [DataSQRL plugin](https://github.com/DataSQRL/datasqrl-plugin). The [Getting Started guide](https://docs.datasqrl.com/docs/intro/getting-started) covers both agents in detail.
 
 ## Next steps
 - [Getting Started tutorial](https://docs.datasqrl.com/docs/intro/getting-started)

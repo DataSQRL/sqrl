@@ -71,11 +71,10 @@ One name per thing. The right-hand column lists terms that should be replaced.
 | harness | What DataSQRL is: the compiler, validator, simulator, and skills that wrap a coding agent. | toolkit, framework, platform |
 | operational data engineering | The category: moving and serving data across systems, in real time or in batches. The counterpart to analytics engineering. | streaming data applications, data streaming framework, data automation |
 | operational data | Data that feeds applications, customers, and AI agents, as opposed to data modeled for reports and BI. | real-time data (when used as the category) |
-| DataSQRL agent | A coding agent running with the harness. The generic term for the core, advanced, and pro agents. | data engineering agent, DataSQRL Code Agent |
+| DataSQRL agent | A coding agent running with the harness. The generic term for the core and advanced agents. | data engineering agent, DataSQRL Code Agent |
 | core agent | The core of the DataSQRL agent, packaged so it can be used on its own: a coding agent with the DataSQRL CLI, instructions, and skills. Open source, defined in `agent/` of the `sqrl` repository, and published as the `datasqrl/core-agent` Docker image. | basic agent, generic agent, standalone agent |
 | advanced agent | Extends the core agent with verifiers, judges, and implementation loops that implement, compile, test, verify, and refine a pipeline until it passes. Open source, published as `ghcr.io/datasqrl/adv-agent`, and run through the DataSQRL plugin. | open-source edition |
-| pro agent | The commercial DataSQRL offering. Extends the advanced agent with enterprise features. Published as the private `ghcr.io/datasqrl/pro-agent` image. | pro edition, commercial version |
-| DataSQRL plugin | Installs DataSQRL into Claude Code, Codex, Cursor, or Copilot, and runs the advanced or pro agent from there. | sub-agent |
+| DataSQRL plugin | Installs DataSQRL into Claude Code, Codex, Cursor, or Copilot, and runs the advanced agent from there. | sub-agent |
 | compiler | Turns SQRL into deployment assets for every system and checks them against each other. | build tool, transpiler |
 | validator | The compiler stage that checks keys, timestamps, table types, and engine capabilities. | linter |
 | simulator | Runs the compiled pipeline locally and replays events at their original timestamps. | test runner, event-time simulator (after first mention) |
