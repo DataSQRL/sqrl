@@ -1,14 +1,11 @@
 ---
 slug: p2-validator-relational-introspection
 title: "The Bugs That Aren't in the Text: What Deep Relational Introspection Catches"
+description: "Wrong keys, time-dependent joins, stalled watermarks, and unbounded state are bugs that aren't in the query text. How relational validation catches them."
+image: /img/blog/harness_p2_deep_introspection.jpeg
 authors: [matthias]
 tags: [technical, DataSQRL]
 ---
-
-<head>
-  <meta property="og:image" content="/img/blog/harness_p2_deep_introspection.jpeg" />
-  <meta name="twitter:image" content="/img/blog/harness_p2_deep_introspection.jpeg" />
-</head>
 
 # The Bugs That Aren't in the Text: What Deep Relational Introspection Catches
 
@@ -18,7 +15,7 @@ tags: [technical, DataSQRL]
 
 "Why do I need that? Isn't Claude Code good enough?"
 
-<img src="/img/blog/harness_p2_deep_introspection.jpeg" alt="Deep introspection of the logic behind a data pipeline can reveal logical flaws" width="50%"/>
+<img src="/img/blog/harness_p2_deep_introspection.jpeg" alt="Deep introspection of the logic behind a data pipeline can reveal logical flaws" style={{width: '50%'}}/>
 
 We get that question a lot. We are building an [open-source data engineering harness](https://docs.datasqrl.com), the tooling and guardrails that a coding agent uses to build data pipelines. Claude Code, Codex, and OpenCode already write plausible data pipeline code. So what is the harness for?
 

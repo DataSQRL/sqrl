@@ -1,3 +1,8 @@
+---
+title: "DataSQRL Cloud Deployment Configuration"
+description: "Configure instance sizes, replicas, and other cloud resources for each engine when deploying DataSQRL pipelines to DataSQRL Cloud."
+---
+
 # DataSQRL Cloud Deployment Configuration
 
 Configures the cloud resources for each engine when deploying pipelines to DataSQRL Cloud. Deployment settings are configured under the `deployment` field within each engine's configuration.

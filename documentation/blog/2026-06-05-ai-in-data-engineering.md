@@ -1,14 +1,11 @@
 ---
 slug: ai-data-engineering
 title: "AI in Data Engineering: Building Reliable Data Systems at Scale"
+description: "Coding agents generate data pipelines in minutes, but late data, schema evolution, and scale break them in production. How to build reliable systems with AI."
+image: /img/diagrams/agentic/harness_overview.png
 authors: [matthias]
 tags: [agentic, data-engineering]
 ---
-
-<head>
-  <meta property="og:image" content="/img/diagrams/agentic/harness_overview.png" />
-  <meta name="twitter:image" content="/img/diagrams/agentic/harness_overview.png" />
-</head>
 
 # AI in Data Engineering: Building Reliable Data Systems at Scale
 
@@ -197,7 +194,7 @@ Over time, this corpus enables agents to anticipate failure modes and proactivel
 
 Implementing governance, validation, and expertise capture requires purpose-built infrastructure. We call this a **data engineering harness**: a system that provides the guardrails and feedback loops coding agents need to produce production-grade data systems.
 
-<img src="/img/diagrams/agentic/harness_overview.png" alt="Data engineering harness architecture" width="80%"/>
+<img src="/img/diagrams/agentic/harness_overview.png" alt="Data engineering harness architecture" style={{width: '80%'}}/>
 
 The harness has three integrated components:
 
@@ -231,7 +228,7 @@ Static validation catches many issues but can't substitute for execution feedbac
 
 **Production Telemetry**: Monitor deployed pipelines and correlate observations back to source code. When latency increases or data quality degrades, the harness links metrics to specific transformations, enabling autonomous troubleshooting.
 
-<img src="/img/diagrams/agentic/feedback_loops.png" alt="Feedback loops from harness components back to coding agent" width="100%"/>
+<img src="/img/diagrams/agentic/feedback_loops.png" alt="Feedback loops from harness components back to coding agent" style={{width: '100%'}}/>
 
 ## Implementation: The DataSQRL Approach
 
@@ -281,7 +278,7 @@ The mapping from logical to physical layer happens through deterministic transpi
 
 The transpiler generates deployment artifacts (Flink plans, Kafka topics, Postgres schemas, GraphQL models) that are guaranteed consistent with the logical definition. Agents focus on business logic while the harness handles infrastructure integration.
 
-<img src="/img/diagrams/agentic/complete_framework.png" alt="Complete framework showing transpilation from SQL to multiple engines" width="100%"/>
+<img src="/img/diagrams/agentic/complete_framework.png" alt="Complete framework showing transpilation from SQL to multiple engines" style={{width: '100%'}}/>
 
 ### Neuro-Symbolic Optimization
 

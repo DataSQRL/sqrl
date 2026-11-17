@@ -1,3 +1,8 @@
+---
+title: "Flink Engine Configuration"
+description: "Configure Apache Flink, the stream and batch processing engine in DataSQRL pipelines: runtime mode, Flink SQL options, and an example configuration."
+---
+
 # Flink Engine Configuration
 
 Apache Flink is a streaming and batch data processor that serves as the core data processing engine in DataSQRL pipelines.

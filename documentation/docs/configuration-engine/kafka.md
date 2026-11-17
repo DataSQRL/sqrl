@@ -1,3 +1,8 @@
+---
+title: "Kafka Engine Configuration"
+description: "Configure Apache Kafka, the log engine in DataSQRL pipelines: topic retention, watermarks, transactions, and key and value formats."
+---
+
 # Kafka Engine Configuration
 
 Apache Kafka is a streaming data platform that serves as the log engine in DataSQRL pipelines for handling data streams and event logs.

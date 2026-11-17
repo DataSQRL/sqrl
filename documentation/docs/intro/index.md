@@ -1,8 +1,13 @@
+---
+title: "DataSQRL Documentation"
+description: "DataSQRL is an open-source data engineering harness for building data engineering agents designed around human control, correctness, and safety."
+---
+
 # DataSQRL Documentation
 
 DataSQRL is an open-source **data engineering harness** for building data engineering agents designed around **human control, correctness, and safety**. It extends your coding agent (Claude Code, Codex, OpenCode, Pi, and others) with a SQL compiler, a validator, an event-time simulator, and your own skills and policies. The result is an agent you can trust with data pipelines, batch jobs, data APIs (REST, GraphQL, MCP), data products, and operational data.
 
-<img src="/img/diagrams/agentic/harness_toolkit.svg" alt="DataSQRL harness: your skills and policies, a coding agent, and the DataSQRL framework packaged as one data engineering agent" width="100%" />
+<img src="/img/diagrams/agentic/harness_toolkit.svg" alt="DataSQRL harness: your skills and policies, a coding agent, and the DataSQRL framework packaged as one data engineering agent" style={{width: '100%'}} />
 
 ## How It Works
 

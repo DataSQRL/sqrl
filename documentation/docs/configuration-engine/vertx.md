@@ -1,3 +1,8 @@
+---
+title: "Vert.x Engine Configuration"
+description: "Configure Eclipse Vert.x, the DataSQRL API server for GraphQL, REST, and MCP, including query logging and JWT and OAuth authentication."
+---
+
 # Vert.x Engine Configuration
 
 Eclipse Vert.x is a reactive server framework that serves as the GraphQL API server, routing queries to the backing database/log engines.

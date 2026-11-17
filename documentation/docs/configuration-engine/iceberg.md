@@ -1,3 +1,8 @@
+---
+title: "Iceberg Engine Configuration"
+description: "Configure Apache Iceberg as a table-format engine in DataSQRL pipelines, including the catalog and warehouse of the shared iceberg connector."
+---
+
 # Iceberg Engine Configuration
 
 Apache Iceberg is an analytic database format that provides ACID transactions, schema evolution, and time travel capabilities for large analytic datasets.

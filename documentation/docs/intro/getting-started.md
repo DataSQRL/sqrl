@@ -1,3 +1,8 @@
+---
+title: "Getting Started with DataSQRL"
+description: "Run the DataSQRL data engineering agent with Docker and an LLM API key, or install the DataSQRL plugin for Claude Code, Codex, Cursor, or GitHub Copilot."
+---
+
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 

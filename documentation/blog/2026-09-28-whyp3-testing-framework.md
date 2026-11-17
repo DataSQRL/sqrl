@@ -1,14 +1,11 @@
 ---
 slug: p3-testing-framework
 title: "Standard Integration Tests Obfuscate Common Errors"
+description: "Standard integration tests miss late data, races, and updates in streaming pipelines. How event-time replay testing makes time-dependent behavior deterministic."
+image: /img/blog/harness_p3_test_simulator.jpeg
 authors: [matthias]
 tags: [technical, DataSQRL]
 ---
-
-<head>
-  <meta property="og:image" content="/img/blog/harness_p3_test_simulator.jpeg" />
-  <meta name="twitter:image" content="/img/blog/harness_p3_test_simulator.jpeg" />
-</head>
 
 # Standard Integration Tests Obfuscate Common Errors
 
@@ -18,7 +15,7 @@ tags: [technical, DataSQRL]
 
 "Why do I need that? Isn't Claude Code good enough?"
 
-<img src="/img/blog/harness_p3_test_simulator.jpeg" alt="An event-time simulator replays data pipeline events at their original timestamps to test time-dependent behavior >|" width="50%"/>
+<img src="/img/blog/harness_p3_test_simulator.jpeg" alt="An event-time simulator replays data pipeline events at their original timestamps to test time-dependent behavior >|" style={{width: '50%'}}/>
 
 We get that question a lot. We are building an [open-source data engineering harness](https://docs.datasqrl.com), the tooling and guardrails that a coding agent uses to build data pipelines. Claude Code, Codex, and OpenCode already write plausible data pipeline code. So what is the harness for?
 

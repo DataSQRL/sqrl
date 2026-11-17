@@ -1,3 +1,8 @@
+---
+title: "Frequently Asked Questions"
+description: "Common questions about DataSQRL: why your coding agent needs a data engineering harness and how DataSQRL compares to Flink, Spark, dbt, and streaming databases."
+---
+
 # Frequently Asked Questions
 
 ## Why do I need DataSQRL in addition to my coding agent?
