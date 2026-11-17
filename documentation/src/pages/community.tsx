@@ -3,7 +3,7 @@ import clsx from 'clsx';
 import Layout from '@theme/Layout';
 import Link from '@docusaurus/Link';
 import styles from './index.module.css';
-import HomepageFeatures from '../components/HomepageFeatures';
+import HomepageFeatures, {FeatureProps} from '../components/HomepageFeatures';
 import HomepageHeader, {HomepageHeaderProps} from '../components/HomepageHeader';
 
 
@@ -21,7 +21,7 @@ const header: HomepageHeaderProps = {
   image: '/img/undraw/community.svg',
 };
 
-const Support = [
+const Support: FeatureProps[] = [
   {
     title: 'GitHub',
     image: '/img/logos/github.svg',
@@ -76,7 +76,7 @@ const Support = [
   // },
 ];
 
-const Updates = [
+const Updates: FeatureProps[] = [
   // {
   //   title: 'LinkedIn',
   //   image: '/img/community/linkedin_sqrl.svg',

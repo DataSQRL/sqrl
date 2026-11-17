@@ -1,3 +1,8 @@
+---
+title: "Deep Dive: How DataSQRL Works"
+description: "How the DataSQRL compiler works step by step: packaging, parsing, logical plan analysis, DAG optimization, physical planning, and API generation."
+---
+
 # Deep Dive: How DataSQRL Works
 
 The DataSQRL `compile` command executes the following steps:

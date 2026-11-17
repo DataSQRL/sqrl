@@ -1,20 +1,17 @@
 ---
 slug: flinkrunner-announcement
 title: "Flink SQL Runner: Run Flink SQL Without JARs or Glue Code"
+description: "Flink SQL Runner is an open-source toolkit for running Flink SQL in production without packaging JARs, writing glue code, or managing connectors by hand."
+image: /img/blog/flinksqlrunner_logo.png
 authors: [matthias]
 tags: [Flink, DataSQRL]
 ---
-
-<head>
-  <meta property="og:image" content="/img/blog/flinksqlrunner_logo.png" />
-  <meta name="twitter:image" content="/img/blog/flinksqlrunner_logo.png" />
-</head>
 
 # Flink SQL Runner: Run Flink SQL Without JARs or Glue Code
 
 Apache Flink has long been a powerhouse for streaming and batch data processing. And with the rise of Flink SQL, developers can now build sophisticated pipelines using a declarative language they already know. But getting Flink SQL applications into production still comes with friction: packaging JARs, managing connectors, injecting secrets, and wiring up deployment infrastructure.
 
-<img src="/img/blog/flinksqlrunner_logo.png" alt="FlinkSQL Runner >" width="40%"/>
+<img src="/img/blog/flinksqlrunner_logo.png" alt="FlinkSQL Runner >" style={{width: '40%'}}/>
 
 [**Flink SQL Runner**](https://github.com/DataSQRL/flink-sql-runner/) is here to change that. It's an open-source toolkit that simplifies development, deployment, and operation of Flink SQL applications—locally or in Kubernetes—without manual JAR assembly or scripting custom infrastructure pipelines.
 

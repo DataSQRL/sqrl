@@ -131,5 +131,8 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+# Generated WebP images (documentation/scripts/optimize-images.mjs)
+documentation/static-generated/
+
 # Generated markdown files
 *-generated.md

@@ -1,14 +1,11 @@
 ---
 slug: flink-sql-stream-ruleset
 title: "Avoiding Duplicate Processing in Flink SQL Streaming Jobs"
+description: "Why Flink SQL streaming jobs duplicate parts of the job graph and how selectively controlling Calcite optimizer rules eliminates the duplicate processing."
+image: /img/blog/subgraph_elimination_after.png
 authors: [ferenc, matthias]
 tags: [Flink]
 ---
-
-<head>
-  <meta property="og:image" content="/img/blog/subgraph_elimination_after.png" />
-  <meta name="twitter:image" content="/img/blog/subgraph_elimination_after.png" />
-</head>
 
 # Avoiding Duplicate Processing in Flink SQL Streaming Jobs
 
@@ -130,7 +127,7 @@ END;
 
 When running this Flink SQL script, the generated job graph duplicates the temporal join.
 
-<img src="/img/blog/subgraph_elimination_before.png" alt="Duplicate Temporal Join" width="100%"/>
+<img src="/img/blog/subgraph_elimination_before.png" alt="Duplicate Temporal Join" style={{width: '100%'}}/>
 
 Why? Because the two aggregations needs slightly different data: The hourly aggregation needs `category`. The daily aggregation needs `advertiser`. Thus, predicate pushdown and projection pruning cause the optimizer to generate slightly different pipelines for each sink. As a result, the temporal join is executed twice.
 
@@ -155,7 +152,7 @@ In many real-world streaming scenarios with multiple sinks, these rules prevent 
 
 The solution is to selectively disable specific Calcite rules so that intermediate views do not get optimized for each `RelNode` tree and remain identical. Identical `RelNode` trees are then removed during the subgraph elimination phase of the Flink SQL optimizer.
 
-<img src="/img/blog/subgraph_elimination_after.png" alt="Duplicate Temporal Join" width="100%"/>
+<img src="/img/blog/subgraph_elimination_after.png" alt="Duplicate Temporal Join" style={{width: '100%'}}/>
 
 ## How Do I use this?
 

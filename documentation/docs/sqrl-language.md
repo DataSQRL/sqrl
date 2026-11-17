@@ -1,3 +1,8 @@
+---
+title: "SQRL Language Specification"
+description: "Specification of SQRL, the extension of Flink SQL with table functions, relationships, and API definitions that DataSQRL compiles into data pipelines."
+---
+
 # SQRL Language Specification
 
 SQRL is an extension of Flink SQL that adds support for table functions and convenience syntax to build reactive data processing and serving applications.  

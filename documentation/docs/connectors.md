@@ -1,3 +1,8 @@
+---
+title: "Connecting External Data Sources and Sinks"
+description: "Connect Kafka, databases, files, and other external sources and sinks to SQRL scripts with CREATE TABLE and Flink connectors, including CDC."
+---
+
 # Connecting External Data Sources and Sinks
 
 Use `CREATE TABLE` statements to connect external data sources and sinks with your SQRL script using the `WITH` clause to provide connector configuration.

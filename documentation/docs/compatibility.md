@@ -1,3 +1,8 @@
+---
+title: "Version Compatibility"
+description: "Which versions of Flink, PostgreSQL, pgvector, Iceberg, and Kafka each DataSQRL release supports and has been tested with."
+---
+
 # Version Compatibility
 
 DataSQRL builds on top of Flink and the Flink connector ecosystem.

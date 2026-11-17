@@ -1,3 +1,8 @@
+---
+title: "Designing the Interface"
+description: "Design the GraphQL, REST, and MCP APIs and data product views that DataSQRL generates from a SQRL script, including mutations and subscriptions."
+---
+
 # Designing the Interface
 
 Based on the SQRL script, DataSQRL generates the interface for the compiled data pipeline. DataSQRL supports the following interfaces:

@@ -1,3 +1,8 @@
+---
+title: "Deployment"
+description: "Deploy compiled DataSQRL pipelines to production with Flink, Kafka, PostgreSQL, Iceberg, and the API server, on DataSQRL Cloud or your own infrastructure."
+---
+
 # Deployment
 
 The [compiler](compiler) generates all deployment assets for a pipeline in `build/deploy/plan`: Flink plans, Kafka topic definitions, database schemas, and the API server model (see [Compilation Output](compilation-output)). This page gives an overview of how to deploy those assets to production.

@@ -1,3 +1,8 @@
+---
+title: "DataSQRL Configuration (package.json)"
+description: "Reference for the DataSQRL package.json configuration: engines, scripts, tests, compiler options, connectors, environment variables, and merging."
+---
+
 # DataSQRL Configuration (`package.json` file)
 
 DataSQRL projects are configured with one or more `*package.json` files which are merged in the order they are provided to the [DataSQRL command](compiler) – latter files override fields in earlier ones, objects are *deep-merged*, and array values are replaced wholesale. User provided configuration files are merged on top of the [default `package.json`](configuration-default). 

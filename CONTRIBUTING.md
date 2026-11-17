@@ -180,7 +180,8 @@ gpg --armor --export D2A162EAE1016F3G
 
 ## Contributors
 
-Contributors for this project are documented in the project's [CONTRIBUTORS](CONTRIBUTORS.md) file.
+GitHub lists everyone who has contributed to DataSQRL on the
+[contributors page](https://github.com/DataSQRL/sqrl/graphs/contributors).
 
 ## License
 

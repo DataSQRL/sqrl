@@ -1,3 +1,8 @@
+---
+title: "Compilation Output"
+description: "The files the DataSQRL compiler writes to build and build/deploy, from the data model and pipeline DAG to each engine's physical plan."
+---
+
 # Compilation Output
 
 The [`compile`](compiler#compile-command) command writes two kinds of output. Compilation outputs in the `build` folder describe the data model and the pipeline the compiler planned. Deployment outputs in `build/deploy/plan` are the artifacts each engine executes. The [`run`](compiler#run-command) and [`test`](compiler#test-command) commands produce the same output before they execute the pipeline.

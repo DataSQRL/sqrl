@@ -1,3 +1,8 @@
+---
+title: "Examples Gallery"
+description: "Open-source DataSQRL examples, from data products for a retail bank to self-contained pipelines for finance, healthcare, IoT, logistics, and more."
+---
+
 # Examples Gallery
 
 A gallery of what you can build with the DataSQRL data engineering harness, from a data product suite for a retail bank to small, self-contained pipelines across a range of use cases. Every example is open source. You can read the SQL, run it locally, and run its tests.

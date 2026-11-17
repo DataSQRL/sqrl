@@ -1,6 +1,7 @@
 ---
 slug: lets-uplevel-database-datasqrl
 title: "Let's Uplevel Our Database Game: Meet DataSQRL"
+description: "Building data-driven applications takes too much plumbing between Kafka, Flink, databases, and APIs. Meet DataSQRL, our effort to simplify the data layer."
 authors: [matthias]
 tags: [DataSQRL, community]
 ---
@@ -12,7 +13,7 @@ import useBaseUrl from '@docusaurus/useBaseUrl';
 
 You need a queue like Kafka to hold your events, a stream processor like Flink to process data, a database like Postgres to store and query the result data, and an API layer to tie it all together.
 
-<img src={useBaseUrl('/img/reference/full_logo.svg')} alt="DataSQRL Logo >" width="30%" />
+<img src={useBaseUrl('/img/reference/full_logo.svg')} alt="DataSQRL Logo >" style={{width: '30%'}} />
 
 And that’s just the price of admission. To get a functioning data layer, you need to make sure that all these components talk to each other and that data flows smoothly between them. Schema synchronization, data model tuning, index selection, query batching … all that fun stuff.
 
@@ -66,7 +67,7 @@ We believe that all this low-level data plumbing work should be done by a compil
 
 ## Join Us on this Journey
 
-<img src={useBaseUrl('/img/undraw/code.svg')} alt="Join DataSQRL Community >" width="50%"/>
+<img src={useBaseUrl('/img/undraw/code.svg')} alt="Join DataSQRL Community >" style={{width: '50%'}}/>
 
 
 We have the ambitious goal of designing a higher level of abstraction for data to enable millions of developers to build data-driven applications.

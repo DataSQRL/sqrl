@@ -1,3 +1,8 @@
+---
+title: "Iceberg Query Engine Configuration"
+description: "Configure DuckDB, Snowflake, Spark SQL, Redshift, and Trino as query engines that DataSQRL pairs with Apache Iceberg to create and query Iceberg tables."
+---
+
 # Iceberg Query Engine Configurations
 
 Apache Iceberg stores analytic data but does not execute queries. Enable an Iceberg query engine alongside `iceberg` to create and query Iceberg tables.

@@ -13,6 +13,8 @@ export interface HomepageHeaderProps {
   buttonLink?: string;
   buttonText?: string;
   image?: string;
+  // Describes the image for screen readers and search engines; empty for a decorative image
+  imageAlt?: string;
   youtubeURL?: string;
 }
 
@@ -23,8 +25,9 @@ export default function HomepageHeader({
                                          buttonLink,
                                          buttonText,
                                          image,
+                                         imageAlt = '',
                                          youtubeURL,
-                                       }: HomepageHeaderProps): JSX.Element {
+                                       }: HomepageHeaderProps): React.JSX.Element {
   const renderButton = () => {
     if (!buttonLink || !buttonText) return null;
     return (
@@ -50,8 +53,7 @@ export default function HomepageHeader({
           ></iframe>
       );
     } else if (image) {
-      return <img src={useBaseUrl(image)} height="350"
-                  alt="DataSQRL unlocks the value of your data"/>
+      return <img src={useBaseUrl(image)} height="350" alt={imageAlt}/>
     } else {
       return null;
     }
