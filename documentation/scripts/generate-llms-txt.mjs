@@ -307,7 +307,7 @@ function llmsTxt(version, versions, sections) {
     '## Optional',
     '',
     `- [Full documentation](${SITE_URL}${version.basePath}/llms-full.txt): all of the above pages in a single file`,
-    `- [Blog](${SITE_URL}/blog): articles on the design of DataSQRL and its harness for data engineering agents`,
+    `- [Blog](${SITE_URL}/blog): articles on the design of DataSQRL and its harness for operational data engineering`,
   );
   for (const other of versions.filter((other) => other !== version)) {
     const label = other.name === 'main' ? 'Unreleased `main` documentation' : `DataSQRL ${other.name} documentation`;

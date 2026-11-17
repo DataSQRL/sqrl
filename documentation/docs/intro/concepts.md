@@ -1,11 +1,11 @@
 ---
-title: "Key DataSQRL Concepts"
+title: "Streaming Concepts: Time and Watermarks"
 description: "Key stream processing concepts in DataSQRL: event time, processing time, and watermarks, and how time determines how data streams are processed."
 ---
 
-# Key DataSQRL Concepts
+# Streaming Concepts: Time and Watermarks
 
-This document explains some of the key concepts in streaming data processing.
+These concepts exist because operational data arrives continuously and out of order, which a warehouse model never has to handle. That is why this page is about time: it explains the key concepts of streaming data processing that DataSQRL pipelines are built on.
 
 ## Time Handling
 

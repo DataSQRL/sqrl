@@ -1,12 +1,14 @@
 ---
 title: "Getting Started with DataSQRL"
-description: "Run the DataSQRL data engineering agent with Docker and an LLM API key, or install the DataSQRL plugin for Claude Code, Codex, Cursor, or GitHub Copilot."
+description: "Run the DataSQRL agent for operational data engineering with Docker and an LLM API key, or install the DataSQRL plugin for Claude Code, Codex, Cursor, or GitHub Copilot."
 ---
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
 # Getting Started with DataSQRL
+
+You will have an agent build a real-time pipeline with a data API, then verify it.
 
 ## Basic DataSQRL Agent
 

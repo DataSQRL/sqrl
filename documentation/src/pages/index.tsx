@@ -412,6 +412,11 @@ ls build/deploy/plan`}
                     <strong>Not built for:</strong> dbt models on a schedule inside a warehouse.{' '}
                     <Link to={comparisonLink}>See how DataSQRL compares →</Link>
                   </p>
+                  <p>
+                    <Link to="/blog/operational-data-engineering">
+                      Why operational data engineering is not analytics engineering →
+                    </Link>
+                  </p>
                 </div>
               </div>
 
