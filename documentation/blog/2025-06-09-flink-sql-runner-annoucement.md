@@ -2,14 +2,10 @@
 slug: flinkrunner-announcement
 title: "Flink SQL Runner: Run Flink SQL Without JARs or Glue Code"
 description: "Flink SQL Runner is an open-source toolkit for running Flink SQL in production without packaging JARs, writing glue code, or managing connectors by hand."
+image: /img/blog/flinksqlrunner_logo.png
 authors: [matthias]
 tags: [Flink, DataSQRL]
 ---
-
-<head>
-  <meta property="og:image" content="/img/blog/flinksqlrunner_logo.png" />
-  <meta name="twitter:image" content="/img/blog/flinksqlrunner_logo.png" />
-</head>
 
 # Flink SQL Runner: Run Flink SQL Without JARs or Glue Code
 

@@ -43,7 +43,7 @@ const pillars: Pillar[] = [
     claim: 'One SQL file your team can read.',
     text: 'Not thousands of lines of Python, dbt, YAML, and glue. The whole pipeline, ' +
         'from ingest to API, is expressed in SQL you can understand, run, and approve.',
-    link: '/blog/p4-human-understanding-one-sql-file',
+    link: '/blog/human-review-data-pipeline-one-sql-file',
     linkText: 'Why verifiability is the bottleneck',
   },
   {
@@ -51,7 +51,7 @@ const pillars: Pillar[] = [
     claim: 'A compiler instead of guesswork.',
     text: 'Deterministic generation removes errors at the seams between systems. Relational ' +
         'validation and event-time replay tests catch the bugs that code review misses.',
-    link: '/blog/p1-broken-at-seams',
+    link: '/blog/ai-coding-agents-data-pipeline-seams',
     linkText: 'Where coding agents break pipelines',
   },
   {
@@ -59,7 +59,7 @@ const pillars: Pillar[] = [
     claim: 'Guardrails you can inspect and extend.',
     text: 'Problems surface at compile time. Every compile writes out lineage, schemas, and the ' +
         'full data flow, so you can enforce your organization\'s policies automatically.',
-    link: '/blog/p2-validator-relational-introspection',
+    link: '/blog/relational-introspection-data-pipeline-validation',
     linkText: 'What deep introspection catches',
   },
 ];
@@ -253,7 +253,7 @@ NoUnenrichedTransactions :=
                     Late and out-of-order data, races between streams, idle sources, updates, and
                     deletes become deterministic tests.
                   </p>
-                  <Link to="/blog/p3-testing-framework">
+                  <Link to="/blog/event-time-testing-streaming-pipelines">
                     Why standard integration tests fall short →
                   </Link>
                 </div>

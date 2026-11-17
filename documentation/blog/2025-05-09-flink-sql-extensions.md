@@ -2,14 +2,10 @@
 slug: flinksql-extensions
 title: "Defining Data Interfaces with FlinkSQL"
 description: "How DataSQRL extends Flink SQL to define data interfaces, with relationships and modular connectors, so you can serve streaming pipeline results through APIs."
+image: /img/blog/flinksql_extension_api.png
 authors: [matthias]
 tags: [Join, Flink, DataSQRL]
 ---
-
-<head>
-  <meta property="og:image" content="/img/blog/flinksql_extension_api.png" />
-  <meta name="twitter:image" content="/img/blog/flinksql_extension_api.png" />
-</head>
 
 # Defining Data Interfaces with FlinkSQL
 

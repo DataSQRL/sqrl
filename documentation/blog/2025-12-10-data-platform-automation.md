@@ -2,15 +2,11 @@
 slug: data-platform-automation
 title: "World Model for Data Platform Automation"
 description: "How DataSQRL uses a world model of the data platform to give AI coding agents the guardrails and feedback to build and operate data pipelines autonomously."
+image: /img/diagrams/world_model_architecture.png
 authors: [matthias]
 tags: [release]
 unlisted: true
 ---
-
-<head>
-  <meta property="og:image" content="/img/diagrams/world_model_architecture.png" />
-  <meta name="twitter:image" content="/img/diagrams/world_model_architecture.png" />
-</head>
 
 # Data Platform Automation
 

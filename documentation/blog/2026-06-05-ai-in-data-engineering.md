@@ -2,14 +2,10 @@
 slug: ai-data-engineering
 title: "AI in Data Engineering: Building Reliable Data Systems at Scale"
 description: "Coding agents generate data pipelines in minutes, but late data, schema evolution, and scale break them in production. How to build reliable systems with AI."
+image: /img/diagrams/agentic/harness_overview.png
 authors: [matthias]
 tags: [agentic, data-engineering]
 ---
-
-<head>
-  <meta property="og:image" content="/img/diagrams/agentic/harness_overview.png" />
-  <meta name="twitter:image" content="/img/diagrams/agentic/harness_overview.png" />
-</head>
 
 # AI in Data Engineering: Building Reliable Data Systems at Scale
 

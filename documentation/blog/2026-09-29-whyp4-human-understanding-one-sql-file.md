@@ -1,15 +1,11 @@
 ---
-slug: p4-human-understanding-one-sql-file
+slug: human-review-data-pipeline-one-sql-file
 title: "The Whole Pipeline in One File a Human Can Actually Read"
 description: "When AI agents write data pipelines, human verification is the bottleneck. Why expressing the whole pipeline in one readable SQL file keeps you in control."
+image: /img/blog/harness_p4_human_validation.jpeg
 authors: [matthias]
 tags: [technical, DataSQRL]
 ---
-
-<head>
-  <meta property="og:image" content="/img/blog/harness_p4_human_validation.jpeg" />
-  <meta name="twitter:image" content="/img/blog/harness_p4_human_validation.jpeg" />
-</head>
 
 # The Whole Pipeline in One File a Human Can Actually Verify
 

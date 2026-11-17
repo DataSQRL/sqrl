@@ -2,14 +2,10 @@
 slug: flink-sql-stream-ruleset
 title: "Avoiding Duplicate Processing in Flink SQL Streaming Jobs"
 description: "Why Flink SQL streaming jobs duplicate parts of the job graph and how selectively controlling Calcite optimizer rules eliminates the duplicate processing."
+image: /img/blog/subgraph_elimination_after.png
 authors: [ferenc, matthias]
 tags: [Flink]
 ---
-
-<head>
-  <meta property="og:image" content="/img/blog/subgraph_elimination_after.png" />
-  <meta name="twitter:image" content="/img/blog/subgraph_elimination_after.png" />
-</head>
 
 # Avoiding Duplicate Processing in Flink SQL Streaming Jobs
 

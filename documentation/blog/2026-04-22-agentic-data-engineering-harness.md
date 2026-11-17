@@ -2,14 +2,10 @@
 slug: agentic-data-engineering-harness
 title: "Agentic Data Engineering Harness"
 description: "DataSQRL becomes an agentic data engineering harness that gives AI coding agents guardrails and feedback to build data pipelines, data products, and APIs."
+image: /img/diagrams/agentic/harness_overview.png
 authors: [matthias]
 tags: [release]
 ---
-
-<head>
-  <meta property="og:image" content="/img/diagrams/agentic/harness_overview.png" />
-  <meta name="twitter:image" content="/img/diagrams/agentic/harness_overview.png" />
-</head>
 
 # Agentic Data Engineering Harness
 

@@ -160,6 +160,11 @@ const config: Config = {
         redirects: [
           {from: '/flink', to: '/'},
           {from: '/ai', to: '/'},
+          // Blog series renamed from p1 to p4 slugs
+          {from: '/blog/p1-broken-at-seams', to: '/blog/ai-coding-agents-data-pipeline-seams'},
+          {from: '/blog/p2-validator-relational-introspection', to: '/blog/relational-introspection-data-pipeline-validation'},
+          {from: '/blog/p3-testing-framework', to: '/blog/event-time-testing-streaming-pipelines'},
+          {from: '/blog/p4-human-understanding-one-sql-file', to: '/blog/human-review-data-pipeline-one-sql-file'},
         ],
       },
     ],
@@ -272,7 +277,7 @@ const config: Config = {
     metadata: [
       {name: 'keywords', content: 'data engineering harness, data engineering agent, coding agent, SQRL, DataSQRL, data pipeline, data product, data API, streaming, real-time analytics'},
       {name: 'description', content: 'DataSQRL is an open-source data engineering harness for building data engineering agents designed around human control, correctness, and safety.'},
-      {name: 'twitter:card', content: 'summary'},
+      {name: 'twitter:card', content: 'summary_large_image'},
       {name: 'twitter:site', content: '@DataSQRL'}
     ],
   } satisfies Preset.ThemeConfig,
