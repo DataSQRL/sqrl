@@ -176,6 +176,11 @@ const sidebars = {
     },
     {
       type: 'doc',
+      id: 'intro/comparison',
+      label: '⚖️ How DataSQRL Compares',
+    },
+    {
+      type: 'doc',
       id: 'intro/faq',
       label: '❓ FAQ',
     },
