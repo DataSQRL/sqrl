@@ -31,7 +31,7 @@ Once published, CircleCI will automatically build and publish the artifacts.
 
 CircleCI will handle all of the following:
 
-- 📦 **Maven artifacts** → [Maven Central](https://repo1.maven.org/maven2/com/datasqrl/sqrl-root/)
+- 📦 **Maven artifacts** → [Maven Central](https://repo1.maven.org/maven2/com/datasqrl/sqrl-root/) and [GitHub Packages](https://github.com/orgs/DataSQRL/packages?repo_name=sqrl), which still gets them when Maven Central rejects a release
 - 🐳 **Docker image** → [`datasqrl/cmd` on Docker Hub](https://hub.docker.com/r/datasqrl/cmd)
 - 📥 **CLI `.jar` files** → included in GitHub Releases
 
@@ -47,6 +47,9 @@ CircleCI will handle all of the following:
 If anything fails:
 - Check the [CircleCI jobs](https://app.circleci.com/pipelines/github/DataSQRL/sqrl).
 - Retry the failed job if the error was transient.
+- Re-running the `deploy` job repeats both Maven deploys, so it fails on the one that succeeded before:
+  GitHub Packages rejects release files it already has with 409, and Maven Central rejects a version it already published.
+  The other one still gets deployed. If GitHub Packages failed halfway, delete the versions it already uploaded before re-running.
 - If you must delete a release, remove the tag both from GitHub and locally:  
   ```bash
   git tag -d <tag>

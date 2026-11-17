@@ -473,25 +473,36 @@ jobs:
       - run:
           name: Deploy Maven artifacts
           command: |
-            if [ -n "$CIRCLE_TAG" ]; then
-              # Releases go to Maven Central as a single bundle through the central-publishing-maven-plugin
-              mvn -U clean -T1C -B deploy -DonlyJars -Prelease
-              exit
-            fi
-
-            # Snapshots go to GitHub Packages, which intermittently fails uploads with HTTP 5xx.
+            # GitHub Packages intermittently fails uploads with HTTP 5xx.
             # Upload each module's files sequentially and retry those errors too (Resolver only retries 429 and 503 by default).
             # A 5xx can still store the file, and GitHub answers the retried upload with 409 because files can't be overwritten.
+            deploy_to_github_packages() {
+              mvn -T1C -B "$@" deploy \
+                -Daether.connector.basic.parallelPut=false \
+                -Daether.transport.http.retryHandler.count=5 \
+                -Daether.transport.http.retryHandler.serviceUnavailable=429,500,502,503,504
+            }
+
+            if [ -n "$CIRCLE_TAG" ]; then
+              # Releases also go to GitHub Packages, so they can be resolved when Maven Central rejects them (it caps what the
+              # com.datasqrl namespace publishes per month). Only the github-release profile gives them a repository there.
+              GITHUB_STATUS=0
+              deploy_to_github_packages -U clean -Pgithub-release || GITHUB_STATUS=$?
+
+              # Also runs when only the GitHub Packages deploy failed, so one repository failing doesn't hold back the other.
+              # Re-running the job repeats both deploys, and GitHub rejects re-uploading a release's files with 409.
+              # Maven Central gets a single bundle through the central-publishing-maven-plugin.
+              mvn -U clean -T1C -B deploy -Pcentral-release
+              exit $GITHUB_STATUS
+            fi
+
+            # Snapshots only go to GitHub Packages.
             # A new Maven run deploys under a new snapshot timestamp, so resume from the failed module when the deploy fails.
             set -o pipefail
             LOG=$(mktemp)
             ARGS="-U clean"
             for ATTEMPT in 1 2 3; do
-              if mvn $ARGS -T1C -B deploy -DonlyJars \
-                  -Daether.connector.basic.parallelPut=false \
-                  -Daether.transport.http.retryHandler.count=5 \
-                  -Daether.transport.http.retryHandler.serviceUnavailable=429,500,502,503,504 \
-                  2>&1 | tee "$LOG"; then
+              if deploy_to_github_packages $ARGS -DonlyJars 2>&1 | tee "$LOG"; then
                 exit 0
               fi
               # Build failures are not retried, only failed uploads
