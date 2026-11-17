@@ -273,7 +273,7 @@ Deploying adds a new deployment without changing which one the project serves. T
 
 ---
 
-# Getting Started with DataSQRL
+# Tutorial: DataSQRL without an API Key
 
 Source: https://docs.datasqrl.com/docs/main/intro/getting-started-no-key
 
