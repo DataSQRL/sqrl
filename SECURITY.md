@@ -3,10 +3,11 @@
 ## Supported Versions
 
 Each major release is maintained on its own `release-*` branch.
-Security fixes are applied to `main` and backported to the latest release branch only.
+Security fixes are applied to `main` and backported to the release branches of the supported versions in the table below.
 
 | Version | Supported          |
 |---------|--------------------|
+| 0.12.x  | :white_check_mark: |
 | 0.11.x  | :white_check_mark: |
 | < 0.11  | :x:                |
 

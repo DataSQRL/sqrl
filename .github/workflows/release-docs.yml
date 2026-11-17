@@ -1,0 +1,46 @@
+name: Release docs
+
+# Checks that SECURITY.md and the compatibility table in the docs cover the latest release line
+# (see .github/scripts/check-release-docs.py). Runs on every PR and push instead of only when those
+# files change, because pushing a new release tag makes them stale without any file changing.
+on:
+  pull_request:
+    branches:
+      - main
+      - 'release-*'
+  push:
+    branches:
+      - main
+      - 'release-*'
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Check SECURITY.md and compatibility table
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_REF: ${{ github.base_ref }}
+          REF_TYPE: ${{ github.ref_type }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          if [ "$EVENT_NAME" = pull_request ]; then
+            target=(--branch "$BASE_REF")
+          elif [ "$REF_TYPE" = tag ]; then
+            target=(--tag "$REF_NAME")
+          else
+            target=(--branch "$REF_NAME")
+          fi
+          python3 .github/scripts/check-release-docs.py "${target[@]}"
