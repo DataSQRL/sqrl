@@ -1343,6 +1343,7 @@
     <profile>
       <id>github-release</id>
       <properties>
+        <deployAtEnd>true</deployAtEnd>
         <docker.skip>true</docker.skip>
         <skipTests>true</skipTests>
         <skipITs>true</skipITs>

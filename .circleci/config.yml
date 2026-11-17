@@ -486,11 +486,19 @@ jobs:
             if [ -n "$CIRCLE_TAG" ]; then
               # Releases also go to GitHub Packages, so they can be resolved when Maven Central rejects them (it caps what the
               # com.datasqrl namespace publishes per month). Only the github-release profile gives them a repository there.
+              # It uploads at the end of the build, one file at a time in reactor order, and the last module's test jar is
+              # the last file. So a re-run skips the deploy once that is there, instead of failing because GitHub rejects
+              # re-uploading a release's files with 409.
               GITHUB_STATUS=0
-              deploy_to_github_packages -U clean -Pgithub-release || GITHUB_STATUS=$?
+              LAST=sqrl-testing-integration
+              if curl -sfLo /dev/null -u "$GITHUB_USER:$GITHUB_TOKEN" \
+                  "https://maven.pkg.github.com/DataSQRL/sqrl/com/datasqrl/$LAST/$CIRCLE_TAG/$LAST-$CIRCLE_TAG-tests.jar"; then
+                echo "$CIRCLE_TAG is already on GitHub Packages, skipping its deploy"
+              else
+                deploy_to_github_packages -U clean -Pgithub-release || GITHUB_STATUS=$?
+              fi
 
               # Also runs when only the GitHub Packages deploy failed, so one repository failing doesn't hold back the other.
-              # Re-running the job repeats both deploys, and GitHub rejects re-uploading a release's files with 409.
               # Maven Central gets a single bundle through the central-publishing-maven-plugin.
               mvn -U clean -T1C -B deploy -Pcentral-release
               exit $GITHUB_STATUS

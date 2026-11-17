@@ -47,9 +47,9 @@ CircleCI will handle all of the following:
 If anything fails:
 - Check the [CircleCI jobs](https://app.circleci.com/pipelines/github/DataSQRL/sqrl).
 - Retry the failed job if the error was transient.
-- Re-running the `deploy` job repeats both Maven deploys, so it fails on the one that succeeded before:
-  GitHub Packages rejects release files it already has with 409, and Maven Central rejects a version it already published.
-  The other one still gets deployed. If GitHub Packages failed halfway, delete the versions it already uploaded before re-running.
+- Re-running the `deploy` job skips the GitHub Packages deploy if the release is already there, and deploys to Maven Central again,
+  which fails if Maven Central already published the version.
+  If GitHub Packages failed halfway, delete the versions it already uploaded before re-running, since it rejects existing release files with 409.
 - If you must delete a release, remove the tag both from GitHub and locally:  
   ```bash
   git tag -d <tag>
