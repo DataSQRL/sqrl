@@ -1,3 +1,8 @@
+---
+title: "Functions"
+description: "Use Flink and DataSQRL system functions, import library functions, and write your own user-defined functions (UDFs) in SQRL scripts."
+---
+
 # Functions
 
 ## System Functions

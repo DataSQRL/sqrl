@@ -56,6 +56,14 @@ jobs:
         working-directory: documentation
         run: npm install
 
+      - name: Typecheck
+        working-directory: documentation
+        run: npm run typecheck
+
+      - name: Check docs and blog front matter
+        working-directory: documentation
+        run: npm run check-front-matter
+
       - name: Build Docusaurus site
         working-directory: documentation
         run: npm run build

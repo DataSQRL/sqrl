@@ -1,6 +1,7 @@
 ---
 slug: data-platform-automation
 title: "World Model for Data Platform Automation"
+description: "How DataSQRL uses a world model of the data platform to give AI coding agents the guardrails and feedback to build and operate data pipelines autonomously."
 authors: [matthias]
 tags: [release]
 unlisted: true
@@ -26,7 +27,7 @@ LLMs are powerful pattern-matching systems but lack grounded models of how data 
 
 That is why DataSQRL exists. Coding agents are impressive solution generators, but they require a **conceptual framework**, **validator**, and **simulator** to ensure correctness, safety, and robustness. In most successful agentic systems deployed in the wild, the neural network–driven reasoning is balanced by a set of components that supply structure, constraints, and feedback loops. Collectively, these components are called **"World Model"**.
 
-<img src="/img/diagrams/world_model_architecture.png" alt="DataSQRL World Model Architecture" width="100%"/>
+<img src="/img/diagrams/world_model_architecture.png" alt="DataSQRL World Model Architecture" style={{width: '100%'}}/>
 
 Consider self-driving cars as an example. Neural networks power environmental perception: recognizing lanes, traffic lights, pedestrians. Autonomous driving becomes possible only when this probabilistic perception is grounded in detailed maps, constraint systems, planning modules, and a conceptual framework based on physics and real‑world dynamics.
 
@@ -152,7 +153,7 @@ We call each data system an *engine* and the above categories *engine types*. Wh
 
 Hence, we use a computational DAG that models the flow of data from source to interface as the basis of our physical model. Each node in the DAG represents a logical computation mapped to be executed by an engine. Thus, the physical model provides an integrated view of the entire data flow.
 
-<img src="/img/diagrams/automation_overview.png" alt="An example physical model DAG" width="100%"/>
+<img src="/img/diagrams/automation_overview.png" alt="An example physical model DAG" style={{width: '100%'}}/>
 
 #### Transpiler
 
@@ -244,7 +245,7 @@ DataSQRL follows the neuro-symbolic approach and provides 3 types of planners fo
 
 Query rewriting and optimization is a well-established technique for producing high-performing physical plans from relational algebra. DataSQRL relies on Apache Calcite's Volcano optimizer and HEP rule engine for this purpose.
 
-<img src="/img/screenshots/banking_dag.png" alt="Architecture view of DataSQRL pipelines" width="100%"/>
+<img src="/img/screenshots/banking_dag.png" alt="Architecture view of DataSQRL pipelines" style={{width: '100%'}}/>
 
 #### Physical Planning
 

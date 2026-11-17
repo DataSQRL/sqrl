@@ -1,3 +1,8 @@
+---
+title: "Default DataSQRL package.json Configuration"
+description: "The default DataSQRL package.json configuration that user configuration files are merged on top of, with the default value of every option."
+---
+
 # Default DataSQRL `package.json` Configuration
 
 The following is the [default configuration file](https://raw.githubusercontent.com/DataSQRL/sqrl/refs/heads/main/sqrl-planner/src/main/resources/default-package.json) that user provided configuration files are merged on top of. It provides the default values for all configuration options.

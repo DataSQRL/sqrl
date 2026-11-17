@@ -1,6 +1,7 @@
 ---
 slug: p1-broken-at-seams
 title: "The Pipeline Compiles, the Demo Works, and the Seams Are Quietly Broken"
+description: "AI coding agents break data pipelines at the seams between Kafka, Flink, databases, and APIs. How a compiler eliminates these errors that survive code review."
 authors: [matthias]
 tags: [technical, DataSQRL]
 ---
@@ -20,7 +21,7 @@ tags: [technical, DataSQRL]
 
 We get that question a lot. We are building an [open-source data engineering harness](https://docs.datasqrl.com), the tooling and guardrails that a coding agent uses to build data pipelines. Claude Code, Codex, and OpenCode already write plausible data pipeline code. So what is the harness for?
 
-<img src="/img/blog/harness_p1_broken_seams.jpeg" alt="A data pipeline spanning multiple systems with broken seams at the boundaries between them." width="50%"/>
+<img src="/img/blog/harness_p1_broken_seams.jpeg" alt="A data pipeline spanning multiple systems with broken seams at the boundaries between them." style={{width: '50%'}}/>
 
 This series answers that. It looks at where general-purpose coding harnesses fail on data engineering work, and why those failures survive code review.
 

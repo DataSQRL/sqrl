@@ -137,6 +137,12 @@ html[data-theme='dark'] .tooltip {
     margin-right: 1rem;
 }
 
+/* JSX <img> tags in docs and blog posts get their width and height from
+   src/remark/optimized-images.mjs; scale them by width only */
+.markdown img {
+  height: auto;
+}
+
 img[alt$=">"] {
   float: right;
   margin: 1rem;

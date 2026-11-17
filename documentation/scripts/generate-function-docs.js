@@ -76,7 +76,12 @@ function generateLibrarySection(categoryName, functions) {
  * Generates the complete system functions markdown file
  */
 function generateSystemFunctionsDoc(data) {
-    const frontmatter = `# System Functions
+    const frontmatter = `---
+title: "System Functions"
+description: "Reference of the built-in DataSQRL system functions for JSONB, vectors and embeddings, text processing, and full text search in SQRL scripts."
+---
+
+# System Functions
 
 DataSQRL provides built-in system functions that are available in all SQRL scripts. These functions are grouped by functionality and provide essential operations for data processing, JSON manipulation, vector operations, and text processing.
 
@@ -93,7 +98,12 @@ DataSQRL provides built-in system functions that are available in all SQRL scrip
  * Generates the complete library functions markdown file
  */
 function generateLibraryFunctionsDoc(data) {
-    const frontmatter = `# Library Functions
+    const frontmatter = `---
+title: "Library Functions"
+description: "Reference of the DataSQRL library functions for math, data processing, AI and LLM integration, and external systems, and how to import them."
+---
+
+# Library Functions
 
 DataSQRL provides extended library functions that can be imported into your SQRL scripts. These functions offer specialized capabilities for mathematical operations, data processing, AI integration, and external system connectivity.
 

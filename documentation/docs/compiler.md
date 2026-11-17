@@ -1,3 +1,8 @@
+---
+title: "DataSQRL Command"
+description: "Install and use the DataSQRL command to initialize, compile, run, and test SQRL projects with Docker, including all options."
+---
+
 # DataSQRL Command
 
 The DataSQRL command initializes, compiles, runs, and tests SQRL projects.

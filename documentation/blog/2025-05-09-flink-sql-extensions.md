@@ -1,6 +1,7 @@
 ---
 slug: flinksql-extensions
 title: "Defining Data Interfaces with FlinkSQL"
+description: "How DataSQRL extends Flink SQL to define data interfaces, with relationships and modular connectors, so you can serve streaming pipeline results through APIs."
 authors: [matthias]
 tags: [Join, Flink, DataSQRL]
 ---
@@ -15,7 +16,7 @@ tags: [Join, Flink, DataSQRL]
 [FlinkSQL](https://nightlies.apache.org/flink/flink-docs-release-1.19/docs/dev/table/sql/overview/) is an amazing innovation in data processing: it packages the power of realtime stream processing within the simplicity of SQL.
 That means you can start with the SQL you know and introduce stream processing constructs as you need them.
 
-<img src="/img/blog/flinksql_extension_api.png" alt="FlinkSQL API Extension >" width="40%"/>
+<img src="/img/blog/flinksql_extension_api.png" alt="FlinkSQL API Extension >" style={{width: '40%'}}/>
 
 FlinkSQL adds the ability to process data incrementally to the classic set-based semantics of SQL. In addition, FlinkSQL supports source and sink connectors making it easy to ingest data from and move data to other systems. That's a powerful combination which covers a lot of data processing use cases.
 

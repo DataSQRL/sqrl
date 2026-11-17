@@ -1,6 +1,7 @@
 ---
 slug: agentic-data-engineering-harness
 title: "Agentic Data Engineering Harness"
+description: "DataSQRL becomes an agentic data engineering harness that gives AI coding agents guardrails and feedback to build data pipelines, data products, and APIs."
 authors: [matthias]
 tags: [release]
 ---
@@ -15,7 +16,7 @@ tags: [release]
 DataSQRL is an open-source data engineering harness that provides guardrails and feedback for AI coding agents to develop and operate data pipelines, data products, and data APIs autonomously.
 You can customize DataSQRL as the foundation of your agentic data platform. Our goal is to develop DataSQRL into a comprehensive data engineering harness for data platform automation.
 
-<img src="/img/diagrams/agentic/harness_overview.png" alt="DataSQRL harness architecture showing coding agent with framework, validator, and simulator feedback loops >" width="50%"/>
+<img src="/img/diagrams/agentic/harness_overview.png" alt="DataSQRL harness architecture showing coding agent with framework, validator, and simulator feedback loops >" style={{width: '50%'}}/>
 
 <!-- truncate -->
 
@@ -39,7 +40,7 @@ DataSQRL is that harness. It encodes the conceptual framework of data systems, v
 
 ## The DataSQRL Harness
 
-<img src="/img/diagrams/agentic/feedback_loops.png" alt="Feedback loops from framework, compiler, testing, validators, and runtime back to the coding agent" width="100%"/>
+<img src="/img/diagrams/agentic/feedback_loops.png" alt="Feedback loops from framework, compiler, testing, validators, and runtime back to the coding agent" style={{width: '100%'}}/>
 
 For the purposes of automating data platforms, a comprehensive harness captures data schemas, data processing, and data serving to consumers. Specifically, we are building a harness for *non-transactional* data processing and serving.
 
@@ -138,7 +139,7 @@ The [interface documentation](/docs/interface) provides more details on the serv
 
 The physical layer represents *how* the data gets processed and served. It's a translation of the logical layer into executable code that runs on actual data systems.
 
-<img src="/img/diagrams/agentic/complete_framework.png" alt="Complete DataSQRL framework showing data flow from sources through processing, storage, and serving layers" width="100%"/>
+<img src="/img/diagrams/agentic/complete_framework.png" alt="Complete DataSQRL framework showing data flow from sources through processing, storage, and serving layers" style={{width: '100%'}}/>
 
 #### Pipeline Architecture
 

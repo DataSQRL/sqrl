@@ -1,6 +1,7 @@
 ---
 slug: p4-human-understanding-one-sql-file
 title: "The Whole Pipeline in One File a Human Can Actually Read"
+description: "When AI agents write data pipelines, human verification is the bottleneck. Why expressing the whole pipeline in one readable SQL file keeps you in control."
 authors: [matthias]
 tags: [technical, DataSQRL]
 ---
@@ -18,7 +19,7 @@ tags: [technical, DataSQRL]
 
 "Why do I need that? Isn't Claude Code good enough?"
 
-<img src="/img/blog/harness_p4_human_validation.jpeg" alt="A human reviewing a complete data pipeline expressed in one readable SQL file >|" width="50%"/>
+<img src="/img/blog/harness_p4_human_validation.jpeg" alt="A human reviewing a complete data pipeline expressed in one readable SQL file >|" style={{width: '50%'}}/>
 
 We get that question a lot. We are building an [open-source data engineering harness](https://docs.datasqrl.com), the tooling and guardrails that a coding agent uses to build data pipelines. Claude Code, Codex, and OpenCode already write plausible data pipeline code. So what is the harness for?
 
