@@ -1,5 +1,5 @@
 ---
-slug: ai-coding-agents-data-pipeline-seams
+slug: p1-broken-at-seams
 title: "The Pipeline Compiles, the Demo Works, and the Seams Are Quietly Broken"
 description: "AI coding agents break data pipelines at the seams between Kafka, Flink, databases, and APIs. How a compiler eliminates these errors that survive code review."
 image: /img/blog/harness_p1_broken_seams.jpeg

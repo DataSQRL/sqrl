@@ -1,5 +1,5 @@
 ---
-slug: event-time-testing-streaming-pipelines
+slug: p3-testing-framework
 title: "Standard Integration Tests Obfuscate Common Errors"
 description: "Standard integration tests miss late data, races, and updates in streaming pipelines. How event-time replay testing makes time-dependent behavior deterministic."
 image: /img/blog/harness_p3_test_simulator.jpeg

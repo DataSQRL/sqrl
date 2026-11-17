@@ -25,7 +25,7 @@ For the full design, read the [harness architecture](/blog/agentic-data-engineer
 | Try it on my own data | [Getting Started](getting-started): run the basic agent in Docker, or install the plugin for Claude Code, Codex, Cursor, or Copilot |
 | See what it can build | [Examples](examples): data products for a retail bank, plus self-contained pipelines across many use cases |
 | Compare DataSQRL to Flink, Spark, dbt, and other tools | [FAQ](faq): short answers to the questions data engineers ask most |
-| Understand why a harness matters | The four-part series: [broken seams](/blog/ai-coding-agents-data-pipeline-seams), [relational introspection](/blog/relational-introspection-data-pipeline-validation), [event-time testing](/blog/event-time-testing-streaming-pipelines), and [human understanding](/blog/human-review-data-pipeline-one-sql-file) |
+| Understand why a harness matters | The four-part series: [broken seams](/blog/p1-broken-at-seams), [relational introspection](/blog/p2-validator-relational-introspection), [event-time testing](/blog/p3-testing-framework), and [human understanding](/blog/p4-human-understanding-one-sql-file) |
 | Read and review the SQL an agent produces | [SQRL Language](../sqrl-language) and [Streaming Concepts](concepts) |
 | Connect my data sources and sinks | [Connectors](../connectors) |
 | Shape the APIs and data products | [Interface](../interface) |

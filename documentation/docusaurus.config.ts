@@ -160,11 +160,6 @@ const config: Config = {
         redirects: [
           {from: '/flink', to: '/'},
           {from: '/ai', to: '/'},
-          // Blog series renamed from p1 to p4 slugs
-          {from: '/blog/p1-broken-at-seams', to: '/blog/ai-coding-agents-data-pipeline-seams'},
-          {from: '/blog/p2-validator-relational-introspection', to: '/blog/relational-introspection-data-pipeline-validation'},
-          {from: '/blog/p3-testing-framework', to: '/blog/event-time-testing-streaming-pipelines'},
-          {from: '/blog/p4-human-understanding-one-sql-file', to: '/blog/human-review-data-pipeline-one-sql-file'},
         ],
       },
     ],

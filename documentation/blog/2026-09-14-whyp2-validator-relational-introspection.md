@@ -1,5 +1,5 @@
 ---
-slug: relational-introspection-data-pipeline-validation
+slug: p2-validator-relational-introspection
 title: "The Bugs That Aren't in the Text: What Deep Relational Introspection Catches"
 description: "Wrong keys, time-dependent joins, stalled watermarks, and unbounded state are bugs that aren't in the query text. How relational validation catches them."
 image: /img/blog/harness_p2_deep_introspection.jpeg
