@@ -24,7 +24,6 @@ import lombok.Value;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class TableStatistic {
 
-  public static final double DEFAULT_NESTED_MULTIPLIER = 2.0;
   public static final TableStatistic UNKNOWN =
       new TableStatistic(Double.NaN, true, Double.POSITIVE_INFINITY);
 
@@ -81,18 +80,6 @@ public class TableStatistic {
    */
   public boolean hasAtMostRows(double rows) {
     return maxRowCount <= rows || (!isEstimated && !isUnknown() && rowCount <= rows);
-  }
-
-  public TableStatistic nested() {
-    return nested(DEFAULT_NESTED_MULTIPLIER);
-  }
-
-  public TableStatistic nested(double multiplier) {
-    if (isUnknown()) {
-      return UNKNOWN;
-    }
-    // Unnesting can multiply the rows without limit
-    return new TableStatistic(rowCount * multiplier, isEstimated, Double.POSITIVE_INFINITY);
   }
 
   public double getRowCount() {

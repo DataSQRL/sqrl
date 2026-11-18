@@ -68,12 +68,4 @@ class TableStatisticTest {
 
     assertThat(statistic.hasAtMostRows(100)).isTrue();
   }
-
-  @Test
-  void givenBoundedTable_whenNested_thenBoundIsDropped() {
-    var statistic = TableStatistic.fromEstimate(6.0, 6.0).nested();
-
-    assertThat(statistic.getMaxRowCount()).isInfinite();
-    assertThat(statistic.hasAtMostRows(100)).isFalse();
-  }
 }
