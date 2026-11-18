@@ -890,7 +890,7 @@ Hints live in a `/*+ ... */` comment placed **immediately before** the definitio
 | **test**                    | `test` or `test(no_rows)`                                                              | table          | marks test case, only executed with [`test` command](https://docs.datasqrl.com/docs/main/compiler.md#test-command).                                                                                                                                                                                                                                                                                                                                                                                |
 | **workload**                | `workload`                                                                             | table          | retained as sink for DAG optimization but hidden from interface                                                                                                                                                                                                                                                                                                                                                                                             |
 | **declassify**              | `declassify(tag, ...)`                                                                 | table          | lets the table drop or lower the listed inherited tags: each listed tag takes the value the doc string declares, or no value. Only applies when tags are configured (see [Tags](https://docs.datasqrl.com/docs/main/configuration.md#tags-compilertags))                                                                                                                                                                                                                                       |
-| **row_count**               | `row_count(count)` or `row_count(col1, col2, ..., count)`                              | table          | specifies estimated row count for the table (e.g. `1e6`) or distinct count for column combinations. Used for query optimization.                                                                                                                                                                                                                                                                                                                            |
+| **row_count**               | `row_count(count)` or `row_count(col1, col2, ..., count)`                              | table          | specifies estimated row count for the table (e.g. `1e6`) or distinct count for column combinations. Used for query optimization. A table with a row count of at most 100 (by default) gets no [automatic indexes](#automatic-index-selection).                                                                                                                                                                                                                                                                                                                            |
 
 This example configures the vector length and a vector index for the `SensorTempByHour` table:
 
@@ -925,7 +925,9 @@ the other side of the comparison so that `agency_id` stands alone.
 
 Rewrite the filter as the warning says: move arithmetic to the other side, like `agency_id = :agency - 1`, compare a column with a value of its own type instead of casting the column, and compute any other expression, like `LOWER(email)`, as a column of a table that Flink computes (`/*+engine(flink) */`). An expression from a table that PostgreSQL computes ends up in the filter of every query that reads the table, so the warning can show a `CAST` or a function that the query itself does not contain.
 
-An `index` hint replaces the automatic selection for its table, including these warnings.
+A table that holds at most 100 rows gets no automatic index and no such warning. The limit is the [`small-table-row-limit`](https://docs.datasqrl.com/docs/main/configuration-engine/postgres.md#index-selection) of the `postgres` engine. PostgreSQL reads it in about one page, so an index makes no query faster. PostgreSQL also never analyzes a table that small on its own, and without statistics it can probe an index once for each row of a join instead of building a hash join. The compiler takes the size from the definition of the table, like a `VALUES` list, or from a `row_count` hint. A table that reads another table, even a small one, does not count.
+
+An `index` hint replaces the automatic selection for its table, including these warnings, and also applies to a small table.
 
 ### Testing
 
@@ -2599,6 +2601,7 @@ No mandatory configuration keys are required. Physical DDL (tables, indexes, vie
 |-------------------------|-------------|---------|----------------------------------------------------------------------------------------------------------------|
 | `partition-ttl-divisor` | **integer** | `100`   | Controls the number of partitions for range-partitioned tables with a TTL (see [Partitioning](#partitioning)). |
 | `partition-premake`     | **integer** | `4`     | Number of future partitions pg_partman pre-creates ahead of the current one (`p_premake`).                     |
+| `index-selection`       | **object**  |         | Limits of the automatic index selection (see [Index Selection](#index-selection)).                             |
 
 ## Basic Configuration
 
@@ -2624,6 +2627,35 @@ Tables annotated with `partition_key` on a timestamp column and a `ttl` hint are
 For example, `ttl(14 days)` with the default divisor produces 1-day partitions.
 
 At setup time, pg_partman pre-creates the historical partitions covering the full TTL window (via `p_start_partition`), so replayed or late-arriving data within the retention period lands in a dated partition rather than the DEFAULT partition. The `partition-premake` key controls how many future partitions are created ahead of the current one.
+
+## Index Selection
+
+The compiler selects the indexes of each table from the filters of the API queries that read it (see [Automatic index selection](https://docs.datasqrl.com/docs/main/sqrl-language.md#automatic-index-selection)). The `index-selection` object sets its limits:
+
+| Key                     | Type        | Default | Description                                                                                                                                                         |
+|-------------------------|-------------|---------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `max-indexes`           | **integer** | `8`     | The most indexes to create for one table. When it is reached, the compiler warns about the filter patterns that no index serves.                                   |
+| `max-index-columns`     | **integer** | `3`     | The most columns of one index. PostgreSQL hash indexes always have one column.                                                                                      |
+| `max-filter-patterns`   | **integer** | `50`    | The most distinct filter patterns on one table. Above it, the compiler creates a single-column index for each filtered column instead of composite indexes, and warns. |
+| `min-cost-reduction`    | **number**  | `0.05`  | How much an index must at least cut the cost of the queries it serves, as a fraction: `0.05` is 5%. Must be at least `0` and less than `1`.                         |
+| `small-table-row-limit` | **integer** | `100`   | A table that holds at most this many rows, by its definition or a `row_count` hint, gets no automatic index. `0` turns this off.                                    |
+
+An `index` hint on a table replaces the automatic selection for that table, so these limits do not apply to it.
+
+```json
+{
+  "engines": {
+    "postgres": {
+      "index-selection": {
+        "max-indexes": 12,
+        "small-table-row-limit": 0
+      }
+    }
+  }
+}
+```
+
+The keys that you leave out keep their defaults.
 
 ## Conflict Handling
 
@@ -2892,7 +2924,14 @@ The following is the [default configuration file](https://raw.githubusercontent.
     },
     "postgres": {
       "partition-ttl-divisor": 100,
-      "partition-premake": 4
+      "partition-premake": 4,
+      "index-selection": {
+        "max-indexes": 8,
+        "max-index-columns": 3,
+        "max-filter-patterns": 50,
+        "min-cost-reduction": 0.05,
+        "small-table-row-limit": 100
+      }
     },
     "kafka": {
       "retention": null,
