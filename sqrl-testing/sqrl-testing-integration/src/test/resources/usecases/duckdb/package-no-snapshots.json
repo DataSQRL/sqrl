@@ -23,7 +23,7 @@
   },
   "connectors": {
     "iceberg": {
-      "warehouse": "warehouse-tmp"
+      "warehouse": "${ICEBERG_TEST_WAREHOUSE}"
     }
   },
   "test-runner": {
