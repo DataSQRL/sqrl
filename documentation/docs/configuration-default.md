@@ -46,7 +46,14 @@ The following is the [default configuration file](https://raw.githubusercontent.
     },
     "postgres": {
       "partition-ttl-divisor": 100,
-      "partition-premake": 4
+      "partition-premake": 4,
+      "index-selection": {
+        "max-indexes": 8,
+        "max-index-columns": 3,
+        "max-filter-patterns": 50,
+        "min-cost-reduction": 0.05,
+        "small-table-row-limit": 100
+      }
     },
     "kafka": {
       "retention": null,

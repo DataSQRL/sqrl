@@ -15,7 +15,6 @@
  */
 package com.datasqrl.plan.index;
 
-import static com.datasqrl.engine.database.relational.IndexSelectorConfigByDialect.DEFAULT_COST_THRESHOLD;
 import static com.datasqrl.plan.index.IndexSelector.getFallbackIndexColumns;
 import static com.datasqrl.plan.index.IndexSelector.improvesAnyQueryByThreshold;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -64,6 +63,9 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 class IndexSelectorTest {
+
+  /** The threshold of the default {@code min-cost-reduction} of 0.05. */
+  private static final double DEFAULT_COST_THRESHOLD = 0.95;
 
   @Test
   void givenProjectedColumnSort_whenSummarize_thenIdentifiesColumn() {

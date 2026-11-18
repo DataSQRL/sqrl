@@ -23,26 +23,37 @@ import static com.datasqrl.plan.index.IndexType.VECTOR_COSINE;
 import static com.datasqrl.plan.index.IndexType.VECTOR_EUCLID;
 
 import com.datasqrl.config.JdbcDialect;
+import com.datasqrl.config.PackageJson.IndexSelectionConfig;
 import com.datasqrl.plan.index.IndexDefinition;
 import com.datasqrl.plan.index.IndexSelectorConfig;
 import com.datasqrl.plan.index.IndexType;
 import com.google.common.base.Preconditions;
 import java.util.EnumSet;
-import lombok.Builder;
-import lombok.Getter;
+import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.Value;
 
+/**
+ * The index selection limits of a dialect. The tunable ones come from the {@code index-selection}
+ * settings of the engine configuration.
+ */
+@AllArgsConstructor
 @Value
-@Builder
+@SuppressWarnings("ClassCanBeRecord")
 public class IndexSelectorConfigByDialect implements IndexSelectorConfig {
 
-  public static final double DEFAULT_COST_THRESHOLD = 0.95;
-  public static final int MAX_INDEX_COLUMNS = 3;
-
-  @Getter @Builder.Default double costImprovementThreshold = DEFAULT_COST_THRESHOLD;
   @NonNull JdbcDialect dialect;
-  @Builder.Default int maxIndexColumns = MAX_INDEX_COLUMNS;
+  @NonNull IndexSelectionConfig indexSelection;
+
+  @Override
+  public double getCostImprovementThreshold() {
+    return 1 - indexSelection.getMinCostReduction();
+  }
+
+  @Override
+  public int getSmallTableRowLimit() {
+    return indexSelection.getSmallTableRowLimit();
+  }
 
   @Override
   public boolean hasPrimaryKeyIndex() {
@@ -57,7 +68,7 @@ public class IndexSelectorConfigByDialect implements IndexSelectorConfig {
   public int maxIndexes() {
     return switch (dialect) {
       case Iceberg -> 1;
-      default -> 8;
+      default -> indexSelection.getMaxIndexes();
     };
   }
 
@@ -65,7 +76,7 @@ public class IndexSelectorConfigByDialect implements IndexSelectorConfig {
   public int maxIndexColumnSets() {
     return switch (dialect) {
       case Iceberg -> Integer.MAX_VALUE;
-      default -> 50;
+      default -> indexSelection.getMaxFilterPatterns();
     };
   }
 
@@ -81,20 +92,15 @@ public class IndexSelectorConfigByDialect implements IndexSelectorConfig {
 
   @Override
   public int maxIndexColumns(IndexType indexType) {
-    switch (dialect) {
-      case Postgres:
-        return switch (indexType) {
-          case HASH -> 1;
-          default -> maxIndexColumns;
-        };
-      case MySQL:
-      case H2:
-      case SQLite:
-      case Iceberg:
-        return maxIndexColumns;
-      default:
-        throw new IllegalStateException("Dialect not supported: " + dialect.name());
-    }
+    return switch (dialect) {
+      case Postgres ->
+          switch (indexType) {
+            case HASH -> 1;
+            default -> indexSelection.getMaxIndexColumns();
+          };
+      case MySQL, H2, SQLite, Iceberg -> indexSelection.getMaxIndexColumns();
+      default -> throw new IllegalStateException("Dialect not supported: " + dialect.name());
+    };
   }
 
   @Override
@@ -108,9 +114,5 @@ public class IndexSelectorConfigByDialect implements IndexSelectorConfig {
       }
       default -> 1;
     };
-  }
-
-  public static IndexSelectorConfigByDialect of(JdbcDialect dialect) {
-    return IndexSelectorConfigByDialect.builder().dialect(dialect).build();
   }
 }

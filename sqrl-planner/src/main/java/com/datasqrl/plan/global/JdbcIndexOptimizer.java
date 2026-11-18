@@ -77,11 +77,15 @@ public final class JdbcIndexOptimizer implements PhysicalPlanRewriter {
 
     Collection<QueryIndexSummary> queryIndexSummaries = new ArrayList<>();
     for (var query : jdbcPlan.queries()) {
-      // Explicit index hints replace automatic selection, including its diagnostics.
+      // Explicit index hints replace automatic selection, including its diagnostics. A table too
+      // small for an index to help gets neither.
       var analysis =
           indexSelector
               .getIndexSelection(query.relNode())
-              .withoutTables(table -> indexHintsByTable.containsKey(table.getTableName()));
+              .withoutTables(
+                  table ->
+                      indexHintsByTable.containsKey(table.getTableName())
+                          || indexSelector.isTooSmallToIndex(table));
       queryIndexSummaries.addAll(analysis.summaries());
       warnAboutUnindexableFilters(query, analysis.unindexableFilters());
     }

@@ -23,7 +23,7 @@ The compiler selects the indexes for most served queries. Fix only the queries t
 Judge the table size from the requirements and the source data. For the query that you fix:
 
 1. Find the SQL of the query in `deploy/plan/vertx.json`, and the indexes of the table in `pipeline_explain.txt`, in the `Table` section after the `--- physical ---` line of the table. The section uses the table and index names of the SQL, for example the line `index Orders_2_btree_c1c2 (btree): customerid, time` under `Table Orders_2 (postgres):`. The primary key also counts as an index. A table that runs in Postgres has no indexes of its own and no `Table` section. Its query is part of the SQL of the served query, and the compiler creates its indexes on the stored tables that this query reads.
-2. Compare the columns that the query compares with a parameter or with another table, in the `WHERE` clause, in `JOIN ... ON` conditions and in subqueries, with the leading columns of the indexes. In an `EXISTS (...)` or `IN (SELECT ...)` that is not part of an `OR`, the column of the outer table that the subquery compares with counts too.
+2. Compare the columns that the query compares with a parameter or with another table, in the `WHERE` clause, in `JOIN ... ON` conditions and in subqueries, with the leading columns of the indexes. In an `EXISTS (...)` or `IN (SELECT ...)` that is not part of an `OR`, the column of the outer table that the subquery compares with counts too. A table of at most 100 rows needs no index (see Automatic index selection).
 3. Make sure that each of these columns stands alone in the SQL. For a filter that wraps its column in an expression, such as `day_index + 1 = :day`, the compiler creates no index and warns `The filter ... cannot use an index on table ...`. When the filtered column comes from a table that runs in Postgres, the warning shows the expression of that table's query, such as `CAST(event_time AS STRING) = :t` for its column `t_str`.
 
 ## Automatic index selection
@@ -37,6 +37,8 @@ The compiler selects the indexes from these parts of the served queries:
 - The first `ORDER BY` column, only when the query has no `WHERE` filter and a literal `LIMIT` of 10000 at most. For example, in `WHERE customer_id = :cid ORDER BY amount DESC LIMIT 10`, only `customer_id` gets an index.
 
 A filter counts only when its column stands alone in the comparison. The compiler warns about a filter that wraps its column in an expression.
+
+A table that holds at most 100 rows (`small-table-row-limit` in the `postgres` engine configuration) gets no automatic index and no warning, because the database reads it in about one page. The compiler takes the size from the definition of the table, like a `VALUES` list, or from a `row_count` hint. It does not count a table that reads another table, even a small one.
 
 ## Filters inside a subquery
 
