@@ -24,6 +24,7 @@ import static org.mockito.Mockito.when;
 import com.datasqrl.config.ConnectorConf;
 import com.datasqrl.config.ConnectorFactoryFactory;
 import com.datasqrl.config.PackageJson;
+import com.datasqrl.deployment.model.IcebergTableModel;
 import com.datasqrl.io.tables.TableType;
 import com.datasqrl.planner.analyzer.TableAnalysis;
 import com.datasqrl.planner.hint.PlannerHints;
@@ -162,6 +163,43 @@ class IcebergEngineTest {
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("Invalid AWS Glue table name: 'table@name!'")
         .hasMessageContaining("Name has to match: ^[a-z0-9_]{1,255}$");
+  }
+
+  @Test
+  void givenHadoopCatalogOptions_whenToTableModel_thenTakesWarehouseAndDefaultDatabase() {
+    var model =
+        IcebergEngine.toTableModel(
+            "_MyApplications1",
+            Map.of(
+                "connector", "iceberg",
+                "catalog-table", "_MyApplications1",
+                "catalog-type", "hadoop",
+                "warehouse", "/tmp/duckdb"));
+
+    assertThat(model)
+        .isEqualTo(
+            new IcebergTableModel(
+                "_MyApplications1", "default_database", "hadoop", null, "/tmp/duckdb"));
+  }
+
+  @Test
+  void givenGlueCatalogOptions_whenToTableModel_thenTakesCatalogImplAndDatabase() {
+    var model =
+        IcebergEngine.toTableModel(
+            "orders",
+            Map.of(
+                "catalog-impl", "org.apache.iceberg.aws.glue.GlueCatalog",
+                "catalog-database", "lake",
+                "warehouse", "s3://bucket/warehouse"));
+
+    assertThat(model)
+        .isEqualTo(
+            new IcebergTableModel(
+                "orders",
+                "lake",
+                null,
+                "org.apache.iceberg.aws.glue.GlueCatalog",
+                "s3://bucket/warehouse"));
   }
 
   @Test

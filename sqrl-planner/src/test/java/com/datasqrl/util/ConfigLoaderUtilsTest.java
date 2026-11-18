@@ -23,6 +23,8 @@ import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.PackageJsonImpl;
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.config.SqrlConfigTest;
+import com.datasqrl.deployment.model.IcebergPlanModel;
+import com.datasqrl.deployment.model.IcebergTableModel;
 import com.datasqrl.deployment.model.JdbcStatementModel;
 import com.datasqrl.deployment.model.KafkaNewTopicModel;
 import com.datasqrl.error.CollectedException;
@@ -545,34 +547,42 @@ class ConfigLoaderUtilsTest {
   }
 
   @Test
-  void givenPlanDirWithoutFlinkJson_whenLoadFlinkPhysicalPlan_thenReturnsEmpty()
+  void givenPlanDirWithoutIcebergJson_whenLoadIcebergPhysicalPlan_thenReturnsEmpty()
       throws IOException {
     var planDir = Files.createDirectories(tempDir.resolve("plan"));
 
-    assertThat(ConfigLoaderUtils.loadFlinkPhysicalPlan(planDir)).isEmpty();
+    assertThat(ConfigLoaderUtils.loadIcebergPhysicalPlan(planDir)).isEmpty();
   }
 
   @Test
-  void givenPlanDirWithFlinkJson_whenLoadFlinkPhysicalPlan_thenReturnsStatementsAndConnectors()
+  void givenPlanDirWithIcebergJson_whenLoadIcebergPhysicalPlan_thenReturnsTables()
       throws IOException {
     var planDir = Files.createDirectories(tempDir.resolve("plan"));
     Files.writeString(
-        planDir.resolve("flink.json"),
+        planDir.resolve("iceberg.json"),
         """
         {
-          "flinkSql" : [ "CREATE TABLE `t` (`id` INT) WITH ('connector' = 'iceberg');" ],
-          "connectors" : [ "iceberg" ],
-          "formats" : [ ],
-          "functions" : [ ]
+          "plans" : {
+            "" : { "statements" : [ ] },
+            "duckdb" : { "statements" : [ ] }
+          },
+          "tables" : [ {
+            "tableName" : "_MyApplications1",
+            "database" : "default_database",
+            "catalogType" : "hadoop",
+            "warehouse" : "/tmp/duckdb"
+          } ]
         }
         """);
 
-    var result = ConfigLoaderUtils.loadFlinkPhysicalPlan(planDir);
+    var result = ConfigLoaderUtils.loadIcebergPhysicalPlan(planDir);
 
-    assertThat(result).isPresent();
-    assertThat(result.get().flinkSql())
-        .containsExactly("CREATE TABLE `t` (`id` INT) WITH ('connector' = 'iceberg');");
-    assertThat(result.get().connectors()).containsExactly("iceberg");
+    assertThat(result)
+        .map(IcebergPlanModel::tables)
+        .contains(
+            List.of(
+                new IcebergTableModel(
+                    "_MyApplications1", "default_database", "hadoop", null, "/tmp/duckdb")));
   }
 
   @Test

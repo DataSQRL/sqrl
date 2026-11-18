@@ -212,5 +212,25 @@ CREATE TABLE IF NOT EXISTS "dev_Readings" ("sensorid" BIGINT NOT NULL, "temperat
       ],
       "standaloneExtensionStatements" : [ ]
     }
-  }
+  },
+  "tables" : [
+    {
+      "tableName" : "dev_ReadingTotals_1",
+      "database" : "default_database",
+      "catalogType" : "hadoop",
+      "warehouse" : "sqrl_iceberg_data"
+    },
+    {
+      "tableName" : "dev_Readings_2",
+      "database" : "default_database",
+      "catalogType" : "hadoop",
+      "warehouse" : "sqrl_iceberg_data"
+    },
+    {
+      "tableName" : "dev_Readings",
+      "database" : "default_database",
+      "catalogType" : "hadoop",
+      "warehouse" : "sqrl_iceberg_data"
+    }
+  ]
 }

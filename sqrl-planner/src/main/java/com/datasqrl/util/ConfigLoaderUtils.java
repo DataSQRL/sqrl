@@ -21,7 +21,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.config.SqrlConstants;
-import com.datasqrl.deployment.model.FlinkPlanModel;
+import com.datasqrl.deployment.model.IcebergPlanModel;
 import com.datasqrl.deployment.model.JdbcPlanModel;
 import com.datasqrl.deployment.model.KafkaPlanModel;
 import com.datasqrl.deployment.model.MutationDatabaseModel;
@@ -241,26 +241,27 @@ public final class ConfigLoaderUtils {
   }
 
   /**
-   * Loads the Flink deployment file from the plan directory by parsing the {@code flink.json} file.
+   * Loads the tables of the Iceberg deployment file from the plan directory by parsing the {@code
+   * iceberg.json} file.
    *
-   * @param planDir the plan directory containing the {@code flink.json} file
-   * @return an {@link Optional} containing the {@link FlinkPlanModel}, or empty if no {@code
-   *     flink.json} file exists
+   * @param planDir the plan directory containing the {@code iceberg.json} file
+   * @return an {@link Optional} containing the {@link IcebergPlanModel}, or empty if no {@code
+   *     iceberg.json} file exists
    * @throws IllegalArgumentException if the plan directory is null or does not exist
-   * @throws IllegalStateException if the {@code flink.json} file exists but cannot be parsed
+   * @throws IllegalStateException if the {@code iceberg.json} file exists but cannot be parsed
    */
-  public static Optional<FlinkPlanModel> loadFlinkPhysicalPlan(Path planDir) {
+  public static Optional<IcebergPlanModel> loadIcebergPhysicalPlan(Path planDir) {
     validatePlanDir(planDir);
 
-    var flinkFile = planDir.resolve("flink.json").toFile();
-    if (!flinkFile.exists()) {
+    var icebergFile = planDir.resolve("iceberg.json").toFile();
+    if (!icebergFile.exists()) {
       return Optional.empty();
     }
 
     try {
-      return Optional.of(MAPPER.readValue(flinkFile, FlinkPlanModel.class));
+      return Optional.of(MAPPER.readValue(icebergFile, IcebergPlanModel.class));
     } catch (Exception ex) {
-      throw new IllegalStateException(String.format("Failed to load '%s'", flinkFile), ex);
+      throw new IllegalStateException(String.format("Failed to load '%s'", icebergFile), ex);
     }
   }
 

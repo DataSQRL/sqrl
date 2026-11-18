@@ -15,11 +15,14 @@
  */
 package com.datasqrl.engine.database.relational;
 
+import static com.datasqrl.config.SqrlConstants.FLINK_DEFAULT_DATABASE;
+import static com.datasqrl.config.SqrlConstants.ICEBERG_CATALOG_DATABASE_KEY;
 import static com.datasqrl.config.SqrlConstants.ICEBERG_CATALOG_IMPL_KEY;
 import static com.datasqrl.config.SqrlConstants.ICEBERG_CATALOG_TABLE_KEY;
 import static com.datasqrl.config.SqrlConstants.ICEBERG_CATALOG_TYPE_KEY;
 import static com.datasqrl.config.SqrlConstants.ICEBERG_GLUE_CATALOG_IMPL;
 import static com.datasqrl.config.SqrlConstants.ICEBERG_UPSERT_ENABLED_KEY;
+import static com.datasqrl.config.SqrlConstants.ICEBERG_WAREHOUSE_KEY;
 
 import com.datasqrl.config.ConnectorConf;
 import com.datasqrl.config.ConnectorConf.Context;
@@ -28,8 +31,11 @@ import com.datasqrl.config.JdbcDialect;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.datatype.DataTypeMapping;
 import com.datasqrl.datatype.flink.iceberg.IcebergDataTypeMapper;
+import com.datasqrl.deployment.model.IcebergTableModel;
+import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.database.QueryEngine;
 import com.datasqrl.planner.analyzer.TableAnalysis;
+import com.datasqrl.planner.dag.plan.MaterializationStagePlan;
 import com.datasqrl.planner.hint.MaintenanceHint;
 import com.datasqrl.planner.hint.MaintenanceHint.MaintenanceType;
 import com.datasqrl.planner.tables.FlinkTableBuilder;
@@ -38,6 +44,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 import lombok.NonNull;
 
 public class IcebergEngine extends AbstractJDBCTableFormatEngine {
@@ -83,6 +90,25 @@ public class IcebergEngine extends AbstractJDBCTableFormatEngine {
   @Override
   public DataTypeMapping getTypeMapping() {
     return new IcebergDataTypeMapper();
+  }
+
+  @Override
+  public EnginePhysicalPlan plan(MaterializationStagePlan stagePlan) {
+    var tables =
+        Stream.concat(stagePlan.getTables().stream(), stagePlan.getMutations().stream())
+            .map(JdbcEngineCreateTable.class::cast)
+            .map(table -> toTableModel(table.tableName(), table.table().getConnectorOptions()))
+            .toList();
+    return new IcebergPhysicalPlan(planWithQueryEngines(stagePlan).getPlans(), tables);
+  }
+
+  static IcebergTableModel toTableModel(String tableName, Map<String, String> connectorOptions) {
+    return new IcebergTableModel(
+        tableName,
+        connectorOptions.getOrDefault(ICEBERG_CATALOG_DATABASE_KEY, FLINK_DEFAULT_DATABASE),
+        connectorOptions.get(ICEBERG_CATALOG_TYPE_KEY),
+        connectorOptions.get(ICEBERG_CATALOG_IMPL_KEY),
+        connectorOptions.get(ICEBERG_WAREHOUSE_KEY));
   }
 
   @Override

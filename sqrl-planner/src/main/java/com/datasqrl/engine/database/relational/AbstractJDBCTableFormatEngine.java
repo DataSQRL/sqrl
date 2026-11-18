@@ -107,6 +107,11 @@ public abstract class AbstractJDBCTableFormatEngine extends AbstractJDBCEngine
 
   @Override
   public EnginePhysicalPlan plan(MaterializationStagePlan stagePlan) {
+    return planWithQueryEngines(stagePlan);
+  }
+
+  /** Plans the table format under an empty name and each query engine under its name. */
+  protected CombinedEnginePlan planWithQueryEngines(MaterializationStagePlan stagePlan) {
     var planBuilder = CombinedEnginePlan.builder();
     planBuilder.plan("", super.plan(stagePlan));
 

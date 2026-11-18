@@ -73,5 +73,19 @@ CREATE OR REPLACE ICEBERG TABLE Numbers2 EXTERNAL_VOLUME = 'MyNewVolume' CATALOG
       ],
       "standaloneExtensionStatements" : [ ]
     }
-  }
+  },
+  "tables" : [
+    {
+      "tableName" : "Numbers",
+      "database" : "default_database",
+      "catalogType" : "hadoop",
+      "warehouse" : "sqrl_iceberg_data"
+    },
+    {
+      "tableName" : "Numbers2",
+      "database" : "default_database",
+      "catalogType" : "hadoop",
+      "warehouse" : "sqrl_iceberg_data"
+    }
+  ]
 }

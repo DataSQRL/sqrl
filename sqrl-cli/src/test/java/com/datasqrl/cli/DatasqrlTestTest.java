@@ -25,7 +25,8 @@ import com.datasqrl.cli.output.NoOutputFormatter;
 import com.datasqrl.cli.output.TestOutputManager;
 import com.datasqrl.compile.TestPlan;
 import com.datasqrl.config.PackageJson;
-import com.datasqrl.deployment.model.FlinkPlanModel;
+import com.datasqrl.deployment.model.IcebergPlanModel;
+import com.datasqrl.deployment.model.IcebergTableModel;
 import com.datasqrl.deployment.model.JdbcStatementModel;
 import com.datasqrl.engine.database.relational.GenericJdbcStatement;
 import com.datasqrl.util.SqrlObjectMapper;
@@ -34,7 +35,6 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import org.apache.flink.configuration.Configuration;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -88,7 +88,7 @@ class DatasqrlTestTest {
   }
 
   @Test
-  void givenIcebergSinkLeftByEarlierInvocation_whenRun_thenDeletesItBeforeThePipelineStarts()
+  void givenIcebergTableLeftByEarlierInvocation_whenRun_thenDeletesItBeforeThePipelineStarts()
       throws Exception {
     var planDir = Files.createDirectories(tempDir.resolve("plan"));
     var warehouse = tempDir.resolve("warehouse");
@@ -96,16 +96,11 @@ class DatasqrlTestTest {
         Files.createDirectories(warehouse.resolve("default_database/MyTable/metadata"));
     Files.writeString(leftoverTable.resolve("v1.metadata.json"), "{}");
     SqrlObjectMapper.INSTANCE.writeValue(
-        planDir.resolve("flink.json").toFile(),
-        new FlinkPlanModel(
+        planDir.resolve("iceberg.json").toFile(),
+        new IcebergPlanModel(
             List.of(
-                "CREATE TABLE `MyTable_1` (`id` INT) WITH ('connector' = 'iceberg',"
-                    + " 'catalog-type' = 'hadoop', 'catalog-table' = 'MyTable',"
-                    + " 'warehouse' = '%s');".formatted(warehouse),
-                "INSERT INTO `MyTable_1` SELECT 1;"),
-            Set.of("iceberg"),
-            Set.of(),
-            Set.of()));
+                new IcebergTableModel(
+                    "MyTable", "default_database", "hadoop", null, warehouse.toString()))));
     // Fails the pipeline right away, the reset must have happened before it starts
     Files.writeString(
         planDir.resolve("flink-sql.sql"),

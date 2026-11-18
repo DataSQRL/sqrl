@@ -20,9 +20,12 @@ import static com.datasqrl.env.EnvVariableNames.POSTGRES_JDBC_URL;
 import static com.datasqrl.env.EnvVariableNames.POSTGRES_PASSWORD;
 import static com.datasqrl.env.EnvVariableNames.POSTGRES_USERNAME;
 
+import com.datasqrl.deployment.model.IcebergPlanModel;
+import com.datasqrl.deployment.model.IcebergTableModel;
 import com.datasqrl.deployment.model.JdbcPlanModel;
 import com.datasqrl.flinkrunner.utils.EnvUtils;
 import com.datasqrl.flinkrunner.utils.EnvVarResolver;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Connection;
@@ -37,6 +40,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
+import java.util.function.UnaryOperator;
+import java.util.regex.Pattern;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
@@ -51,6 +56,10 @@ import org.apache.kafka.clients.admin.NewTopic;
 public final class CmdUtils {
 
   private static final int TOPIC_CREATE_TIMEOUT_MS = 8000;
+  private static final String HADOOP_CATALOG_TYPE = "hadoop";
+
+  /** A URI scheme of at least two characters, so that a Windows drive letter is not one */
+  private static final Pattern URI_SCHEME = Pattern.compile("^([a-zA-Z][a-zA-Z0-9+.-]+):");
 
   @SneakyThrows
   public static void initializePostgres(Path planDir, Map<String, String> env) {
@@ -160,15 +169,15 @@ public final class CmdUtils {
   }
 
   /**
-   * Deletes the Iceberg tables that the Flink plan writes into, so the next run starts from empty
-   * tables, like it does with Postgres and Kafka. Only tables in a Hadoop catalog with a local
-   * warehouse are deleted; tables in any other catalog are left as they are.
+   * Deletes the Iceberg tables of the plan, so the next run starts from empty tables, like it does
+   * with Postgres and Kafka. Only tables in a Hadoop catalog with a local warehouse are deleted;
+   * tables in any other catalog are left as they are.
    */
   @SneakyThrows
   public static void resetIceberg(Path planDir, Map<String, String> env) {
     var tables =
-        ConfigLoaderUtils.loadFlinkPhysicalPlan(planDir)
-            .map(plan -> IcebergSinkTables.find(plan.flinkSql()))
+        ConfigLoaderUtils.loadIcebergPhysicalPlan(planDir)
+            .map(IcebergPlanModel::tables)
             .orElse(List.of());
     if (tables.isEmpty()) {
       return;
@@ -178,9 +187,9 @@ public final class CmdUtils {
     for (var table : tables) {
       Optional<Path> tableDir;
       try {
-        tableDir = table.localDirectory(resolver::resolve);
+        tableDir = localTableDir(table, resolver::resolve);
       } catch (IllegalStateException e) {
-        log.warn("Cannot reset Iceberg table '{}': {}", table.name(), e.getMessage());
+        log.warn("Cannot reset Iceberg table '{}': {}", table.tableName(), e.getMessage());
         continue;
       }
 
@@ -188,11 +197,58 @@ public final class CmdUtils {
         log.warn(
             "Not resetting Iceberg table '{}': only tables in a Hadoop catalog with a local"
                 + " warehouse are reset, so it keeps the rows of previous runs",
-            table.name());
+            table.tableName());
       } else if (Files.exists(tableDir.get())) {
-        log.info("Deleting Iceberg table '{}' at {}", table.name(), tableDir.get());
+        log.info("Deleting Iceberg table '{}' at {}", table.tableName(), tableDir.get());
         FileUtils.deleteDirectory(tableDir.get().toFile());
       }
+    }
+  }
+
+  /**
+   * Returns the directory of the table if it is in a Hadoop catalog with a warehouse on the local
+   * file system. A relative warehouse is resolved against the working directory, as Flink does.
+   *
+   * @param resolveEnv resolves the environment variables in the warehouse location
+   * @return the table directory, or empty for any other catalog or warehouse
+   */
+  static Optional<Path> localTableDir(IcebergTableModel table, UnaryOperator<String> resolveEnv) {
+    if (table.catalogImpl() != null || !HADOOP_CATALOG_TYPE.equalsIgnoreCase(table.catalogType())) {
+      return Optional.empty();
+    }
+
+    return localPath(table.warehouse() == null ? null : resolveEnv.apply(table.warehouse()))
+        .flatMap(
+            warehouse -> {
+              var tableDir =
+                  warehouse.resolve(table.database()).resolve(table.tableName()).normalize();
+              // A Hadoop catalog keeps a table two levels below the warehouse; anything else
+              // would come from a database or table name that is a path
+              return tableDir.startsWith(warehouse)
+                      && warehouse.relativize(tableDir).getNameCount() == 2
+                  ? Optional.of(tableDir)
+                  : Optional.empty();
+            });
+  }
+
+  private static Optional<Path> localPath(String location) {
+    if (location == null || location.isBlank() || location.contains("${")) {
+      return Optional.empty();
+    }
+
+    var scheme = URI_SCHEME.matcher(location);
+    if (!scheme.find()) {
+      return Optional.of(Path.of(location).toAbsolutePath().normalize());
+    }
+    if (!"file".equalsIgnoreCase(scheme.group(1))) {
+      return Optional.empty();
+    }
+
+    try {
+      return Optional.of(Path.of(URI.create(location)).normalize());
+    } catch (IllegalArgumentException e) {
+      log.debug("Iceberg warehouse '{}' is not a local path", location, e);
+      return Optional.empty();
     }
   }
 
