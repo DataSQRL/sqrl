@@ -545,6 +545,37 @@ class ConfigLoaderUtilsTest {
   }
 
   @Test
+  void givenPlanDirWithoutFlinkJson_whenLoadFlinkPhysicalPlan_thenReturnsEmpty()
+      throws IOException {
+    var planDir = Files.createDirectories(tempDir.resolve("plan"));
+
+    assertThat(ConfigLoaderUtils.loadFlinkPhysicalPlan(planDir)).isEmpty();
+  }
+
+  @Test
+  void givenPlanDirWithFlinkJson_whenLoadFlinkPhysicalPlan_thenReturnsStatementsAndConnectors()
+      throws IOException {
+    var planDir = Files.createDirectories(tempDir.resolve("plan"));
+    Files.writeString(
+        planDir.resolve("flink.json"),
+        """
+        {
+          "flinkSql" : [ "CREATE TABLE `t` (`id` INT) WITH ('connector' = 'iceberg');" ],
+          "connectors" : [ "iceberg" ],
+          "formats" : [ ],
+          "functions" : [ ]
+        }
+        """);
+
+    var result = ConfigLoaderUtils.loadFlinkPhysicalPlan(planDir);
+
+    assertThat(result).isPresent();
+    assertThat(result.get().flinkSql())
+        .containsExactly("CREATE TABLE `t` (`id` INT) WITH ('connector' = 'iceberg');");
+    assertThat(result.get().connectors()).containsExactly("iceberg");
+  }
+
+  @Test
   void givenLaterLayerWithIssuers_whenMerged_thenIssuersArrayIsReplacedWhole() {
     var authConfig =
         mergedAuthConfig(

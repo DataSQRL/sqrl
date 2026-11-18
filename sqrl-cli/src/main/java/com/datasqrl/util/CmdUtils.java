@@ -21,6 +21,9 @@ import static com.datasqrl.env.EnvVariableNames.POSTGRES_PASSWORD;
 import static com.datasqrl.env.EnvVariableNames.POSTGRES_USERNAME;
 
 import com.datasqrl.deployment.model.JdbcPlanModel;
+import com.datasqrl.flinkrunner.utils.EnvUtils;
+import com.datasqrl.flinkrunner.utils.EnvVarResolver;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -28,6 +31,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -37,6 +41,7 @@ import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.apache.kafka.clients.admin.NewTopic;
@@ -150,6 +155,43 @@ public final class CmdUtils {
       topics.retainAll(adminClient.listTopics().names().get());
       if (!topics.isEmpty()) {
         adminClient.deleteTopics(topics).all().get();
+      }
+    }
+  }
+
+  /**
+   * Deletes the Iceberg tables that the Flink plan writes into, so the next run starts from empty
+   * tables, like it does with Postgres and Kafka. Only tables in a Hadoop catalog with a local
+   * warehouse are deleted; tables in any other catalog are left as they are.
+   */
+  @SneakyThrows
+  public static void resetIceberg(Path planDir, Map<String, String> env) {
+    var tables =
+        ConfigLoaderUtils.loadFlinkPhysicalPlan(planDir)
+            .map(plan -> IcebergSinkTables.find(plan.flinkSql()))
+            .orElse(List.of());
+    if (tables.isEmpty()) {
+      return;
+    }
+
+    var resolver = EnvVarResolver.builder().envVars(EnvUtils.addDeploymentDefaults(env)).build();
+    for (var table : tables) {
+      Optional<Path> tableDir;
+      try {
+        tableDir = table.localDirectory(resolver::resolve);
+      } catch (IllegalStateException e) {
+        log.warn("Cannot reset Iceberg table '{}': {}", table.name(), e.getMessage());
+        continue;
+      }
+
+      if (tableDir.isEmpty()) {
+        log.warn(
+            "Not resetting Iceberg table '{}': only tables in a Hadoop catalog with a local"
+                + " warehouse are reset, so it keeps the rows of previous runs",
+            table.name());
+      } else if (Files.exists(tableDir.get())) {
+        log.info("Deleting Iceberg table '{}' at {}", table.name(), tableDir.get());
+        FileUtils.deleteDirectory(tableDir.get().toFile());
       }
     }
   }

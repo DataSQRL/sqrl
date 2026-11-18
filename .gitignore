@@ -3,6 +3,8 @@
 ##############################
 plan-output/
 sqrl_iceberg_data/
+# Local Iceberg warehouse of test packages
+warehouse-tmp/
 
 ##############################
 ## Java

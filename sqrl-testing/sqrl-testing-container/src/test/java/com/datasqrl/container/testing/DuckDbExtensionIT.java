@@ -18,6 +18,7 @@ package com.datasqrl.container.testing;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import lombok.SneakyThrows;
+import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
@@ -36,5 +37,33 @@ public class DuckDbExtensionIT {
         .contains("iceberg-query")
         .contains("postgres-query")
         .contains("BUILD SUCCESS");
+  }
+
+  @Test
+  @SneakyThrows
+  void givenLocalIcebergWarehouse_whenTestCommandExecutedTwice_thenRunsDoNotSeeEarlierRows() {
+    var snapshots = sqrl.getTestDir().resolve("snapshots-tmp");
+    var warehouse = sqrl.getTestDir().resolve("warehouse-tmp");
+    FileUtils.deleteDirectory(snapshots.toFile());
+    FileUtils.deleteDirectory(warehouse.toFile());
+
+    try {
+      // Creates the snapshots, then verifies them with a second pipeline run on reset tables
+      var created = sqrl.sqrlCmd("test", "package-no-snapshots.json");
+      assertThat(created.logs())
+          .contains("Starting stream processor (snapshot validation run)")
+          .contains("BUILD SUCCESS");
+      assertThat(snapshots.resolve("iceberg-query.snapshot")).isRegularFile();
+      assertThat(warehouse.resolve("default_database")).isDirectory();
+
+      // The warehouse is in the project, so it outlives the container of the first invocation
+      var compared = sqrl.sqrlCmd("test", "package-no-snapshots.json");
+      assertThat(compared.logs())
+          .doesNotContain("Validating newly created snapshots")
+          .contains("BUILD SUCCESS");
+    } finally {
+      FileUtils.deleteDirectory(snapshots.toFile());
+      FileUtils.deleteDirectory(warehouse.toFile());
+    }
   }
 }
