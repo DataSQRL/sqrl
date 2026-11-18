@@ -5,23 +5,24 @@ description: "How DataSQRL compares to dbt, SQLMesh, warehouse-native agents, Da
 
 # How DataSQRL Compares
 
-Data engineering has two worlds. **Analytics engineering** models data inside a warehouse for dashboards and reports. **Operational data engineering** moves and serves data across systems, in real time or in batches, to applications, customers, and AI agents. DataSQRL is built for the second.
+Data engineering has two worlds. **Analytics engineering** models data inside a warehouse for dashboards, reports, and BI. **Operational data engineering** moves, processes, and serves data across systems, in real time or in batches, to applications, customers, and AI agents. DataSQRL is built for the second.
 
 ## Why operational is different
 
-|  | Analytics engineering (dbt in a warehouse) | Operational data engineering (DataSQRL) |
-| --- | --- | --- |
-| Typical work | Models for dashboards and reports | Real-time pipelines, data APIs, data products |
-| Systems involved | One warehouse | Kafka, Flink, Postgres, Iceberg, API layer, and operational systems to sync with |
-| Who consumes it | Analysts, (Gen)BI tools | Applications, customers, AI agents |
-| Freshness | Next scheduled run | Seconds to minutes, continuously |
-| Performance | The batch run finishes within its window | Processing and serving latency, under variable load on both the incoming data and the API requests |
-| When it is wrong | Fix the model and rerun | Bad data has already reached live consumers |
-| Where bugs hide | Inside one SQL model | At the seams between systems, and in time: late events, duplicates, state |
-| What verification needs | Tests on the result table | Compile-time checks across every system, plus event-time replay |
-| What an agent needs | SQL skills and warehouse context | A compiler and simulator that catch what the agent cannot see |
-| Operations | The warehouse handles it | Long-running jobs, state, upgrades, monitoring |
-| Observability | Did the run succeed? | Continuous monitoring of lag, latency, throughput, and data quality to spot regressions, performance degradation, and early symptoms of issues |
+|  | Analytics engineering (dbt in a warehouse) | Operational data engineering (DataSQRL)                                                                                                        |
+| --- |--------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------|
+| Typical work | Models for dashboards, reports, and BI     | Real-time pipelines, data APIs, data products                                                                                                  |
+| Systems involved | One warehouse                              | Kafka, Flink, Postgres, Iceberg, query engines, API layer, and operational systems to sync with                                                |
+| Who consumes it | Analysts, (Gen)BI tools                    | Applications, customers, AI agents                                                                                                             |
+| Freshness | Next scheduled run                         | Seconds to minutes, continuously                                                                                                               |
+| Performance | The batch run finishes within its window   | Processing and serving latency, under variable load on both the incoming data and the API requests                                             |
+| When it is wrong | Fix the model and rerun                    | Bad data has already reached live consumers                                                                                                    |
+| Error impact | Reports are late or wrong until the rerun  | Applications break, customers see wrong results, and AI agents act on them; an outage stops every product that depends on the data             |
+| Where bugs hide | Inside one SQL model                       | At the seams between systems, and in time: late events, duplicates, state                                                                      |
+| What verification needs | Tests on the result table                  | Compile-time checks across every system, plus event-time replay                                                                                |
+| What an agent needs | SQL skills and warehouse context           | A compiler and simulator that analyze the execution DAG and expose runtime dynamics                                                            |
+| Operations | The warehouse handles it                   | Long-running jobs, state, upgrades, monitoring, blue-green deployments                                                                         |
+| Observability | Did the run succeed?                       | Continuous monitoring of lag, latency, throughput, and data quality to spot regressions, performance degradation, and early symptoms of issues |
 
 In a warehouse a wrong model is rerun; in an operational system a wrong pipeline has already served bad data, so verification has to happen before deployment.
 
