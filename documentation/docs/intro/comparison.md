@@ -1,6 +1,6 @@
 ---
 title: "How DataSQRL Compares"
-description: "How DataSQRL compares to dbt, SQLMesh, warehouse-native agents, Databricks, streaming databases, Flink, Spark, orchestrators, and plain coding agents: analytics engineering versus operational data engineering."
+description: "How DataSQRL compares to dbt, SQLMesh, warehouse-native agents, data warehouses, streaming databases, Flink, Spark, orchestrators, and plain coding agents: analytics engineering versus operational data engineering."
 ---
 
 # How DataSQRL Compares
@@ -54,13 +54,13 @@ In a warehouse a wrong model is rerun; in an operational system a wrong pipeline
 
 ### Where the warehouse fits
 
-DataSQRL does populate the data lake and warehouse: Snowflake, Databricks, AWS through Athena, and others. A typical pipeline takes CDC streams out of a database, enriches them, and lands them in Iceberg, with views generated in each [query engine's](../configuration-engine/iceberg-query) dialect. The views sit on top of physical tables that stay separate per deployment, which makes blue-green deployments possible.
+DataSQRL does populate the data lake and warehouse: Snowflake, Databricks, AWS with Redshift or Athena, and others. A typical pipeline takes CDC streams out of a database, enriches them, and lands them in Iceberg, with views generated in each [query engine's](../configuration-engine/iceberg-query) dialect and registered in the catalog. The views sit on top of physical tables that stay separate per deployment, which makes blue-green deployments possible.
 
-The rule: models inside the warehouse stay in dbt; operational pipelines that land in the warehouse are DataSQRL's. Many teams run both.
+Models inside the warehouse stay in dbt; operational pipelines that land in the warehouse are DataSQRL's. Many teams run both.
 
 ## How does DataSQRL compare to dbt or SQLMesh?
 
-dbt and SQLMesh transform data that is already in a warehouse. DataSQRL builds the pipelines that ingest, process, and serve data across Kafka, Flink, Postgres, Iceberg, and an API. We share their belief that SQL is the right language for data work, and DataSQRL focuses on what agents cannot guarantee on their own:
+dbt and SQLMesh transform data that is already in a warehouse. DataSQRL builds the pipelines that ingest, process, and serve data across Kafka, Flink, Postgres, Iceberg, and an API. We share their belief that SQL is the right language for data work, and DataSQRL focuses on what agents generating SQL cannot guarantee on their own:
 
 - **End-to-end scope.** Ingestion, streaming, storage, and API serving are covered in one model, not just warehouse transformations. Connectors are compiled deterministically and kept in sync.
 - **Deep relational introspection.** It parses the whole pipeline into a relational plan and validates keys, timestamps, table types, and engine capabilities. dbt manages SQL models mostly through templating, which is string manipulation that does not understand the SQL.
@@ -69,13 +69,19 @@ dbt and SQLMesh transform data that is already in a warehouse. DataSQRL builds t
 
 SQLMesh parses SQL and adds features like column-level lineage, but it also targets batch transformations in a warehouse. Neither tool generates streaming pipelines, database integrations, or APIs.
 
-## How does DataSQRL compare to warehouse-native agents?
+## How does DataSQRL compare to warehouse-native agents (Snowflake, Databricks, etc)?
 
-dbt's agents, Snowflake's coding agent, Altimate Code, and similar tools make coding agents better at writing and maintaining SQL inside a warehouse, with warehouse context and dbt project awareness. That is a valuable problem, and a different one. DataSQRL makes agents reliable at generating streaming jobs, Kafka topics, database schemas, and APIs that have to agree with each other, and at replaying event time to test them. The two can be used side by side: a warehouse-native agent for the models inside the warehouse, a DataSQRL agent for the operational pipelines that feed and serve from it.
+dbt's agents, Snowflake's Cortex, Databricks' Genie, and similar tools make coding agents better at writing and maintaining SQL inside a warehouse, with warehouse context and dbt project awareness.They generate the SQL a human would have to build by hand for data warehouse transformations. DataSQRL makes agents reliable at generating streaming jobs, Kafka topics, database schemas, and APIs that have to agree with each other, and at replaying event time to test them. The two can be used side by side: a warehouse-native agent for the models inside the warehouse, a DataSQRL agent for the operational pipelines that feed to and serve from it.
 
-## How does DataSQRL compare to Databricks?
+## How does DataSQRL compare to data warehouses like Snowflake, Databricks, or BigQuery?
 
-Databricks is the one warehouse vendor with its own streaming pipelines, which run inside the Databricks platform on Delta and Spark. DataSQRL compiles pipelines to open-source engines that you operate, with Flink and Kafka for processing, Postgres and Iceberg for storage, and a generated data API for serving, and it can land data in Iceberg tables that Databricks queries. Choose Databricks pipelines when the pipeline starts and ends inside Databricks. Choose DataSQRL when the pipeline spans Kafka, operational databases, and an API, or when you want the agent's output verified across all of them before deployment.
+Data warehouses and lakehouses are built for analytics: they store large volumes of data and answer analytical queries from analysts and BI tools. Several now add streaming ingestion and incrementally updated tables, and Databricks runs its own streaming pipelines inside its platform. That makes analytical data fresher, but the data still lives in the warehouse and is consumed by analytics.
+
+Operational data engineering has different requirements. Applications, customers, and AI agents need low-latency lookups at high concurrency through an API, processing that reacts to events as they arrive, and results that are synced back into operational systems. That work spans Kafka, a stream processor, an operational database, and an API layer, not one warehouse. DataSQRL builds those pipelines on open-source engines you operate and verifies them across every system before deployment.
+
+The two meet at the lake. DataSQRL can land the results in Iceberg tables with views for Snowflake, Databricks, and other query engines, so the warehouse gets operational data without having to serve it. Choose the warehouse for analytics on data that is already there. Choose DataSQRL for the pipelines that move, process, and serve data across systems, including the ones that feed the warehouse.
+
+And when you need to serve live consumers such as applications, customers, or AI agents through APIs or data streams you need the operational control, verification, and testing that DataSQRL provides.
 
 ## Why do I need DataSQRL in addition to my coding agent?
 
@@ -86,7 +92,7 @@ Claude Code, Codex, and similar agents write plausible data pipeline code, but d
 - **Bugs that only appear over time.** Late data, races, and updates are tested with event-time replay. [Read more](/blog/p3-testing-framework)
 - **Code nobody can review.** The whole pipeline is expressed in SQL that a person can read in one sitting. [Read more](/blog/p4-human-understanding-one-sql-file)
 
-Your agent keeps doing the reasoning. DataSQRL gives it guardrails and feedback, and it keeps you in control of what gets built.
+Your agent keeps doing the reasoning. DataSQRL gives it guardrails, feedback, and deeper insight while keeping you in control of what gets built.
 
 ## How does DataSQRL compare to Apache Flink or Apache Spark?
 

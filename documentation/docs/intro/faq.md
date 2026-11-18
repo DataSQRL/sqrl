@@ -5,7 +5,7 @@ description: "Common questions about DataSQRL: batch and streaming scope, existi
 
 # Frequently Asked Questions
 
-For how DataSQRL compares to dbt, SQLMesh, warehouse-native agents, Databricks, streaming databases, Flink, Spark, orchestrators, and plain coding agents, see [How DataSQRL Compares](comparison).
+For how DataSQRL compares to dbt, SQLMesh, warehouse-native agents, data warehouses, streaming databases, Flink, Spark, orchestrators, and plain coding agents, see [How DataSQRL Compares](comparison).
 
 ## Is DataSQRL only for real-time streaming?
 
