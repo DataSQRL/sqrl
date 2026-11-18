@@ -124,7 +124,6 @@ Schema:
 --- physical ---
 Table Orders (postgres):
  - primary key: order_id
- - index Orders_hash_c1 (hash): customer_id
 
 === RequestCount
 ID:          default_catalog.default_database.RequestCount
@@ -249,9 +248,7 @@ END
 >>>postgres-schema.sql
 CREATE TABLE IF NOT EXISTS "AllOrders" ("order_id" TEXT NOT NULL, "customer_id" TEXT NOT NULL, PRIMARY KEY ("order_id"));
 CREATE TABLE IF NOT EXISTS "Orders" ("order_id" TEXT NOT NULL, "customer_id" TEXT NOT NULL, PRIMARY KEY ("order_id"));
-CREATE TABLE IF NOT EXISTS "RequestCount" ("n" BIGINT NOT NULL, "__pk_hash" INTEGER NOT NULL, PRIMARY KEY ("__pk_hash"));
-
-CREATE INDEX IF NOT EXISTS "Orders_hash_c1" ON "Orders" USING hash ("customer_id")
+CREATE TABLE IF NOT EXISTS "RequestCount" ("n" BIGINT NOT NULL, "__pk_hash" INTEGER NOT NULL, PRIMARY KEY ("__pk_hash"))
 >>>vertx.json
 {
   "models" : {

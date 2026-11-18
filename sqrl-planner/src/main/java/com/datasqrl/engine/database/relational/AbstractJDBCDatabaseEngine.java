@@ -55,6 +55,6 @@ public abstract class AbstractJDBCDatabaseEngine extends AbstractJDBCEngine
   }
 
   public IndexSelectorConfig getIndexSelectorConfig() {
-    return IndexSelectorConfigByDialect.of(getDialect());
+    return new IndexSelectorConfigByDialect(getDialect(), engineConfig.getIndexSelection());
   }
 }

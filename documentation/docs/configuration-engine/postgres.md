@@ -15,6 +15,7 @@ No mandatory configuration keys are required. Physical DDL (tables, indexes, vie
 |-------------------------|-------------|---------|----------------------------------------------------------------------------------------------------------------|
 | `partition-ttl-divisor` | **integer** | `100`   | Controls the number of partitions for range-partitioned tables with a TTL (see [Partitioning](#partitioning)). |
 | `partition-premake`     | **integer** | `4`     | Number of future partitions pg_partman pre-creates ahead of the current one (`p_premake`).                     |
+| `index-selection`       | **object**  |         | Limits of the automatic index selection (see [Index Selection](#index-selection)).                             |
 
 ## Basic Configuration
 
@@ -40,6 +41,35 @@ Tables annotated with `partition_key` on a timestamp column and a `ttl` hint are
 For example, `ttl(14 days)` with the default divisor produces 1-day partitions.
 
 At setup time, pg_partman pre-creates the historical partitions covering the full TTL window (via `p_start_partition`), so replayed or late-arriving data within the retention period lands in a dated partition rather than the DEFAULT partition. The `partition-premake` key controls how many future partitions are created ahead of the current one.
+
+## Index Selection
+
+The compiler selects the indexes of each table from the filters of the API queries that read it (see [Automatic index selection](../sqrl-language#automatic-index-selection)). The `index-selection` object sets its limits:
+
+| Key                     | Type        | Default | Description                                                                                                                                                         |
+|-------------------------|-------------|---------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `max-indexes`           | **integer** | `8`     | The most indexes to create for one table. When it is reached, the compiler warns about the filter patterns that no index serves.                                   |
+| `max-index-columns`     | **integer** | `3`     | The most columns of one index. PostgreSQL hash indexes always have one column.                                                                                      |
+| `max-filter-patterns`   | **integer** | `50`    | The most distinct filter patterns on one table. Above it, the compiler creates a single-column index for each filtered column instead of composite indexes, and warns. |
+| `min-cost-reduction`    | **number**  | `0.05`  | How much an index must at least cut the cost of the queries it serves, as a fraction: `0.05` is 5%. Must be at least `0` and less than `1`.                         |
+| `small-table-row-limit` | **integer** | `100`   | A table that holds at most this many rows, by its definition or a `row_count` hint, gets no automatic index. `0` turns this off.                                    |
+
+An `index` hint on a table replaces the automatic selection for that table, so these limits do not apply to it.
+
+```json
+{
+  "engines": {
+    "postgres": {
+      "index-selection": {
+        "max-indexes": 12,
+        "small-table-row-limit": 0
+      }
+    }
+  }
+}
+```
+
+The keys that you leave out keep their defaults.
 
 ## Conflict Handling
 

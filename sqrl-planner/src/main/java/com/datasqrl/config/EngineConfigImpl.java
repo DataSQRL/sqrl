@@ -68,6 +68,12 @@ public class EngineConfigImpl implements PackageJson.EngineConfig {
   }
 
   @Override
+  public PackageJson.IndexSelectionConfig getIndexSelection() {
+    return new IndexSelectionConfigImpl(
+        sqrlConfig.getSubConfig(IndexSelectionConfigImpl.INDEX_SELECTION_KEY));
+  }
+
+  @Override
   public boolean isEmpty() {
     return Iterables.isEmpty(sqrlConfig.getSubConfig(CONFIG_KEY).getKeys());
   }

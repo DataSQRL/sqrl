@@ -365,6 +365,39 @@
               "description": "Number of future partitions pg_partman pre-creates ahead of the current one (p_premake).",
               "type": "integer"
             },
+            "index-selection": {
+              "description": "How the compiler selects the indexes for the API queries.",
+              "type": "object",
+              "properties": {
+                "max-indexes": {
+                  "description": "The most indexes to create for one table.",
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "max-index-columns": {
+                  "description": "The most columns of one index.",
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "max-filter-patterns": {
+                  "description": "The most distinct filter patterns on one table before the compiler creates a single-column index for each filtered column instead of composite indexes.",
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "min-cost-reduction": {
+                  "description": "The fraction by which an index must at least cut the cost of the queries it serves, like 0.05 for 5%.",
+                  "type": "number",
+                  "minimum": 0,
+                  "exclusiveMaximum": 1
+                },
+                "small-table-row-limit": {
+                  "description": "A table that holds at most this many rows, by its definition or a row_count hint, gets no automatic index.",
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "additionalProperties": false
+            },
             "config": {
               "type": "object",
               "minProperties": 1

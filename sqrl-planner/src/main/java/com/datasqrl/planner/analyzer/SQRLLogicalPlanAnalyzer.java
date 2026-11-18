@@ -37,11 +37,11 @@ import com.datasqrl.planner.TableAnalysisLookup;
 import com.datasqrl.planner.analyzer.cost.CostAnalysis;
 import com.datasqrl.planner.analyzer.cost.JoinCostAnalysis;
 import com.datasqrl.planner.hint.HintsAndDoc;
+import com.datasqrl.planner.hint.PlannerHints;
 import com.datasqrl.planner.hint.PrimaryKeyHint;
 import com.datasqrl.planner.hint.RowCountHint;
 import com.datasqrl.planner.tables.SqrlTableFunction;
 import com.datasqrl.planner.util.Documented;
-import com.datasqrl.planner.util.Documented.Documentation;
 import com.datasqrl.util.CalciteUtil;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.LinkedHashMultimap;
@@ -106,7 +106,7 @@ import org.apache.flink.table.planner.plan.schema.TableSourceTable;
 import org.apache.flink.table.types.logical.utils.LogicalTypeCasts;
 
 /**
- * Analyses a view to produce a {@link ViewAnalysis} which includes the {@link TableAnalysis} that
+ * Analyzes a view to produce a {@link ViewAnalysis} which includes the {@link TableAnalysis} that
  * has information about the query needed for subsequent planning and optimization.
  *
  * <p>As the query is analyzed, the analyzer detects inefficiencies or optimization opportunities
@@ -249,22 +249,8 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
               .primaryKey(PrimaryKeyMap.of(pkHint.get().getColumnIndexes()))
               .build();
     }
-    // Retrieve row count from hint or estimate via metadata query
-    var rowCountHint =
-        hints
-            .getHints(RowCountHint.class)
-            .filter(hint -> hint.getColumnNames().isEmpty())
-            .findFirst();
-    TableStatistic tableStatistic;
-    if (rowCountHint.isPresent()) {
-      tableStatistic = TableStatistic.fromHint(rowCountHint.get().getRowCount());
-    } else {
-      // Use our custom metadata query that can look up statistics from tableLookup
-      final var mq = new SqrlRelMetadataQuery(tableLookup);
-      var rowCount = mq.getRowCount(analysis.relNode);
-      tableStatistic =
-          rowCount != null ? TableStatistic.fromEstimate(rowCount) : TableStatistic.UNKNOWN;
-    }
+
+    var tableStatistic = getTableStatistic(hints, analysis.relNode);
 
     // To "be" a most recent distinct is must have one and not change the selected columns on a
     // stream.
@@ -290,7 +276,7 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
 
     // A table without a doc string of its own that keeps the rows of its source table, filtered or
     // deduplicated, takes the documentation (and tags) of the source, even if it is hidden
-    Documentation documentation = hintsAndDoc.getDocumentation();
+    var documentation = hintsAndDoc.getDocumentation();
     if (documentation.isEmpty() && (preservesBaseTable || isDeduplication)) {
       documentation =
           sameTypeSource
@@ -338,6 +324,23 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
       this.intermediateAnalysis = null;
       return analysis;
     }
+  }
+
+  /**
+   * The row count from a {@code row_count} hint, or else the metadata estimate, and the most rows
+   * that the plan allows, like the size of a {@code VALUES} list. Any table scan is unbounded.
+   */
+  private TableStatistic getTableStatistic(PlannerHints hints, RelNode relNode) {
+    // Our custom metadata query looks up the statistics of other tables from tableLookup
+    var mq = new SqrlRelMetadataQuery(tableLookup);
+    var maxRowCount = mq.getMaxRowCount(relNode);
+
+    return hints
+        .getHints(RowCountHint.class)
+        .filter(hint -> hint.getColumnNames().isEmpty())
+        .findFirst()
+        .map(hint -> TableStatistic.fromHint(hint.getRowCount(), maxRowCount))
+        .orElseGet(() -> TableStatistic.fromEstimate(mq.getRowCount(relNode), maxRowCount));
   }
 
   private RelNodeAnalysis fromSource(TableAnalysis tableAnalysis, RelNode input) {

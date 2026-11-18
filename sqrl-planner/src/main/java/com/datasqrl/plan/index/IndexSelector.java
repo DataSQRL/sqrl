@@ -65,6 +65,16 @@ import org.apache.flink.table.planner.plan.metadata.FlinkDefaultRelMetadataProvi
 @AllArgsConstructor
 public class IndexSelector {
 
+  public static final List<RelOptRule> PUSH_DOWN_FILTERS_RULES =
+      List.of(
+          CoreRules.FILTER_INTO_JOIN,
+          CoreRules.FILTER_MERGE,
+          CoreRules.FILTER_AGGREGATE_TRANSPOSE,
+          CoreRules.FILTER_PROJECT_TRANSPOSE,
+          CoreRules.FILTER_TABLE_FUNCTION_TRANSPOSE,
+          CoreRules.FILTER_CORRELATE,
+          CoreRules.FILTER_SET_OP_TRANSPOSE);
+
   private static final double EPSILON = 0.00001d;
 
   private static final int MAX_LIMIT_INDEX_SCAN = 10000;
@@ -88,24 +98,12 @@ public class IndexSelector {
     return new IndexAnalysis(indexFinder.queryIndexSummaries, indexFinder.unindexableFilters);
   }
 
-  public static final List<RelOptRule> PUSH_DOWN_FILTERS_RULES =
-      List.of(
-          CoreRules.FILTER_INTO_JOIN,
-          CoreRules.FILTER_MERGE,
-          CoreRules.FILTER_AGGREGATE_TRANSPOSE,
-          CoreRules.FILTER_PROJECT_TRANSPOSE,
-          CoreRules.FILTER_TABLE_FUNCTION_TRANSPOSE,
-          CoreRules.FILTER_CORRELATE,
-          CoreRules.FILTER_SET_OP_TRANSPOSE);
-
-  private RelNode applyPushDownFilters(RelNode queryRelnode) {
-    // A rule collection runs all rules until none matches. Programs#hep would run each rule once in
-    // list order, so a filter that FILTER_PROJECT_TRANSPOSE moves onto a join never reaches
-    // FILTER_INTO_JOIN, and stacked filters never get merged.
-    var hepProgram = HepProgram.builder().addRuleCollection(PUSH_DOWN_FILTERS_RULES).build();
-    var program = Programs.of(hepProgram, false, FlinkDefaultRelMetadataProvider.INSTANCE());
-
-    return program.run(null, queryRelnode, queryRelnode.getTraitSet(), List.of(), List.of());
+  /**
+   * Whether the table holds too few rows for an index to make any query cheaper, see {@link
+   * IndexSelectorConfig#getSmallTableRowLimit()}.
+   */
+  public boolean isTooSmallToIndex(NamedTable table) {
+    return table.getAnalysis().getTableStatistic().hasAtMostRows(config.getSmallTableRowLimit());
   }
 
   public Set<IndexDefinition> optimizeIndexes(Collection<QueryIndexSummary> queryIndexSummaries) {
@@ -152,6 +150,16 @@ public class IndexSelector {
             .toList();
 
     return Optional.of(indexDefinitions);
+  }
+
+  private RelNode applyPushDownFilters(RelNode queryRelnode) {
+    // A rule collection runs all rules until none matches. Programs#hep would run each rule once in
+    // list order, so a filter that FILTER_PROJECT_TRANSPOSE moves onto a join never reaches
+    // FILTER_INTO_JOIN, and stacked filters never get merged.
+    var hepProgram = HepProgram.builder().addRuleCollection(PUSH_DOWN_FILTERS_RULES).build();
+    var program = Programs.of(hepProgram, false, FlinkDefaultRelMetadataProvider.INSTANCE());
+
+    return program.run(null, queryRelnode, queryRelnode.getTraitSet(), List.of(), List.of());
   }
 
   private Set<IndexDefinition> optimizeIndexes(

@@ -1,4 +1,4 @@
-/*+primary_key(doc_id), vector_dim(vector, 5) */
+/*+primary_key(doc_id), vector_dim(vector, 5), index(VECTOR_COSINE, vector) */
 VectorData := SELECT doc_id, category_id, double_to_vector(vector) AS vector FROM (VALUES
              (1, 10, ARRAY[0.9, 0.8, 0.01, 0.1, 0.15]),
              (2, 10, ARRAY[0.85, 0.85, 0.03, 0.12, 0.09]),

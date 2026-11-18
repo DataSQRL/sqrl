@@ -1,0 +1,2620 @@
+>>>pipeline_explain.txt
+=== Events
+ID:          default_catalog.default_database.Events
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   ts
+Row count:   ~1e8
+--- definition ---
+Schema:
+ - id: BIGINT NOT NULL
+ - status: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - status_code: INTEGER NOT NULL
+ - ts: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.Events__base
+Plan:
+LogicalWatermarkAssigner(rowtime=[ts], watermark=[$3])
+  LogicalTableScan(table=[[default_catalog, default_database, Events]])
+SQL:
+CREATE TABLE `Events` (
+  `id` BIGINT NOT NULL,
+  `status` STRING NOT NULL,
+  `status_code` INTEGER NOT NULL,
+  `ts` TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR `ts` AS `ts`
+)
+WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10'
+)
+--- physical ---
+Table Events_1 (postgres):
+ - primary key: __pk_hash (generated hash key)
+
+=== EventsLatest
+ID:          default_catalog.default_database.EventsLatest
+Type:        state
+Stage:       flink
+Primary key: id
+Timestamp:   ts
+Row count:   ~2e7
+--- definition ---
+Schema:
+ - id: BIGINT NOT NULL
+ - status: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - status_code: INTEGER NOT NULL
+ - ts: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.Events
+Annotations:
+ - mostRecentDistinct: true
+Plan:
+LogicalProject(id=[$0], status=[$1], status_code=[$2], ts=[$3])
+  LogicalFilter(condition=[=($4, 1)])
+    LogicalProject(id=[$0], status=[$1], status_code=[$2], ts=[$3], __sqrlinternal_rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $3 DESC NULLS LAST)])
+      LogicalTableScan(table=[[default_catalog, default_database, Events]])
+SQL:
+CREATE VIEW `EventsLatest`
+AS
+SELECT `id`, `status`, `status_code`, `ts`
+FROM (SELECT `id`, `status`, `status_code`, `ts`, ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `ts` DESC NULLS LAST) AS `__sqrlinternal_rownum`
+  FROM `default_catalog`.`default_database`.`Events`) AS `t`
+WHERE `__sqrlinternal_rownum` = 1
+--- physical ---
+Table EventsLatest_2 (postgres):
+ - primary key: id
+
+=== EventsWithLarge
+ID:          default_catalog.default_database.EventsWithLarge
+Type:        query
+Stage:       postgres
+--- definition ---
+Inputs:
+ - default_catalog.default_database.EventsLatest
+ - default_catalog.default_database.StatusLarge
+Annotations:
+ - parameters: id
+ - base-table: EventsWithLarge
+Plan:
+LogicalProject(id=[$0], status=[$1], code=[$4])
+  LogicalFilter(condition=[=($0, ?0)])
+    LogicalJoin(condition=[=($5, $2)], joinType=[left])
+      LogicalTableScan(table=[[default_catalog, default_database, EventsLatest]])
+      LogicalTableScan(table=[[default_catalog, default_database, StatusLarge]])
+SQL:
+CREATE VIEW `EventsWithLarge` AS  SELECT e.id, e.status, s.code
+  FROM EventsLatest e LEFT JOIN StatusLarge s ON s.num = e.status_code WHERE e.id = ?  ;
+
+=== EventsWithNumber
+ID:          default_catalog.default_database.EventsWithNumber
+Type:        query
+Stage:       postgres
+--- definition ---
+Inputs:
+ - default_catalog.default_database.EventsLatest
+ - default_catalog.default_database.StatusNumber
+Annotations:
+ - parameters: id
+ - base-table: EventsWithNumber
+Plan:
+LogicalProject(id=[$0], status=[$1], code=[$4])
+  LogicalFilter(condition=[=($0, ?0)])
+    LogicalJoin(condition=[=($5, $2)], joinType=[left])
+      LogicalTableScan(table=[[default_catalog, default_database, EventsLatest]])
+      LogicalTableScan(table=[[default_catalog, default_database, StatusNumber]])
+SQL:
+CREATE VIEW `EventsWithNumber` AS  SELECT e.id, e.status, s.code
+  FROM EventsLatest e LEFT JOIN StatusNumber s ON s.num = e.status_code WHERE e.id = ?  ;
+
+=== EventsWithStatus
+ID:          default_catalog.default_database.EventsWithStatus
+Type:        query
+Stage:       postgres
+--- definition ---
+Inputs:
+ - default_catalog.default_database.EventsLatest
+ - default_catalog.default_database.StatusCode
+Annotations:
+ - parameters: id
+ - base-table: EventsWithStatus
+Plan:
+LogicalProject(id=[$0], status=[$1], code=[$4], label=[$5])
+  LogicalFilter(condition=[=($0, ?0)])
+    LogicalProject(id=[$0], status=[$1], status_code=[$2], ts=[$3], code=[$4], label=[$5])
+      LogicalJoin(condition=[=($6, $1)], joinType=[left])
+        LogicalTableScan(table=[[default_catalog, default_database, EventsLatest]])
+        LogicalProject(code=[$0], label=[$1], label0=[CAST($1):VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL])
+          LogicalTableScan(table=[[default_catalog, default_database, StatusCode]])
+SQL:
+CREATE VIEW `EventsWithStatus` AS  SELECT e.id, e.status, s.code, s.label
+  FROM EventsLatest e LEFT JOIN StatusCode s ON s.label = e.status WHERE e.id = ?  ;
+
+=== Orders
+ID:          default_catalog.default_database.Orders
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   ts
+Row count:   ~1e8
+--- definition ---
+Schema:
+ - order_id: BIGINT NOT NULL
+ - customer_id: BIGINT NOT NULL
+ - ts: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.Orders__base
+Plan:
+LogicalWatermarkAssigner(rowtime=[ts], watermark=[$2])
+  LogicalTableScan(table=[[default_catalog, default_database, Orders]])
+SQL:
+CREATE TABLE `Orders` (
+  `order_id` BIGINT NOT NULL,
+  `customer_id` BIGINT NOT NULL,
+  `ts` TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR `ts` AS `ts`
+)
+WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10'
+)
+--- physical ---
+Table Orders_3 (postgres):
+ - primary key: __pk_hash (generated hash key)
+
+=== PriorityOrders
+ID:          default_catalog.default_database.PriorityOrders
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   ts
+Row count:   ~5
+--- definition ---
+Schema:
+ - order_id: BIGINT NOT NULL
+ - customer_id: BIGINT NOT NULL
+ - ts: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.Orders
+Plan:
+LogicalProject(order_id=[$0], customer_id=[$1], ts=[$2])
+  LogicalProject(order_id=[$0], customer_id=[$1], ts=[$2], customer_id0=[$3])
+    LogicalJoin(condition=[=($1, $4)], joinType=[inner])
+      LogicalTableScan(table=[[default_catalog, default_database, Orders]])
+      LogicalProject(customer_id=[$0], customer_id0=[CAST($0):BIGINT NOT NULL])
+        LogicalValues(tuples=[[{ 1 }, { 2 }, { 3 }, { 4 }, { 4 }]])
+SQL:
+CREATE VIEW `PriorityOrders` AS  SELECT o.order_id, o.customer_id, o.ts
+  FROM Orders o JOIN (VALUES (1), (2), (3), (4), (4)) AS t(customer_id) ON o.customer_id = t.customer_id;
+--- physical ---
+Table PriorityOrders_4 (postgres):
+ - primary key: __pk_hash (generated hash key)
+ - index PriorityOrders_4_hash_c1 (hash): customer_id
+
+=== PriorityOrdersByCustomer
+ID:          default_catalog.default_database.PriorityOrdersByCustomer
+Type:        query
+Stage:       postgres
+--- definition ---
+Inputs:
+ - default_catalog.default_database.PriorityOrders
+Annotations:
+ - parameters: customerId
+ - base-table: Orders
+Plan:
+LogicalProject(order_id=[$0], customer_id=[$1], ts=[$2])
+  LogicalFilter(condition=[=($1, ?0)])
+    LogicalTableScan(table=[[default_catalog, default_database, PriorityOrders]])
+SQL:
+CREATE VIEW `PriorityOrdersByCustomer` AS  SELECT * FROM PriorityOrders WHERE customer_id = ?          ;
+
+=== Regions
+ID:          default_catalog.default_database.Regions
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   ts
+Row count:   1e1
+--- definition ---
+Schema:
+ - region_id: BIGINT NOT NULL
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - ts: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.Regions__base
+Plan:
+LogicalWatermarkAssigner(rowtime=[ts], watermark=[$2])
+  LogicalTableScan(table=[[default_catalog, default_database, Regions]])
+SQL:
+CREATE TABLE `Regions` (
+  `region_id` BIGINT NOT NULL,
+  `name` STRING NOT NULL,
+  `ts` TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR `ts` AS `ts`
+)
+WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10'
+)
+--- physical ---
+Table Regions_5 (postgres):
+ - primary key: __pk_hash (generated hash key)
+
+=== RegionsByName
+ID:          default_catalog.default_database.RegionsByName
+Type:        query
+Stage:       postgres
+--- definition ---
+Inputs:
+ - default_catalog.default_database.Regions
+Annotations:
+ - parameters: name
+ - base-table: Regions
+Plan:
+LogicalProject(region_id=[$0], name=[$1], ts=[$2])
+  LogicalFilter(condition=[=($1, ?0)])
+    LogicalTableScan(table=[[default_catalog, default_database, Regions]])
+SQL:
+CREATE VIEW `RegionsByName` AS  SELECT * FROM Regions WHERE name = ?    ;
+
+=== StatusByLabel
+ID:          default_catalog.default_database.StatusByLabel
+Type:        query
+Stage:       postgres
+--- definition ---
+Inputs:
+ - default_catalog.default_database.StatusLabel
+Annotations:
+ - parameters: label
+ - base-table: StatusLabel
+Plan:
+LogicalProject(code=[$0], label=[$1])
+  LogicalFilter(condition=[=($1, ?0)])
+    LogicalTableScan(table=[[default_catalog, default_database, StatusLabel]])
+SQL:
+CREATE VIEW `StatusByLabel` AS  SELECT * FROM StatusLabel WHERE label = ?     ;
+
+=== StatusCode
+ID:          default_catalog.default_database.StatusCode
+Type:        state
+Stage:       flink
+Primary key: code
+Timestamp:   -
+Row count:   ~6
+--- definition ---
+Schema:
+ - code: INTEGER NOT NULL
+ - label: CHAR(1) CHARACTER SET "UTF-16LE" NOT NULL
+Plan:
+LogicalProject(code=[$0], label=[$1])
+  LogicalValues(tuples=[[{ 0, 'A' }, { 1, 'B' }, { 2, 'C' }, { 3, 'D' }, { 4, 'E' }, { 5, 'F' }]])
+SQL:
+CREATE VIEW `StatusCode` AS  SELECT * FROM (VALUES (0, 'A'), (1, 'B'), (2, 'C'), (3, 'D'), (4, 'E'), (5, 'F')) AS t(code, label);
+--- physical ---
+Table StatusCode_6 (postgres):
+ - primary key: code
+
+=== StatusHinted
+ID:          default_catalog.default_database.StatusHinted
+Type:        state
+Stage:       flink
+Primary key: code
+Timestamp:   -
+Row count:   ~2
+--- definition ---
+Schema:
+ - code: INTEGER NOT NULL
+ - label: CHAR(1) CHARACTER SET "UTF-16LE" NOT NULL
+Plan:
+LogicalProject(code=[$0], label=[$1])
+  LogicalValues(tuples=[[{ 0, 'A' }, { 1, 'B' }]])
+SQL:
+CREATE VIEW `StatusHinted` AS  SELECT * FROM (VALUES (0, 'A'), (1, 'B')) AS t(code, label);
+--- physical ---
+Table StatusHinted_7 (postgres):
+ - primary key: code
+ - index StatusHinted_7_hash_c1 (hash): label
+
+=== StatusHintedByLabel
+ID:          default_catalog.default_database.StatusHintedByLabel
+Type:        query
+Stage:       postgres
+--- definition ---
+Inputs:
+ - default_catalog.default_database.StatusHinted
+Annotations:
+ - parameters: label
+ - base-table: StatusHinted
+Plan:
+LogicalProject(code=[$0], label=[$1])
+  LogicalFilter(condition=[=($1, ?0)])
+    LogicalTableScan(table=[[default_catalog, default_database, StatusHinted]])
+SQL:
+CREATE VIEW `StatusHintedByLabel` AS  SELECT * FROM StatusHinted WHERE label = ?     ;
+
+=== StatusLabel
+ID:          default_catalog.default_database.StatusLabel
+Type:        state
+Stage:       flink
+Primary key: code
+Timestamp:   -
+Row count:   ~2
+--- definition ---
+Schema:
+ - code: INTEGER NOT NULL
+ - label: CHAR(1) CHARACTER SET "UTF-16LE" NOT NULL
+Plan:
+LogicalProject(code=[$0], label=[$1])
+  LogicalValues(tuples=[[{ 0, 'A' }, { 1, 'B' }]])
+SQL:
+CREATE VIEW `StatusLabel` AS  SELECT * FROM (VALUES (0, 'A'), (1, 'B')) AS t(code, label);
+--- physical ---
+Table StatusLabel_8 (postgres):
+ - primary key: code
+
+=== StatusLarge
+ID:          default_catalog.default_database.StatusLarge
+Type:        state
+Stage:       flink
+Primary key: code
+Timestamp:   -
+Row count:   ~1e2
+--- definition ---
+Schema:
+ - code: INTEGER NOT NULL
+ - num: INTEGER NOT NULL
+Plan:
+LogicalProject(code=[$0], num=[$1])
+  LogicalValues(tuples=[[{ 0, 1000 }, { 1, 1001 }, { 2, 1002 }, { 3, 1003 }, { 4, 1004 }, { 5, 1005 }, { 6, 1006 }, { 7, 1007 }, { 8, 1008 }, { 9, 1009 }, { 10, 1010 }, { 11, 1011 }, { 12, 1012 }, { 13, 1013 }, { 14, 1014 }, { 15, 1015 }, { 16, 1016 }, { 17, 1017 }, { 18, 1018 }, { 19, 1019 }, { 20, 1020 }, { 21, 1021 }, { 22, 1022 }, { 23, 1023 }, { 24, 1024 }, { 25, 1025 }, { 26, 1026 }, { 27, 1027 }, { 28, 1028 }, { 29, 1029 }, { 30, 1030 }, { 31, 1031 }, { 32, 1032 }, { 33, 1033 }, { 34, 1034 }, { 35, 1035 }, { 36, 1036 }, { 37, 1037 }, { 38, 1038 }, { 39, 1039 }, { 40, 1040 }, { 41, 1041 }, { 42, 1042 }, { 43, 1043 }, { 44, 1044 }, { 45, 1045 }, { 46, 1046 }, { 47, 1047 }, { 48, 1048 }, { 49, 1049 }, { 50, 1050 }, { 51, 1051 }, { 52, 1052 }, { 53, 1053 }, { 54, 1054 }, { 55, 1055 }, { 56, 1056 }, { 57, 1057 }, { 58, 1058 }, { 59, 1059 }, { 60, 1060 }, { 61, 1061 }, { 62, 1062 }, { 63, 1063 }, { 64, 1064 }, { 65, 1065 }, { 66, 1066 }, { 67, 1067 }, { 68, 1068 }, { 69, 1069 }, { 70, 1070 }, { 71, 1071 }, { 72, 1072 }, { 73, 1073 }, { 74, 1074 }, { 75, 1075 }, { 76, 1076 }, { 77, 1077 }, { 78, 1078 }, { 79, 1079 }, { 80, 1080 }, { 81, 1081 }, { 82, 1082 }, { 83, 1083 }, { 84, 1084 }, { 85, 1085 }, { 86, 1086 }, { 87, 1087 }, { 88, 1088 }, { 89, 1089 }, { 90, 1090 }, { 91, 1091 }, { 92, 1092 }, { 93, 1093 }, { 94, 1094 }, { 95, 1095 }, { 96, 1096 }, { 97, 1097 }, { 98, 1098 }, { 99, 1099 }, { 100, 1100 }]])
+SQL:
+CREATE VIEW `StatusLarge` AS  SELECT * FROM (VALUES (0, 1000), (1, 1001), (2, 1002), (3, 1003), (4, 1004), (5, 1005), (6, 1006), (7, 1007), (8, 1008), (9, 1009), (10, 1010), (11, 1011), (12, 1012), (13, 1013), (14, 1014), (15, 1015), (16, 1016), (17, 1017), (18, 1018), (19, 1019), (20, 1020), (21, 1021), (22, 1022), (23, 1023), (24, 1024), (25, 1025), (26, 1026), (27, 1027), (28, 1028), (29, 1029), (30, 1030), (31, 1031), (32, 1032), (33, 1033), (34, 1034), (35, 1035), (36, 1036), (37, 1037), (38, 1038), (39, 1039), (40, 1040), (41, 1041), (42, 1042), (43, 1043), (44, 1044), (45, 1045), (46, 1046), (47, 1047), (48, 1048), (49, 1049), (50, 1050), (51, 1051), (52, 1052), (53, 1053), (54, 1054), (55, 1055), (56, 1056), (57, 1057), (58, 1058), (59, 1059), (60, 1060), (61, 1061), (62, 1062), (63, 1063), (64, 1064), (65, 1065), (66, 1066), (67, 1067), (68, 1068), (69, 1069), (70, 1070), (71, 1071), (72, 1072), (73, 1073), (74, 1074), (75, 1075), (76, 1076), (77, 1077), (78, 1078), (79, 1079), (80, 1080), (81, 1081), (82, 1082), (83, 1083), (84, 1084), (85, 1085), (86, 1086), (87, 1087), (88, 1088), (89, 1089), (90, 1090), (91, 1091), (92, 1092), (93, 1093), (94, 1094), (95, 1095), (96, 1096), (97, 1097), (98, 1098), (99, 1099), (100, 1100)) AS t(code, num);
+--- physical ---
+Table StatusLarge_9 (postgres):
+ - primary key: code
+ - index StatusLarge_9_hash_c1 (hash): num
+
+=== StatusNumber
+ID:          default_catalog.default_database.StatusNumber
+Type:        state
+Stage:       flink
+Primary key: code
+Timestamp:   -
+Row count:   ~3
+--- definition ---
+Schema:
+ - code: INTEGER NOT NULL
+ - num: INTEGER NOT NULL
+Plan:
+LogicalProject(code=[$0], num=[$1])
+  LogicalValues(tuples=[[{ 0, 10 }, { 1, 11 }, { 2, 12 }]])
+SQL:
+CREATE VIEW `StatusNumber` AS  SELECT * FROM (VALUES (0, 10), (1, 11), (2, 12)) AS t(code, num);
+--- physical ---
+Table StatusNumber_10 (postgres):
+ - primary key: code
+
+>>>flink-sql-no-functions.sql
+CREATE TABLE `Events` (
+  `id` BIGINT NOT NULL,
+  `status` STRING NOT NULL,
+  `status_code` INTEGER NOT NULL,
+  `ts` TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR `ts` AS `ts`
+)
+WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10'
+);
+CREATE VIEW `EventsLatest`
+AS
+SELECT `id`, `status`, `status_code`, `ts`
+FROM (SELECT `id`, `status`, `status_code`, `ts`, ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `ts` DESC NULLS LAST) AS `__sqrlinternal_rownum`
+  FROM `default_catalog`.`default_database`.`Events`) AS `t`
+WHERE `__sqrlinternal_rownum` = 1;
+CREATE VIEW `StatusCode`
+AS
+SELECT *
+FROM (VALUES ROW(0, 'A'),
+   ROW(1, 'B'),
+   ROW(2, 'C'),
+   ROW(3, 'D'),
+   ROW(4, 'E'),
+   ROW(5, 'F')) AS `t` (`code`, `label`);
+CREATE VIEW `StatusNumber`
+AS
+SELECT *
+FROM (VALUES ROW(0, 10),
+   ROW(1, 11),
+   ROW(2, 12)) AS `t` (`code`, `num`);
+CREATE VIEW `StatusLabel`
+AS
+SELECT *
+FROM (VALUES ROW(0, 'A'),
+   ROW(1, 'B')) AS `t` (`code`, `label`);
+CREATE VIEW `StatusLarge`
+AS
+SELECT *
+FROM (VALUES ROW(0, 1000),
+   ROW(1, 1001),
+   ROW(2, 1002),
+   ROW(3, 1003),
+   ROW(4, 1004),
+   ROW(5, 1005),
+   ROW(6, 1006),
+   ROW(7, 1007),
+   ROW(8, 1008),
+   ROW(9, 1009),
+   ROW(10, 1010),
+   ROW(11, 1011),
+   ROW(12, 1012),
+   ROW(13, 1013),
+   ROW(14, 1014),
+   ROW(15, 1015),
+   ROW(16, 1016),
+   ROW(17, 1017),
+   ROW(18, 1018),
+   ROW(19, 1019),
+   ROW(20, 1020),
+   ROW(21, 1021),
+   ROW(22, 1022),
+   ROW(23, 1023),
+   ROW(24, 1024),
+   ROW(25, 1025),
+   ROW(26, 1026),
+   ROW(27, 1027),
+   ROW(28, 1028),
+   ROW(29, 1029),
+   ROW(30, 1030),
+   ROW(31, 1031),
+   ROW(32, 1032),
+   ROW(33, 1033),
+   ROW(34, 1034),
+   ROW(35, 1035),
+   ROW(36, 1036),
+   ROW(37, 1037),
+   ROW(38, 1038),
+   ROW(39, 1039),
+   ROW(40, 1040),
+   ROW(41, 1041),
+   ROW(42, 1042),
+   ROW(43, 1043),
+   ROW(44, 1044),
+   ROW(45, 1045),
+   ROW(46, 1046),
+   ROW(47, 1047),
+   ROW(48, 1048),
+   ROW(49, 1049),
+   ROW(50, 1050),
+   ROW(51, 1051),
+   ROW(52, 1052),
+   ROW(53, 1053),
+   ROW(54, 1054),
+   ROW(55, 1055),
+   ROW(56, 1056),
+   ROW(57, 1057),
+   ROW(58, 1058),
+   ROW(59, 1059),
+   ROW(60, 1060),
+   ROW(61, 1061),
+   ROW(62, 1062),
+   ROW(63, 1063),
+   ROW(64, 1064),
+   ROW(65, 1065),
+   ROW(66, 1066),
+   ROW(67, 1067),
+   ROW(68, 1068),
+   ROW(69, 1069),
+   ROW(70, 1070),
+   ROW(71, 1071),
+   ROW(72, 1072),
+   ROW(73, 1073),
+   ROW(74, 1074),
+   ROW(75, 1075),
+   ROW(76, 1076),
+   ROW(77, 1077),
+   ROW(78, 1078),
+   ROW(79, 1079),
+   ROW(80, 1080),
+   ROW(81, 1081),
+   ROW(82, 1082),
+   ROW(83, 1083),
+   ROW(84, 1084),
+   ROW(85, 1085),
+   ROW(86, 1086),
+   ROW(87, 1087),
+   ROW(88, 1088),
+   ROW(89, 1089),
+   ROW(90, 1090),
+   ROW(91, 1091),
+   ROW(92, 1092),
+   ROW(93, 1093),
+   ROW(94, 1094),
+   ROW(95, 1095),
+   ROW(96, 1096),
+   ROW(97, 1097),
+   ROW(98, 1098),
+   ROW(99, 1099),
+   ROW(100, 1100)) AS `t` (`code`, `num`);
+CREATE TABLE `Regions` (
+  `region_id` BIGINT NOT NULL,
+  `name` STRING NOT NULL,
+  `ts` TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR `ts` AS `ts`
+)
+WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10'
+);
+CREATE VIEW `StatusHinted`
+AS
+SELECT *
+FROM (VALUES ROW(0, 'A'),
+   ROW(1, 'B')) AS `t` (`code`, `label`);
+CREATE TABLE `Orders` (
+  `order_id` BIGINT NOT NULL,
+  `customer_id` BIGINT NOT NULL,
+  `ts` TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR `ts` AS `ts`
+)
+WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10'
+);
+CREATE VIEW `PriorityOrders`
+AS
+SELECT `o`.`order_id`, `o`.`customer_id`, `o`.`ts`
+FROM `Orders` AS `o`
+ INNER JOIN (VALUES ROW(1),
+   ROW(2),
+   ROW(3),
+   ROW(4),
+   ROW(4)) AS `t` (`customer_id`) ON `o`.`customer_id` = `t`.`customer_id`;
+CREATE TABLE `Events_1` (
+  `id` BIGINT NOT NULL,
+  `status` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `status_code` INTEGER NOT NULL,
+  `ts` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'Events_1',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `EventsLatest_2` (
+  `id` BIGINT NOT NULL,
+  `status` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `status_code` INTEGER NOT NULL,
+  `ts` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`id`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'TIMESTAMP',
+  'sink.on-conflict.timestamp-column' = 'ts',
+  'table-name' = 'EventsLatest_2',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `Orders_3` (
+  `order_id` BIGINT NOT NULL,
+  `customer_id` BIGINT NOT NULL,
+  `ts` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'Orders_3',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `PriorityOrders_4` (
+  `order_id` BIGINT NOT NULL,
+  `customer_id` BIGINT NOT NULL,
+  `ts` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'PriorityOrders_4',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `Regions_5` (
+  `region_id` BIGINT NOT NULL,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `ts` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'Regions_5',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `StatusCode_6` (
+  `code` INTEGER NOT NULL,
+  `label` CHAR(1) CHARACTER SET `UTF-16LE` NOT NULL,
+  PRIMARY KEY (`code`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'table-name' = 'StatusCode_6',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `StatusHinted_7` (
+  `code` INTEGER NOT NULL,
+  `label` CHAR(1) CHARACTER SET `UTF-16LE` NOT NULL,
+  PRIMARY KEY (`code`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'table-name' = 'StatusHinted_7',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `StatusLabel_8` (
+  `code` INTEGER NOT NULL,
+  `label` CHAR(1) CHARACTER SET `UTF-16LE` NOT NULL,
+  PRIMARY KEY (`code`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'table-name' = 'StatusLabel_8',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `StatusLarge_9` (
+  `code` INTEGER NOT NULL,
+  `num` INTEGER NOT NULL,
+  PRIMARY KEY (`code`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'table-name' = 'StatusLarge_9',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `StatusNumber_10` (
+  `code` INTEGER NOT NULL,
+  `num` INTEGER NOT NULL,
+  PRIMARY KEY (`code`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'table-name' = 'StatusNumber_10',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+EXECUTE STATEMENT SET BEGIN
+INSERT INTO `default_catalog`.`default_database`.`Events_1`
+SELECT `id`, `status`, `status_code`, `ts`, `hash_key`(`id`, `status`, `status_code`, `ts`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`Events`
+ON CONFLICT DO DEDUPLICATE
+;
+INSERT INTO `default_catalog`.`default_database`.`EventsLatest_2`
+SELECT *
+FROM `default_catalog`.`default_database`.`Events`
+ON CONFLICT DO DEDUPLICATE
+;
+INSERT INTO `default_catalog`.`default_database`.`Orders_3`
+SELECT `order_id`, `customer_id`, `ts`, `hash_key`(`order_id`, `customer_id`, `ts`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`Orders`
+ON CONFLICT DO DEDUPLICATE
+;
+INSERT INTO `default_catalog`.`default_database`.`PriorityOrders_4`
+SELECT `order_id`, `customer_id`, `ts`, `hash_key`(`order_id`, `customer_id`, `ts`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`PriorityOrders`
+ON CONFLICT DO DEDUPLICATE
+;
+INSERT INTO `default_catalog`.`default_database`.`Regions_5`
+SELECT `region_id`, `name`, `ts`, `hash_key`(`region_id`, `name`, `ts`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`Regions`
+ON CONFLICT DO DEDUPLICATE
+;
+INSERT INTO `default_catalog`.`default_database`.`StatusCode_6`
+SELECT *
+FROM `default_catalog`.`default_database`.`StatusCode`
+ON CONFLICT DO DEDUPLICATE
+;
+INSERT INTO `default_catalog`.`default_database`.`StatusHinted_7`
+SELECT *
+FROM `default_catalog`.`default_database`.`StatusHinted`
+ON CONFLICT DO DEDUPLICATE
+;
+INSERT INTO `default_catalog`.`default_database`.`StatusLabel_8`
+SELECT *
+FROM `default_catalog`.`default_database`.`StatusLabel`
+ON CONFLICT DO DEDUPLICATE
+;
+INSERT INTO `default_catalog`.`default_database`.`StatusLarge_9`
+SELECT *
+FROM `default_catalog`.`default_database`.`StatusLarge`
+ON CONFLICT DO DEDUPLICATE
+;
+INSERT INTO `default_catalog`.`default_database`.`StatusNumber_10`
+SELECT *
+FROM `default_catalog`.`default_database`.`StatusNumber`
+ON CONFLICT DO DEDUPLICATE
+;
+END
+>>>kafka.json
+{
+  "topics" : [ ],
+  "testRunnerTopics" : [ ]
+}
+>>>postgres.json
+{
+  "statements" : [
+    {
+      "name" : "Events_1",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"Events_1\" (\"id\" BIGINT NOT NULL, \"status\" TEXT NOT NULL, \"status_code\" INTEGER NOT NULL, \"ts\" TIMESTAMP WITH TIME ZONE NOT NULL, \"__pk_hash\" TEXT, PRIMARY KEY (\"__pk_hash\"))",
+      "fields" : [
+        {
+          "name" : "id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "status",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "status_code",
+          "type" : "INTEGER",
+          "nullable" : false
+        },
+        {
+          "name" : "ts",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "__pk_hash",
+          "type" : "TEXT",
+          "nullable" : true
+        }
+      ],
+      "primaryKey" : [
+        "__pk_hash"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0,
+      "logicalName" : "Events",
+      "role" : "MATERIALIZATION"
+    },
+    {
+      "name" : "EventsLatest_2",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"EventsLatest_2\" (\"id\" BIGINT NOT NULL, \"status\" TEXT NOT NULL, \"status_code\" INTEGER NOT NULL, \"ts\" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY (\"id\"))",
+      "fields" : [
+        {
+          "name" : "id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "status",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "status_code",
+          "type" : "INTEGER",
+          "nullable" : false
+        },
+        {
+          "name" : "ts",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ],
+      "primaryKey" : [
+        "id"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0,
+      "logicalName" : "EventsLatest",
+      "role" : "MATERIALIZATION"
+    },
+    {
+      "name" : "Orders_3",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"Orders_3\" (\"order_id\" BIGINT NOT NULL, \"customer_id\" BIGINT NOT NULL, \"ts\" TIMESTAMP WITH TIME ZONE NOT NULL, \"__pk_hash\" TEXT, PRIMARY KEY (\"__pk_hash\"))",
+      "fields" : [
+        {
+          "name" : "order_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "customer_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "ts",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "__pk_hash",
+          "type" : "TEXT",
+          "nullable" : true
+        }
+      ],
+      "primaryKey" : [
+        "__pk_hash"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0,
+      "logicalName" : "Orders",
+      "role" : "MATERIALIZATION"
+    },
+    {
+      "name" : "PriorityOrders_4",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"PriorityOrders_4\" (\"order_id\" BIGINT NOT NULL, \"customer_id\" BIGINT NOT NULL, \"ts\" TIMESTAMP WITH TIME ZONE NOT NULL, \"__pk_hash\" TEXT, PRIMARY KEY (\"__pk_hash\"))",
+      "fields" : [
+        {
+          "name" : "order_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "customer_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "ts",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "__pk_hash",
+          "type" : "TEXT",
+          "nullable" : true
+        }
+      ],
+      "primaryKey" : [
+        "__pk_hash"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0,
+      "logicalName" : "PriorityOrders",
+      "role" : "MATERIALIZATION"
+    },
+    {
+      "name" : "Regions_5",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"Regions_5\" (\"region_id\" BIGINT NOT NULL, \"name\" TEXT NOT NULL, \"ts\" TIMESTAMP WITH TIME ZONE NOT NULL, \"__pk_hash\" TEXT, PRIMARY KEY (\"__pk_hash\"))",
+      "fields" : [
+        {
+          "name" : "region_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "name",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "ts",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "__pk_hash",
+          "type" : "TEXT",
+          "nullable" : true
+        }
+      ],
+      "primaryKey" : [
+        "__pk_hash"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0,
+      "logicalName" : "Regions",
+      "role" : "MATERIALIZATION"
+    },
+    {
+      "name" : "StatusCode_6",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"StatusCode_6\" (\"code\" INTEGER NOT NULL, \"label\" TEXT NOT NULL, PRIMARY KEY (\"code\"))",
+      "fields" : [
+        {
+          "name" : "code",
+          "type" : "INTEGER",
+          "nullable" : false
+        },
+        {
+          "name" : "label",
+          "type" : "TEXT",
+          "nullable" : false
+        }
+      ],
+      "primaryKey" : [
+        "code"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0,
+      "logicalName" : "StatusCode",
+      "role" : "MATERIALIZATION"
+    },
+    {
+      "name" : "StatusHinted_7",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"StatusHinted_7\" (\"code\" INTEGER NOT NULL, \"label\" TEXT NOT NULL, PRIMARY KEY (\"code\"))",
+      "fields" : [
+        {
+          "name" : "code",
+          "type" : "INTEGER",
+          "nullable" : false
+        },
+        {
+          "name" : "label",
+          "type" : "TEXT",
+          "nullable" : false
+        }
+      ],
+      "primaryKey" : [
+        "code"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0,
+      "logicalName" : "StatusHinted",
+      "role" : "MATERIALIZATION"
+    },
+    {
+      "name" : "StatusLabel_8",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"StatusLabel_8\" (\"code\" INTEGER NOT NULL, \"label\" TEXT NOT NULL, PRIMARY KEY (\"code\"))",
+      "fields" : [
+        {
+          "name" : "code",
+          "type" : "INTEGER",
+          "nullable" : false
+        },
+        {
+          "name" : "label",
+          "type" : "TEXT",
+          "nullable" : false
+        }
+      ],
+      "primaryKey" : [
+        "code"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0,
+      "logicalName" : "StatusLabel",
+      "role" : "MATERIALIZATION"
+    },
+    {
+      "name" : "StatusLarge_9",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"StatusLarge_9\" (\"code\" INTEGER NOT NULL, \"num\" INTEGER NOT NULL, PRIMARY KEY (\"code\"))",
+      "fields" : [
+        {
+          "name" : "code",
+          "type" : "INTEGER",
+          "nullable" : false
+        },
+        {
+          "name" : "num",
+          "type" : "INTEGER",
+          "nullable" : false
+        }
+      ],
+      "primaryKey" : [
+        "code"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0,
+      "logicalName" : "StatusLarge",
+      "role" : "MATERIALIZATION"
+    },
+    {
+      "name" : "StatusNumber_10",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"StatusNumber_10\" (\"code\" INTEGER NOT NULL, \"num\" INTEGER NOT NULL, PRIMARY KEY (\"code\"))",
+      "fields" : [
+        {
+          "name" : "code",
+          "type" : "INTEGER",
+          "nullable" : false
+        },
+        {
+          "name" : "num",
+          "type" : "INTEGER",
+          "nullable" : false
+        }
+      ],
+      "primaryKey" : [
+        "code"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0,
+      "logicalName" : "StatusNumber",
+      "role" : "MATERIALIZATION"
+    },
+    {
+      "name" : "Events",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"Events\"(\"id\", \"status\", \"status_code\", \"ts\") AS SELECT \"id\", \"status\", \"status_code\", \"ts\"\nFROM \"Events_1\"",
+      "fields" : [
+        {
+          "name" : "id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "status",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "status_code",
+          "type" : "INTEGER",
+          "nullable" : false
+        },
+        {
+          "name" : "ts",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ],
+      "referencedTables" : [
+        "Events_1"
+      ]
+    },
+    {
+      "name" : "EventsLatest",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"EventsLatest\"(\"id\", \"status\", \"status_code\", \"ts\") AS SELECT *\nFROM \"EventsLatest_2\"",
+      "fields" : [
+        {
+          "name" : "id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "status",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "status_code",
+          "type" : "INTEGER",
+          "nullable" : false
+        },
+        {
+          "name" : "ts",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ],
+      "referencedTables" : [
+        "EventsLatest_2"
+      ]
+    },
+    {
+      "name" : "Orders",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"order_id\", \"customer_id\", \"ts\") AS SELECT \"order_id\", \"customer_id\", \"ts\"\nFROM \"Orders_3\"",
+      "fields" : [
+        {
+          "name" : "order_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "customer_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "ts",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ],
+      "referencedTables" : [
+        "Orders_3"
+      ]
+    },
+    {
+      "name" : "PriorityOrders",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"PriorityOrders\"(\"order_id\", \"customer_id\", \"ts\") AS SELECT \"order_id\", \"customer_id\", \"ts\"\nFROM \"PriorityOrders_4\"",
+      "fields" : [
+        {
+          "name" : "order_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "customer_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "ts",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ],
+      "referencedTables" : [
+        "PriorityOrders_4"
+      ]
+    },
+    {
+      "name" : "Regions",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"Regions\"(\"region_id\", \"name\", \"ts\") AS SELECT \"region_id\", \"name\", \"ts\"\nFROM \"Regions_5\"",
+      "fields" : [
+        {
+          "name" : "region_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "name",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "ts",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ],
+      "referencedTables" : [
+        "Regions_5"
+      ]
+    },
+    {
+      "name" : "StatusCode",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"StatusCode\"(\"code\", \"label\") AS SELECT *\nFROM \"StatusCode_6\"",
+      "fields" : [
+        {
+          "name" : "code",
+          "type" : "INTEGER",
+          "nullable" : false
+        },
+        {
+          "name" : "label",
+          "type" : "TEXT",
+          "nullable" : false
+        }
+      ],
+      "referencedTables" : [
+        "StatusCode_6"
+      ]
+    },
+    {
+      "name" : "StatusHinted",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"StatusHinted\"(\"code\", \"label\") AS SELECT *\nFROM \"StatusHinted_7\"",
+      "fields" : [
+        {
+          "name" : "code",
+          "type" : "INTEGER",
+          "nullable" : false
+        },
+        {
+          "name" : "label",
+          "type" : "TEXT",
+          "nullable" : false
+        }
+      ],
+      "referencedTables" : [
+        "StatusHinted_7"
+      ]
+    },
+    {
+      "name" : "StatusLabel",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"StatusLabel\"(\"code\", \"label\") AS SELECT *\nFROM \"StatusLabel_8\"",
+      "fields" : [
+        {
+          "name" : "code",
+          "type" : "INTEGER",
+          "nullable" : false
+        },
+        {
+          "name" : "label",
+          "type" : "TEXT",
+          "nullable" : false
+        }
+      ],
+      "referencedTables" : [
+        "StatusLabel_8"
+      ]
+    },
+    {
+      "name" : "StatusLarge",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"StatusLarge\"(\"code\", \"num\") AS SELECT *\nFROM \"StatusLarge_9\"",
+      "fields" : [
+        {
+          "name" : "code",
+          "type" : "INTEGER",
+          "nullable" : false
+        },
+        {
+          "name" : "num",
+          "type" : "INTEGER",
+          "nullable" : false
+        }
+      ],
+      "referencedTables" : [
+        "StatusLarge_9"
+      ]
+    },
+    {
+      "name" : "StatusNumber",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"StatusNumber\"(\"code\", \"num\") AS SELECT *\nFROM \"StatusNumber_10\"",
+      "fields" : [
+        {
+          "name" : "code",
+          "type" : "INTEGER",
+          "nullable" : false
+        },
+        {
+          "name" : "num",
+          "type" : "INTEGER",
+          "nullable" : false
+        }
+      ],
+      "referencedTables" : [
+        "StatusNumber_10"
+      ]
+    },
+    {
+      "name" : "PriorityOrders_4_hash_c1",
+      "type" : "INDEX",
+      "sql" : "CREATE INDEX IF NOT EXISTS \"PriorityOrders_4_hash_c1\" ON \"PriorityOrders_4\" USING hash (\"customer_id\")"
+    },
+    {
+      "name" : "StatusHinted_7_hash_c1",
+      "type" : "INDEX",
+      "sql" : "CREATE INDEX IF NOT EXISTS \"StatusHinted_7_hash_c1\" ON \"StatusHinted_7\" USING hash (\"label\")"
+    },
+    {
+      "name" : "StatusLarge_9_hash_c1",
+      "type" : "INDEX",
+      "sql" : "CREATE INDEX IF NOT EXISTS \"StatusLarge_9_hash_c1\" ON \"StatusLarge_9\" USING hash (\"num\")"
+    }
+  ],
+  "standaloneExtensionStatements" : [ ]
+}
+>>>vertx.json
+{
+  "models" : {
+    "v1" : {
+      "queries" : [
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "Events",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"id\", \"status\", \"status_code\", \"ts\"\nFROM \"Events_1\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "EventsLatest",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"EventsLatest_2\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "Orders",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"order_id\", \"customer_id\", \"ts\"\nFROM \"Orders_3\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "PriorityOrders",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"order_id\", \"customer_id\", \"ts\"\nFROM \"PriorityOrders_4\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "Regions",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"region_id\", \"name\", \"ts\"\nFROM \"Regions_5\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "StatusCode",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"StatusCode_6\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "StatusHinted",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"StatusHinted_7\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "StatusLabel",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"StatusLabel_8\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "StatusLarge",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"StatusLarge_9\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "StatusNumber",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"StatusNumber_10\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "EventsWithLarge",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "id"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"EventsLatest_20\".\"id\", \"EventsLatest_20\".\"status\", \"StatusLarge_90\".\"code\"\nFROM \"EventsLatest_2\" AS \"EventsLatest_20\"\n LEFT JOIN \"StatusLarge_9\" AS \"StatusLarge_90\" ON \"EventsLatest_20\".\"status_code\" = \"StatusLarge_90\".\"num\"\nWHERE \"EventsLatest_20\".\"id\" = $1",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "id",
+                  "sqlType" : "BIGINT"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "EventsWithNumber",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "id"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"EventsLatest_20\".\"id\", \"EventsLatest_20\".\"status\", \"StatusNumber_100\".\"code\"\nFROM \"EventsLatest_2\" AS \"EventsLatest_20\"\n LEFT JOIN \"StatusNumber_10\" AS \"StatusNumber_100\" ON \"EventsLatest_20\".\"status_code\" = \"StatusNumber_100\".\"num\"\nWHERE \"EventsLatest_20\".\"id\" = $1",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "id",
+                  "sqlType" : "BIGINT"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "EventsWithStatus",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "id"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"id\", \"status\", \"code\", \"label\"\nFROM (SELECT \"EventsLatest_20\".\"id\", \"EventsLatest_20\".\"status\", \"EventsLatest_20\".\"status_code\", \"EventsLatest_20\".\"ts\", \"t\".\"code\", \"t\".\"label\"\n  FROM \"EventsLatest_2\" AS \"EventsLatest_20\"\n   LEFT JOIN (SELECT \"code\", \"label\", CAST(\"label\" AS TEXT) AS \"label0\"\n    FROM \"StatusCode_6\") AS \"t\" ON \"EventsLatest_20\".\"status\" = \"t\".\"label0\") AS \"t0\"\nWHERE \"t0\".\"id\" = $1",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "id",
+                  "sqlType" : "BIGINT"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "PriorityOrdersByCustomer",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "customerId"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"order_id\", \"customer_id\", \"ts\"\n  FROM \"PriorityOrders_4\") AS \"t\"\nWHERE \"customer_id\" = $1",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "customerId",
+                  "sqlType" : "BIGINT"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "RegionsByName",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "name"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"region_id\", \"name\", \"ts\"\n  FROM \"Regions_5\") AS \"t\"\nWHERE \"name\" = $1",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "name",
+                  "sqlType" : "VARCHAR"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "StatusByLabel",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "label"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"StatusLabel_8\"\nWHERE \"label\" = $1",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "label",
+                  "sqlType" : "VARCHAR"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "StatusHintedByLabel",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "label"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"StatusHinted_7\"\nWHERE \"label\" = $1",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "label",
+                  "sqlType" : "VARCHAR"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        }
+      ],
+      "mutations" : [ ],
+      "subscriptions" : [ ],
+      "operations" : [
+        {
+          "function" : {
+            "name" : "GetEvents",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query Events($limit: Int = 10, $offset: Int = 0) {\nEvents(limit: $limit, offset: $offset) {\nid\nstatus\nstatus_code\nts\n}\n\n}",
+            "queryName" : "Events",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Events{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "integer"
+                },
+                "status" : {
+                  "type" : "string"
+                },
+                "status_code" : {
+                  "type" : "integer"
+                },
+                "ts" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetEventsLatest",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query EventsLatest($limit: Int = 10, $offset: Int = 0) {\nEventsLatest(limit: $limit, offset: $offset) {\nid\nstatus\nstatus_code\nts\n}\n\n}",
+            "queryName" : "EventsLatest",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/EventsLatest{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "integer"
+                },
+                "status" : {
+                  "type" : "string"
+                },
+                "status_code" : {
+                  "type" : "integer"
+                },
+                "ts" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetOrders",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query Orders($limit: Int = 10, $offset: Int = 0) {\nOrders(limit: $limit, offset: $offset) {\norder_id\ncustomer_id\nts\n}\n\n}",
+            "queryName" : "Orders",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Orders{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "order_id" : {
+                  "type" : "integer"
+                },
+                "customer_id" : {
+                  "type" : "integer"
+                },
+                "ts" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetPriorityOrders",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query PriorityOrders($limit: Int = 10, $offset: Int = 0) {\nPriorityOrders(limit: $limit, offset: $offset) {\norder_id\ncustomer_id\nts\n}\n\n}",
+            "queryName" : "PriorityOrders",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/PriorityOrders{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "order_id" : {
+                  "type" : "integer"
+                },
+                "customer_id" : {
+                  "type" : "integer"
+                },
+                "ts" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetRegions",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query Regions($limit: Int = 10, $offset: Int = 0) {\nRegions(limit: $limit, offset: $offset) {\nregion_id\nname\nts\n}\n\n}",
+            "queryName" : "Regions",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Regions{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "region_id" : {
+                  "type" : "integer"
+                },
+                "name" : {
+                  "type" : "string"
+                },
+                "ts" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetStatusCode",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query StatusCode($limit: Int = 10, $offset: Int = 0) {\nStatusCode(limit: $limit, offset: $offset) {\ncode\nlabel\n}\n\n}",
+            "queryName" : "StatusCode",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/StatusCode{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "code" : {
+                  "type" : "integer"
+                },
+                "label" : {
+                  "type" : "string"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetStatusHinted",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query StatusHinted($limit: Int = 10, $offset: Int = 0) {\nStatusHinted(limit: $limit, offset: $offset) {\ncode\nlabel\n}\n\n}",
+            "queryName" : "StatusHinted",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/StatusHinted{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "code" : {
+                  "type" : "integer"
+                },
+                "label" : {
+                  "type" : "string"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetStatusLabel",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query StatusLabel($limit: Int = 10, $offset: Int = 0) {\nStatusLabel(limit: $limit, offset: $offset) {\ncode\nlabel\n}\n\n}",
+            "queryName" : "StatusLabel",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/StatusLabel{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "code" : {
+                  "type" : "integer"
+                },
+                "label" : {
+                  "type" : "string"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetStatusLarge",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query StatusLarge($limit: Int = 10, $offset: Int = 0) {\nStatusLarge(limit: $limit, offset: $offset) {\ncode\nnum\n}\n\n}",
+            "queryName" : "StatusLarge",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/StatusLarge{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "code" : {
+                  "type" : "integer"
+                },
+                "num" : {
+                  "type" : "integer"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetStatusNumber",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query StatusNumber($limit: Int = 10, $offset: Int = 0) {\nStatusNumber(limit: $limit, offset: $offset) {\ncode\nnum\n}\n\n}",
+            "queryName" : "StatusNumber",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/StatusNumber{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "code" : {
+                  "type" : "integer"
+                },
+                "num" : {
+                  "type" : "integer"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetEventsWithLarge",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                },
+                "id" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [
+                "id"
+              ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query EventsWithLarge($id: Long!, $limit: Int = 10, $offset: Int = 0) {\nEventsWithLarge(id: $id, limit: $limit, offset: $offset) {\nid\nstatus\ncode\n}\n\n}",
+            "queryName" : "EventsWithLarge",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/EventsWithLarge{?offset,limit,id}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "integer"
+                },
+                "status" : {
+                  "type" : "string"
+                },
+                "code" : {
+                  "type" : "integer"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetEventsWithNumber",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                },
+                "id" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [
+                "id"
+              ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query EventsWithNumber($id: Long!, $limit: Int = 10, $offset: Int = 0) {\nEventsWithNumber(id: $id, limit: $limit, offset: $offset) {\nid\nstatus\ncode\n}\n\n}",
+            "queryName" : "EventsWithNumber",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/EventsWithNumber{?offset,limit,id}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "integer"
+                },
+                "status" : {
+                  "type" : "string"
+                },
+                "code" : {
+                  "type" : "integer"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetEventsWithStatus",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                },
+                "id" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [
+                "id"
+              ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query EventsWithStatus($id: Long!, $limit: Int = 10, $offset: Int = 0) {\nEventsWithStatus(id: $id, limit: $limit, offset: $offset) {\nid\nstatus\ncode\nlabel\n}\n\n}",
+            "queryName" : "EventsWithStatus",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/EventsWithStatus{?offset,limit,id}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "integer"
+                },
+                "status" : {
+                  "type" : "string"
+                },
+                "code" : {
+                  "type" : "integer"
+                },
+                "label" : {
+                  "type" : "string"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetPriorityOrdersByCustomer",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "customerId" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [
+                "customerId"
+              ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query PriorityOrdersByCustomer($customerId: Long!, $limit: Int = 10, $offset: Int = 0) {\nPriorityOrdersByCustomer(customerId: $customerId, limit: $limit, offset: $offset) {\norder_id\ncustomer_id\nts\n}\n\n}",
+            "queryName" : "PriorityOrdersByCustomer",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/PriorityOrdersByCustomer{?offset,customerId,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "order_id" : {
+                  "type" : "integer"
+                },
+                "customer_id" : {
+                  "type" : "integer"
+                },
+                "ts" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetRegionsByName",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "name" : {
+                  "type" : "string"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [
+                "name"
+              ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query RegionsByName($name: String!, $limit: Int = 10, $offset: Int = 0) {\nRegionsByName(name: $name, limit: $limit, offset: $offset) {\nregion_id\nname\nts\n}\n\n}",
+            "queryName" : "RegionsByName",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/RegionsByName{?offset,name,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "region_id" : {
+                  "type" : "integer"
+                },
+                "name" : {
+                  "type" : "string"
+                },
+                "ts" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetStatusByLabel",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                },
+                "label" : {
+                  "type" : "string"
+                }
+              },
+              "required" : [
+                "label"
+              ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query StatusByLabel($label: String!, $limit: Int = 10, $offset: Int = 0) {\nStatusByLabel(label: $label, limit: $limit, offset: $offset) {\ncode\nlabel\n}\n\n}",
+            "queryName" : "StatusByLabel",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/StatusByLabel{?offset,limit,label}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "code" : {
+                  "type" : "integer"
+                },
+                "label" : {
+                  "type" : "string"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetStatusHintedByLabel",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                },
+                "label" : {
+                  "type" : "string"
+                }
+              },
+              "required" : [
+                "label"
+              ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query StatusHintedByLabel($label: String!, $limit: Int = 10, $offset: Int = 0) {\nStatusHintedByLabel(label: $label, limit: $limit, offset: $offset) {\ncode\nlabel\n}\n\n}",
+            "queryName" : "StatusHintedByLabel",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/StatusHintedByLabel{?offset,limit,label}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "code" : {
+                  "type" : "integer"
+                },
+                "label" : {
+                  "type" : "string"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "schema" : {
+        "type" : "string",
+        "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\ntype Events {\n  id: Long!\n  status: String!\n  status_code: Int!\n  ts: DateTime!\n}\n\ntype EventsLatest {\n  id: Long!\n  status: String!\n  status_code: Int!\n  ts: DateTime!\n}\n\ntype EventsWithLarge {\n  id: Long!\n  status: String!\n  code: Int\n}\n\ntype EventsWithNumber {\n  id: Long!\n  status: String!\n  code: Int\n}\n\ntype EventsWithStatus {\n  id: Long!\n  status: String!\n  code: Int\n  label: String\n}\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Orders {\n  order_id: Long!\n  customer_id: Long!\n  ts: DateTime!\n}\n\ntype Query {\n  Events(limit: Int = 10, offset: Int = 0): [Events!]\n  EventsLatest(limit: Int = 10, offset: Int = 0): [EventsLatest!]\n  Orders(limit: Int = 10, offset: Int = 0): [Orders!]\n  PriorityOrders(limit: Int = 10, offset: Int = 0): [Orders!]\n  Regions(limit: Int = 10, offset: Int = 0): [Regions!]\n  StatusCode(limit: Int = 10, offset: Int = 0): [StatusCode!]\n  StatusHinted(limit: Int = 10, offset: Int = 0): [StatusHinted!]\n  StatusLabel(limit: Int = 10, offset: Int = 0): [StatusLabel!]\n  StatusLarge(limit: Int = 10, offset: Int = 0): [StatusLarge!]\n  StatusNumber(limit: Int = 10, offset: Int = 0): [StatusNumber!]\n  EventsWithLarge(id: Long!, limit: Int = 10, offset: Int = 0): [EventsWithLarge!]\n  EventsWithNumber(id: Long!, limit: Int = 10, offset: Int = 0): [EventsWithNumber!]\n  EventsWithStatus(id: Long!, limit: Int = 10, offset: Int = 0): [EventsWithStatus!]\n  PriorityOrdersByCustomer(customerId: Long!, limit: Int = 10, offset: Int = 0): [Orders!]\n  RegionsByName(name: String!, limit: Int = 10, offset: Int = 0): [Regions!]\n  StatusByLabel(label: String!, limit: Int = 10, offset: Int = 0): [StatusLabel!]\n  StatusHintedByLabel(label: String!, limit: Int = 10, offset: Int = 0): [StatusHinted!]\n}\n\ntype Regions {\n  region_id: Long!\n  name: String!\n  ts: DateTime!\n}\n\ntype StatusCode {\n  code: Int!\n  label: String!\n}\n\ntype StatusHinted {\n  code: Int!\n  label: String!\n}\n\ntype StatusLabel {\n  code: Int!\n  label: String!\n}\n\ntype StatusLarge {\n  code: Int!\n  num: Int!\n}\n\ntype StatusNumber {\n  code: Int!\n  num: Int!\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+      }
+    }
+  }
+}

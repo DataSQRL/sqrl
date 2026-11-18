@@ -200,7 +200,35 @@ public interface PackageJson {
 
     Map<String, Object> getConfig();
 
+    /** The {@code index-selection} settings of a database engine that selects indexes. */
+    IndexSelectionConfig getIndexSelection();
+
     boolean isEmpty();
+  }
+
+  /** How a database engine selects the indexes for the queries it serves. */
+  interface IndexSelectionConfig {
+
+    /** The most indexes to create for one table. */
+    int getMaxIndexes();
+
+    /** The most columns of one index. */
+    int getMaxIndexColumns();
+
+    /**
+     * The most distinct filter patterns on one table before the compiler creates a single-column
+     * index for each filtered column instead of composite indexes.
+     */
+    int getMaxFilterPatterns();
+
+    /**
+     * The fraction by which an index must at least cut the cost of the queries it serves, for
+     * example {@code 0.05} for 5%.
+     */
+    double getMinCostReduction();
+
+    /** A table that holds at most this many rows gets no automatic index. */
+    int getSmallTableRowLimit();
   }
 
   @AllArgsConstructor
@@ -234,6 +262,12 @@ public interface PackageJson {
     @Override
     public Map<String, Object> getConfig() {
       return Map.of();
+    }
+
+    @Override
+    public IndexSelectionConfig getIndexSelection() {
+      throw new IllegalArgumentException(
+          "Engine " + engineName + " does not have configuration options");
     }
 
     @Override

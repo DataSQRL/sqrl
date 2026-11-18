@@ -21,11 +21,9 @@ import java.util.Set;
 
 public interface IndexSelectorConfig {
 
-  /**
-   * If the database has a primary key index by default.
-   *
-   * @return
-   */
+  IndexType[] PREFERRED_GENERIC_INDEX = {IndexType.BTREE, IndexType.HASH};
+
+  /** If the database has a primary key index by default. */
   boolean hasPrimaryKeyIndex();
 
   /**
@@ -35,10 +33,14 @@ public interface IndexSelectorConfig {
   double getCostImprovementThreshold();
 
   /**
-   * The maximum number of indexes to create per table
-   *
-   * @return
+   * A table that holds at most this many rows gets no automatic index. The database reads such a
+   * table in about one page, so an index makes no lookup or join cheaper. PostgreSQL never analyzes
+   * a table this small on its own, and without statistics it can prefer an index probe per row over
+   * a hash join.
    */
+  int getSmallTableRowLimit();
+
+  /** The maximum number of indexes to create per table */
   int maxIndexes();
 
   /**
@@ -47,35 +49,17 @@ public interface IndexSelectorConfig {
    *
    * <p>Creating too many indexes is very expensive and the database will likely perform better by
    * combining multiple column indexes.
-   *
-   * @return
    */
   int maxIndexColumnSets();
 
-  /**
-   * A set of all supported indexes for this database.
-   *
-   * @return
-   */
+  /** A set of all supported indexes for this database. */
   EnumSet<IndexType> supportedIndexTypes();
 
-  /**
-   * The maximum number of columns that can be indexed by this type of index.
-   *
-   * @param indexType
-   * @return
-   */
+  /** The maximum number of columns that can be indexed by this type of index. */
   int maxIndexColumns(IndexType indexType);
 
-  /**
-   * The relative cost of creating this index against some fixed baseline.
-   *
-   * @param index
-   * @return
-   */
+  /** The relative cost of creating this index against some fixed baseline. */
   double relativeIndexCost(IndexDefinition index);
-
-  public static final IndexType[] PREFERRED_GENERIC_INDEX = {IndexType.BTREE, IndexType.HASH};
 
   default IndexType getPreferredGenericIndexType() {
     for (IndexType type : PREFERRED_GENERIC_INDEX) {
