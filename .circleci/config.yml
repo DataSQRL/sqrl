@@ -318,22 +318,50 @@ commands:
       builder_name:
         type: string
         default: "default-builder"
+      arch:
+        type: enum
+        enum: ["amd64", "arm64"]
+        default: "amd64"
+      qemu:
+        type: boolean
+        default: true
     steps:
-      - run:
-          name: Enable QEMU for ARM build
-          command: |
-            sudo apt-get update && sudo apt-get install -y qemu-user-static binfmt-support
-            docker run --privileged --rm tonistiigi/binfmt --install all
+      - when:
+          condition: << parameters.qemu >>
+          steps:
+            - run:
+                name: Enable QEMU for ARM build
+                command: |
+                  sudo apt-get update && sudo apt-get install -y qemu-user-static binfmt-support
+                  docker run --privileged --rm tonistiigi/binfmt --install all
       - run:
           name: Install docker buildx
           command: |
             sudo mkdir -p /usr/local/lib/docker/cli-plugins
-            curl -sSL https://github.com/docker/buildx/releases/download/v0.12.0/buildx-v0.12.0.linux-amd64 \
+            curl -sSL https://github.com/docker/buildx/releases/download/v0.12.0/buildx-v0.12.0.linux-<< parameters.arch >> \
                  -o buildx
             chmod +x buildx
             sudo mv buildx /usr/local/lib/docker/cli-plugins/docker-buildx
             docker buildx create --use --name << parameters.builder_name >>
             docker buildx inspect --bootstrap
+
+  skip-if-base-image-exists:
+    steps:
+      - run:
+          name: Skip build if base already exists
+          command: |
+            set +e
+
+            if docker buildx imagetools inspect ghcr.io/datasqrl/sqrl-base:${BASE_TAG} \
+                --format '{{json .}}' > /tmp/manifest.json 2>/dev/null; then
+              echo "── Manifest for ghcr.io/datasqrl/sqrl-base:${BASE_TAG} ────────────────"
+              cat /tmp/manifest.json | jq .
+              echo "───────────────────────────────────────────────────────────────"
+              echo "Tag already exists – skipping base-image build."
+              circleci step halt
+            else
+              echo "Tag does not exist yet – will build base image."
+            fi
 
   checkout-and-version:
     steps:
@@ -693,30 +721,24 @@ jobs:
               -f Dockerfile.duckdb-extensions \
               .
 
-  docker-build-base-image:
+  docker-build-base-image-platform:
+    parameters:
+      arch:
+        type: enum
+        enum: ["amd64", "arm64"]
+      resource_class:
+        type: string
     machine:
       image: ubuntu-2404:current
+    resource_class: << parameters.resource_class >>
     steps:
       - checkout
       - compute-sha1-tags
       - setup-buildx:
           builder_name: "base-builder"
-      - run:
-          name: Skip build if base already exists
-          command: |
-            set +e
-
-            if docker buildx imagetools inspect ghcr.io/datasqrl/sqrl-base:${BASE_TAG} \
-                --format '{{json .}}' > /tmp/manifest.json 2>/dev/null; then
-              echo "── Manifest for ghcr.io/datasqrl/sqrl-base:${BASE_TAG} ────────────────"
-              cat /tmp/manifest.json | jq .
-              echo "───────────────────────────────────────────────────────────────"
-              echo "Tag already exists – skipping base-image build."
-              circleci step halt
-            else
-              echo "Tag does not exist yet – will build base image."
-            fi
-
+          arch: << parameters.arch >>
+          qemu: false
+      - skip-if-base-image-exists
 
       - run:
           name: Login to GHCR
@@ -726,20 +748,44 @@ jobs:
       - run:
           name: Pull duckdb-extensions image
           command: |
-            docker pull ghcr.io/datasqrl/duckdb-extensions:$DUCKDB_EXTENSIONS_TAG
+            docker pull --platform linux/<< parameters.arch >> ghcr.io/datasqrl/duckdb-extensions:$DUCKDB_EXTENSIONS_TAG
 
       - run:
-          name: Build & push ghcr.io/datasqrl/sqrl-base:$BASE_TAG
+          name: Build & push ghcr.io/datasqrl/sqrl-base:$BASE_TAG-<< parameters.arch >>
           command: |
             docker buildx build \
               --push \
-              --platform linux/amd64,linux/arm64 \
+              --platform linux/<< parameters.arch >> \
               --build-arg IMG_REPO=ghcr.io/datasqrl \
               --build-arg DUCKDB_EXTENSIONS_TAG=$DUCKDB_EXTENSIONS_TAG \
-              -t ghcr.io/datasqrl/sqrl-base:$BASE_TAG \
-              -t ghcr.io/datasqrl/sqrl-base:latest \
+              -t ghcr.io/datasqrl/sqrl-base:$BASE_TAG-<< parameters.arch >> \
               -f sqrl-cli/Dockerfile.base \
               sqrl-cli
+
+  docker-build-base-image:
+    machine:
+      image: ubuntu-2404:current
+    steps:
+      - checkout
+      - compute-sha1-tags
+      - setup-buildx:
+          builder_name: "base-builder"
+          qemu: false
+      - skip-if-base-image-exists
+
+      - run:
+          name: Login to GHCR
+          command: |
+            echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_USER" --password-stdin
+
+      - run:
+          name: Merge ghcr.io/datasqrl/sqrl-base:$BASE_TAG manifest
+          command: |
+            docker buildx imagetools create \
+              -t ghcr.io/datasqrl/sqrl-base:$BASE_TAG \
+              -t ghcr.io/datasqrl/sqrl-base:latest \
+              ghcr.io/datasqrl/sqrl-base:$BASE_TAG-amd64 \
+              ghcr.io/datasqrl/sqrl-base:$BASE_TAG-arm64
 
   docker-build-mcp-inspector:
     machine:
@@ -787,10 +833,25 @@ workflows:
     jobs:
       - docker-build-duckdb-extensions:
           <<: *job-defaults
+      - docker-build-base-image-platform:
+          <<: *job-defaults
+          name: docker-build-base-image-amd64
+          arch: amd64
+          resource_class: large
+          requires:
+            - docker-build-duckdb-extensions
+      - docker-build-base-image-platform:
+          <<: *job-defaults
+          name: docker-build-base-image-arm64
+          arch: arm64
+          resource_class: arm.large
+          requires:
+            - docker-build-duckdb-extensions
       - docker-build-base-image:
           <<: *job-defaults
           requires:
-            - docker-build-duckdb-extensions
+            - docker-build-base-image-amd64
+            - docker-build-base-image-arm64
       - docker-build-mcp-inspector:
           <<: *job-defaults
       - download-maven-dependencies:
