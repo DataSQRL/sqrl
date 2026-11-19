@@ -1,6 +1,6 @@
 # SQRL Language Specification
 
-SQRL is an extension of Flink SQL that adds support for table functions and convenience syntax to build reactive data processing and serving applications.  
+SQRL is Flink SQL plus imports, exports, relationships, and API definitions, used to build real-time pipelines, data APIs, and data products.  
 The “R” in **SQRL** stands for *Reactive* and *Relationships*.
 
 This document focuses only on features **unique to SQRL**; when SQRL accepts Flink SQL verbatim we simply refer to the [upstream spec](https://nightlies.apache.org/flink/flink-docs-release-2.3/docs/dev/table/sql/overview/).

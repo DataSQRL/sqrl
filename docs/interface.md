@@ -2,19 +2,19 @@
 
 Based on the SQRL script, DataSQRL generates the interface for the compiled data pipeline. DataSQRL supports the following interfaces:
 
-* Data Product (Data Lake Views and Database Views)
+* Data Lake and Database Views
 * GraphQL (Mutations, Queries, and Subscriptions)
 * MCP (Tooling and Resources)
 * REST (GET and POST)
 
-For data products, DataSQRL generates view definitions as deployment assets in `build/deploy/plan` which can be queried directly.
+For data lake and database views, DataSQRL generates view definitions as deployment assets in `build/deploy/plan` which can be queried directly.
 
 The last three are APIs that can be invoked programmatically. Every compiled API model uses the GraphQL execution model.
 The `protocols` [compiler configuration](https://docs.datasqrl.com/docs/configuration.md#compiler-compiler) controls which public API protocols the server exposes.
 
-## Data Products
+## Data Lake and Database Views
 
-For data products, each visible table defined in the SQRL script is exposed as a view or physical table depending on the pipeline optimization. The mapping between visible tables in the SQRL script and exposed tables in the interface is 1-to-1.
+For data lake and database views, each visible table defined in the SQRL script is exposed as a view or physical table depending on the pipeline optimization. The mapping between visible tables in the SQRL script and exposed tables in the interface is 1-to-1.
 
 We recommend generating unique table names for the physical tables by configuring a table-name suffix in the [connector configuration](https://docs.datasqrl.com/docs/configuration-default.md), e.g. by configuring the `table-name` for `postgres` or the `catalog-table` for `iceberg` to `${sqrl:table-name}_MY_SUFFIX` . This separates views from physical tables to provide modularity and support updates without impacting downstream consumers. 
 
