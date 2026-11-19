@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="675" viewBox="0 0 1200 675">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#dcebfb"/>
+    </linearGradient>
+    <linearGradient id="strip" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2f5d8a"/>
+      <stop offset="1" stop-color="#1e3a5f"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="675" fill="url(#bg)"/>
+  <rect width="14" height="675" fill="url(#strip)"/>
+  <g fill="none" transform="translate(125,130) scale(0.466)"><path d="M 203.265 619.491 C 186.811 635.945 179.643 662.414 176.5 677 M 176.705 675.631 C 149.601 772.403 226.21 829.306 266.256 848.863 C 231.605 831.94 195.139 831.844 167.111 836.896 M 176.705 675.631 C 27.8115 630.5 -33.6875 452.5 176.705 282.651 C 291.851 189.695 315.312 136 331.976 35 C 403.476 61 529.976 124 455.976 235.5" stroke="#1e3a5f" stroke-width="25"></path><path d="M 534.459 655.28 C 566.539 778.467 490.301 829.412 449.447 849.364 C 485.81 831.605 524.17 832.377 552.683 838.182 M 534.459 655.28 C 579.496 595.061 595.411 538.188 502.379 443.552 M 534.459 655.28 C 525.989 665.726 515.309 676.865 506.076 686 M 508 442 L 467.091 464.404 M 502.379 443.552 C 502.379 443.552 574.412 443.361 574.412 392.046 C 574.412 340.731 548.852 358.665 526.964 320.908 C 505.075 283.15 481.024 275.388 426.991 271.924 C 422.713 249.469 405.497 199.424 370.851 178.893 C 341.444 246.795 229.244 443.552 205.639 496.484 C 188.98 533.841 183.867 611.972 272.352 611.972 M 371.945 514.128 H 427.427 C 453.091 515.223 471.204 536.509 471.204 562.758 C 471.204 589.006 452.544 610.878 427.427 611.972 H 316.13 C 310.488 611.972 277.407 612.426 271 611.972 M 371.945 514.128 C 371.945 496.484 364.99 470.971 394.539 470.971 M 371.945 514.128 H 316.315 C 290.569 515.223 272.353 539.358 272.353 563.852 M 272.352 611.972 C 283.045 643.213 328.326 705.004 371.945 705.004 C 381.954 705.004 400.559 705.004 430.71 669.716" stroke="#1e3a5f" stroke-width="25"></path><rect x="298.307" y="538.773" width="148" height="48" rx="24" fill="#a0c1e1"></rect></g>
+  <g font-family="Helvetica Neue, Helvetica, Arial, sans-serif">
+    <text x="502" y="250" font-size="112" font-weight="700" fill="#1e3a5f">DataSQRL</text>
+    <rect x="506" y="290" width="96" height="6" rx="3" fill="#a77be0"/>
+    <text x="504" y="370" font-size="44" font-weight="700" fill="#33608c">Agentic Data Engineering</text>
+    <text x="504" y="424" font-size="44" font-weight="700" fill="#33608c">for Operational Data</text>
+    <text x="505" y="484" font-size="26" font-weight="500" fill="#4a5f78">Real-time pipelines · Data APIs · Data products</text>
+    <text x="505" y="530" font-size="28" font-weight="700" fill="#6b3fb0">Agents build it. The compiler verifies it.</text>
+    <text x="1150" y="636" font-size="22" font-weight="500" fill="#33608c" text-anchor="end">docs.datasqrl.com</text>
+  </g>
+</svg>

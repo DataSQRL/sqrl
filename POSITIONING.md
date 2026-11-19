@@ -41,7 +41,7 @@ Use DataSQRL when:
 
 It is not the fit when the work is dbt models on a schedule inside Snowflake, BigQuery, or Databricks.
 
-**Where the warehouse fits.** DataSQRL does populate the data lake and warehouse: Snowflake, Databricks, AWS through Athena, and others. A typical pipeline takes CDC streams out of a database, enriches them, and lands them in Iceberg, with views generated in each query engine's dialect. The views sit on top of physical tables that stay separate per deployment, which also makes blue-green deployments possible. For models inside the warehouse, keep using dbt. For operational pipelines that land in the warehouse, use DataSQRL.
+**Where the warehouse fits.** DataSQRL does populate the data lake and warehouse: Snowflake, Databricks, AWS with Redshift or Athena, and others. A typical pipeline takes CDC streams out of a database, enriches them, and lands them in Iceberg, with views generated in each query engine's dialect. The views sit on top of physical tables that stay separate per deployment, which also makes blue-green deployments possible. For models inside the warehouse, keep using dbt. For operational pipelines that land in the warehouse, use DataSQRL.
 
 ## Why operational is different
 

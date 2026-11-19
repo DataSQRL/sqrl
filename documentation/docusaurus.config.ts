@@ -184,7 +184,7 @@ const config: Config = {
 
   themeConfig: {
     // Replace with your project's social card
-    image: 'img/datasqrl-social-card.jpg',
+    image: 'img/datasqrl-social-card-operational.jpg',
     navbar: {
       title: 'DataSQRL',
       logo: {
