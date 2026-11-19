@@ -19,7 +19,8 @@
 # from the release branches, so that a subsequent `npm run build` builds a versioned site:
 #   - the docs of each major release vX are taken from its latest release-X.Y branch
 #   - before 1.0, each minor release v0.Y is a version of its own, taken from its release-0.Y
-#     branch, starting with 0.11; earlier releases predate versioning and are skipped
+#     branch, starting with 0.11 (or FIRST_VERSIONED_ZERO_MINOR, if set); earlier releases predate
+#     versioning and are skipped
 #   - the latest major release is the default docs version, served at /docs/
 #   - main is the unreleased docs version, served at /docs/main/
 #   - older releases are served at /docs/vX/ (or /docs/v0-Y/)
@@ -31,7 +32,7 @@
 set -euo pipefail
 
 REMOTE="${REMOTE:-origin}"
-FIRST_VERSIONED_ZERO_MINOR=11
+FIRST_VERSIONED_ZERO_MINOR="${FIRST_VERSIONED_ZERO_MINOR:-11}"
 
 DOCS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 REPO_DIR="$(cd "${DOCS_DIR}/.." && pwd)"
