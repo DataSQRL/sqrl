@@ -16,6 +16,9 @@ updates:
     directories: ["/", "/sqrl-cli"]
     schedule: { interval: "weekly", time: "10:00" }
     cooldown: { default-days: 14 }
+    ignore:
+      - dependency-name: "eclipse-temurin"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: "npm"
     directory: "/documentation"
