@@ -54,7 +54,7 @@ For analytics engineering, a coding agent mostly needs SQL skills and context ab
 
 Operational data engineering is a different problem. The hard part isn't writing the SQL. It's making several systems agree, getting the behavior over time right, and proving the guarantees a live consumer depends on. Better context doesn't solve that. A smarter model doesn't either. The agent needs feedback from tools that see what it can't.
 
-That's a **harness**: a toolkit the agent works inside. A compiler generates the seams between systems from one model, so they can't disagree. A validator checks keys, timestamps, and table types across the whole pipeline. A simulator replays event time so the agent can see how the pipeline behaves when data arrives late or out of order. The agent writes the logic. The harness verifies it before anything reaches a live consumer.
+That's a **harness**: the tools and checks an agent works inside. A compiler generates the seams between systems from one model, so they can't disagree. A validator checks keys, timestamps, and table types across the whole pipeline. A simulator replays event time so the agent can see how the pipeline behaves when data arrives late or out of order. The agent writes the logic. The harness verifies it before anything reaches a live consumer.
 
 That's what we built [DataSQRL](/docs/intro) to be: an open-source harness for agentic data engineering on operational data. Agents build real-time pipelines, data APIs, and data products. A compiler verifies them.
 

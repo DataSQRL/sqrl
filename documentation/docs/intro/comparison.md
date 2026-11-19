@@ -54,7 +54,7 @@ In a warehouse a wrong model is rerun; in an operational system a wrong pipeline
 
 ### Where the warehouse fits
 
-DataSQRL does populate the data lake and warehouse: Snowflake, Databricks, AWS with Redshift or Athena, and others. A typical pipeline takes CDC streams out of a database, enriches them, and lands them in Iceberg, with views generated in each [query engine's](../configuration-engine/iceberg-query) dialect and registered in the catalog. The views sit on top of physical tables that stay separate per deployment, which makes blue-green deployments possible.
+DataSQRL does populate the data lake and warehouse: Snowflake, Databricks, AWS with Redshift or Athena, and others. A typical pipeline takes CDC streams out of a database, enriches them, and lands them in Iceberg, with views generated in each [query engine's](../configuration-engine/iceberg-query) dialect. The views sit on top of physical tables that stay separate per deployment, which makes blue-green deployments possible.
 
 Models inside the warehouse stay in dbt; operational pipelines that land in the warehouse are DataSQRL's. Many teams run both.
 
@@ -71,7 +71,7 @@ SQLMesh parses SQL and adds features like column-level lineage, but it also targ
 
 ## How does DataSQRL compare to warehouse-native agents (Snowflake, Databricks, etc)?
 
-dbt's agents, Snowflake's Cortex, Databricks' Genie, and similar tools make coding agents better at writing and maintaining SQL inside a warehouse, with warehouse context and dbt project awareness.They generate the SQL a human would have to build by hand for data warehouse transformations. DataSQRL makes agents reliable at generating streaming jobs, Kafka topics, database schemas, and APIs that have to agree with each other, and at replaying event time to test them. The two can be used side by side: a warehouse-native agent for the models inside the warehouse, a DataSQRL agent for the operational pipelines that feed to and serve from it.
+dbt's agents, Snowflake's Cortex, Databricks' Genie, and similar tools make coding agents better at writing and maintaining SQL inside a warehouse, with warehouse context and dbt project awareness. They generate the SQL a human would have to build by hand for data warehouse transformations. DataSQRL makes agents reliable at generating streaming jobs, Kafka topics, database schemas, and APIs that have to agree with each other, and at replaying event time to test them. The two can be used side by side: a warehouse-native agent for the models inside the warehouse, a DataSQRL agent for the operational pipelines that feed to and serve from it.
 
 ## How does DataSQRL compare to data warehouses like Snowflake, Databricks, or BigQuery?
 

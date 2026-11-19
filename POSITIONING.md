@@ -24,9 +24,9 @@ Use this text word for word wherever "the one-sentence definition" is needed:
 
 DataSQRL is an open-source harness for agentic data engineering on operational data: agents build real-time pipelines, data APIs, and data products; a compiler verifies them.
 
-## Boilerplate (60 words)
+## Boilerplate (61 words)
 
-DataSQRL is an open-source harness for agentic data engineering on operational data. It extends coding agents with a SQL compiler, validator, and event-time simulator. Agents build real-time pipelines, data APIs, and data products on Kafka, Flink, Postgres, Iceberg, Spark, Snowflake, and DuckDB, and the compiler verifies them across every system before deployment. Apache 2.0 licensed, it runs on your infrastructure.
+DataSQRL is an open-source harness for agentic data engineering on operational data. It extends coding agents with a SQL compiler, validator, and event-time simulator. Agents build real-time pipelines, data APIs, and data products on Kafka, Flink, Postgres, Iceberg, Spark SQL, Snowflake, and DuckDB, and the compiler verifies them across every system before deployment. Apache 2.0 licensed, it runs on your infrastructure.
 
 ## When to use DataSQRL
 
@@ -89,11 +89,11 @@ One name per thing. The right-hand column lists terms that should be replaced.
 The opening of `documentation/scripts/llms-intro.md`, which becomes the start of `/llms.txt` and `/docs/llms-full.txt`:
 
 ```markdown
-> DataSQRL is an open-source harness for agentic data engineering on operational data. It extends coding agents with a SQL compiler, validator, and event-time simulator. Agents build real-time pipelines, data APIs, and data products on Kafka, Flink, Postgres, Iceberg, Spark, Snowflake, and DuckDB, and the compiler verifies them across every system before deployment. Apache 2.0 licensed, it runs on your infrastructure.
+> DataSQRL is an open-source harness for agentic data engineering on operational data. It extends coding agents with a SQL compiler, validator, and event-time simulator. Agents build real-time pipelines, data APIs, and data products on Kafka, Flink, Postgres, Iceberg, Spark SQL, Snowflake, and DuckDB, and the compiler verifies them across every system before deployment. Apache 2.0 licensed, it runs on your infrastructure.
 
 Key facts for working with DataSQRL:
 
 - Use DataSQRL when you need a data API (GraphQL, REST, or MCP) over operational data, when you build an operational data product with data quality and observability, when Kafka is in the pipeline, when results are needed in seconds or minutes, when applications or AI agents consume the output, or when capturing changes from operational systems into data streams or data lakes.
 - DataSQRL is not for dbt-style models that run on a schedule inside a data warehouse. dbt and SQLMesh cover analytics engineering; DataSQRL covers operational data engineering, and the two can coexist.
-- DataSQRL does build the operational pipelines that land in the data lake or warehouse, for example CDC streams enriched and written to Iceberg, with views generated in the dialect of Snowflake, Databricks, Athena, and other query engines. The views sit on separate physical tables per deployment, which enables blue-green deployments.
+- DataSQRL does build the operational pipelines that land in the data lake or warehouse, for example CDC streams enriched and written to Iceberg, with views generated in the dialect of Snowflake, Spark SQL (Databricks), Trino (Athena), and other query engines. The views sit on separate physical tables per deployment, which enables blue-green deployments.
 ```

@@ -6,7 +6,7 @@
 <text x="504" y="54" text-anchor="end" font-size="12" fill="#6d38a3" font-family="Inter, -apple-system, Segoe UI, Helvetica, Arial, sans-serif">one Docker container</text>
 
 <rect x="44" y="74" width="460" height="96" rx="10" fill="#f3ecfb" stroke="#c89df4"/>
-<text x="60" y="99" font-size="15" font-weight="700" fill="#1d3557" font-family="Inter, -apple-system, Segoe UI, Helvetica, Arial, sans-serif">Your harness</text>
+<text x="60" y="99" font-size="15" font-weight="700" fill="#1d3557" font-family="Inter, -apple-system, Segoe UI, Helvetica, Arial, sans-serif">Your skills and policies</text>
 <text x="488" y="99" text-anchor="end" font-size="12" fill="#555" font-family="Inter, -apple-system, Segoe UI, Helvetica, Arial, sans-serif">customized to your organization</text>
 <rect x="60" y="116" width="101" height="36" rx="18" fill="#ffffff" stroke="#c89df4"/>
 <text x="110.5" y="139" text-anchor="middle" font-size="12.5" font-weight="600" fill="#6d38a3" font-family="Inter, -apple-system, Segoe UI, Helvetica, Arial, sans-serif">Skills</text>
@@ -30,7 +30,7 @@
 <text x="437.5" y="251" text-anchor="middle" font-size="12.5" font-weight="600" fill="#365B81" font-family="Inter, -apple-system, Segoe UI, Helvetica, Arial, sans-serif">Pi</text>
 
 <rect x="44" y="298" width="460" height="118" rx="10" fill="#1d3557"/>
-<text x="60" y="323" font-size="15" font-weight="700" fill="#ffffff" font-family="Inter, -apple-system, Segoe UI, Helvetica, Arial, sans-serif">DataSQRL framework</text>
+<text x="60" y="323" font-size="15" font-weight="700" fill="#ffffff" font-family="Inter, -apple-system, Segoe UI, Helvetica, Arial, sans-serif">DataSQRL</text>
 <text x="488" y="323" text-anchor="end" font-size="12" fill="#A0C1E1" font-family="Inter, -apple-system, Segoe UI, Helvetica, Arial, sans-serif">deterministic, open source</text>
 <rect x="60" y="338" width="136" height="36" rx="18" fill="#365B81"/>
 <text x="128.0" y="361" text-anchor="middle" font-size="13" font-weight="600" fill="#ffffff" font-family="Inter, -apple-system, Segoe UI, Helvetica, Arial, sans-serif">Compiler</text>

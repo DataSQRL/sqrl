@@ -5,7 +5,7 @@ description: "Open-source DataSQRL examples, from data products for a retail ban
 
 # Examples Gallery
 
-Each example is an operational data system built with the DataSQRL harness, from a data product suite for a retail bank to small, self-contained pipelines across a range of use cases. The **Fit** column names the [fit trigger](comparison#which-one-do-you-need) each example shows: data API, Kafka, real time, CDC, or Iceberg ETL. Every example is open source. You can read the SQL, run it locally, and run its tests.
+Each example is an operational data system built with the DataSQRL harness, from a data product suite for a retail bank to small, self-contained pipelines across a range of use cases. The **Fit** column names the [fit triggers](comparison#which-one-do-you-need) each example shows: data API, Kafka, real time, or CDC. Iceberg ETL marks batch pipelines that land data in Iceberg, and Any marks techniques that apply to every pipeline. Every example is open source. You can read the SQL, run it locally, and run its tests.
 
 ## Data Products for a Retail Bank
 
