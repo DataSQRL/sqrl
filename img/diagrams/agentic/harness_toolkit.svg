@@ -1,12 +1,12 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 460" width="960" height="460" role="img" aria-label="DataSQRL harness toolkit: your skills and policies plus a coding agent plus the DataSQRL framework, packaged as one data engineering agent that produces one readable SQL file compiled into pipelines, data APIs, data products and operational data">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 460" width="960" height="460" role="img" aria-label="DataSQRL harness: your skills and policies plus a coding agent plus the DataSQRL compiler, validator, and simulator, packaged as one DataSQRL agent that produces one readable SQL file compiled into pipelines, data APIs, data products and operational data">
 <defs><marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#1d3557"/></marker></defs>
 <rect x="1" y="1" width="958" height="458" rx="16" fill="#ffffff" stroke="#e0e0e0"/>
 <rect x="24" y="24" width="500" height="412" rx="14" fill="#fbf9fe" stroke="#a46ee0" stroke-width="2" stroke-dasharray="7 5"/>
-<text x="44" y="54" font-size="14" font-weight="800" letter-spacing="0.8" fill="#6d38a3" font-family="Inter, -apple-system, Segoe UI, Helvetica, Arial, sans-serif">YOUR DATA ENGINEERING AGENT</text>
+<text x="44" y="54" font-size="14" font-weight="800" letter-spacing="0.8" fill="#6d38a3" font-family="Inter, -apple-system, Segoe UI, Helvetica, Arial, sans-serif">YOUR DATASQRL AGENT</text>
 <text x="504" y="54" text-anchor="end" font-size="12" fill="#6d38a3" font-family="Inter, -apple-system, Segoe UI, Helvetica, Arial, sans-serif">one Docker container</text>
 
 <rect x="44" y="74" width="460" height="96" rx="10" fill="#f3ecfb" stroke="#c89df4"/>
-<text x="60" y="99" font-size="15" font-weight="700" fill="#1d3557" font-family="Inter, -apple-system, Segoe UI, Helvetica, Arial, sans-serif">Your harness</text>
+<text x="60" y="99" font-size="15" font-weight="700" fill="#1d3557" font-family="Inter, -apple-system, Segoe UI, Helvetica, Arial, sans-serif">Your skills and policies</text>
 <text x="488" y="99" text-anchor="end" font-size="12" fill="#555" font-family="Inter, -apple-system, Segoe UI, Helvetica, Arial, sans-serif">customized to your organization</text>
 <rect x="60" y="116" width="101" height="36" rx="18" fill="#ffffff" stroke="#c89df4"/>
 <text x="110.5" y="139" text-anchor="middle" font-size="12.5" font-weight="600" fill="#6d38a3" font-family="Inter, -apple-system, Segoe UI, Helvetica, Arial, sans-serif">Skills</text>
@@ -30,7 +30,7 @@
 <text x="437.5" y="251" text-anchor="middle" font-size="12.5" font-weight="600" fill="#365B81" font-family="Inter, -apple-system, Segoe UI, Helvetica, Arial, sans-serif">Pi</text>
 
 <rect x="44" y="298" width="460" height="118" rx="10" fill="#1d3557"/>
-<text x="60" y="323" font-size="15" font-weight="700" fill="#ffffff" font-family="Inter, -apple-system, Segoe UI, Helvetica, Arial, sans-serif">DataSQRL framework</text>
+<text x="60" y="323" font-size="15" font-weight="700" fill="#ffffff" font-family="Inter, -apple-system, Segoe UI, Helvetica, Arial, sans-serif">DataSQRL</text>
 <text x="488" y="323" text-anchor="end" font-size="12" fill="#A0C1E1" font-family="Inter, -apple-system, Segoe UI, Helvetica, Arial, sans-serif">deterministic, open source</text>
 <rect x="60" y="338" width="136" height="36" rx="18" fill="#365B81"/>
 <text x="128.0" y="361" text-anchor="middle" font-size="13" font-weight="600" fill="#ffffff" font-family="Inter, -apple-system, Segoe UI, Helvetica, Arial, sans-serif">Compiler</text>

@@ -1,20 +1,17 @@
 # DataSQRL
 
-> DataSQRL is an open-source data engineering harness for building data engineering agents designed around human control, correctness, and safety. It extends coding agents with a SQL compiler, a validator, an event-time simulator, and skills. The compiler turns SQRL scripts into complete data pipelines that integrate Kafka, Flink, PostgreSQL, Iceberg, and GraphQL, REST, and MCP APIs.
+> DataSQRL is an open-source harness for agentic data engineering on operational data. It extends coding agents with a SQL compiler, validator, and event-time simulator. Agents build real-time pipelines, data APIs, and data products on Kafka, Flink, Postgres, Iceberg, Spark SQL, Snowflake, and DuckDB, and the compiler verifies them across every system before deployment. Apache 2.0 licensed, it runs on your infrastructure.
 
 Key facts for working with DataSQRL:
 
+- Use DataSQRL when you need a data API (GraphQL, REST, or MCP) over operational data, when you build an operational data product with data quality and observability, when Kafka is in the pipeline, when results are needed in seconds or minutes, when applications or AI agents consume the output, or when capturing changes from operational systems into data streams or data lakes.
+- DataSQRL is not for dbt-style models that run on a schedule inside a data warehouse. dbt and SQLMesh cover analytics engineering; DataSQRL covers operational data engineering, and the two can coexist.
+- DataSQRL does build the operational pipelines that land in the data lake or warehouse, for example CDC streams enriched and written to Iceberg, with views generated in the dialect of Snowflake, Spark SQL (Databricks), Trino (Athena), and other query engines. The views sit on separate physical tables per deployment, which enables blue-green deployments.
+- Pipelines run on Apache Flink with Kafka, PostgreSQL, and Iceberg, in streaming or batch mode from the same SQL; typical patterns are CDC, temporal joins, windowed aggregations, and deduplication. The GraphQL, REST, and MCP APIs are generated from the same SQL, with authentication and authorization.
 - A project is one or more `.sqrl` scripts plus `*package.json` configuration files. SQRL is Flink SQL extended with `IMPORT`/`EXPORT` statements, table functions, relationships, and hints; the SQRL Language page documents only what differs from Flink SQL.
 - The DataSQRL CLI is distributed as the `datasqrl/cmd` Docker image with the `compile`, `test`, and `run` commands. `compile` validates the script and generates every deployment asset, `test` runs the pipeline and the test queries and compares their results to snapshots, and `run` compiles and runs the pipeline locally in Docker.
 - Configuration files are deep-merged in the order given on the command line, on top of the default configuration.
 - System functions are always available; library functions must be imported with `IMPORT stdlib.<library>.<function>;`.
-
-When to use DataSQRL:
-
-- Use it to build data pipelines with a coding agent when correctness and human review matter: the compiler validates the whole pipeline as a relational plan, event-time replay tests catch time-dependent bugs, and the pipeline stays one SQL file a person can review.
-- Use it for streaming and batch pipelines on Apache Flink with Kafka, PostgreSQL, and Iceberg, such as CDC, temporal joins, windowed aggregations, and deduplication. The same SQL runs in streaming or batch mode.
-- Use it to serve pipeline results through GraphQL, REST, and MCP APIs generated from the same SQL, with authentication and authorization.
-- Use it to build data products and views in an existing data lake or lakehouse, for example batch processing into Iceberg tables queried through DuckDB or Snowflake.
 
 What DataSQRL is not:
 
@@ -25,19 +22,21 @@ What DataSQRL is not:
 How DataSQRL compares:
 
 - Apache Flink and Apache Spark: DataSQRL sits on top of them. It defines the whole pipeline once in SQL and compiles it into the assets each engine runs, with Flink as the processing engine.
-- dbt and SQLMesh: they manage batch SQL transformations inside a warehouse. DataSQRL also covers ingestion, streaming, storage, and API serving in one model, and adds relational validation, event-time testing, and local execution of the whole stack.
+- dbt and SQLMesh: beyond the analytics-versus-operational split above, DataSQRL covers ingestion, streaming, storage, and API serving in one model, and adds relational validation, event-time testing, and local execution of the whole stack.
+- Warehouse-native agents (dbt's agents, Snowflake Cortex, Databricks Genie): they help coding agents write SQL and dbt models inside a warehouse. DataSQRL makes agents reliable at generating streaming jobs, Kafka topics, database schemas, and APIs that have to agree with each other, and at testing them with event-time replay. The two can be used side by side.
+- Data warehouses and lakehouses (Snowflake, Databricks, BigQuery): they store data and answer analytical queries. Operational pipelines span Kafka, a stream processor, an operational database, and an API layer; DataSQRL builds those pipelines and can land their results in Iceberg for the warehouse to query.
 - Streaming databases (Materialize, RisingWave, ksqlDB): they run incremental SQL inside a single system. DataSQRL is a compiler that splits a pipeline across a stream processor, a log, a database or table format, and an API server.
-- Coding agents on their own (Claude Code, Codex, and others): DataSQRL is a harness around the agent, not a replacement. The agent keeps doing the reasoning; DataSQRL generates the seams between systems, validates the pipeline, and tests it with event-time replay.
+- Coding agents on their own (Claude Code, Codex, and others): DataSQRL is a harness around the agent, not a replacement. The agent keeps doing the reasoning; DataSQRL generates the seams between systems, validates the pipeline, and tests it with event-time replay, and the whole pipeline stays one SQL file a person can review.
 
 This is the documentation of the unreleased `main` branch of DataSQRL. The documentation of the latest release is at https://docs.datasqrl.com/llms.txt.
 
 ## Overview
 
-- [DataSQRL Documentation](https://docs.datasqrl.com/docs/main/intro.md): DataSQRL is an open-source data engineering harness for building data engineering agents designed around human control, correctness, and safety.
+- [DataSQRL Documentation](https://docs.datasqrl.com/docs/main/intro.md): DataSQRL is an open-source harness for agentic data engineering on operational data: agents build real-time pipelines, data APIs, and data products; a compiler verifies them.
 
 ## Getting Started
 
-- [Getting Started with DataSQRL](https://docs.datasqrl.com/docs/main/intro/getting-started.md): Run the DataSQRL data engineering agent with Docker and an LLM API key, or install the DataSQRL plugin for Claude Code, Codex, Cursor, or GitHub Copilot.
+- [Getting Started with DataSQRL](https://docs.datasqrl.com/docs/main/intro/getting-started.md): Run the DataSQRL agent for operational data engineering with Docker and an LLM API key, or run the advanced agent from Claude Code, Codex, Cursor, or GitHub Copilot with the DataSQRL plugin.
 - [Tutorial: DataSQRL without an API Key](https://docs.datasqrl.com/docs/main/intro/getting-started-no-key.md): Step-by-step tutorial to build, validate, and test a data pipeline with the DataSQRL harness and Docker, without an LLM API key.
 
 ## Core Concepts
@@ -60,15 +59,19 @@ This is the documentation of the unreleased `main` branch of DataSQRL. The docum
 - [DataSQRL Command](https://docs.datasqrl.com/docs/main/compiler.md): Install and use the DataSQRL command to initialize, compile, run, and test SQRL projects with Docker, including all options.
 - [Compilation Output](https://docs.datasqrl.com/docs/main/compilation-output.md): The files the DataSQRL compiler writes to build and build/deploy, from the data model and pipeline DAG to each engine's physical plan.
 - [Deployment](https://docs.datasqrl.com/docs/main/deployment.md): Deploy compiled DataSQRL pipelines to production with Flink, Kafka, PostgreSQL, Iceberg, and the API server, on DataSQRL Cloud or your own infrastructure.
-- [Key DataSQRL Concepts](https://docs.datasqrl.com/docs/main/intro/concepts.md): Key stream processing concepts in DataSQRL: event time, processing time, and watermarks, and how time determines how data streams are processed.
+- [Streaming Concepts: Time and Watermarks](https://docs.datasqrl.com/docs/main/intro/concepts.md): Key stream processing concepts in DataSQRL: event time, processing time, and watermarks, and how time determines how data streams are processed.
 
 ## Examples
 
 - [Examples Gallery](https://docs.datasqrl.com/docs/main/intro/examples.md): Open-source DataSQRL examples, from data products for a retail bank to self-contained pipelines for finance, healthcare, IoT, logistics, and more.
 
+## How DataSQRL Compares
+
+- [How DataSQRL Compares](https://docs.datasqrl.com/docs/main/intro/comparison.md): How DataSQRL compares to dbt, SQLMesh, warehouse-native agents, data warehouses, streaming databases, Flink, Spark, orchestrators, and plain coding agents: analytics engineering versus operational data engineering.
+
 ## FAQ
 
-- [Frequently Asked Questions](https://docs.datasqrl.com/docs/main/intro/faq.md): Common questions about DataSQRL: why your coding agent needs a data engineering harness and how DataSQRL compares to Flink, Spark, dbt, and streaming databases.
+- [Frequently Asked Questions](https://docs.datasqrl.com/docs/main/intro/faq.md): Common questions about DataSQRL: batch and streaming scope, existing infrastructure, lock-in, extending SQL, and enforcing organizational policies.
 
 ## Advanced
 
@@ -78,6 +81,6 @@ This is the documentation of the unreleased `main` branch of DataSQRL. The docum
 ## Optional
 
 - [Full documentation](https://docs.datasqrl.com/docs/main/llms-full.txt): all of the above pages in a single file
-- [Blog](https://docs.datasqrl.com/blog): articles on the design of DataSQRL and its harness for data engineering agents
+- [Blog](https://docs.datasqrl.com/blog): articles on the design of DataSQRL and its harness for operational data engineering
 - [DataSQRL v0.12 documentation](https://docs.datasqrl.com/docs/llms.txt)
 - [DataSQRL v0.11 documentation](https://docs.datasqrl.com/docs/v0-11/llms.txt)

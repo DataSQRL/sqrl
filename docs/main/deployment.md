@@ -1,5 +1,7 @@
 # Deployment
 
+Operational pipelines are long-running services, not scheduled jobs. A deployment keeps Flink jobs running with their state, keeps Kafka topics and databases in sync with them, and runs an API server that serves live consumers. That is why this page covers Flink jobs, state, and the API server, and why monitoring and data quality checks belong with the deployment.
+
 The [compiler](https://docs.datasqrl.com/docs/main/compiler.md) generates all deployment assets for a pipeline in `build/deploy/plan`: Flink plans, Kafka topic definitions, database schemas, and the API server model (see [Compilation Output](https://docs.datasqrl.com/docs/main/compilation-output.md)). This page gives an overview of how to deploy those assets to production.
 
 > **Tip: DataSQRL Cloud**
@@ -42,6 +44,12 @@ Kubernetes gives you the most control over the deployment, and it runs the same 
 - **API server:** a standard `Deployment` and `Service` for the server image, scaled horizontally since the server is stateless. It exposes `/health` for probes and, when enabled, `/metrics` for Prometheus. The server logs a `WARN` with the reason when `/health` first reports a check as failing, and an `INFO` when the check recovers.
 
 You can also mix both options, for example running Flink and the API server on Kubernetes against managed Kafka and PostgreSQL services.
+
+## Monitoring and Data Quality
+
+- **API server:** `/health` for liveness and readiness probes and, when enabled, `/metrics` for Prometheus, as described under [Option B](#option-b-kubernetes).
+- **Flink job:** monitor checkpoints, backpressure, and restarts through the Flink web UI and metrics, or through the operator or managed service that runs the job.
+- **Data quality:** prove it before deployment. Tests with the `/*+ test */` and `/*+ test(no_rows) */` hints run with the [`test` command](https://docs.datasqrl.com/docs/main/compiler.md#test-command), which replays events at their original timestamps, so a pipeline is checked against late, out-of-order, and duplicate data before it serves live consumers.
 
 ## Working Out the Details
 

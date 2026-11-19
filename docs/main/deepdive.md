@@ -1,5 +1,7 @@
 # Deep Dive: How DataSQRL Works
 
+The compiler checks the pipeline across every system before deployment, because in an operational pipeline a mismatch between systems fails in production, not in a test query.
+
 The DataSQRL `compile` command executes the following steps:
 
 1. **Read Configuration**: Read the package.json configuration files and merge them on top of the built-in defaults to initialize the configuration for the compiler. The `run` and `test` commands add their own defaults.

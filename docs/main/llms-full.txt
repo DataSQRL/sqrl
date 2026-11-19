@@ -1,20 +1,17 @@
 # DataSQRL Documentation
 
-> DataSQRL is an open-source data engineering harness for building data engineering agents designed around human control, correctness, and safety. It extends coding agents with a SQL compiler, a validator, an event-time simulator, and skills. The compiler turns SQRL scripts into complete data pipelines that integrate Kafka, Flink, PostgreSQL, Iceberg, and GraphQL, REST, and MCP APIs.
+> DataSQRL is an open-source harness for agentic data engineering on operational data. It extends coding agents with a SQL compiler, validator, and event-time simulator. Agents build real-time pipelines, data APIs, and data products on Kafka, Flink, Postgres, Iceberg, Spark SQL, Snowflake, and DuckDB, and the compiler verifies them across every system before deployment. Apache 2.0 licensed, it runs on your infrastructure.
 
 Key facts for working with DataSQRL:
 
+- Use DataSQRL when you need a data API (GraphQL, REST, or MCP) over operational data, when you build an operational data product with data quality and observability, when Kafka is in the pipeline, when results are needed in seconds or minutes, when applications or AI agents consume the output, or when capturing changes from operational systems into data streams or data lakes.
+- DataSQRL is not for dbt-style models that run on a schedule inside a data warehouse. dbt and SQLMesh cover analytics engineering; DataSQRL covers operational data engineering, and the two can coexist.
+- DataSQRL does build the operational pipelines that land in the data lake or warehouse, for example CDC streams enriched and written to Iceberg, with views generated in the dialect of Snowflake, Spark SQL (Databricks), Trino (Athena), and other query engines. The views sit on separate physical tables per deployment, which enables blue-green deployments.
+- Pipelines run on Apache Flink with Kafka, PostgreSQL, and Iceberg, in streaming or batch mode from the same SQL; typical patterns are CDC, temporal joins, windowed aggregations, and deduplication. The GraphQL, REST, and MCP APIs are generated from the same SQL, with authentication and authorization.
 - A project is one or more `.sqrl` scripts plus `*package.json` configuration files. SQRL is Flink SQL extended with `IMPORT`/`EXPORT` statements, table functions, relationships, and hints; the SQRL Language page documents only what differs from Flink SQL.
 - The DataSQRL CLI is distributed as the `datasqrl/cmd` Docker image with the `compile`, `test`, and `run` commands. `compile` validates the script and generates every deployment asset, `test` runs the pipeline and the test queries and compares their results to snapshots, and `run` compiles and runs the pipeline locally in Docker.
 - Configuration files are deep-merged in the order given on the command line, on top of the default configuration.
 - System functions are always available; library functions must be imported with `IMPORT stdlib.<library>.<function>;`.
-
-When to use DataSQRL:
-
-- Use it to build data pipelines with a coding agent when correctness and human review matter: the compiler validates the whole pipeline as a relational plan, event-time replay tests catch time-dependent bugs, and the pipeline stays one SQL file a person can review.
-- Use it for streaming and batch pipelines on Apache Flink with Kafka, PostgreSQL, and Iceberg, such as CDC, temporal joins, windowed aggregations, and deduplication. The same SQL runs in streaming or batch mode.
-- Use it to serve pipeline results through GraphQL, REST, and MCP APIs generated from the same SQL, with authentication and authorization.
-- Use it to build data products and views in an existing data lake or lakehouse, for example batch processing into Iceberg tables queried through DuckDB or Snowflake.
 
 What DataSQRL is not:
 
@@ -25,9 +22,11 @@ What DataSQRL is not:
 How DataSQRL compares:
 
 - Apache Flink and Apache Spark: DataSQRL sits on top of them. It defines the whole pipeline once in SQL and compiles it into the assets each engine runs, with Flink as the processing engine.
-- dbt and SQLMesh: they manage batch SQL transformations inside a warehouse. DataSQRL also covers ingestion, streaming, storage, and API serving in one model, and adds relational validation, event-time testing, and local execution of the whole stack.
+- dbt and SQLMesh: beyond the analytics-versus-operational split above, DataSQRL covers ingestion, streaming, storage, and API serving in one model, and adds relational validation, event-time testing, and local execution of the whole stack.
+- Warehouse-native agents (dbt's agents, Snowflake Cortex, Databricks Genie): they help coding agents write SQL and dbt models inside a warehouse. DataSQRL makes agents reliable at generating streaming jobs, Kafka topics, database schemas, and APIs that have to agree with each other, and at testing them with event-time replay. The two can be used side by side.
+- Data warehouses and lakehouses (Snowflake, Databricks, BigQuery): they store data and answer analytical queries. Operational pipelines span Kafka, a stream processor, an operational database, and an API layer; DataSQRL builds those pipelines and can land their results in Iceberg for the warehouse to query.
 - Streaming databases (Materialize, RisingWave, ksqlDB): they run incremental SQL inside a single system. DataSQRL is a compiler that splits a pipeline across a stream processor, a log, a database or table format, and an API server.
-- Coding agents on their own (Claude Code, Codex, and others): DataSQRL is a harness around the agent, not a replacement. The agent keeps doing the reasoning; DataSQRL generates the seams between systems, validates the pipeline, and tests it with event-time replay.
+- Coding agents on their own (Claude Code, Codex, and others): DataSQRL is a harness around the agent, not a replacement. The agent keeps doing the reasoning; DataSQRL generates the seams between systems, validates the pipeline, and tests it with event-time replay, and the whole pipeline stays one SQL file a person can review.
 
 This is the documentation of the unreleased `main` branch of DataSQRL. The documentation of the latest release is at https://docs.datasqrl.com/llms.txt.
 
@@ -37,14 +36,22 @@ This is the documentation of the unreleased `main` branch of DataSQRL. The docum
 
 Source: https://docs.datasqrl.com/docs/main/intro
 
-DataSQRL is an open-source **data engineering harness** for building data engineering agents designed around **human control, correctness, and safety**. It extends your coding agent (Claude Code, Codex, OpenCode, Pi, and others) with a SQL compiler, a validator, an event-time simulator, and your own skills and policies. The result is an agent you can trust with data pipelines, batch jobs, data APIs (REST, GraphQL, MCP), data products, and operational data.
+DataSQRL is an open-source **harness for agentic data engineering on operational data**: agents build real-time pipelines, data APIs, and data products; a compiler verifies them. It extends your coding agent (Claude Code, Codex, OpenCode, Pi, and others) with a SQL compiler, a validator, an event-time simulator, and your own skills and policies, designed around **human control, correctness, and safety**.
 
-![DataSQRL harness: your skills and policies, a coding agent, and the DataSQRL framework packaged as one data engineering agent](https://docs.datasqrl.com/img/diagrams/agentic/harness_toolkit.svg)
+![DataSQRL harness: your skills and policies, a coding agent, and the DataSQRL compiler, validator, and simulator packaged as one DataSQRL agent](https://docs.datasqrl.com/img/diagrams/agentic/harness_toolkit.svg)
+
+> **Tip: Is this for you?**
+>
+> - You need a data API (GraphQL, REST, or MCP) over operational data.
+> - Kafka is in your stack, as source, sink, or both.
+> - You need results in seconds or minutes, not after the next batch run.
+>
+> Working in dbt and a warehouse? See [How DataSQRL Compares](https://docs.datasqrl.com/docs/main/intro/comparison.md).
 
 ## How It Works
 
 1. **The agent writes SQL.** The whole pipeline, from ingest to transform to store to serve, is expressed in [SQRL](https://docs.datasqrl.com/docs/main/sqrl-language.md): SQL extended with stream processing and API definitions. It stays readable enough for a human to review.
-2. **The compiler validates and generates.** DataSQRL checks the logical plan (schemas, keys, timestamps, table types) and the physical plan (engine capabilities, type mappings). It then generates every deployment asset from one model: Flink plans, Kafka topics, Postgres and Iceberg schemas, and GraphQL, REST, and MCP APIs.
+2. **The compiler validates and generates.** DataSQRL checks the logical plan (schemas, keys, timestamps, table types) and the physical plan (engine capabilities, type mappings). It then generates every deployment asset from one model: Flink plans, Kafka topics, Postgres and Iceberg schemas, and GraphQL, REST, and MCP APIs, so the systems cannot disagree.
 3. **The simulator tests.** Pipelines run locally with timestamp-accurate event replay, so time-dependent behavior becomes a deterministic test.
 4. **You review and deploy.** [Compilation outputs](https://docs.datasqrl.com/docs/main/compilation-output.md) such as the pipeline DAG and lineage support human review and automated policy checks. The artifacts run on open-source infrastructure you operate yourself.
 
@@ -54,9 +61,10 @@ For the full design, read the [harness architecture](https://docs.datasqrl.com/b
 
 | I want to… | Go to |
 |---|---|
-| Try it on my own data | [Getting Started](https://docs.datasqrl.com/docs/main/intro/getting-started.md): run the basic agent in Docker, or install the plugin for Claude Code, Codex, Cursor, or Copilot |
+| Try it on my own data | [Getting Started](https://docs.datasqrl.com/docs/main/intro/getting-started.md): run the core agent in Docker, or the advanced agent from Claude Code, Codex, Cursor, or Copilot through the DataSQRL plugin |
 | See what it can build | [Examples](https://docs.datasqrl.com/docs/main/intro/examples.md): data products for a retail bank, plus self-contained pipelines across many use cases |
-| Compare DataSQRL to Flink, Spark, dbt, and other tools | [FAQ](https://docs.datasqrl.com/docs/main/intro/faq.md): short answers to the questions data engineers ask most |
+| Compare DataSQRL to dbt, Flink, streaming databases, and other tools | [How DataSQRL Compares](https://docs.datasqrl.com/docs/main/intro/comparison.md): analytics versus operational data engineering, and when to use which |
+| Get short answers to common questions | [FAQ](https://docs.datasqrl.com/docs/main/intro/faq.md): scope, infrastructure, lock-in, extensibility, and policies |
 | Understand why a harness matters | The four-part series: [broken seams](https://docs.datasqrl.com/blog/p1-broken-at-seams), [relational introspection](https://docs.datasqrl.com/blog/p2-validator-relational-introspection), [event-time testing](https://docs.datasqrl.com/blog/p3-testing-framework), and [human understanding](https://docs.datasqrl.com/blog/p4-human-understanding-one-sql-file) |
 | Read and review the SQL an agent produces | [SQRL Language](https://docs.datasqrl.com/docs/main/sqrl-language.md) and [Streaming Concepts](https://docs.datasqrl.com/docs/main/intro/concepts.md) |
 | Connect my data sources and sinks | [Connectors](https://docs.datasqrl.com/docs/main/connectors.md) |
@@ -72,7 +80,8 @@ For the full design, read the [harness architecture](https://docs.datasqrl.com/b
 **Start here**
 - [Getting Started](https://docs.datasqrl.com/docs/main/intro/getting-started.md): set up the DataSQRL agent and build your first pipeline
 - [Examples](https://docs.datasqrl.com/docs/main/intro/examples.md): a gallery of what DataSQRL can build
-- [FAQ](https://docs.datasqrl.com/docs/main/intro/faq.md): how DataSQRL compares to other tools, and common questions
+- [How DataSQRL Compares](https://docs.datasqrl.com/docs/main/intro/comparison.md): DataSQRL next to dbt, warehouse-native agents, streaming databases, and plain coding agents
+- [FAQ](https://docs.datasqrl.com/docs/main/intro/faq.md): common questions
 
 **Core concepts**
 - [SQRL Language](https://docs.datasqrl.com/docs/main/sqrl-language.md): imports and exports, table functions and relationships, hints, subscriptions, and stream and state semantics
@@ -98,9 +107,11 @@ DataSQRL is [open source](https://github.com/DataSQRL/sqrl). Report bugs in [Git
 
 Source: https://docs.datasqrl.com/docs/main/intro/getting-started
 
-## Basic DataSQRL Agent
+You will have an agent build a real-time pipeline with a data API, then verify it.
 
-The basic DataSQRL agent runs as a Docker image on your local machine. It wraps the Pi coding agent with the DataSQRL framework, an `AGENTS.md` file, and skills.
+## DataSQRL Core Agent
+
+The DataSQRL core agent runs as the `datasqrl/core-agent` Docker image on your local machine. It wraps the Pi coding agent with the DataSQRL harness, an `AGENTS.md` file, and skills.
 All you need is a recent version of [Docker](https://www.docker.com/products/docker-desktop/) and an API key from the LLM provider you'd like to use. If you don't have an API key or want to see how the agent works step-by-step, [follow this tutorial](https://docs.datasqrl.com/docs/main/intro/getting-started-no-key.md) instead.
 
 **macOS:**
@@ -158,13 +169,13 @@ Once the Pi terminal is running, give the coding agent a prompt like:
 
 > Build a pipeline that ingests our order data from Kafka in real time and serves hourly revenue per product through an API.
 
-The [agent README on GitHub](https://github.com/DataSQRL/sqrl/blob/main/agent/README.md) shows how to customize the basic agent to use a different coding agent, skills, AGENTS.md, and more.
+The [agent README on GitHub](https://github.com/DataSQRL/sqrl/blob/main/agent/README.md) shows how to customize the core agent to use a different coding agent, skills, AGENTS.md, and more.
 
-## Advanced DataSQRL Agent
+## DataSQRL Advanced Agent
 
-You can also run DataSQRL as a sub-agent with planning mode, iterative improvement, and deployment workflows. It plugs into your existing coding agent and GitHub to act as your data engineering sidekick.
+The advanced agent extends the core agent with verifiers, judges, and implementation loops, plus planning and deployment workflows. You run it from your existing coding agent (Claude Code, Codex, Cursor, or GitHub Copilot) through the DataSQRL plugin, which works with GitHub to act as your data engineering sidekick.
 
-Install the DataSQRL plugin, describe the pipeline you want in plain English, review the plan, and let the DataSQRL agent build it. The DataSQRL agent implements, compiles, tests, verifies, and refines the pipeline until the tests pass. It is more thorough and complete than the basic agent but takes more time and resources to run.
+Install the DataSQRL plugin, describe the pipeline you want in plain English, review the plan, and let the advanced agent build it. It implements, compiles, tests, verifies, and refines the pipeline until the tests pass. It is more thorough and complete than the core agent but takes more time and resources to run.
 
 ### Prerequisites
 
@@ -225,11 +236,11 @@ Your agent asks clarifying questions about sources, payloads, entities, time sem
 
 #### 3. Review the plan
 
-The DataSQRL agent turns the requirements into a checkbox-tracked plan at `adr/plan_<ts>.md`. Read through it. This is the point where you steer the design, before anything is built. Ask for changes, or tell your agent the plan looks good to proceed.
+The advanced agent turns the requirements into a checkbox-tracked plan at `adr/plan_<ts>.md`. Read through it. This is the point where you steer the design, before anything is built. Ask for changes, or tell your agent the plan looks good to proceed.
 
 #### 4. Let the agent implement
 
-Once you approve the plan, the DataSQRL agent runs the full implement → compile → test → verify → refine loop. An implementation run takes 30–60+ minutes, so it runs **detached**:
+Once you approve the plan, the advanced agent runs the full implement → compile → test → verify → refine loop. An implementation run takes 30–60+ minutes, so it runs **detached**:
 
 - The run belongs to Docker, not to your session. You can close the session, interrupt your agent, or restart your editor, and the run still finishes.
 - The launch prints a `tail -f` command you can run in another terminal to follow the agent's progress live.
@@ -253,7 +264,7 @@ To run the pipeline and its API locally, use the [`run` command](https://docs.da
 
 ### Make Changes
 
-For a small, well-scoped change to an existing project, you don't need the full requirements and planning workflow. Ask your agent for a patch (`/datasqrl:patch` in Claude Code). It sends the request straight to the implementing agent, which makes the change, updates the affected tests and documentation, and runs the tests until they pass.
+For a small, well-scoped change to an existing project, you don't need the full requirements and planning workflow. Ask your agent for a patch (`/datasqrl:patch` in Claude Code). It sends the request straight to the advanced agent, which makes the change, updates the affected tests and documentation, and runs the tests until they pass.
 
 > Add an endpoint that returns the total order count and the timestamp of the most recent order.
 
@@ -297,7 +308,9 @@ Deploying adds a new deployment without changing which one the project serves. T
 
 Source: https://docs.datasqrl.com/docs/main/intro/getting-started-no-key
 
-This tutorial demonstrates how the DataSQRL data engineering harness works without an LLM API key. That means we won't be running an agent that autonomously uses the harness to build data projects, but walk an agent through the steps and use the harness to ensure correct, safe, and easy to understand results.
+This tutorial demonstrates how the DataSQRL harness for operational data engineering works without an LLM API key. That means we won't be running an agent that autonomously uses the harness to build data projects, but walk an agent through the steps and use the harness to ensure correct, safe, and easy to understand results.
+
+The messenger example is an operational system in miniature: events in, processing, and an API out.
 
 ## Prerequisites
 
@@ -4150,6 +4163,8 @@ Check out the [Deployments documentation](https://docs.datasqrl.com/docs/main/de
 
 ## Test Command
 
+With live consumers, data quality has to be proven before deployment, so tests replay real event timing: the simulator runs the compiled pipeline and replays events at their original timestamps.
+
 The `test` command compiles and runs the data pipeline, then executes the provided test API queries and API endpoints
 for all tables annotated with `/*+ test */` to snapshot the results.
 
@@ -4290,6 +4305,8 @@ docker run --rm -it -p 8081:8081 -p 8888:8888 -p 9092:9092 -v $PWD:/workspace da
 
 Source: https://docs.datasqrl.com/docs/main/compilation-output
 
+The compiler checks the pipeline across every system before deployment, because in an operational pipeline a mismatch between systems fails in production, not in a test query.
+
 The [`compile`](https://docs.datasqrl.com/docs/main/compiler.md#compile-command) command writes two kinds of output. Compilation outputs in the `build` folder describe the data model and the pipeline the compiler planned. Deployment outputs in `build/deploy/plan` are the artifacts each engine executes. The [`run`](https://docs.datasqrl.com/docs/main/compiler.md#run-command) and [`test`](https://docs.datasqrl.com/docs/main/compiler.md#test-command) commands produce the same output before they execute the pipeline.
 
 The output is the basis for validating a pipeline before you deploy it, whether you or a coding agent wrote the SQRL script. Each file shows the pipeline at a different level of detail, from the data model down to the physical plan of each engine. This page lists the files and what they contain at a high level. The best way to learn the details is to compile a project and inspect the files:
@@ -4427,6 +4444,8 @@ For example, plans compiled by earlier DataSQRL versions write `STREAM` tables t
 
 Source: https://docs.datasqrl.com/docs/main/deployment
 
+Operational pipelines are long-running services, not scheduled jobs. A deployment keeps Flink jobs running with their state, keeps Kafka topics and databases in sync with them, and runs an API server that serves live consumers. That is why this page covers Flink jobs, state, and the API server, and why monitoring and data quality checks belong with the deployment.
+
 The [compiler](https://docs.datasqrl.com/docs/main/compiler.md) generates all deployment assets for a pipeline in `build/deploy/plan`: Flink plans, Kafka topic definitions, database schemas, and the API server model (see [Compilation Output](https://docs.datasqrl.com/docs/main/compilation-output.md)). This page gives an overview of how to deploy those assets to production.
 
 > **Tip: DataSQRL Cloud**
@@ -4470,6 +4489,12 @@ Kubernetes gives you the most control over the deployment, and it runs the same 
 
 You can also mix both options, for example running Flink and the API server on Kubernetes against managed Kafka and PostgreSQL services.
 
+## Monitoring and Data Quality
+
+- **API server:** `/health` for liveness and readiness probes and, when enabled, `/metrics` for Prometheus, as described under [Option B](#option-b-kubernetes).
+- **Flink job:** monitor checkpoints, backpressure, and restarts through the Flink web UI and metrics, or through the operator or managed service that runs the job.
+- **Data quality:** prove it before deployment. Tests with the `/*+ test */` and `/*+ test(no_rows) */` hints run with the [`test` command](https://docs.datasqrl.com/docs/main/compiler.md#test-command), which replays events at their original timestamps, so a pipeline is checked against late, out-of-order, and duplicate data before it serves live consumers.
+
 ## Working Out the Details
 
 The details of a production deployment depend on your infrastructure, security requirements, and existing tooling, such as Terraform, Helm, or your CI/CD pipeline. Consult the documentation of the services and operators you choose, or ask your coding agent to work out the deployment: point it at the `build/deploy/plan` folder, the [Flink SQL Runner](https://github.com/DataSQRL/flink-sql-runner) repository, and your target infrastructure, and have it generate the deployment configuration.
@@ -4477,11 +4502,11 @@ The details of a production deployment depend on your infrastructure, security r
 
 ---
 
-# Key DataSQRL Concepts
+# Streaming Concepts: Time and Watermarks
 
 Source: https://docs.datasqrl.com/docs/main/intro/concepts
 
-This document explains some of the key concepts in streaming data processing.
+These concepts exist because operational data arrives continuously and out of order, which a warehouse model never has to handle. That is why this page is about time: it explains the key concepts of streaming data processing that DataSQRL pipelines are built on.
 
 ## Time Handling
 
@@ -4525,14 +4550,14 @@ For tables exposed as mutations in the API, DataSQRL handles the watermarks for 
 
 Source: https://docs.datasqrl.com/docs/main/intro/examples
 
-A gallery of what you can build with the DataSQRL data engineering harness, from a data product suite for a retail bank to small, self-contained pipelines across a range of use cases. Every example is open source. You can read the SQL, run it locally, and run its tests.
+Each example is an operational data system built with the DataSQRL harness, from a data product suite for a retail bank to small, self-contained pipelines across a range of use cases. The **Fit** column names the [fit triggers](https://docs.datasqrl.com/docs/main/intro/comparison.md#which-one-do-you-need) each example shows: data API, Kafka, real time, or CDC. Iceberg ETL marks batch pipelines that land data in Iceberg, and Any marks techniques that apply to every pipeline. Every example is open source. You can read the SQL, run it locally, and run its tests.
 
 ## Data Products for a Retail Bank
 
 This example shows how DataSQRL works in an organizational setting. A fictional retail bank keeps a **semantic data catalog** of its source and enriched datasets. A coding agent with the DataSQRL harness uses that catalog to build **data products**: pipelines and APIs that serve specific business needs.
 
 - **[Data Catalog](https://github.com/datasqrl-colab/finance-data-catalog-demo)**: the bank's datasets, schemas, connectors, relationships, and data quality rules
-- **[Data Products](https://github.com/datasqrl-colab/finance-demo)**: two AI-generated data products built from that catalog
+- **[Data Products](https://github.com/datasqrl-colab/finance-demo)**: two AI-generated data products built from that catalog, each with a data API
 
 Explore the respective Github repositories to learn more.
 
@@ -4540,18 +4565,18 @@ Explore the respective Github repositories to learn more.
 
 The **[DataSQRL Examples repository](https://github.com/DataSQRL/datasqrl-examples)** contains smaller, self-contained pipelines across a range of use cases. Each one is a standalone project with sample data and a README that explains how to run it. Pick the one closest to what you want to build:
 
-| Example | What it builds | Look here for |
-|---|---|---|
-| [Getting Started Examples](https://github.com/DataSQRL/datasqrl-examples/tree/main/getting-started-examples) | Seven minimal pipelines: Kafka to console, Kafka to Kafka, stream joins, files and Kafka to Iceberg (local or AWS Glue), and Avro with Schema Registry | Connector patterns and your first pipeline |
-| [Finance Credit Card Chatbot](https://github.com/DataSQRL/datasqrl-examples/tree/main/finance-credit-card-chatbot) | Enriched transaction analytics for a GenAI chatbot, a credit card rewards program, and a batch variant that writes spending views to Iceberg for DuckDB and Snowflake | Enrichment, APIs for AI agents, batch to Iceberg |
-| [Clickstream AI Recommendation](https://github.com/DataSQRL/datasqrl-examples/tree/main/clickstream-ai-recommendation) | Personalized content recommendations from clickstream data and LLM-generated vector embeddings | Vector embeddings and real-time recommendations |
-| [Healthcare Study](https://github.com/DataSQRL/datasqrl-examples/tree/main/healthcare-study) | Three use cases over one shared catalog: a real-time API, analytics in Iceberg, and an enriched stream published to Kafka | One catalog feeding API, analytics, and streaming |
-| [Oil & Gas Agent Automation](https://github.com/DataSQRL/datasqrl-examples/tree/main/oil-gas-agent-automation) | A monitoring API for an AI agent plus an operations backend with an ingest mutation and a low-flow-rate alert subscription | Event-triggered agents and subscriptions |
-| [IoT Sensor Metrics](https://github.com/DataSQRL/datasqrl-examples/tree/main/iot-sensor-metrics) | An event-driven microservice that ingests sensor readings and serves metrics and alerts | Ingest APIs and time-windowed metrics |
-| [Logistics Shipping](https://github.com/DataSQRL/datasqrl-examples/tree/main/logistics-shipping-geodata) | Real-time shipment tracking with locations, in about 30 lines of SQL | A compact streaming pipeline |
-| [Law Enforcement](https://github.com/DataSQRL/datasqrl-examples/tree/main/law-enforcement) | An integrated view of drivers, vehicles, warrants, and BOLOs, with analytics and alerts for traffic stops | Combining databases and streams |
-| [Iceberg Data Deduplication](https://github.com/DataSQRL/datasqrl-examples/tree/main/iceberg-data-deduplication) | Compaction and deletion jobs for Iceberg tables | Maintaining data lake tables |
-| [User-Defined Functions](https://github.com/DataSQRL/datasqrl-examples/tree/main/user-defined-function) | A custom function shipped with JBang or a Maven project | Extending SQL with your own logic |
+| Example | What it builds | Look here for | Fit |
+|---|---|---|---|
+| [Getting Started Examples](https://github.com/DataSQRL/datasqrl-examples/tree/main/getting-started-examples) | Seven minimal pipelines: Kafka to console, Kafka to Kafka, stream joins, files and Kafka to Iceberg (local or AWS Glue), and Avro with Schema Registry | Connector patterns and your first pipeline | Kafka, Iceberg ETL |
+| [Finance Credit Card Chatbot](https://github.com/DataSQRL/datasqrl-examples/tree/main/finance-credit-card-chatbot) | Enriched transaction analytics for a GenAI chatbot, a credit card rewards program, and a batch variant that writes spending views to Iceberg for DuckDB and Snowflake | Enrichment, APIs for AI agents, batch to Iceberg | Data API, real time, Iceberg ETL |
+| [Clickstream AI Recommendation](https://github.com/DataSQRL/datasqrl-examples/tree/main/clickstream-ai-recommendation) | Personalized content recommendations from clickstream data and LLM-generated vector embeddings | Vector embeddings and real-time recommendations | Data API, real time |
+| [Healthcare Study](https://github.com/DataSQRL/datasqrl-examples/tree/main/healthcare-study) | Three use cases over one shared catalog: a real-time API, analytics in Iceberg, and an enriched stream published to Kafka | One catalog feeding API, analytics, and streaming | Data API, Kafka, Iceberg ETL |
+| [Oil & Gas Agent Automation](https://github.com/DataSQRL/datasqrl-examples/tree/main/oil-gas-agent-automation) | A monitoring API for an AI agent plus an operations backend with an ingest mutation and a low-flow-rate alert subscription | Event-triggered agents and subscriptions | Data API, real time |
+| [IoT Sensor Metrics](https://github.com/DataSQRL/datasqrl-examples/tree/main/iot-sensor-metrics) | An event-driven microservice that ingests sensor readings and serves metrics and alerts | Ingest APIs and time-windowed metrics | Data API, real time |
+| [Logistics Shipping](https://github.com/DataSQRL/datasqrl-examples/tree/main/logistics-shipping-geodata) | Real-time shipment tracking with locations, in about 30 lines of SQL | A compact streaming pipeline | Real time |
+| [Law Enforcement](https://github.com/DataSQRL/datasqrl-examples/tree/main/law-enforcement) | An integrated view of drivers, vehicles, warrants, and BOLOs, with analytics and alerts for traffic stops | Combining databases and streams | CDC, real time |
+| [Iceberg Data Deduplication](https://github.com/DataSQRL/datasqrl-examples/tree/main/iceberg-data-deduplication) | Compaction and deletion jobs for Iceberg tables | Maintaining data lake tables | Iceberg ETL |
+| [User-Defined Functions](https://github.com/DataSQRL/datasqrl-examples/tree/main/user-defined-function) | A custom function shipped with JBang or a Maven project | Extending SQL with your own logic | Any |
 
 The repository also includes a [data generator](https://github.com/DataSQRL/datasqrl-examples/tree/main/data-generator) for producing larger datasets for experiments and benchmarks.
 
@@ -4562,20 +4587,98 @@ Start from your own catalog or data sources and describe the data product you ne
 
 ---
 
-# Frequently Asked Questions
+# How DataSQRL Compares
 
-Source: https://docs.datasqrl.com/docs/main/intro/faq
+Source: https://docs.datasqrl.com/docs/main/intro/comparison
+
+Data engineering has two worlds. **Analytics engineering** models data inside a warehouse for dashboards, reports, and BI. **Operational data engineering** moves, processes, and serves data across systems, in real time or in batches, to applications, customers, and AI agents. DataSQRL is built for the second.
+
+## Why operational is different
+
+|  | Analytics engineering (dbt in a warehouse) | Operational data engineering (DataSQRL)                                                                                                        |
+| --- |--------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------|
+| Typical work | Models for dashboards, reports, and BI     | Real-time pipelines, data APIs, data products                                                                                                  |
+| Systems involved | One warehouse                              | Kafka, Flink, Postgres, Iceberg, query engines, API layer, and operational systems to sync with                                                |
+| Who consumes it | Analysts, (Gen)BI tools                    | Applications, customers, AI agents                                                                                                             |
+| Freshness | Next scheduled run                         | Seconds to minutes, continuously                                                                                                               |
+| Performance | The batch run finishes within its window   | Processing and serving latency, under variable load on both the incoming data and the API requests                                             |
+| When it is wrong | Fix the model and rerun                    | Bad data has already reached live consumers                                                                                                    |
+| Error impact | Reports are late or wrong until the rerun  | Applications break, customers see wrong results, and AI agents act on them; an outage stops every product that depends on the data             |
+| Where bugs hide | Inside one SQL model                       | At the seams between systems, and in time: late events, duplicates, state                                                                      |
+| What verification needs | Tests on the result table                  | Compile-time checks across every system, plus event-time replay                                                                                |
+| What an agent needs | SQL skills and warehouse context           | A compiler and simulator that analyze the execution DAG and expose runtime dynamics                                                            |
+| Operations | The warehouse handles it                   | Long-running jobs, state, upgrades, monitoring, blue-green deployments                                                                         |
+| Observability | Did the run succeed?                       | Continuous monitoring of lag, latency, throughput, and data quality to spot regressions, performance degradation, and early symptoms of issues |
+
+In a warehouse a wrong model is rerun; in an operational system a wrong pipeline has already served bad data, so verification has to happen before deployment.
+
+## Which one do you need?
+
+<div className="row">
+<div className="col col--6">
+
+**Use DataSQRL when:**
+
+- You need a data API (GraphQL, REST, or MCP) over operational data.
+- You build an operational data product with data quality and observability.
+- Kafka is in the pipeline, as source, sink, or both.
+- Results are needed in seconds or minutes, not after the next batch run.
+- An application, a customer, or an AI agent consumes the output, not only a dashboard.
+- You are capturing changes from operational systems into data streams or data lakes.
+
+</div>
+<div className="col col--6">
+
+**Stay with dbt or SQLMesh when:**
+
+- The output is tables for BI and reporting.
+- Runs are scheduled, and the next run is fresh enough.
+- Everything lives in one warehouse.
+
+</div>
+</div>
+
+### Where the warehouse fits
+
+DataSQRL does populate the data lake and warehouse: Snowflake, Databricks, AWS with Redshift or Athena, and others. A typical pipeline takes CDC streams out of a database, enriches them, and lands them in Iceberg, with views generated in each [query engine's](https://docs.datasqrl.com/docs/main/configuration-engine/iceberg-query.md) dialect. The views sit on top of physical tables that stay separate per deployment, which makes blue-green deployments possible.
+
+Models inside the warehouse stay in dbt; operational pipelines that land in the warehouse are DataSQRL's. Many teams run both.
+
+## How does DataSQRL compare to dbt or SQLMesh?
+
+dbt and SQLMesh transform data that is already in a warehouse. DataSQRL builds the pipelines that ingest, process, and serve data across Kafka, Flink, Postgres, Iceberg, and an API. We share their belief that SQL is the right language for data work, and DataSQRL focuses on what agents generating SQL cannot guarantee on their own:
+
+- **End-to-end scope.** Ingestion, streaming, storage, and API serving are covered in one model, not just warehouse transformations. Connectors are compiled deterministically and kept in sync.
+- **Deep relational introspection.** It parses the whole pipeline into a relational plan and validates keys, timestamps, table types, and engine capabilities. dbt manages SQL models mostly through templating, which is string manipulation that does not understand the SQL.
+- **Event-time testing.** It replays real-time and batch data deterministically.
+- **Local build and execution.** Run the entire stack locally to inspect results and iterate quickly.
+
+SQLMesh parses SQL and adds features like column-level lineage, but it also targets batch transformations in a warehouse. Neither tool generates streaming pipelines, database integrations, or APIs.
+
+## How does DataSQRL compare to warehouse-native agents (Snowflake, Databricks, etc)?
+
+dbt's agents, Snowflake's Cortex, Databricks' Genie, and similar tools make coding agents better at writing and maintaining SQL inside a warehouse, with warehouse context and dbt project awareness. They generate the SQL a human would have to build by hand for data warehouse transformations. DataSQRL makes agents reliable at generating streaming jobs, Kafka topics, database schemas, and APIs that have to agree with each other, and at replaying event time to test them. The two can be used side by side: a warehouse-native agent for the models inside the warehouse, a DataSQRL agent for the operational pipelines that feed to and serve from it.
+
+## How does DataSQRL compare to data warehouses like Snowflake, Databricks, or BigQuery?
+
+Data warehouses and lakehouses are built for analytics: they store large volumes of data and answer analytical queries from analysts and BI tools. Several now add streaming ingestion and incrementally updated tables, and Databricks runs its own streaming pipelines inside its platform. That makes analytical data fresher, but the data still lives in the warehouse and is consumed by analytics.
+
+Operational data engineering has different requirements. Applications, customers, and AI agents need low-latency lookups at high concurrency through an API, processing that reacts to events as they arrive, and results that are synced back into operational systems. That work spans Kafka, a stream processor, an operational database, and an API layer, not one warehouse. DataSQRL builds those pipelines on open-source engines you operate and verifies them across every system before deployment.
+
+The two meet at the lake. DataSQRL can land the results in Iceberg tables with views for Snowflake, Databricks, and other query engines, so the warehouse gets operational data without having to serve it. Choose the warehouse for analytics on data that is already there. Choose DataSQRL for the pipelines that move, process, and serve data across systems, including the ones that feed the warehouse.
+
+And when you need to serve live consumers such as applications, customers, or AI agents through APIs or data streams you need the operational control, verification, and testing that DataSQRL provides.
 
 ## Why do I need DataSQRL in addition to my coding agent?
 
-Claude Code, Codex, and similar agents write plausible data pipeline code, but data engineering has failure modes that general-purpose coding agents miss and that pass code review. DataSQRL adds a harness around your agent that catches them:
+Claude Code, Codex, and similar agents write plausible data pipeline code, but data engineering has failure modes that general-purpose coding agents miss and that pass code review. An agent can write Flink SQL, but it cannot see whether a key is wrong across four systems or whether a join breaks on late data. The compiler and simulator can. DataSQRL adds a harness around your agent that catches:
 
 - **The seams between systems.** Types, schemas, and connector configurations are generated by a compiler instead of being handwritten in each system. [Read more](https://docs.datasqrl.com/blog/p1-broken-at-seams)
 - **Bugs that aren't in the query text.** Wrong keys, time-dependent joins, stalled watermarks, and unbounded state are caught by relational validation. [Read more](https://docs.datasqrl.com/blog/p2-validator-relational-introspection)
 - **Bugs that only appear over time.** Late data, races, and updates are tested with event-time replay. [Read more](https://docs.datasqrl.com/blog/p3-testing-framework)
 - **Code nobody can review.** The whole pipeline is expressed in SQL that a person can read in one sitting. [Read more](https://docs.datasqrl.com/blog/p4-human-understanding-one-sql-file)
 
-Your agent keeps doing the reasoning. DataSQRL gives it guardrails and feedback, and it keeps you in control of what gets built.
+Your agent keeps doing the reasoning. DataSQRL gives it guardrails, feedback, and deeper insight while keeping you in control of what gets built.
 
 ## How does DataSQRL compare to Apache Flink or Apache Spark?
 
@@ -4583,30 +4686,40 @@ DataSQRL doesn't replace them. It sits on top. Flink, Kafka, Postgres, Iceberg, 
 
 You keep the full power of each engine. The compiler writes out the artifacts at every level, so you can inspect exactly what runs where and tune it through configuration and hints. Flink is the processing engine today. The engine architecture is modular, so other data engines can be added. See [Configuration](https://docs.datasqrl.com/docs/main/configuration.md) and [How DataSQRL Works](https://docs.datasqrl.com/docs/main/deepdive.md).
 
-## How does DataSQRL compare to dbt or SQLMesh?
-
-We share their belief that SQL is the right language for data work, but DataSQRL solves a different problem.
-
-dbt helps people manage many SQL models across files, mostly through templating, which is string manipulation that does not understand the SQL. Coding agents already handle that kind of file organization well. DataSQRL focuses on what agents cannot guarantee on their own:
-
-- **Deep relational introspection.** It parses the whole pipeline into a relational plan and validates keys, timestamps, table types, and engine capabilities.
-- **Event-time testing.** It replays real-time and batch data deterministically.
-- **Local build and execution.** Run the entire stack locally to inspect results and iterate quickly.
-- **End-to-end scope.** Ingestion, streaming, storage, and API serving are covered in one model, not just warehouse transformations. Connectors are compiled deterministically and kept in sync.
-
-SQLMesh parses SQL and adds features like column-level lineage, but it also targets batch transformations in a warehouse. Neither tool generates streaming pipelines, database integrations, or APIs.
-
 ## How does DataSQRL compare to streaming databases like Materialize, RisingWave, or ksqlDB?
 
-Streaming databases run incremental SQL inside a single system. DataSQRL is a compiler and harness that spans several systems. It splits a pipeline across a stream processor, a log, a database or table format, and an API server, depending on what each part needs. It also adds the pieces an agent needs to produce correct pipelines: validation, event-time replay tests, and inspectable compilation output. The engine architecture is extensible, so a streaming database could serve as an engine in a DataSQRL pipeline. But DataSQRL empowers you to combine the technologies you already trust to solve most of your data problems instead of having to adopt yet another database.
+Streaming databases run incremental SQL inside a single system. DataSQRL is a compiler and harness that spans several systems. It splits a pipeline across a stream processor, a log, a database or table format, and an API server, depending on what each part needs. Streaming databases are a single system; DataSQRL also generates the API and the lake tables. It also adds the pieces an agent needs to produce correct pipelines: validation, event-time replay tests, and inspectable compilation output. The engine architecture is extensible, so a streaming database could serve as an engine in a DataSQRL pipeline. But DataSQRL empowers you to combine the technologies you already trust to solve most of your data problems instead of having to adopt yet another database.
 
 ## Does DataSQRL replace Airflow, Dagster, Fivetran, or Airbyte?
 
 No, they are complementary. Orchestrators schedule and coordinate jobs, and ingestion tools move data into your platform. DataSQRL defines and compiles the integration, processing, and serving logic. It reads from the systems those tools write to, such as Kafka topics, databases, and Iceberg tables, and its compiled jobs can be deployed and scheduled with your existing tooling.
 
+## Summary of alternatives
+
+| Tool | What it is for | Real-time pipelines | Data API | Cross-system compile-time checks | Agent verification |
+| --- | --- | --- | --- | --- | --- |
+| dbt and SQLMesh | Batch SQL models inside a warehouse | No | No | No, one warehouse | Tests on result tables |
+| Warehouse-native agents | Agents writing SQL and dbt models inside a warehouse | No | No | No, one warehouse | Warehouse context and tests |
+| Streaming databases | Incremental SQL inside one system | Yes | Through the database's own interface | No, one system | None built in |
+| Plain coding agent on Flink | Handwritten Flink jobs, connectors, and API code | Yes | Handwritten | No | Code review and integration tests |
+| DataSQRL | Operational pipelines, data APIs, and data products across systems | Yes | Generated GraphQL, REST, and MCP | Yes | Compiler, validator, and event-time simulator |
+
+See the [FAQ](https://docs.datasqrl.com/docs/main/intro/faq.md) for questions about infrastructure, lock-in, extensibility, and policies.
+
+
+---
+
+# Frequently Asked Questions
+
+Source: https://docs.datasqrl.com/docs/main/intro/faq
+
+For how DataSQRL compares to dbt, SQLMesh, warehouse-native agents, data warehouses, streaming databases, Flink, Spark, orchestrators, and plain coding agents, see [How DataSQRL Compares](https://docs.datasqrl.com/docs/main/intro/comparison.md).
+
 ## Is DataSQRL only for real-time streaming?
 
-No. The same SQL runs as a streaming or a batch pipeline, depending on the [Flink runtime mode](https://docs.datasqrl.com/docs/main/configuration-engine/flink.md). Batch pipelines can be split into [sequential sub-batches](https://docs.datasqrl.com/docs/main/sqrl-language.md#next_batch). A common pattern is batch processing into Iceberg tables that are queried through DuckDB or Snowflake. You can also use DataSQRL to build data products and views in your existing data lake(house). See the [examples](https://docs.datasqrl.com/docs/main/intro/examples.md) for both styles.
+No. Operational means data that moves between systems and is served to consumers, in real time or in batches. Batch ETL into Iceberg is in scope. Modeling inside a warehouse is not.
+
+The same SQL runs as a streaming or a batch pipeline, depending on the [Flink runtime mode](https://docs.datasqrl.com/docs/main/configuration-engine/flink.md). Batch pipelines can be split into [sequential sub-batches](https://docs.datasqrl.com/docs/main/sqrl-language.md#next_batch). A common pattern is batch processing into Iceberg tables that are queried through DuckDB or Snowflake. You can also use DataSQRL to build data products and views in your existing data lake(house). See the [examples](https://docs.datasqrl.com/docs/main/intro/examples.md) for both styles.
 
 ## Does it work with our existing infrastructure?
 
@@ -4638,6 +4751,8 @@ A [semantic data catalog](https://docs.datasqrl.com/docs/main/intro/examples.md)
 # Deep Dive: How DataSQRL Works
 
 Source: https://docs.datasqrl.com/docs/main/deepdive
+
+The compiler checks the pipeline across every system before deployment, because in an operational pipeline a mismatch between systems fails in production, not in a test query.
 
 The DataSQRL `compile` command executes the following steps:
 

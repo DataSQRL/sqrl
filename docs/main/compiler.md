@@ -338,6 +338,8 @@ Check out the [Deployments documentation](https://docs.datasqrl.com/docs/main/de
 
 ## Test Command
 
+With live consumers, data quality has to be proven before deployment, so tests replay real event timing: the simulator runs the compiled pipeline and replays events at their original timestamps.
+
 The `test` command compiles and runs the data pipeline, then executes the provided test API queries and API endpoints
 for all tables annotated with `/*+ test */` to snapshot the results.
 

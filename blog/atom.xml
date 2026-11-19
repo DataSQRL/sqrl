@@ -2,11 +2,52 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://docs.datasqrl.com/blog</id>
     <title>DataSQRL Blog</title>
-    <updated>2026-09-29T00:00:00.000Z</updated>
+    <updated>2026-11-16T00:00:00.000Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://docs.datasqrl.com/blog"/>
     <subtitle>DataSQRL Blog</subtitle>
     <icon>https://docs.datasqrl.com/img/favicon.ico</icon>
+    <entry>
+        <title type="html"><![CDATA[Operational Data Engineering Is Not Analytics Engineering]]></title>
+        <id>https://docs.datasqrl.com/blog/operational-data-engineering</id>
+        <link href="https://docs.datasqrl.com/blog/operational-data-engineering"/>
+        <updated>2026-11-16T00:00:00.000Z</updated>
+        <summary type="html"><![CDATA[Analytics engineering models data inside a warehouse. Operational data engineering moves, processes, and serves data across systems to live consumers. Why the difference decides what a data engineering agent needs.]]></summary>
+        <content type="html"><![CDATA[<p>Ask ten people what a data engineer does and you get ten answers. One builds Spark jobs. One maintains Kafka clusters. One writes ETL into the warehouse. One keeps the CDC pipelines alive so the search index stays fresh. They all have the same job title.</p>
+<p>"Data engineering" grew up as a catch-all for anything that moves data from where it is to where it's needed. As data engineering matured, sub-areas started to emerge.</p>
+<p>dbt drew the first clear boundary. It took the work of turning raw warehouse tables into models for dashboards and reports, and gave it a name: <strong>analytics engineering</strong>. The boundary is the warehouse. Inside it, the work is SQL models, version control, tests, and documentation. A clear boundary led to a clear process, and a clear process led to tooling everyone now takes for granted.</p>
+<p>Another clearly defined sub-area is <strong>operational data engineering</strong>: It moves, processes, and serves data across systems, in real time or in batches, to consumers that act on the data the moment it arrives or becomes available.</p>
+<p>Both use SQL. Both benefit from coding agents. But they fail in different ways, and that decides what an agent needs to do the job well.</p>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="it-starts-with-the-consumer">It starts with the consumer<a href="https://docs.datasqrl.com/blog/operational-data-engineering#it-starts-with-the-consumer" class="hash-link" aria-label="Direct link to It starts with the consumer" title="Direct link to It starts with the consumer" translate="no">​</a></h2>
+<p>The clearest way to tell the two apart is to ask who consumes the data.</p>
+<p>In analytics engineering, the consumer is a person inside your organization. An analyst looks at a dashboard, a BI tool runs a report, an executive reads a number in a meeting. The data needs to be fresh as of the last scheduled run. Performance means the batch finishes within its window. When a model is wrong, someone notices, the model gets fixed, and the next run corrects it. The report was late or wrong for a while. That's annoying, but it's recoverable.</p>
+<p>In operational data engineering, the consumer is a live system or customer. An application calls an API to decide what a customer sees. A workflow reads the latest state to trigger the next step. An AI agent queries the data and acts on the answer. These consumers need fresh data and they need it instantly on request or pushed to them. Performance means processing and serving latency under variable load, both on the incoming events and on the API requests.</p>
+<p>And when the data is wrong, it has already been served. The application broke, the customer saw the wrong price, the agent took the wrong action. Rerunning the pipeline doesn't undo any of that. An outage doesn't delay a report. It stops every product that depends on the data.</p>
+<p>That's why operational data comes with SLAs and analytics data mostly doesn't. Live consumers need guarantees on freshness, latency, availability, and correctness. Those guarantees have to be proven before deployment, not discovered after.</p>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="one-system-versus-many">One system versus many<a href="https://docs.datasqrl.com/blog/operational-data-engineering#one-system-versus-many" class="hash-link" aria-label="Direct link to One system versus many" title="Direct link to One system versus many" translate="no">​</a></h2>
+<p>A dbt project runs inside one warehouse. The warehouse owns the types, the storage, the execution, and the operations. When an agent writes a model, the warehouse checks most of what can go wrong. A test on the result table catches the rest.</p>
+<p>Live consumers rarely sit next to a warehouse. Serving them means integrating several systems. A Kafka topic carries the events, Flink processes them, Postgres or Iceberg stores the results, and an API layer serves them. Often the results also need to sync back into operational systems.</p>
+<p>Each of those systems has its own schema, its own types, its own notion of a key, and its own configuration. Nothing checks that they agree. A coding agent can write correct Flink SQL and still get a key wrong between Flink and Postgres, or map a timestamp differently in the topic and the table. Those bugs live <a class="" href="https://docs.datasqrl.com/blog/p1-broken-at-seams">at the seams between systems</a>, and no single system's tests see them.</p>
+<p>The operations look different too. In a warehouse, "did the run succeed?" is most of the monitoring. An operational pipeline is a set of long-running jobs with state that has to survive upgrades and blue-green deployments. You watch lag, latency, throughput, and data quality continuously, because regressions show up as a slow drift long before they show up as an outage.</p>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="time-is-part-of-the-logic">Time is part of the logic<a href="https://docs.datasqrl.com/blog/operational-data-engineering#time-is-part-of-the-logic" class="hash-link" aria-label="Direct link to Time is part of the logic" title="Direct link to Time is part of the logic" translate="no">​</a></h2>
+<p>A warehouse model reads a table that has stopped changing. An operational pipeline reads data that arrives continuously and out of order. Late events, duplicates, races between streams, idle sources, updates, and deletes are normal operation. A join that is correct on a snapshot can be wrong when one side arrives a minute late.</p>
+<p>These bugs don't show up in the query text. They don't show up in a test against fixed fixtures either. They show up when events <a class="" href="https://docs.datasqrl.com/blog/p3-testing-framework">are replayed at their original timestamps</a>, which is a different kind of test than a check on a result table.</p>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="why-it-needs-a-different-harness">Why it needs a different harness<a href="https://docs.datasqrl.com/blog/operational-data-engineering#why-it-needs-a-different-harness" class="hash-link" aria-label="Direct link to Why it needs a different harness" title="Direct link to Why it needs a different harness" translate="no">​</a></h2>
+<p>For analytics engineering, a coding agent mostly needs SQL skills and context about the warehouse: which tables exist, what the columns mean, which conventions the team follows. The warehouse does the integration and the operations. The warehouse-native agents being built today handle this well.</p>
+<p>Operational data engineering is a different problem. The hard part isn't writing the SQL. It's making several systems agree, getting the behavior over time right, and proving the guarantees a live consumer depends on. Better context doesn't solve that. A smarter model doesn't either. The agent needs feedback from tools that see what it can't.</p>
+<p>That's a <strong>harness</strong>: the tools and checks an agent works inside. A compiler generates the seams between systems from one model, so they can't disagree. A validator checks keys, timestamps, and table types across the whole pipeline. A simulator replays event time so the agent can see how the pipeline behaves when data arrives late or out of order. The agent writes the logic. The harness verifies it before anything reaches a live consumer.</p>
+<p>That's what we built <a class="" href="https://docs.datasqrl.com/docs/intro">DataSQRL</a> to be: an open-source harness for agentic data engineering on operational data. Agents build real-time pipelines, data APIs, and data products. A compiler verifies them.</p>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="use-both">Use both<a href="https://docs.datasqrl.com/blog/operational-data-engineering#use-both" class="hash-link" aria-label="Direct link to Use both" title="Direct link to Use both" translate="no">​</a></h2>
+<p>The two worlds meet in the data lake and warehouse. Operational pipelines often land their results there, for example CDC streams enriched and written to Iceberg with views for the warehouse's query engine. The split is simple. Models inside the warehouse stay in dbt. Pipelines that serve live consumers, including the ones that land in the warehouse, belong in an operational harness. Many teams run both.</p>
+<p>Not sure which one your problem is? <a class="" href="https://docs.datasqrl.com/docs/intro/comparison">How DataSQRL Compares</a> lists the signals: a data API over operational data, Kafka in the pipeline, results needed in seconds or minutes, or applications and AI agents as consumers. If any of those apply, you're doing operational data engineering.</p>]]></content>
+        <author>
+            <name>Matthias Broecheler</name>
+            <uri>https://github.com/mbroecheler</uri>
+        </author>
+        <category label="Agentic" term="Agentic"/>
+        <category label="Data Engineering" term="Data Engineering"/>
+        <category label="DataSQRL" term="DataSQRL"/>
+    </entry>
     <entry>
         <title type="html"><![CDATA[The Whole Pipeline in One File a Human Can Actually Read]]></title>
         <id>https://docs.datasqrl.com/blog/p4-human-understanding-one-sql-file</id>
