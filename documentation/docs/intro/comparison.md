@@ -81,7 +81,7 @@ Operational data engineering has different requirements. Applications, customers
 
 The two meet at the lake. DataSQRL can land the results in Iceberg tables with views for Snowflake, Databricks, and other query engines, so the warehouse gets operational data without having to serve it. Choose the warehouse for analytics on data that is already there. Choose DataSQRL for the pipelines that move, process, and serve data across systems, including the ones that feed the warehouse.
 
-And when you need to serve live consumers such as applications, customers, or AI agents through APIs or data streams you need the operational control, verification, and testing that DataSQRL provides.
+And when you need to serve live consumers such as applications, customers, or AI agents through APIs or data streams, you need the operational control, verification, and testing that DataSQRL provides.
 
 ## Why do I need DataSQRL in addition to my coding agent?
 
