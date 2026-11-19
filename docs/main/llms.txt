@@ -43,7 +43,7 @@ This is the documentation of the unreleased `main` branch of DataSQRL. The docum
 
 - [SQRL Language Specification](https://docs.datasqrl.com/docs/main/sqrl-language.md): Specification of SQRL, the extension of Flink SQL with table functions, relationships, and API definitions that DataSQRL compiles into data pipelines.
 - [Connecting External Data Sources and Sinks](https://docs.datasqrl.com/docs/main/connectors.md): Connect Kafka, databases, files, and other external sources and sinks to SQRL scripts with CREATE TABLE and Flink connectors, including CDC.
-- [Designing the Interface](https://docs.datasqrl.com/docs/main/interface.md): Design the GraphQL, REST, and MCP APIs and data product views that DataSQRL generates from a SQRL script, including mutations and subscriptions.
+- [Designing the Interface](https://docs.datasqrl.com/docs/main/interface.md): Design the GraphQL, REST, and MCP APIs and the data lake and database views that DataSQRL generates from a SQRL script, including mutations and subscriptions.
 - [DataSQRL Configuration (package.json)](https://docs.datasqrl.com/docs/main/configuration.md): Reference for the DataSQRL package.json configuration: engines, scripts, tests, compiler options, connectors, environment variables, and merging.
 - [Flink Engine Configuration](https://docs.datasqrl.com/docs/main/configuration-engine/flink.md): Configure Apache Flink, the stream and batch processing engine in DataSQRL pipelines: runtime mode, Flink SQL options, and an example configuration.
 - [Kafka Engine Configuration](https://docs.datasqrl.com/docs/main/configuration-engine/kafka.md): Configure Apache Kafka, the log engine in DataSQRL pipelines: topic retention, watermarks, transactions, and key and value formats.
