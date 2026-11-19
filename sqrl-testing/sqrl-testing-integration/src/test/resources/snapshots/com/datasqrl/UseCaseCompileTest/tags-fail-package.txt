@@ -103,71 +103,85 @@ CustomerRegions := SELECT id, address AS region FROM Customers;
 /*+declassify(pii, classification) */
 ^
 
-[FATAL] Tag [@pii=unknown] has an invalid value: allowed values are [masked, raw]
+[FATAL] Table [CustomerJurisdictionCases] has tag [@jurisdiction] which requires column [jurisdiction] of type [STRING], but the name matches columns that differ only in case: write `JURISDICTION` or `jurisdiction` to match exactly one
 in script:tags.sqrl [34:1]:
 CustomerJurisdictions := SELECT id, 1 AS jurisdiction FROM Customers;
+
+/*+declassify(pii, classification) */
+^
+
+[FATAL] Table [CustomerCountries] has tag [@country] which requires column [`Country`] of type [STRING], but the column is missing
+in script:tags.sqrl [42:1]:
+CustomerCountryCases := SELECT id, 1 AS country, address AS Country FROM Customers;
+
+/*+declassify(pii, classification) */
+^
+
+[FATAL] Tag [@pii=unknown] has an invalid value: allowed values are [masked, raw]
+in script:tags.sqrl [46:1]:
+CustomerCountries := SELECT id, address AS country FROM Customers;
 
 /*+engine(kafka) */
 ^
 
 [NOTICE] This table does not propagate the source row time columns: default_catalog.default_database.ContactEventsCopy[event_time]
-in script:tags.sqrl [47:1]:
+in script:tags.sqrl [59:1]:
 ) LIKE ContactEvents;
 
 /** Missing the pii tag of the email column comment that LIKE copies */
 ^
 
 [FATAL] Table [ContactEmails] must declare tag [@pii=raw] inherited from [ContactEventsCopy]: declare it in the doc string or declassify it with /*+declassify(pii) */
-in script:tags.sqrl [47:1]:
+in script:tags.sqrl [59:1]:
 ) LIKE ContactEvents;
 
 /** Missing the pii tag of the email column comment that LIKE copies */
 ^
 
 [FATAL] Table [CustomerContacts] must declare tag [@classification=confidential] inherited from [Customers]: declare it in the doc string of the table
-in script:tags.sqrl [60:1]:
+in script:tags.sqrl [72:1]:
 );
 
 INSERT INTO CustomerContacts SELECT id, email FROM Customers;
 ^
 
 [FATAL] Table [CustomerContacts] must declare tag [@pii=raw] inherited from [Customers]: declare it in the doc string of the table
-in script:tags.sqrl [60:1]:
+in script:tags.sqrl [72:1]:
 );
 
 INSERT INTO CustomerContacts SELECT id, email FROM Customers;
 ^
 
 [FATAL] Table [CustomerContacts] must declare tag [@classification=internal] inherited from [ApplicationContacts]: declare it in the doc string of the table
-in script:tags.sqrl [65:1]:
+in script:tags.sqrl [77:1]:
 ApplicationContacts := SELECT customer_id AS id, CAST(NULL AS STRING) AS email FROM Applications;
 
 EXPORT ApplicationContacts TO CustomerContacts;
 ^
 
 [FATAL] Table [CustomerContacts] must declare tag [@financial] inherited from [ApplicationContacts]: declare it in the doc string of the table
-in script:tags.sqrl [65:1]:
+in script:tags.sqrl [77:1]:
 ApplicationContacts := SELECT customer_id AS id, CAST(NULL AS STRING) AS email FROM Applications;
 
 EXPORT ApplicationContacts TO CustomerContacts;
 ^
 
 [FATAL] Table [EmailArchive] must declare tag [@classification=confidential] inherited from [CustomerEmails]: declare it in the doc string of the table
-in script:tags.sqrl [67:1]:
+in script:tags.sqrl [79:1]:
 EXPORT ApplicationContacts TO CustomerContacts;
 
 EXPORT CustomerEmails TO sinks.archive.EmailArchive;
 ^
 
 [FATAL] Table [EmailArchive] must declare tag [@pii=raw] inherited from [CustomerEmails]: declare it in the doc string of the table
-in script:tags.sqrl [67:1]:
+in script:tags.sqrl [79:1]:
 EXPORT ApplicationContacts TO CustomerContacts;
 
 EXPORT CustomerEmails TO sinks.archive.EmailArchive;
 ^
 
 [FATAL] Table [CustomerAudit] has tag [@jurisdiction] which requires column [jurisdiction] of type [STRING], but the column is missing
-in script:tags.sqrl [69:1]:
+in script:tags.sqrl [81:1]:
 EXPORT CustomerEmails TO sinks.archive.EmailArchive;
 
 /** Audit of customer ids, missing the column required by the jurisdiction tag @jurisdiction */

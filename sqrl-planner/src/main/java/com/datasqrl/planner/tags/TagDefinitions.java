@@ -17,10 +17,10 @@ package com.datasqrl.planner.tags;
 
 import com.datasqrl.config.PackageJson.TagConfig;
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.planner.analyzer.ColumnReference;
 import com.datasqrl.planner.tags.TagDefinition.RequiredColumn;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -99,29 +99,34 @@ public final class TagDefinitions {
       }
 
       var columns = new ArrayList<RequiredColumn>();
-      var columnNames = new HashSet<String>();
+      var columnNames = new ArrayList<ColumnReference>();
       for (var column : entry.getValue().getRequiredColumns().entrySet()) {
-        // Tables are checked for their required columns case-insensitively
-        if (!columnNames.add(column.getKey().toLowerCase(Locale.ROOT))) {
+        var columnName = ColumnReference.parse(column.getKey());
+
+        // Two names are duplicates when they would match the same column of a table
+        if (columnNames.stream().anyMatch(columnName::overlaps)) {
           errors.fatal(
               "Duplicate required column [%s] of tag [%s] in compiler.tags: column names are"
-                  + " case-insensitive",
+                  + " case-insensitive unless they are in backticks",
               column.getKey(), name);
           continue;
         }
+
+        columnNames.add(columnName);
+
         try {
           columns.add(
               new RequiredColumn(
-                  column.getKey(), column.getValue(), typeParser.apply(column.getValue())));
+                  columnName, column.getValue(), typeParser.apply(column.getValue())));
         } catch (Exception e) {
           errors.fatal(
               "Invalid type [%s] of required column [%s] of tag [%s] in compiler.tags: %s",
               column.getValue(), column.getKey(), name, e.getMessage());
         }
       }
-
       definitions.put(name, TagDefinition.of(name, values, columns));
     }
+
     return new TagDefinitions(true, definitions);
   }
 

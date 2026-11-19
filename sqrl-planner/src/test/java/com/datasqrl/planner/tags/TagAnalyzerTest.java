@@ -23,6 +23,7 @@ import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorLocation.FileLocation;
 import com.datasqrl.error.ErrorMessage;
 import com.datasqrl.error.ErrorMessage.Severity;
+import com.datasqrl.planner.analyzer.ColumnReference;
 import com.datasqrl.planner.analyzer.TableAnalysis;
 import com.datasqrl.planner.analyzer.TableOrFunctionAnalysis;
 import com.datasqrl.planner.hint.DocStringParser;
@@ -69,7 +70,15 @@ class TagAnalyzerTest {
               TagDefinition.of(
                   "jurisdiction",
                   List.of(),
-                  List.of(new RequiredColumn("jurisdiction", "STRING", STRING)))));
+                  List.of(
+                      new RequiredColumn(
+                          new ColumnReference("jurisdiction", false), "STRING", STRING))),
+              TagDefinition.of(
+                  "country",
+                  List.of(),
+                  List.of(
+                      new RequiredColumn(
+                          new ColumnReference("Country", true), "STRING", STRING)))));
 
   private final TagAnalyzer analyzer = new TagAnalyzer(DEFINITIONS);
   private final ErrorCollector errors = ErrorCollector.root();
@@ -257,6 +266,40 @@ class TagAnalyzerTest {
   }
 
   @Test
+  void givenColumnsDifferingOnlyInCase_whenAnalyze_thenReportsAmbiguousRequiredColumn() {
+    var table =
+        table("Cases", TYPES.builder().add("JURISDICTION", INT).add("jurisdiction", STRING).build())
+            .fromTables(List.of(input("Customers", "@jurisdiction")))
+            .build();
+
+    analyzer.analyze(table, false, errors);
+
+    assertThat(messages())
+        .containsExactly(
+            "Table [Cases] has tag [@jurisdiction] which requires column [jurisdiction] of type"
+                + " [STRING], but the name matches columns that differ only in case: write"
+                + " `JURISDICTION` or `jurisdiction` to match exactly one");
+  }
+
+  @Test
+  void givenRequiredColumnInBackticks_whenAnalyze_thenMatchesOnlyTheExactName() {
+    List<TableOrFunctionAnalysis> inputs = List.of(input("Customers", "@country"));
+
+    analyzer.analyze(
+        table("Cases", TYPES.builder().add("country", INT).add("Country", STRING).build())
+            .fromTables(inputs)
+            .build(),
+        false,
+        errors);
+    analyzer.analyze(table("Lower", "country", STRING).fromTables(inputs).build(), false, errors);
+
+    assertThat(messages())
+        .containsExactly(
+            "Table [Lower] has tag [@country] which requires column [`Country`] of type [STRING],"
+                + " but the column is missing");
+  }
+
+  @Test
   void givenDeclassifiedTagWithRequiredColumns_whenAnalyze_thenColumnsAreNotRequired() {
     var table =
         table("MyTable")
@@ -305,7 +348,11 @@ class TagAnalyzerTest {
 
   private static TableAnalysis.TableAnalysisBuilder table(
       String name, String column, RelDataType type) {
-    var values = LogicalValues.createEmpty(CLUSTER, TYPES.builder().add(column, type).build());
+    return table(name, TYPES.builder().add(column, type).build());
+  }
+
+  private static TableAnalysis.TableAnalysisBuilder table(String name, RelDataType rowType) {
+    var values = LogicalValues.createEmpty(CLUSTER, rowType);
     return TableAnalysis.builder()
         .objectIdentifier(ObjectIdentifier.of("default_catalog", "default_database", name))
         .collapsedRelnode(values);

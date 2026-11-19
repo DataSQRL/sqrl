@@ -1,0 +1,9 @@
+IMPORT ecommerceTs.orders AS _OrdersStream;
+
+-- A plain column name in a hint matches ignoring case, a name in backticks matches exactly
+/*+primary_key(CUSTOMERID), index(btree, `CNT` DESC, `cnt`), query_by_any(`CNT`) */
+CustomerOrderCounts := SELECT customerid, COUNT(*) AS cnt, SUM(id) AS CNT
+                       FROM _OrdersStream GROUP BY customerid;
+
+/*+primary_key(id, `Time`), partition_key(`Time`) */
+OrderTimes := SELECT id, `time`, CAST(`time` AS STRING) AS `Time` FROM _OrdersStream;

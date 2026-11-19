@@ -17,6 +17,7 @@ package com.datasqrl.planner.tags;
 
 import com.datasqrl.calcite.type.TypeCompatibility;
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.planner.analyzer.ColumnReference;
 import com.datasqrl.planner.analyzer.TableAnalysis;
 import com.datasqrl.planner.analyzer.TableOrFunctionAnalysis;
 import com.datasqrl.planner.hint.DeclassifyHint;
@@ -26,10 +27,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
-import org.apache.calcite.rel.type.RelDataTypeField;
+import org.apache.calcite.rel.type.RelDataType;
 import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
 
 /**
@@ -86,37 +88,42 @@ public class TagAnalyzer {
     }
 
     var effective = required.merge(declared);
-    checkRequiredColumns(table.getName(), table::getField, effective, errors);
+    checkRequiredColumns(table.getName(), table::getRowType, effective, errors);
 
     return effective;
   }
 
   /**
    * Validates that a table has the columns that its tags require. {@link #analyze} validates this
-   * for the tables it analyzes.
+   * for the tables it analyzes. The required column names match the columns of the table as
+   * described in {@link ColumnReference}.
    *
    * @param table the name of the table
-   * @param columnByName looks up a column of the table by name, returns null if it is missing
+   * @param rowType supplies the row type of the table, only called when a tag requires columns
    * @param tags the tags of the table
    */
   public void checkRequiredColumns(
-      String table,
-      Function<String, RelDataTypeField> columnByName,
-      TableTags tags,
-      ErrorCollector errors) {
+      String table, Supplier<RelDataType> rowType, TableTags tags, ErrorCollector errors) {
 
     errors = errors.abortOnFatal(false);
     for (var tag : tags.values()) {
       for (var column : tag.definition().requiredColumns()) {
-        var field = columnByName.apply(column.name());
+        var matches = column.name().matchingColumns(rowType.get());
 
-        if (field == null) {
+        if (matches.isEmpty()) {
           errors.fatal(
               "Table [%s] has tag [%s] which requires column [%s] of type [%s], but the column is"
                   + " missing",
               table, tag, column.name(), column.typeName());
 
-        } else if (!TypeCompatibility.isCallSiteCompatible(field.getType(), column.type())) {
+        } else if (matches.size() > 1) {
+          errors.fatal(
+              "Table [%s] has tag [%s] which requires column [%s] of type [%s], but the name"
+                  + " matches columns that differ only in case: write %s to match exactly one",
+              table, tag, column.name(), column.typeName(), ColumnReference.alternatives(matches));
+
+        } else if (!TypeCompatibility.isCallSiteCompatible(
+            matches.get(0).getType(), column.type())) {
           errors.fatal(
               "Table [%s] has tag [%s] which requires column [%s] of type [%s], but the column has"
                   + " type [%s]",
@@ -124,7 +131,7 @@ public class TagAnalyzer {
               tag,
               column.name(),
               column.typeName(),
-              FlinkTypeFactory.toLogicalType(field.getType()).asSummaryString());
+              FlinkTypeFactory.toLogicalType(matches.get(0).getType()).asSummaryString());
         }
       }
     }

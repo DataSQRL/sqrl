@@ -22,11 +22,10 @@ import com.datasqrl.planner.parser.StatementParserException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Function;
 import java.util.stream.Stream;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
-import org.apache.calcite.rel.type.RelDataTypeField;
+import org.apache.calcite.rel.type.RelDataType;
 
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 public class PlannerHints {
@@ -84,7 +83,11 @@ public class PlannerHints {
     return hints.stream().filter(hintClass::isInstance).map(hintClass::cast);
   }
 
-  public void updateColumnNamesHints(Function<String, RelDataTypeField> fieldByIndex) {
-    getHints(ColumnNamesHint.class).forEach(hint -> hint.validateAndUpdate(fieldByIndex));
+  /**
+   * Resolves the column names of the hints against the columns of the table, see {@link
+   * ColumnNamesHint#validateAndUpdate}.
+   */
+  public void updateColumnNamesHints(RelDataType rowType) {
+    getHints(ColumnNamesHint.class).forEach(hint -> hint.validateAndUpdate(rowType));
   }
 }
