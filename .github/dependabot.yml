@@ -4,17 +4,19 @@
 # https://docs.github.com/github/administering-a-repository/configuration-options-for-dependency-updates
 
 # Supply-chain policy: every entry only takes releases that have been public for 14 days (cooldown).
+# Schedule policy: every entry runs once a week, Monday 10:00 UTC. Keep `day` explicit: without it the
+# weekly runs moved to the weekday of the last change to this file.
 version: 2
 updates:
   - package-ecosystem: "maven"
     directory: "/"
-    schedule: { interval: "weekly", time: "10:00" }
+    schedule: { interval: "weekly", day: "monday", time: "10:00", timezone: "UTC" }
     cooldown: { default-days: 14 }
     open-pull-requests-limit: 20
 
   - package-ecosystem: "docker"
     directories: ["/", "/sqrl-cli"]
-    schedule: { interval: "weekly", time: "10:00" }
+    schedule: { interval: "weekly", day: "monday", time: "10:00", timezone: "UTC" }
     cooldown: { default-days: 14 }
     ignore:
       - dependency-name: "eclipse-temurin"
@@ -22,7 +24,7 @@ updates:
 
   - package-ecosystem: "npm"
     directory: "/documentation"
-    schedule: { interval: "monthly", time: "10:00" }
+    schedule: { interval: "weekly", day: "monday", time: "10:00", timezone: "UTC" }
     cooldown: { default-days: 14 }
     groups:
       docusaurus:
@@ -31,5 +33,5 @@ updates:
   # Keeps the actions pinned to commit SHAs in .github/workflows up to date.
   - package-ecosystem: "github-actions"
     directory: "/"
-    schedule: { interval: "weekly", time: "10:00" }
+    schedule: { interval: "weekly", day: "monday", time: "10:00", timezone: "UTC" }
     cooldown: { default-days: 14 }
