@@ -1,5 +1,6 @@
 import React from 'react';
 import Layout from '@theme/Layout';
+import Head from '@docusaurus/Head';
 import Link from '@docusaurus/Link';
 import styles from './index.module.css';
 import useBaseUrl from "@docusaurus/useBaseUrl";
@@ -14,19 +15,48 @@ import TabItem from '@theme/TabItem';
 const roundedImage: React.CSSProperties = {borderRadius: '16px', height: 'auto'};
 
 
-// The one-sentence definition of DataSQRL, shown in the header and used as the meta description
-const definition = 'DataSQRL is an open-source toolkit for building data engineering agents ' +
-    'designed around human control, correctness, and safety.';
+// Canonical copy from POSITIONING.md at the repository root: the one-sentence definition (used as the
+// meta description), the tagline, and the line that defines "operational data" under the tagline
+const definition = 'DataSQRL is an open-source harness for agentic data engineering on operational data: ' +
+    'agents build real-time pipelines, data APIs, and data products; a compiler verifies them.';
+const tagline = 'Agentic Data Engineering for Operational Data';
+const pageTitle = `DataSQRL: ${tagline}`;
+
+const comparisonLink = '/docs/intro/comparison';
+
+const proofFacts: {text: React.ReactNode; link: string}[] = [
+  {text: 'Apache 2.0 licensed', link: 'https://github.com/DataSQRL/sqrl/blob/main/LICENSE'},
+  {text: 'Releases every few weeks', link: 'https://github.com/DataSQRL/sqrl/releases'},
+  {text: <img src="https://img.shields.io/docker/pulls/datasqrl/cmd?label=Docker%20pulls"
+              alt="Docker pulls of datasqrl/cmd" height={20} loading="lazy" style={{verticalAlign: 'middle'}}/>,
+    link: 'https://hub.docker.com/r/datasqrl/cmd'},
+];
 
 const header: HomepageHeaderProps = {
-  title: 'DataSQRL - Agentic Data Engineering Harness',
-  tagLine: 'Data Engineering Harness',
-  text: <>{definition}</>,
+  title: pageTitle,
+  tagLine: tagline,
+  text: <>Real-time pipelines, data APIs, and data products on Kafka, Flink, Postgres, and Iceberg.
+    Built by your coding agent, verified by a compiler.</>,
   buttonLink: 'docs/intro/getting-started',
   buttonText: 'Start Building',
+  secondaryButtonLink: 'https://github.com/DataSQRL/sqrl',
+  secondaryButtonText: 'View on GitHub',
+  footer: (
+      <>
+        <p>
+          For teams building on Kafka, Flink, Postgres, and Iceberg who need data APIs and real-time
+          pipelines. <Link to={comparisonLink}>Not sure it fits?</Link>
+        </p>
+        <ul className="clean-list" style={{display: 'flex', flexWrap: 'wrap', gap: '0.5rem 1.5rem', padding: 0}}>
+          {proofFacts.map((f, i) => (
+              <li key={i}><Link to={f.link}><strong>{f.text}</strong></Link></li>
+          ))}
+        </ul>
+      </>
+  ),
   image: "/img/diagrams/agentic/harness_toolkit.svg",
-  imageAlt: 'DataSQRL harness: your skills and policies, a coding agent, and the DataSQRL framework ' +
-      'packaged as one data engineering agent',
+  imageAlt: 'DataSQRL harness: your skills and policies, a coding agent, and the DataSQRL compiler, ' +
+      'validator, and simulator packaged as one DataSQRL agent',
 };
 
 interface Pillar {
@@ -72,10 +102,10 @@ interface UseCase {
 }
 
 const useCases: UseCase[] = [
-  {title: 'Streaming & Batch Pipelines', text: 'CDC, temporal joins, windowed aggregations, and deduplication on Flink, Kafka, and Iceberg.'},
   {title: 'Data APIs', text: 'GraphQL, REST, and MCP endpoints generated from SQL, with authentication and authorization built in.'},
-  {title: 'Data Products', text: 'Curated, documented, and tested datasets for analytics and downstream teams.'},
-  {title: 'Operational Data', text: 'Low-latency data for applications and AI agents, including embeddings and LLM enrichment.'},
+  {title: 'Real-Time Pipelines', text: 'CDC, temporal joins, windowed aggregations, and deduplication on Flink and Kafka, with low-latency results for applications and AI agents.'},
+  {title: 'Data Products', text: 'Curated, documented, and tested pipelines and data APIs, each built for one business need.'},
+  {title: 'Batch ETL into Iceberg', text: 'The same SQL in batch mode, landing enriched data in Iceberg with views for Snowflake, Databricks, Athena, and DuckDB.'},
   {title: 'See It in Action', text: 'Browse data products for a retail bank and self-contained pipelines across finance, healthcare, IoT, logistics, and more.',
     link: '/docs/intro/examples', linkText: 'Explore the examples'},
 ];
@@ -127,6 +157,11 @@ function UseCaseCard({title, text, link, linkText}: UseCase) {
 export default function Home() {
   return (
       <Layout title={header.title} description={definition}>
+        {/* Overrides the "title | DataSQRL" pattern so the brand appears once */}
+        <Head>
+          <title>{pageTitle}</title>
+          <meta property="og:title" content={pageTitle}/>
+        </Head>
         <HomepageHeader {...header} />
         <main>
           <section className={styles.content}>
@@ -140,6 +175,8 @@ export default function Home() {
                     Writing code is no longer the bottleneck for data teams. Trusting and managing it is.<br />
                     General-purpose coding agents solve data engineering tasks with dozens of files in multiple languages.
                     The results look plausible but contain subtle bugs and misalignments that are hard to spot.
+                    In operational systems that code feeds live applications, so errors reach customers before
+                    anyone reviews them.
                   </p>
                   <img src={useBaseUrl("/img/diagrams/agentic/control_comparison.svg")}
                        width={960} height={400} loading="lazy" decoding="async"
@@ -151,7 +188,7 @@ export default function Home() {
               {/* ---------- Three pillars ---------- */}
               <div className="row margin-bottom--md">
                 <div className="col text--center">
-                  <h2>Automate data engineering without giving up control</h2>
+                  <h2>Automate operational data engineering without giving up control</h2>
                 </div>
               </div>
               <div className="row margin-bottom--xl">
@@ -252,6 +289,10 @@ NoUnenrichedTransactions :=
                   <p className="hero__subtitle">
                     Late and out-of-order data, races between streams, idle sources, updates, and
                     deletes become deterministic tests.
+                  </p>
+                  <p className="hero__subtitle">
+                    Late events, duplicates, and races between streams do not exist in a batch model,
+                    and they are where operational pipelines fail.
                   </p>
                   <Link to="/blog/p3-testing-framework">
                     Why standard integration tests fall short →
@@ -359,11 +400,24 @@ ls build/deploy/plan`}
               {/* ---------- Use cases ---------- */}
               <div className="row margin-bottom--md margin-top--lg">
                 <div className="col text--center">
-                  <h2>What a DataSQRL Data Engineering Agent Builds</h2>
+                  <h2>What a DataSQRL Agent Builds</h2>
                 </div>
               </div>
-              <div className="row margin-bottom--xl">
+              <div className="row margin-bottom--md">
                 {useCases.map((u) => <UseCaseCard key={u.title} {...u} />)}
+              </div>
+              <div className="row margin-bottom--xl">
+                <div className="col text--center">
+                  <p>
+                    <strong>Not built for:</strong> dbt models on a schedule inside a warehouse.{' '}
+                    <Link to={comparisonLink}>See how DataSQRL compares →</Link>
+                  </p>
+                  <p>
+                    <Link to="/blog/operational-data-engineering">
+                      Why operational data engineering is not analytics engineering →
+                    </Link>
+                  </p>
+                </div>
               </div>
 
               <div className="row margin-bottom--xl margin-top--lg">
@@ -380,6 +434,9 @@ ls build/deploy/plan`}
                     DataSQRL compiles to Flink, Kafka, Postgres, and Iceberg and deploys to Docker,
                     Kubernetes, or managed cloud services. There is no proprietary runtime, and the
                     harness is open source.
+                  </p>
+                  <p className="hero__subtitle">
+                    If Kafka is already in your stack, DataSQRL fits on top of it.
                   </p>
                 </div>
               </div>
@@ -423,7 +480,7 @@ ls build/deploy/plan`}
                 <div className="col col--5 col--offset-1 text--left">
                   <h2>Getting Started</h2>
                   <p className="hero__subtitle">
-                    The agent wraps the Pi coding agent with the DataSQRL framework and skills. Once
+                    The DataSQRL core agent wraps the Pi coding agent with the DataSQRL harness and skills. Once
                     it is running, tell it what you need in plain English:
                   </p>
                   <blockquote>
@@ -434,9 +491,9 @@ ls build/deploy/plan`}
                     You get SQL scripts with tests that you can read, run, and verify.
                   </p>
                   <p>
-                    Want planning, iterative refinement, and deployment workflows? <Link to="https://github.com/DataSQRL/datasqrl-plugin">Install the
-                    advanced DataSQRL agent</Link> as a plugin for Claude Code, Codex, Cursor, or GitHub
-                    Copilot.
+                    Want verifiers, judges, and implementation loops? Run the advanced agent from Claude
+                    Code, Codex, Cursor, or GitHub Copilot with the <Link to="https://github.com/DataSQRL/datasqrl-plugin">DataSQRL
+                    plugin</Link>.
                   </p>
                   <Link className="button button--primary button--lg margin-right--sm margin-bottom--sm"
                         to="/docs/intro/getting-started">Getting Started Guide</Link>

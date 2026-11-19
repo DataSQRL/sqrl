@@ -25,9 +25,8 @@
   <packaging>pom</packaging>
 
   <name>SQRL</name>
-  <description>DataSQRL is an open-source data engineering harness for building data engineering agents designed around
-    human control, correctness, and safety. It extends coding agents with a SQL compiler, validator, and event-time
-    simulator to build data pipelines, data APIs, and data products.</description>
+  <description>DataSQRL is an open-source harness for agentic data engineering on operational data: agents build
+    real-time pipelines, data APIs, and data products; a compiler verifies them.</description>
   <url>https://docs.datasqrl.com/</url>
 
   <inceptionYear>2021</inceptionYear>

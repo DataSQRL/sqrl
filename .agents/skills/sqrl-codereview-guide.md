@@ -30,7 +30,7 @@ You are reviewing code for SQRL. Follow these guidelines:
 1. **SQRL Snapshot Files**: Any file with a `.snapshot` extension that contains the snapshot data
 2. **Unit Test Snapshot Files**: Any `.txt` files under the `sqrl-testing/sqrl-testing-integration/src/test/resources/snapshots/com/datasqrl` directory
 3. **User Documentation**: Markdown files under `documentation/docs`, published as the DataSQRL documentation site
-4. **Agent Skills**: The `SKILL.md` files and their reference files under `agent/skills`, used by the DataSQRL data engineering agent
+4. **Agent Skills**: The `SKILL.md` files and their reference files under `agent/skills`, used by the DataSQRL agent
 
 ## What to Check
 

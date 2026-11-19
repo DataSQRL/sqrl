@@ -35,7 +35,7 @@ jobs:
     needs: check-changes
     if: needs.check-changes.outputs.has-docs == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -63,6 +63,17 @@ jobs:
       - name: Check docs and blog front matter
         working-directory: documentation
         run: npm run check-front-matter
+
+      # Build the docs versioned as deploy.yml does, so that a link from the unversioned pages
+      # (homepage, blog) to a docs page the latest release does not have fails here, not on deploy.
+      # Releases before 0.12 predate the current site structure and are not checked.
+      - name: Fetch release branches
+        run: git fetch --no-tags --depth 1 origin '+refs/heads/release-*:refs/remotes/origin/release-*'
+
+      - name: Prepare versioned docs
+        env:
+          FIRST_VERSIONED_ZERO_MINOR: 12
+        run: documentation/scripts/prepare-versioned-docs.sh
 
       - name: Build Docusaurus site
         working-directory: documentation

@@ -5,6 +5,8 @@ description: "The files the DataSQRL compiler writes to build and build/deploy, 
 
 # Compilation Output
 
+The compiler checks the pipeline across every system before deployment, because in an operational pipeline a mismatch between systems fails in production, not in a test query.
+
 The [`compile`](compiler#compile-command) command writes two kinds of output. Compilation outputs in the `build` folder describe the data model and the pipeline the compiler planned. Deployment outputs in `build/deploy/plan` are the artifacts each engine executes. The [`run`](compiler#run-command) and [`test`](compiler#test-command) commands produce the same output before they execute the pipeline.
 
 The output is the basis for validating a pipeline before you deploy it, whether you or a coding agent wrote the SQRL script. Each file shows the pipeline at a different level of detail, from the data model down to the physical plan of each engine. This page lists the files and what they contain at a high level. The best way to learn the details is to compile a project and inspect the files:

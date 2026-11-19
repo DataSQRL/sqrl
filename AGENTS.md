@@ -4,10 +4,17 @@ This file provides guidance to coding agents (e.g., Claude Code, Codex) when wor
 
 ## Project Overview
 
-DataSQRL is an open-source data engineering harness for building data engineering agents designed around
-human control, correctness, and safety. It extends coding agents with a SQL compiler, a validator, an
-event-time simulator, and skills. The compiler turns SQL-like scripts (SQRL) into complete data pipelines
-that integrate Kafka, Flink, PostgreSQL, Iceberg, GraphQL APIs, and LLM tooling. Built with Java 17 and Maven.
+DataSQRL is an open-source harness for agentic data engineering on operational data: agents build real-time
+pipelines, data APIs, and data products; a compiler verifies them. It extends coding agents with a SQL compiler,
+a validator, an event-time simulator, and skills. The compiler turns SQL-like scripts (SQRL) into complete data
+pipelines that integrate Kafka, Flink, PostgreSQL, Iceberg, GraphQL APIs, and LLM tooling. Built with Java 17 and Maven.
+
+## Positioning and Naming
+
+[`POSITIONING.md`](POSITIONING.md) holds the canonical tagline, definition, boilerplate, fit triggers, and naming
+glossary. When writing or editing any description of DataSQRL (READMEs, documentation, site metadata, `llms.txt`,
+package descriptions), copy or derive the text from `POSITIONING.md` and use the glossary terms. Change
+`POSITIONING.md` first when the positioning changes.
 
 ## External Dependencies
 
@@ -94,7 +101,7 @@ Multi-module Maven project (versions live in the root `pom.xml` properties, not 
 - **sqrl-testing/** - Integration and end-to-end tests:
   - `sqrl-testing-integration/` - Compiler and pipeline integration tests, including snapshot tests
   - `sqrl-testing-container/` - Docker image end-to-end tests
-- **agent/** - DataSQRL data engineering agent image and its skills
+- **agent/** - DataSQRL core agent image (`datasqrl/core-agent`) and its skills
 - **documentation/** - User documentation site
 
 ## Development Workflow
