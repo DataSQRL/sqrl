@@ -45,7 +45,8 @@ Apache Flink deployments consist of 1 job manager and a configurable number of i
         "jobmanager-size": "small",    // Job manager instance size (see table below)
         "taskmanager-size": "medium",  // Task manager instance size (see table below)
         "taskmanager-count": 2,        // Number of task managers (positive integer)
-        "taskmanager-disk-size-gb": 400 // NVMe space per task manager (see "Task Manager Disk" below)
+        "taskmanager-disk-size-gb": 400, // NVMe space per task manager (see "Task Manager Disk" below)
+        "taskmanager-slot-scaling": true // Whether slots follow taskmanager-cpu-limit-factor (see "Task Slots Follow the Ceiling")
       }
     }
   }
@@ -267,9 +268,11 @@ The limit factor must be at least `max(1, request factor)`, otherwise the ceilin
 
 ### Task Slots Follow the Ceiling
 
-On a Flink task manager the slot count moves with the **ceiling**, not the request, because burst headroom requires subtasks to fill it. Slots scale by the ceiling *relative to the size's own*: `slots x (taskmanager-cpu-limit-factor / the size's Max CPU Burst)`. A `medium` (2 slots, burst 1) at `taskmanager-cpu-limit-factor: 2` gets 4 slots; `dev`'s burst is already 2, so factor 2 leaves it at 1 slot and factor 4 gives it 2. Lowering `taskmanager-cpu-request-factor` leaves slots alone, which is how you keep the parallelism of a size while sharing its cores at steady state. The job manager runs no subtasks, so its factors never move slots or parallelism.
+On a Flink task manager the slot count moves with the **ceiling**, not the request, by default. Slots scale by the ceiling *relative to the size's own*: `slots x (taskmanager-cpu-limit-factor / the size's Max CPU Burst)`. A `medium` (2 slots, burst 1) at `taskmanager-cpu-limit-factor: 2` gets 4 slots; `dev`'s burst is already 2, so factor 2 leaves it at 1 slot and factor 4 gives it 2. Lowering `taskmanager-cpu-request-factor` leaves slots alone, which is how you keep the parallelism of a size while sharing its cores at steady state. The job manager runs no subtasks, so its factors never move slots or parallelism.
 
-Because slots move, so does parallelism (`instances x slots`), and `pipeline.max-parallelism` is baked into savepoints. Raising the limit factor on a running deployment is rejected when the new parallelism no longer divides the recorded `pipeline.max-parallelism`; the error lists the `taskmanager-count` values that do.
+`taskmanager-slot-scaling: false` raises only the ceiling: slots stay at the size's own count, and the extra CPU speeds up the existing subtasks instead. Parallelism, `pipeline.max-parallelism` and pinned connector parallelism such as `sink.parallelism` stay the same, which suits a temporary boost such as catch-up on dedicated nodes.
+
+When slots move, so does parallelism (`instances x slots`), and `pipeline.max-parallelism` is baked into savepoints. Raising the limit factor on a running deployment with slot scaling on is rejected when the new parallelism no longer divides the recorded `pipeline.max-parallelism`; the error lists the `taskmanager-count` values that do.
 
 ---
 
