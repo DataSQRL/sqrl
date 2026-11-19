@@ -262,6 +262,10 @@
             "url": {
               "type": "string"
             },
+            "pool-size": {
+              "type": "integer",
+              "minimum": 1
+            },
             "memory-limit": {
               "type": "string"
             },
@@ -270,6 +274,20 @@
             },
             "use-version-guessing": {
               "type": "boolean"
+            },
+            "use-credential-chain": {
+              "type": "boolean"
+            },
+            "s3-endpoint": {
+              "description": "An http:// or https:// URL, a value with a ${VAR} placeholder that the server resolves at startup, or blank to unset an endpoint of an earlier package file",
+              "type": "string",
+              "pattern": "^(\\s*$|https?://[^/?#]|.*\\$\\{)"
+            },
+            "temp-directory": {
+              "type": "string"
+            },
+            "max-temp-directory-size": {
+              "type": "string"
             },
             "scan-cte-cardinality-divisor": {
               "type": "integer",

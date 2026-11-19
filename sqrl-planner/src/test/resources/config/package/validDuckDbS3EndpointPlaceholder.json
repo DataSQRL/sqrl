@@ -1,0 +1,10 @@
+{
+  "version": "1",
+  "engines": {
+    "duckdb": {
+      "url": "jdbc:duckdb:",
+      "use-credential-chain": true,
+      "s3-endpoint": "${S3_ENDPOINT}"
+    }
+  }
+}

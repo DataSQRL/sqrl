@@ -1,0 +1,7 @@
+IMPORT data.applications AS _Applications;
+
+/*+exec(iceberg)*/
+Applications := SELECT id, customer_id, amount FROM _Applications;
+
+/*+test */
+ApplicationsTest := SELECT id, customer_id, amount FROM Applications ORDER BY id ASC;

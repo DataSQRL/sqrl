@@ -56,9 +56,14 @@ DuckDB is a vectorized query engine that reads Iceberg tables directly. It runs 
 | Key                    | Type        | Default          | Description                                                                    |
 |------------------------|-------------|------------------|--------------------------------------------------------------------------------|
 | `url`                  | **string**  | `"jdbc:duckdb:"` | Full JDBC URL for the database connection                                      |
+| `pool-size`            | **integer** | `1`              | Number of queries the server runs on DuckDB at the same time, per API version; other queries wait. Each API version has its own DuckDB database with its own `memory-limit`, so a server with two API versions can run twice as many queries and use twice the memory. With `use-credential-chain`, a value above 1 makes queries fail when the credentials expire, see the usage notes |
 | `memory-limit`         | **string**  | -                | Sets DuckDB's `memory_limit`, for example `"8GB"`                              |
-| `use-disk-cache`       | **boolean** | `false`          | Loads the `cache_httpfs` extension (requires `DUCKDB_EXTENSIONS_DIR`, see below) |
+| `temp-directory`       | **string**  | `sqrl-duckdb` in the JVM temp directory | Directory DuckDB writes spill files to when a query needs more than `memory-limit`. Must be writable. The server image default is `/tmp/sqrl-duckdb` |
+| `max-temp-directory-size` | **string** | `"4GB"`        | Disk space DuckDB may use for spill files. A query that needs more fails with an Out of Memory error |
+| `use-disk-cache`       | **boolean** | `false`          | Loads the `cache_httpfs` extension (requires `DUCKDB_EXTENSIONS_DIR`, see below). New Iceberg commits then reach the server late, see the usage notes |
 | `use-version-guessing` | **boolean** | `false`          | Sets `unsafe_enable_version_guessing` flag to be able to read uncommitted data (requires `DUCKDB_EXTENSIONS_DIR`, see below) |
+| `use-credential-chain` | **boolean** | `false`          | Loads the `aws` extension and creates an S3 secret from the AWS credential provider chain: environment variables, profiles, or the EKS IRSA web-identity token. DuckDB refreshes the credentials when S3 rejects them as expired and retries the request (with `pool-size` above 1, see the usage notes). Requires `DUCKDB_EXTENSIONS_DIR` |
+| `s3-endpoint`          | **string**  | -                | URL of an S3-compatible store such as S3Mock, for example `"http://localhost:9090"`. The `use-credential-chain` secret then uses this endpoint with path-style URLs, and with SSL for `https` URLs. Requires `use-credential-chain` |
 | `scan-cte-cardinality-divisor` | **integer** | `1`  | Controls when a query that scans the same Iceberg table multiple times reads it once into a shared CTE. The scan is shared when the number of scans exceeds `max((log2(row count) - 20) / divisor, 1)`; a larger divisor shares scans more eagerly. Requires a known row count (estimated or set via the `row_count` hint). Must be a positive integer |
 
 ```json
@@ -74,7 +79,7 @@ DuckDB is a vectorized query engine that reads Iceberg tables directly. It runs 
 }
 ```
 
-The DataSQRL server only loads DuckDB extensions (`iceberg`, `httpfs`, and `cache_httpfs`) and applies `use-version-guessing` when the `DUCKDB_EXTENSIONS_DIR` environment variable points to a directory with the preinstalled extensions. The official `datasqrl/cmd` and `datasqrl/sqrl-server` Docker images set it. When running the server elsewhere without it, the server logs a warning and silently skips these settings.
+The DataSQRL server only loads DuckDB extensions (`iceberg`, `httpfs`, `aws`, and `cache_httpfs`) and applies `use-version-guessing` and `use-credential-chain` when the `DUCKDB_EXTENSIONS_DIR` environment variable points to a directory with the preinstalled extensions. The official `datasqrl/cmd` and `datasqrl/sqrl-server` Docker images set it. When running the server elsewhere without it, the server logs a warning and silently skips these settings.
 
 #### Usage Notes
 - Ideal for local development and testing of analytical workloads
@@ -83,10 +88,19 @@ The DataSQRL server only loads DuckDB extensions (`iceberg`, `httpfs`, and `cach
 - Supports both in-memory and persistent database modes
 - Perfect for prototyping before deploying to cloud query engines like Snowflake
 - Lightweight alternative to larger analytical databases
+- With `use-disk-cache`, the server does not see new Iceberg commits right away. With `use-version-guessing`, a commit shows up when the cached folder listing expires, after up to 30 minutes. A table with a `version-hint.text` on S3 stays on the snapshot the server read first for as long as the hint file is in the extension's cache directory, `/tmp/duckdb_cache_httpfs_cache`
+- With `use-credential-chain`, the server fails to start if the chain finds no credentials
+- `pool-size` is 1 by default because of a DuckDB bug, [duckdb-httpfs#462](https://github.com/duckdb/duckdb-httpfs/issues/462): with `use-credential-chain` and a `pool-size` above 1, queries can fail when the AWS credentials expire, which happens once per credential lifetime (an hour by default with EKS IRSA). Every query that gets the expiry error from S3 refreshes the secret, but only one refresh can win: the others fail with `Exception thrown while trying to refresh secret "sqrl_s3_credential_chain"` and `Catalog write-write conflict on alter with "sqrl_s3_credential_chain"`. In a test with four simultaneous queries, three failed at each expiry. The winning query stores the new credentials when it finishes, so requests that start after that work, and a request retried before then fails again. If you raise `pool-size` with `use-credential-chain`, retry failed requests after a delay. Without `use-credential-chain`, DuckDB does not refresh credentials and a higher `pool-size` does not hit this bug. [duckdb#24804](https://github.com/duckdb/duckdb/pull/24804) proposes a fix
+- Without `use-credential-chain`, DuckDB 2.0 still signs S3 requests with AWS credentials it finds in the environment, but never refreshes them
+- For S3Mock (`adobe/s3mock`), set `"use-credential-chain": true` and `"s3-endpoint": "http://s3mock:9090"`, and give the server any keys in `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`. S3Mock does not check them, but without keys the credential chain finds nothing and the server fails to start. `AWS_REGION` is optional
 
 
 
 Set `memory-limit` when DuckDB runs next to Flink on the same instance and both compete for memory. Read the `.mem-headroom-Nx` size qualifiers in [cloud-deployment.md](cloud-deployment.md) for that case.
+
+Raise `pool-size` when the API serves several requests at once and does not use `use-credential-chain`. The concurrent queries share the database's `memory-limit`.
+
+Set `use-credential-chain` when the Iceberg warehouse is on S3 and the server gets its AWS credentials from the environment, for example through EKS IRSA. Leave `pool-size` at 1 with it. With a Glue catalog, also set `use-version-guessing`, because Glue-written tables have no `version-hint.text`. For local testing against S3Mock, add `s3-endpoint`.
 
 ## Shallow Query Engines
 
