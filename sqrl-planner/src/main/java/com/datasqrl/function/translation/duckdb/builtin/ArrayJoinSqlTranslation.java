@@ -47,9 +47,9 @@ public class ArrayJoinSqlTranslation extends DuckDbSqlTranslation {
     arr.unparse(writer, 0, 0);
     writer.sep(",", true);
 
-    writer.print("lambda x: ");
+    writer.print("lambda " + DuckDbSqlTranslationUtils.LAMBDA_PARAM + ": ");
     var coalesce = writer.startFunCall("COALESCE");
-    writer.print("x");
+    writer.print(DuckDbSqlTranslationUtils.LAMBDA_PARAM);
     writer.sep(",", true);
     nullRepl.unparse(writer, 0, 0);
     writer.endFunCall(coalesce);

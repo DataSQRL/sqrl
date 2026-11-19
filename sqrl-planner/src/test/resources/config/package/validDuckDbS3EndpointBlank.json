@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "engines": {
+    "duckdb": {
+      "url": "jdbc:duckdb:",
+      "s3-endpoint": ""
+    }
+  }
+}

@@ -18,6 +18,7 @@ package com.datasqrl.engine.database.relational;
 import com.datasqrl.config.ConnectorFactoryFactory;
 import com.datasqrl.config.JdbcDialect;
 import com.datasqrl.config.PackageJson;
+import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.server.jdbc.DatabaseType;
 import jakarta.inject.Inject;
 import java.util.Optional;
@@ -25,12 +26,30 @@ import lombok.NonNull;
 
 public class DuckDBEngine extends AbstractJDBCQueryEngine {
 
+  static final String S3_ENDPOINT_KEY = "s3-endpoint";
+  static final String USE_CREDENTIAL_CHAIN_KEY = "use-credential-chain";
+
   @Inject
-  public DuckDBEngine(@NonNull PackageJson json, ConnectorFactoryFactory connectorFactory) {
+  public DuckDBEngine(
+      @NonNull PackageJson json, ConnectorFactoryFactory connectorFactory, ErrorCollector errors) {
     super(
         DuckDBEngineFactory.ENGINE_NAME,
         json.getEngines().getEngineConfigOrEmpty(DuckDBEngineFactory.ENGINE_NAME),
         connectorFactory);
+
+    // The package schema checks each package file before the files are merged, so a rule over
+    // two keys is checked here, on the merged config. The server checks it again at startup.
+    var hasS3Endpoint =
+        engineConfig.getPropertyOptional(S3_ENDPOINT_KEY).filter(e -> !e.isBlank()).isPresent();
+    var useCredentialChain =
+        engineConfig.getPropertyAsOptional(USE_CREDENTIAL_CHAIN_KEY, Boolean.class).orElse(false);
+    errors.checkFatal(
+        !hasS3Endpoint || useCredentialChain,
+        "The DuckDB engine sets '%s' but not '%s': true. The endpoint only applies to the S3"
+            + " secret that '%s' creates.",
+        S3_ENDPOINT_KEY,
+        USE_CREDENTIAL_CHAIN_KEY,
+        USE_CREDENTIAL_CHAIN_KEY);
   }
 
   @Override

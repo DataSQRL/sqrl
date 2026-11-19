@@ -48,7 +48,9 @@ class PackageJsonSchemaTest {
         "validFlinkDeployment.json",
         "validPostgresDeployment.json",
         "validVertxDeployment.json",
-        "validFullDeployment.json"
+        "validFullDeployment.json",
+        "validDuckDbS3EndpointPlaceholder.json",
+        "validDuckDbS3EndpointBlank.json"
       })
   void validConfigFile(String configFileName) {
     var errors = ErrorCollector.root();
@@ -73,6 +75,7 @@ class PackageJsonSchemaTest {
         "invalidScriptFields.json",
         "invalidScriptApiFields.json",
         "invalidCompilerTags.json",
+        "invalidDuckDbS3EndpointWithoutScheme.json",
       })
   void invalidConfigFile(String configFileName) {
     testForErrors(

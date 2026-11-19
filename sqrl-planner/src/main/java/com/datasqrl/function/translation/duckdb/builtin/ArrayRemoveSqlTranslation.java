@@ -20,10 +20,7 @@ import com.datasqrl.function.translation.DuckDbSqlTranslation;
 import com.datasqrl.function.translation.SqlTranslation;
 import com.google.auto.service.AutoService;
 import org.apache.calcite.sql.SqlCall;
-import org.apache.calcite.sql.SqlLiteral;
-import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlWriter;
-import org.apache.calcite.sql.type.SqlTypeName;
 
 @AutoService(SqlTranslation.class)
 public class ArrayRemoveSqlTranslation extends DuckDbSqlTranslation {
@@ -37,24 +34,17 @@ public class ArrayRemoveSqlTranslation extends DuckDbSqlTranslation {
     var arr = call.operand(0);
     var elemToRemove = call.operand(1);
 
-    // Non-null elem to remove: list_filter(arr, lambda x: x <> elem_to_remove);
-    // Null as elem to remove:  list_filter(arr, lambda x: x IS NOT NULL);
+    // list_filter(arr, lambda x: x IS DISTINCT FROM elem_to_remove)
+    // Unlike <>, IS DISTINCT FROM keeps the NULL elements for a non-null elem to remove, and
+    // removes them when the elem to remove is NULL, as Flink does.
     var listFilter = writer.startFunCall("list_filter");
     arr.unparse(writer, 0, 0);
     writer.sep(",", true);
 
-    if (isNullLiteral(elemToRemove)) {
-      writer.print("lambda x: x IS NOT NULL");
-
-    } else {
-      writer.print("lambda x: x <> ");
-      elemToRemove.unparse(writer, 0, 0);
-    }
+    var param = DuckDbSqlTranslationUtils.LAMBDA_PARAM;
+    writer.print("lambda " + param + ": " + param + " IS DISTINCT FROM ");
+    elemToRemove.unparse(writer, 0, 0);
 
     writer.endFunCall(listFilter);
-  }
-
-  private static boolean isNullLiteral(SqlNode node) {
-    return node instanceof SqlLiteral lit && lit.getTypeName() == SqlTypeName.NULL;
   }
 }

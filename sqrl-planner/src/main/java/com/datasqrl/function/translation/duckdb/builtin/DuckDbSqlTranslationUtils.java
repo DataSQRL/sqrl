@@ -28,6 +28,13 @@ import org.apache.calcite.sql.parser.SqlParserPos;
 final class DuckDbSqlTranslationUtils {
 
   /**
+   * The parameter name of every lambda that a translation writes. DuckDB binds a name in a lambda
+   * body to the parameter before a column, quoted or not and ignoring case, so a short name such as
+   * {@code x} would capture a column called {@code x}. A column with this name is still captured.
+   */
+  static final String LAMBDA_PARAM = "__sqrl_elem";
+
+  /**
    * Maps a {@code (innerUnit, divisor)} pair to the DuckDB time unit it represents. The outer key
    * is the unit of the value being divided:
    *

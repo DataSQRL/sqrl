@@ -279,7 +279,9 @@
               "type": "boolean"
             },
             "s3-endpoint": {
-              "type": "string"
+              "description": "An http:// or https:// URL, a value with a ${VAR} placeholder that the server resolves at startup, or blank to unset an endpoint of an earlier package file",
+              "type": "string",
+              "pattern": "^(\\s*$|https?://[^/?#]|.*\\$\\{)"
             },
             "temp-directory": {
               "type": "string"

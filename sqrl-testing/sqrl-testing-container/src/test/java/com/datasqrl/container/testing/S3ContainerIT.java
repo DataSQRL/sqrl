@@ -18,19 +18,10 @@ package com.datasqrl.container.testing;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
-import com.amazonaws.auth.AWSStaticCredentialsProvider;
-import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.client.builder.AwsClientBuilder;
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.AmazonS3Client;
 import java.time.Duration;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.wait.strategy.Wait;
-import org.testcontainers.utility.DockerImageName;
 
 public class S3ContainerIT {
 
@@ -38,51 +29,14 @@ public class S3ContainerIT {
   static SqrlContainerExtension sqrl = new SqrlContainerExtension("seedshop-tutorial");
 
   private static final String BUCKET_NAME = "test";
-  private static final String CRED = "s3mock";
-  private static final int S3_MOCK_PORT = 9090;
 
-  private final GenericContainer<?> s3MockContainer =
-      new GenericContainer<>(DockerImageName.parse("adobe/s3mock:5.2.2"))
-          .withNetwork(sqrl.getNetwork())
-          .withNetworkAliases("s3mock")
-          .withExposedPorts(S3_MOCK_PORT)
-          .waitingFor(
-              Wait.forHttp("/favicon.ico")
-                  .forPort(S3_MOCK_PORT)
-                  .forStatusCode(200)
-                  .withStartupTimeout(Duration.ofSeconds(30)));
-
-  private AmazonS3 s3Client;
-
-  @BeforeEach
-  void setup() {
-    s3MockContainer.start();
-
-    var endpoint =
-        "http://" + s3MockContainer.getHost() + ":" + s3MockContainer.getMappedPort(S3_MOCK_PORT);
-
-    s3Client =
-        AmazonS3Client.builder()
-            .withCredentials(new AWSStaticCredentialsProvider(new BasicAWSCredentials(CRED, CRED)))
-            .withPathStyleAccessEnabled(true)
-            .withEndpointConfiguration(
-                new AwsClientBuilder.EndpointConfiguration(endpoint, "unused-region"))
-            .build();
-
-    s3Client.createBucket(BUCKET_NAME);
-  }
+  @RegisterExtension
+  static S3MockContainerExtension s3Mock = new S3MockContainerExtension(sqrl, BUCKET_NAME);
 
   @AfterEach
   void tearDown() {
+    // Stops the cmd container before the extension stops S3Mock
     sqrl.cleanupContainers();
-
-    if (s3Client != null) {
-      s3Client.shutdown();
-    }
-
-    if (s3MockContainer != null) {
-      s3MockContainer.stop();
-    }
   }
 
   @Test
@@ -90,14 +44,15 @@ public class S3ContainerIT {
     var cmd =
         sqrl.createCmdContainer()
             .withNetwork(sqrl.getNetwork())
-            .withEnv("AWS_ACCESS_KEY_ID", CRED)
-            .withEnv("AWS_SECRET_KEY", CRED)
+            .withEnv("AWS_ACCESS_KEY_ID", S3MockContainerExtension.CREDENTIAL)
+            .withEnv("AWS_SECRET_KEY", S3MockContainerExtension.CREDENTIAL)
             .withCommand("test", "package-s3.json");
     cmd.start();
 
     await().atMost(Duration.ofSeconds(90)).until(() -> !cmd.isRunning());
     assertThat(cmd.getLogs()).contains("BUILD SUCCESS");
 
+    var s3Client = s3Mock.getClient();
     var objList = s3Client.listObjects(BUCKET_NAME);
     var objSummaries = objList.getObjectSummaries();
     assertThat(objSummaries).hasSize(1);

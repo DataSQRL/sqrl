@@ -17,58 +17,53 @@ package com.datasqrl.server.jdbc;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 
 import java.sql.SQLException;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 
 class DuckDbDataSourceTest {
 
   @Test
-  void givenEightThreads_whenOpeningConnectionsAtOnce_thenAllShareOneDatabase() {
-    assertTimeoutPreemptively(
-        Duration.ofSeconds(10),
-        () -> {
-          try (var ds =
-              new DuckDbDataSource("jdbc:duckdb:", "CREATE TABLE seen (thread INTEGER)")) {
-            var start = new CountDownLatch(1);
-            // All eight connections are open at once, so a pool of separate physical connections
-            // could not hand the same one to every thread
-            var allOpen = new CyclicBarrier(8);
-            var executor = Executors.newFixedThreadPool(8);
-            try {
-              var inserts = new ArrayList<Future<?>>();
-              for (var i = 0; i < 8; i++) {
-                var index = i;
-                inserts.add(
-                    executor.submit(
-                        () -> {
-                          start.await();
-                          try (var conn = ds.getConnection();
-                              var stmt = conn.createStatement()) {
-                            allOpen.await();
-                            stmt.execute("INSERT INTO seen VALUES (" + index + ")");
-                          }
-                          return null;
-                        }));
-              }
-              start.countDown();
-              for (var insert : inserts) {
-                insert.get();
-              }
-            } finally {
-              executor.shutdownNow();
-            }
+  @Timeout(value = 10, threadMode = Timeout.ThreadMode.SEPARATE_THREAD)
+  void givenEightThreads_whenOpeningConnectionsAtOnce_thenAllShareOneDatabase() throws Exception {
+    try (var ds = new DuckDbDataSource("jdbc:duckdb:", "CREATE TABLE seen (thread INTEGER)")) {
+      var start = new CountDownLatch(1);
+      // All eight connections are open at once, so a pool of separate physical connections
+      // could not hand the same one to every thread
+      var allOpen = new CyclicBarrier(8);
+      var executor = Executors.newFixedThreadPool(8);
+      try {
+        var inserts = new ArrayList<Future<?>>();
+        for (var i = 0; i < 8; i++) {
+          var index = i;
+          inserts.add(
+              executor.submit(
+                  () -> {
+                    start.await();
+                    try (var conn = ds.getConnection();
+                        var stmt = conn.createStatement()) {
+                      allOpen.await();
+                      stmt.execute("INSERT INTO seen VALUES (" + index + ")");
+                    }
+                    return null;
+                  }));
+        }
+        start.countDown();
+        for (var insert : inserts) {
+          insert.get();
+        }
+      } finally {
+        executor.shutdownNow();
+      }
 
-            assertThat(queryString(ds, "SELECT count(*) FROM seen")).isEqualTo("8");
-          }
-        });
+      assertThat(queryString(ds, "SELECT count(*) FROM seen")).isEqualTo("8");
+    }
   }
 
   @Test
