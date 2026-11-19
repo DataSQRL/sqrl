@@ -1,5 +1,19 @@
 FROM eclipse-temurin:17.0.21_9-jdk-noble@sha256:f7f22e46d0f60856d74d602d6b61db29ece3d011e85183a718bea8341734cd52
 
+ARG PATCHED_JDK_URL=https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.21.1%2B2/OpenJDK17U-jdk_x64_linux_hotspot_17.0.21.1_2.tar.gz
+ARG PATCHED_JDK_SHA256=0b0ac5eab6db6abaec68c9913bcddb31321e5da411c45073d520d9c125e6f7b4
+
+RUN set -eux; \
+    if [ "$(dpkg --print-architecture)" = "amd64" ]; then \
+      curl -fsSLo /tmp/jdk.tar.gz "${PATCHED_JDK_URL}"; \
+      echo "${PATCHED_JDK_SHA256}  /tmp/jdk.tar.gz" | sha256sum -c -; \
+      rm -rf "${JAVA_HOME}"; \
+      mkdir -p "${JAVA_HOME}"; \
+      tar -xzf /tmp/jdk.tar.gz -C "${JAVA_HOME}" --strip-components=1; \
+      rm /tmp/jdk.tar.gz; \
+    fi; \
+    java -version
+
 ENV DUCKDB_EXTENSIONS_DIR=/opt/duckdb_extensions
 
 ARG DUCKDB_JDBC_VERSION
