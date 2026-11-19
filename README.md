@@ -81,7 +81,7 @@ Packaged into **one Docker container** which contains the DataSQRL agent that yo
 
 - **Streaming and batch pipelines** on Flink, Kafka, and Iceberg, with CDC, temporal joins, windowed aggregations, and deduplication
 - **Data APIs** with GraphQL, REST, and MCP endpoints generated from SQL table functions, including authentication and authorization
-- **Data products** as curated, documented datasets and tables for analytics and downstream teams
+- **Data products** as curated, documented datasets and tables for downstream teams
 - **Operational data** for applications and AI agents, including vector embeddings and LLM enrichment
 
 The compiled deployment artifacts run on proven open-source technologies that you operate on existing Kubernetes or managed cloud services.

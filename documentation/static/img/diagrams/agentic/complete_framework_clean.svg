@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 500" width="960" height="500" role="img" aria-label="DataSQRL compiles SQL into a complete data architecture: sources (database, data streams, data lake, data files, APIs) flow into Apache Flink for ingest and processing, into Postgres, Kafka and Iceberg for storage, into an API server and catalog views for serving, and out through MCP, GraphQL, RAG, REST and data product interfaces">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 500" width="960" height="500" role="img" aria-label="DataSQRL compiles SQL into a complete data architecture: sources (database, data streams, data lake, data files, APIs) flow into Apache Flink for ingest and processing, into Postgres, Kafka and Iceberg for storage, into an API server and catalog views for serving, and out through MCP, GraphQL, RAG, REST, and data lake and database views">
 <defs>
 <marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#1d3557"/></marker>
 <marker id="ag" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#7299C1"/></marker>
@@ -68,8 +68,8 @@
 <rect x="716" y="290" width="200" height="40" rx="10" fill="#eef3f8" stroke="#86AACE" stroke-width="1.5"/>
 <text x="816.0" y="315.0" text-anchor="middle" font-size="13.5" font-weight="700" fill="#1d3557" font-family="Inter, -apple-system, Segoe UI, Helvetica, Arial, sans-serif">REST API</text>
 <rect x="716" y="370" width="200" height="64" rx="10" fill="#eef3f8" stroke="#86AACE" stroke-width="1.5"/>
-<text x="816.0" y="400.0" text-anchor="middle" font-size="14" font-weight="700" fill="#1d3557" font-family="Inter, -apple-system, Segoe UI, Helvetica, Arial, sans-serif">Data Product</text>
-<text x="816.0" y="417.0" text-anchor="middle" font-size="11.5" fill="#555" font-family="Inter, -apple-system, Segoe UI, Helvetica, Arial, sans-serif">datasets &amp; tables</text>
+<text x="816.0" y="400.0" text-anchor="middle" font-size="14" font-weight="700" fill="#1d3557" font-family="Inter, -apple-system, Segoe UI, Helvetica, Arial, sans-serif">Views</text>
+<text x="816.0" y="417.0" text-anchor="middle" font-size="11.5" fill="#555" font-family="Inter, -apple-system, Segoe UI, Helvetica, Arial, sans-serif">data lake &amp; database</text>
 <text x="84" y="464" text-anchor="middle" font-size="12" font-weight="800" letter-spacing="0.8" fill="#365B81" font-family="Inter, -apple-system, Segoe UI, Helvetica, Arial, sans-serif">SOURCES</text>
 <text x="261" y="464" text-anchor="middle" font-size="12" font-weight="800" letter-spacing="0.8" fill="#365B81" font-family="Inter, -apple-system, Segoe UI, Helvetica, Arial, sans-serif">INGEST &amp; PROCESSING</text>
 <text x="426" y="464" text-anchor="middle" font-size="12" font-weight="800" letter-spacing="0.8" fill="#365B81" font-family="Inter, -apple-system, Segoe UI, Helvetica, Arial, sans-serif">STORAGE</text>
