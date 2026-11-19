@@ -433,7 +433,7 @@ RecentSensorReadings := SELECT ... ;
 SQL matches column names case-sensitively, as Flink does. The column names in the hints `primary_key`, `index`, `partition_key`, `vector_dim`, `query_by_all`, `query_by_any` and `row_count` match like identifiers in PostgreSQL:
 
 - A plain name matches the column with the same name, ignoring case: `primary_key(CUSTOMERID)` matches the column `customerId`. When a plain name matches several columns whose names differ only in case, the compile fails and asks for the name in backticks.
-- A name in backticks only matches the column with exactly that name.
+- A name in backticks only matches the column with exactly that name. A backtick that is part of the name is doubled, as in Flink SQL.
 
 Unlike PostgreSQL, a plain name is not folded to lower case, because Flink keeps the case of column names. For a table with the columns `cnt` and `CNT`, `index(BTREE, CNT)` fails, and ``index(BTREE, `CNT`)`` indexes `CNT`:
 

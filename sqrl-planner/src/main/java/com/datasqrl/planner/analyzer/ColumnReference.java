@@ -30,7 +30,7 @@ import org.apache.calcite.rel.type.RelDataTypeField;
  *   <li>A plain name, such as {@code customerid}, matches the column with the same name ignoring
  *       case. It is ambiguous when it matches several columns whose names differ only in case.
  *   <li>A name in backticks, such as {@code `customerId`}, only matches the column with exactly
- *       that name.
+ *       that name. A backtick in the name is doubled, as in Flink SQL.
  * </ul>
  *
  * <p>Unlike Postgres, a plain name is not folded to lower case, since Flink keeps the case of
@@ -41,13 +41,13 @@ import org.apache.calcite.rel.type.RelDataTypeField;
  */
 public record ColumnReference(String name, boolean quoted) {
 
-  private static final Pattern QUOTED = Pattern.compile("`([^`]+)`");
+  private static final Pattern QUOTED = Pattern.compile("`((?:[^`]|``)+)`");
 
   /** Parses a column name as it is written. A name that is not all in backticks is plain. */
   public static ColumnReference parse(String written) {
     var quoted = QUOTED.matcher(written);
     return quoted.matches()
-        ? new ColumnReference(quoted.group(1), true)
+        ? new ColumnReference(quoted.group(1).replace("``", "`"), true)
         : new ColumnReference(written, false);
   }
 
@@ -82,6 +82,6 @@ public record ColumnReference(String name, boolean quoted) {
   }
 
   private static String quote(String name) {
-    return "`" + name + "`";
+    return "`" + name.replace("`", "``") + "`";
   }
 }

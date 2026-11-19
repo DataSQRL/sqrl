@@ -57,7 +57,7 @@ public class IndexHint extends ColumnNamesHint {
      * backticks may contain whitespace, see {@link com.datasqrl.planner.analyzer.ColumnReference}.
      */
     private static final Pattern COLUMN_SPECIFICATION =
-        Pattern.compile("(?<name>`[^`]+`|\\S+)(?:\\s+(?<direction>\\S+))?");
+        Pattern.compile("(?<name>`(?:[^`]|``)+`|\\S+)(?:\\s+(?<direction>\\S+))?");
 
     @Override
     public PlannerHint create(ParsedObject<SqrlHint> source) {

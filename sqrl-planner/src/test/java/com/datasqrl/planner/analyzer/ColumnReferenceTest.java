@@ -45,6 +45,7 @@ class ColumnReferenceTest {
   void givenNameInBackticks_whenParse_thenIsQuotedWithoutTheBackticks() {
     assertThat(ColumnReference.parse("`customer id`"))
         .isEqualTo(new ColumnReference("customer id", true));
+    assertThat(ColumnReference.parse("`it``s`")).isEqualTo(new ColumnReference("it`s", true));
   }
 
   @Test
@@ -92,6 +93,7 @@ class ColumnReferenceTest {
   void givenReference_whenToString_thenIsWrittenForm() {
     assertThat(new ColumnReference("cnt", false)).hasToString("cnt");
     assertThat(new ColumnReference("CNT", true)).hasToString("`CNT`");
+    assertThat(new ColumnReference("it`s", true)).hasToString("`it``s`");
   }
 
   private static List<String> names(ColumnReference reference) {

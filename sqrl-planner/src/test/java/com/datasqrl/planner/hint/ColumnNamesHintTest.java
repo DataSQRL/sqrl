@@ -60,6 +60,19 @@ class ColumnNamesHintTest {
   }
 
   @Test
+  void givenAmbiguousNameWithBacktick_whenValidateAndUpdateWithSuggestedName_thenResolvesIt() {
+    var rowType = TYPES.builder().add("it`s", BIGINT).add("IT`S", BIGINT).build();
+
+    assertThatThrownBy(() -> hint("primary_key(it`s)").validateAndUpdate(rowType))
+        .hasMessageEndingWith("write `it``s` or `IT``S` to match exactly one");
+
+    var hint = hint("index(btree, `IT``S` DESC)");
+    hint.validateAndUpdate(rowType);
+
+    assertThat(hint.getColumnNames()).containsExactly("IT`S");
+  }
+
+  @Test
   void givenResolvedHint_whenValidateAndUpdateAgain_thenResolvesTheWrittenNames() {
     var hint = hint("query_by_all(`CNT`)");
     hint.validateAndUpdate(ROW_TYPE);
