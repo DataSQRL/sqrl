@@ -66,6 +66,10 @@ This is the documentation of DataSQRL v0.12, the latest release.
 
 - [Examples Gallery](https://docs.datasqrl.com/docs/intro/examples.md): Open-source DataSQRL examples, from data products for a retail bank to self-contained pipelines for finance, healthcare, IoT, logistics, and more.
 
+## How DataSQRL Compares
+
+- [How DataSQRL Compares](https://docs.datasqrl.com/docs/intro/comparison.md): How DataSQRL compares to dbt, SQLMesh, warehouse-native agents, data warehouses, streaming databases, Flink, Spark, orchestrators, and plain coding agents: analytics engineering versus operational data engineering.
+
 ## FAQ
 
 - [Frequently Asked Questions](https://docs.datasqrl.com/docs/intro/faq.md): Common questions about DataSQRL: why your coding agent needs a data engineering harness and how DataSQRL compares to Flink, Spark, dbt, and streaming databases.
