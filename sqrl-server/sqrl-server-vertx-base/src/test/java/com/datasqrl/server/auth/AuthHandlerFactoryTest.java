@@ -53,14 +53,14 @@ class AuthHandlerFactoryTest {
 
   @Test
   void givenSingleJwtProvider_whenCreating_thenReturnsJwtHandler() {
-    var handler = AuthHandlerFactory.create(vertx, List.of(jwtAuth));
+    var handler = AuthHandlerFactory.create(List.of(jwtAuth));
 
     assertThat(handler).isInstanceOf(JWTAuthHandler.class);
   }
 
   @Test
   void givenSeveralProviders_whenCreating_thenReturnsChainHandler() {
-    var handler = AuthHandlerFactory.create(vertx, List.of(jwtAuth, jwtAuth));
+    var handler = AuthHandlerFactory.create(List.of(jwtAuth, jwtAuth));
 
     assertThat(handler).isInstanceOf(ChainAuthHandler.class);
   }
@@ -69,14 +69,14 @@ class AuthHandlerFactoryTest {
   void givenUnsupportedProvider_whenCreating_thenThrows() {
     var provider = mock(AuthenticationProvider.class);
 
-    assertThatThrownBy(() -> AuthHandlerFactory.create(vertx, List.of(provider)))
+    assertThatThrownBy(() -> AuthHandlerFactory.create(List.of(provider)))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageStartingWith("Unsupported auth provider type");
   }
 
   @Test
   void givenNoProviders_whenCreating_thenThrows() {
-    assertThatThrownBy(() -> AuthHandlerFactory.create(vertx, List.of()))
+    assertThatThrownBy(() -> AuthHandlerFactory.create(List.of()))
         .isInstanceOf(IllegalArgumentException.class);
   }
 }

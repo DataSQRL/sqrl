@@ -140,7 +140,7 @@ public class GraphQLServerVerticle extends AbstractVerticle {
           this.config.getServletConfig().getGraphQLEndpoint(modelVersion));
       // Required for adding auth on ws handler
       System.setProperty("io.vertx.web.router.setup.lenient", "true");
-      handler.handler(AuthHandlerFactory.create(vertx, authProviders));
+      handler.handler(AuthHandlerFactory.create(authProviders));
       handler.failureHandler(new JwtFailureHandler());
     }
 

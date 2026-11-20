@@ -17,14 +17,11 @@ package com.datasqrl.server.auth;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import io.vertx.core.Vertx;
 import io.vertx.ext.auth.authentication.AuthenticationProvider;
 import io.vertx.ext.auth.jwt.JWTAuth;
-import io.vertx.ext.auth.oauth2.OAuth2Auth;
 import io.vertx.ext.web.handler.AuthenticationHandler;
 import io.vertx.ext.web.handler.ChainAuthHandler;
 import io.vertx.ext.web.handler.JWTAuthHandler;
-import io.vertx.ext.web.handler.OAuth2AuthHandler;
 import java.util.List;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
@@ -36,27 +33,23 @@ public final class AuthHandlerFactory {
   /**
    * Returns a handler that authenticates a request if any of the providers accepts its token.
    *
-   * @param vertx the Vert.x instance
    * @param providers the authentication providers, not empty
    * @return the authentication handler
    */
-  public static AuthenticationHandler create(Vertx vertx, List<AuthenticationProvider> providers) {
+  public static AuthenticationHandler create(List<AuthenticationProvider> providers) {
     checkArgument(!providers.isEmpty(), "At least one authentication provider is required");
     if (providers.size() == 1) {
-      return create(vertx, providers.get(0));
+      return create(providers.get(0));
     }
 
     var chain = ChainAuthHandler.any();
-    providers.forEach(provider -> chain.add(create(vertx, provider)));
+    providers.forEach(provider -> chain.add(create(provider)));
     return chain;
   }
 
-  private static AuthenticationHandler create(Vertx vertx, AuthenticationProvider provider) {
+  private static AuthenticationHandler create(AuthenticationProvider provider) {
     if (provider instanceof JWTAuth jwtAuth) {
       return JWTAuthHandler.create(jwtAuth);
-    }
-    if (provider instanceof OAuth2Auth oauth2Auth) {
-      return OAuth2AuthHandler.create(vertx, oauth2Auth);
     }
     throw new IllegalArgumentException("Unsupported auth provider type: " + provider.getClass());
   }

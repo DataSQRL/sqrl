@@ -129,7 +129,7 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
 
     var postRoute = router.post(endpoint);
     if (!authProviders.isEmpty()) {
-      postRoute.handler(AuthHandlerFactory.create(vertx, authProviders));
+      postRoute.handler(AuthHandlerFactory.create(authProviders));
       postRoute.failureHandler(
           new OAuthFailureHandler(config.getProtectedResourceMetadata().orElse(null)));
     }

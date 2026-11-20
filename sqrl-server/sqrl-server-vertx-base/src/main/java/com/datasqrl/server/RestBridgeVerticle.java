@@ -196,7 +196,7 @@ public class RestBridgeVerticle extends AbstractBridgeVerticle {
 
     // Add auth if configured
     if (!authProviders.isEmpty()) {
-      route.handler(AuthHandlerFactory.create(vertx, authProviders));
+      route.handler(AuthHandlerFactory.create(authProviders));
       route.failureHandler(new JwtFailureHandler());
     }
 
