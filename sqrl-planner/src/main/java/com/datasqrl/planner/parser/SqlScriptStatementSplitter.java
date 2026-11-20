@@ -50,11 +50,12 @@ public final class SqlScriptStatementSplitter {
    * A line starting a SQRL definition (e.g. {@code Name :=} or {@code Name(arg INT) :=}). Outside
    * of parentheses, {@code :=} is not valid SQL, so such a line starts a new statement. Inside
    * them, it can be a named argument of a function in the SQL of a database, e.g. {@code p_id :=
-   * :id}.
+   * :id}. A line starting with {@code RETURNS (} continues the header of the definition above it,
+   * e.g. {@code Fn(id BIGINT)} followed by {@code RETURNS (id BIGINT) :=} on the next line.
    */
   private static final Pattern DEFINITION_START =
       Pattern.compile(
-          "^\\s*[\\w`][\\w.`*-]*\\s*(\\(.*\\))?\\s*(RETURNS\\s*\\(.*\\)\\s*)?:=",
+          "^\\s*(?!RETURNS\\s*\\()[\\w`][\\w.`*-]*\\s*(\\(.*\\))?\\s*(RETURNS\\s*\\(.*\\)\\s*)?:=",
           Pattern.CASE_INSENSITIVE);
 
   /**

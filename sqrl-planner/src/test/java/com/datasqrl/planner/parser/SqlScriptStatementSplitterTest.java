@@ -541,6 +541,47 @@ class SqlScriptStatementSplitterTest {
   }
 
   @Test
+  void givenReturnsOnItsOwnLine_whenSplitStatements_thenDoesNotSplitTheHeader() {
+    var script =
+        """
+        Recent(id BIGINT)
+          RETURNS (id BIGINT) := SELECT * FROM T WHERE id = :id;
+        Fn(
+          id BIGINT
+        )
+        RETURNS (id BIGINT) := SELECT * FROM T WHERE id = :id;
+        """;
+    var missingDelimiters = new ArrayList<SqlScriptStatementSplitter.MissingDelimiter>();
+
+    var statements = SqlScriptStatementSplitter.splitStatements(script, missingDelimiters);
+
+    assertThat(statements)
+        .extracting(ParsedObject::getFileLocation)
+        .containsExactly(new FileLocation(1, 1), new FileLocation(3, 1));
+    assertThat(missingDelimiters).isEmpty();
+  }
+
+  @Test
+  void givenMissingDelimiterBeforeTableNamedReturns_whenSplitStatements_thenSplitsAndReportsIt() {
+    var script =
+        """
+        A := SELECT * FROM T
+        Returns := SELECT * FROM A;
+        """;
+    var missingDelimiters = new ArrayList<SqlScriptStatementSplitter.MissingDelimiter>();
+
+    var statements = SqlScriptStatementSplitter.splitStatements(script, missingDelimiters);
+
+    assertThat(statements)
+        .extracting(ParsedObject::get)
+        .containsExactly("A := SELECT * FROM T;\n", "Returns := SELECT * FROM A;\n");
+    assertThat(missingDelimiters)
+        .containsExactly(
+            new SqlScriptStatementSplitter.MissingDelimiter(
+                new FileLocation(1, 1), new FileLocation(1, 21)));
+  }
+
+  @Test
   void givenDefinitionAfterTerminatedStatement_whenSplitStatements_thenReportsNoMissingDelimiter() {
     var script =
         """
