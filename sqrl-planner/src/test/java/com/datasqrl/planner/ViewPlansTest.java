@@ -150,6 +150,50 @@ class ViewPlansTest {
   }
 
   @Test
+  void givenViewWithReusedPlan_whenTemporaryViewOfItsNameAdded_thenQueriesUseTheTemporaryView() {
+    try (var translator = createTranslator()) {
+      translator.addView(
+          "CREATE VIEW Amounts AS SELECT id FROM Orders",
+          HintsAndDoc.EMPTY,
+          false,
+          ErrorCollector.root());
+      translator.addView(
+          "CREATE TEMPORARY VIEW Amounts AS SELECT id, amount FROM Orders",
+          HintsAndDoc.EMPTY,
+          false,
+          ErrorCollector.root());
+
+      var plan = plan(translator, "CREATE VIEW BigOrders AS SELECT amount FROM Amounts");
+
+      assertThat(plan.getRowType().getFieldNames()).containsExactly("amount");
+      assertThat(
+              translator
+                  .getCatalogManager()
+                  .getTableOrError(identifier("Amounts"))
+                  .getResolvedTable()
+                  .getOrigin())
+          .isNotInstanceOf(QueryOperationCatalogView.class);
+    }
+  }
+
+  @Test
+  void givenViewWithReusedPlan_whenTemporaryTableOfItsNameCreated_thenQueriesUseTheTable() {
+    try (var translator = createTranslator()) {
+      translator.addView(VIEWS.get(0), HintsAndDoc.EMPTY, false, ErrorCollector.root());
+      translator.createTable(
+          "CREATE TEMPORARY TABLE Recent (code STRING) WITH ('connector'='datagen')",
+          Optional.empty(),
+          mock(SchemaLoader.class),
+          HintsAndDoc.EMPTY,
+          ErrorCollector.root());
+
+      var plan = plan(translator, "CREATE VIEW Codes AS SELECT code FROM Recent");
+
+      assertThat(plan.getRowType().getFieldNames()).containsExactly("code");
+    }
+  }
+
+  @Test
   void givenViewWithReusedPlan_whenRemovedAsFailed_thenTheViewIsGone() {
     try (var translator = createTranslator()) {
       translator.addView(VIEWS.get(0), HintsAndDoc.EMPTY, false, ErrorCollector.root());

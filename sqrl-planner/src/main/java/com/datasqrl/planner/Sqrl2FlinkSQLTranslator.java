@@ -531,10 +531,6 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
     final var query = removeSort(originalQuery);
     var removedSort = originalQuery != query;
     final var rewrittenViewDef = updateViewQuery(query, viewDef);
-    if (rewrittenViewDef instanceof SqlAlterViewAs alterView) {
-      viewPlans.forget(
-          catalogManager.qualifyIdentifier(UnresolvedIdentifier.of(alterView.getFullName())));
-    }
     // Add the view to Flink using the rewritten SqlNode from stage 1.
     var op = executeSqlNode(rewrittenViewDef);
     ObjectIdentifier identifier;
@@ -1386,12 +1382,29 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
   }
 
   private Operation execute(SqlNode sqlNode, boolean addToPlan) {
+    forgetShadowedView(sqlNode);
     if (addToPlan) {
       planBuilder.add(sqlNode);
     }
     var operation = getOperation(sqlNode);
     checkResultOk(tEnv.executeInternal(operation));
     return operation;
+  }
+
+  /**
+   * Makes queries expand a view again before a statement that Flink refuses while a temporary view
+   * shadows the view: one that alters the view, or that creates a temporary view or table of its
+   * name, since there can only be one temporary object of a name.
+   */
+  private void forgetShadowedView(SqlNode sqlNode) {
+    if (sqlNode instanceof SqlAlterViewAs alterView) {
+      viewPlans.forget(
+          catalogManager.qualifyIdentifier(UnresolvedIdentifier.of(alterView.getFullName())));
+    } else if (sqlNode instanceof SqlCreateView view && view.isTemporary()) {
+      viewPlans.forget(qualifyIdentifier(view.getName()));
+    } else if (sqlNode instanceof SqlCreateTable table && table.isTemporary()) {
+      viewPlans.forget(qualifyIdentifier(table.getName()));
+    }
   }
 
   Operation getOperation(SqlNode sqlNode) {
