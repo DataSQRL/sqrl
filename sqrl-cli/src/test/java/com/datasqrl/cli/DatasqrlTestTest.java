@@ -25,6 +25,8 @@ import com.datasqrl.cli.output.NoOutputFormatter;
 import com.datasqrl.cli.output.TestOutputManager;
 import com.datasqrl.compile.TestPlan;
 import com.datasqrl.config.PackageJson;
+import com.datasqrl.deployment.model.IcebergPlanModel;
+import com.datasqrl.deployment.model.IcebergTableModel;
 import com.datasqrl.deployment.model.JdbcStatementModel;
 import com.datasqrl.engine.database.relational.GenericJdbcStatement;
 import com.datasqrl.util.SqrlObjectMapper;
@@ -81,6 +83,37 @@ class DatasqrlTestTest {
         planDir.resolve("flink-sql.sql"),
         "CREATE TABLE t (id INT) WITH ('connector' = 'datagen', 'id' = '${NON_EXISTING_ENV_VAR}');\n");
 
+    var exitCode = newDatasqrlTest(planDir).run();
+    assertThat(exitCode).isNotZero();
+  }
+
+  @Test
+  void givenIcebergTableLeftByEarlierInvocation_whenRun_thenDeletesItBeforeThePipelineStarts()
+      throws Exception {
+    var planDir = Files.createDirectories(tempDir.resolve("plan"));
+    var warehouse = tempDir.resolve("warehouse");
+    var leftoverTable =
+        Files.createDirectories(warehouse.resolve("default_database/MyTable/metadata"));
+    Files.writeString(leftoverTable.resolve("v1.metadata.json"), "{}");
+    SqrlObjectMapper.INSTANCE.writeValue(
+        planDir.resolve("iceberg.json").toFile(),
+        new IcebergPlanModel(
+            List.of(
+                new IcebergTableModel(
+                    "MyTable", "default_database", "hadoop", null, warehouse.toString()))));
+    // Fails the pipeline right away, the reset must have happened before it starts
+    Files.writeString(
+        planDir.resolve("flink-sql.sql"),
+        "CREATE TABLE t (id INT) WITH ('connector' = 'datagen', 'id' = '${NON_EXISTING_ENV_VAR}');\n");
+
+    var exitCode = newDatasqrlTest(planDir).run();
+
+    assertThat(exitCode).isNotZero();
+    assertThat(leftoverTable.getParent()).doesNotExist();
+    assertThat(warehouse.resolve("default_database")).isDirectory();
+  }
+
+  private DatasqrlTest newDatasqrlTest(Path planDir) {
     var sqrlConfig = mock(PackageJson.class, RETURNS_DEEP_STUBS);
     when(sqrlConfig.getCompilerConfig().compileFlinkPlan()).thenReturn(false);
     when(sqrlConfig.getTestConfig().getSnapshotDir(any())).thenReturn(tempDir.resolve("snapshots"));
@@ -89,18 +122,14 @@ class DatasqrlTestTest {
     when(sqrlConfig.getTestConfig().getMutationDelaySec()).thenReturn(0);
     when(sqrlConfig.getTestConfig().getRequiredCheckpoints()).thenReturn(0);
 
-    var underTest =
-        new DatasqrlTest(
-            tempDir,
-            planDir,
-            sqrlConfig,
-            new Configuration(),
-            Map.of(),
-            new TestOutputManager(tempDir),
-            new NoOutputFormatter());
-
-    var exitCode = underTest.run();
-    assertThat(exitCode).isNotZero();
+    return new DatasqrlTest(
+        tempDir,
+        planDir,
+        sqrlConfig,
+        new Configuration(),
+        Map.of(),
+        new TestOutputManager(tempDir),
+        new NoOutputFormatter());
   }
 
   @Test

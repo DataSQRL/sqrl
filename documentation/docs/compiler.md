@@ -355,6 +355,11 @@ snapshots are reproducible: the test succeeds if the second run produces identic
 All subsequent runs of the test command compare the results to the previously snapshotted results and succeed
 if the results are identical, else fail.
 
+Resetting the environment drops the PostgreSQL tables, deletes the Kafka topics, and deletes the tables of the
+Iceberg engine. Since a local Iceberg warehouse is a directory that outlives the test command, the test command
+also deletes those Iceberg tables before the first run. Only Iceberg tables in a Hadoop catalog with a local warehouse
+are deleted; tables in other catalogs keep the data of previous runs.
+
 ```bash
 docker run --rm -it -p 8081:8081 -p 8888:8888 -p 9092:9092 -v $PWD:/workspace datasqrl/cmd test -h
 ```

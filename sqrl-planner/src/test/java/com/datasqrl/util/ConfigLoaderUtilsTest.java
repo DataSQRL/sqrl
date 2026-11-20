@@ -23,6 +23,8 @@ import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.PackageJsonImpl;
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.config.SqrlConfigTest;
+import com.datasqrl.deployment.model.IcebergPlanModel;
+import com.datasqrl.deployment.model.IcebergTableModel;
 import com.datasqrl.deployment.model.JdbcStatementModel;
 import com.datasqrl.deployment.model.KafkaNewTopicModel;
 import com.datasqrl.error.CollectedException;
@@ -542,6 +544,45 @@ class ConfigLoaderUtilsTest {
     // Then
     assertThat(result).isPresent();
     assertThat(result.get().statements()).isEmpty();
+  }
+
+  @Test
+  void givenPlanDirWithoutIcebergJson_whenLoadIcebergPhysicalPlan_thenReturnsEmpty()
+      throws IOException {
+    var planDir = Files.createDirectories(tempDir.resolve("plan"));
+
+    assertThat(ConfigLoaderUtils.loadIcebergPhysicalPlan(planDir)).isEmpty();
+  }
+
+  @Test
+  void givenPlanDirWithIcebergJson_whenLoadIcebergPhysicalPlan_thenReturnsTables()
+      throws IOException {
+    var planDir = Files.createDirectories(tempDir.resolve("plan"));
+    Files.writeString(
+        planDir.resolve("iceberg.json"),
+        """
+        {
+          "plans" : {
+            "" : { "statements" : [ ] },
+            "duckdb" : { "statements" : [ ] }
+          },
+          "tables" : [ {
+            "tableName" : "_MyApplications1",
+            "database" : "default_database",
+            "catalogType" : "hadoop",
+            "warehouse" : "/tmp/duckdb"
+          } ]
+        }
+        """);
+
+    var result = ConfigLoaderUtils.loadIcebergPhysicalPlan(planDir);
+
+    assertThat(result)
+        .map(IcebergPlanModel::tables)
+        .contains(
+            List.of(
+                new IcebergTableModel(
+                    "_MyApplications1", "default_database", "hadoop", null, "/tmp/duckdb")));
   }
 
   @Test

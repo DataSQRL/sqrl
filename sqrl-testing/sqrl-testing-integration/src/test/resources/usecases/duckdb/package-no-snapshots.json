@@ -1,0 +1,34 @@
+{
+  "version": "1",
+  "enabled-engines": [
+    "flink",
+    "iceberg",
+    "postgres",
+    "duckdb",
+    "kafka",
+    "vertx"
+  ],
+  "script": {
+    "main": "duckdb.sqrl"
+  },
+  "engines": {
+    "flink": {
+      "config": {
+        "parallelism.default": "1",
+        "table.exec.source.idle-timeout": "1 ms",
+        "execution.checkpointing.interval": "8 s",
+        "execution.checkpointing.min-pause": "2 s"
+      }
+    }
+  },
+  "connectors": {
+    "iceberg": {
+      "warehouse": "${ICEBERG_TEST_WAREHOUSE}"
+    }
+  },
+  "test-runner": {
+    "snapshot-folder": "snapshots-tmp",
+    "delay-sec": -1,
+    "required-checkpoints": 1
+  }
+}

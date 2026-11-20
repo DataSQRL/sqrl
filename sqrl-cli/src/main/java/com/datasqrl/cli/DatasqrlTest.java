@@ -91,6 +91,8 @@ public class DatasqrlTest {
 
   @SneakyThrows
   public int run() {
+    // A local Iceberg warehouse is a directory that keeps the rows of earlier test invocations
+    CmdUtils.resetIceberg(planDir, env);
     return runInternal(true);
   }
 
@@ -410,6 +412,7 @@ public class DatasqrlTest {
   private void resetTestEnvironment() {
     CmdUtils.resetPostgres(planDir, env);
     CmdUtils.resetKafka(planDir, env);
+    CmdUtils.resetIceberg(planDir, env);
   }
 
   static boolean requiresSnapshotValidation(List<TestResult> testResults) {

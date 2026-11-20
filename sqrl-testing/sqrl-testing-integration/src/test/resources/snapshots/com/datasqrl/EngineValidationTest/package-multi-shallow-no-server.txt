@@ -201,5 +201,19 @@ CREATE TABLE IF NOT EXISTS "Numbers2" ("id" INTEGER NOT NULL)
       ],
       "standaloneExtensionStatements" : [ ]
     }
-  }
+  },
+  "tables" : [
+    {
+      "tableName" : "Numbers",
+      "database" : "default_database",
+      "catalogType" : "hadoop",
+      "warehouse" : "sqrl_iceberg_data"
+    },
+    {
+      "tableName" : "Numbers2",
+      "database" : "default_database",
+      "catalogType" : "hadoop",
+      "warehouse" : "sqrl_iceberg_data"
+    }
+  ]
 }
