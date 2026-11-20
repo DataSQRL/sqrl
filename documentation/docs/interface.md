@@ -221,6 +221,8 @@ The MCP server uses the Streamable HTTP transport at `/<version>/mcp` (e.g. `/v1
 
 An MCP app is an interactive HTML UI for an MCP tool. MCP hosts that support the [MCP Apps extension](https://github.com/modelcontextprotocol/ext-apps) (`io.modelcontextprotocol/ui`) render the app of a tool in a sandboxed iframe when the tool is called. The app receives the tool's input and result from the host, and it can call the server's tools through the host.
 
+An app has to initialize with the host before it gets any data: it sends `ui/initialize`, and the host sends the tool's input and result after the app confirms with `ui/notifications/initialized`. The `App` class of `@modelcontextprotocol/ext-apps` does this in `connect()`. The apps of the [`mcp-apps` use case](https://github.com/DataSQRL/sqrl/tree/main/sqrl-testing/sqrl-testing-integration/src/test/resources/usecases/mcp-apps/apps) show it without a library.
+
 Configure the directory with the apps of an API version in `script.api.<version>.mcp-apps` in the [`package.json`](configuration.md#api-versioning):
 
 ```json
@@ -238,6 +240,8 @@ Configure the directory with the apps of an API version in `script.api.<version>
 Without `mcp-apps`, the API version has no MCP Apps support. Apps are only served when `compiler.api.protocols` includes `MCP`.
 
 Each app is a single, self-contained `.html` file directly in the apps directory, with all scripts, styles, and assets inlined. Subdirectories and other files are ignored. The app's name is its file name without `.html`. It must start with a letter, a digit, or `_`, and may only contain letters, digits, `_`, `-`, and `.`. You can build apps with any framework that writes single-file HTML into the apps directory, for example Vite with `vite-plugin-singlefile`. DataSQRL only picks up the finished files.
+
+An app is a static file that every user gets, and hosts may prefetch and cache it. Don't put secrets or a user's data into an app: data reaches an app only through tool results and the tools it calls.
 
 A tool is linked to an app as follows. All names match regardless of case.
 * By default, a tool is linked to the app with the tool's name. For example, the operation `GetSales` is linked to `api/apps-v1/GetSales.html`.
