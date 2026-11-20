@@ -373,7 +373,7 @@ Each key is a tag name, and its definition has these optional fields:
 | `values`           | The allowed values, ordered from **lowest to highest**. |
 | `required-columns` | The columns, by name, with their type, that every table carrying the tag must have. |
 
-Tag names and values may only contain letters, digits, underscores and dashes, and are case-insensitive. Values and required column names must be unique within a tag, also ignoring case, and each required column type must be a valid column type. When several package files are combined, their tag definitions are merged per tag.
+Tag names and values may only contain letters, digits, underscores and dashes, and are case-insensitive. A required column name matches the columns of a table like a [column name in a hint](https://docs.datasqrl.com/docs/main/sqrl-language.md#column-names-in-hints): ignoring case, unless the name is in backticks, such as ``"`jurisdiction`": "STRING"``, which only matches the column with exactly that name. Values must be unique within a tag, also ignoring case, and so must required column names, unless both are in backticks. Each required column type must be a valid column type. When several package files are combined, their tag definitions are merged per tag.
 
 There are two kinds of tags:
 - **Boolean tag**: has no `values`, e.g. `"gdpr": {}`. Its only value is `true`.
@@ -403,7 +403,7 @@ The compiler checks:
 - Every table and function in the API declares each tag it inherits with the same or a higher value. A table without a doc string of its own that returns the same columns as the table it selects from (e.g. `SELECT * FROM Customers WHERE ...`), or a `DISTINCT` table (e.g. `Customers := DISTINCT CustomersStream ON id ORDER BY updated_at DESC`), takes the doc string of the table it selects from, and with it its tags. A [column-addition statement](https://docs.datasqrl.com/docs/main/sqrl-language.md#column-addition-statement) keeps the doc string of the table definition it extends.
 - These tables need not declare their inherited tags, but still carry them: hidden tables, relationships (e.g. `Customers.orders := ...`), which return rows of their target table, [test tables](https://docs.datasqrl.com/docs/main/sqrl-language.md#testing), which are never deployed, and views defined with Flink SQL `CREATE VIEW`, which have no doc string.
 - A table that `INSERT INTO` or `EXPORT` writes into declares the tags of the written data, if other tables read it or the pipeline manages it, i.e. an internal table defined with an `engine` hint, such as an Iceberg table defined in a separate script. Its readers and its deployment only have its declared tags. Writes into an external table that nothing reads are not checked, since the data leaves the pipeline.
-- Every table, hidden or public, whose effective tags include a tag with `required-columns` has those columns, with a type that is accepted wherever a function parameter of the required type is expected.
+- Every table, hidden or public, whose effective tags include a tag with `required-columns` has those columns, with a type that is accepted wherever a function parameter of the required type is expected. A required column name that matches several columns of a table whose names differ only in case is an error, unless the name is in backticks.
 
 The compiler reports all violations in one compile, with the table, the tag, the required and found values, and the input tables the tag comes from.
 
