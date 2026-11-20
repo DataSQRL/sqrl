@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "type": "object",
+  "properties": {
+    "server": {
+      "$ref": "#/$defs/Servers/TestGroupServer"
+    }
+  },
+  "$defs": {
+    "Servers": {
+      "TestGroupServer": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

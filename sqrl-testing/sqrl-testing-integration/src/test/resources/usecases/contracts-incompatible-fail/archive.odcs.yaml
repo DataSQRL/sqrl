@@ -1,0 +1,16 @@
+apiVersion: v3.2.0
+kind: DataContract
+id: urn:catalog:archive
+version: 1.0.0
+status: active
+schema:
+  - name: EmailArchive
+    tags: [classification=confidential, gdpr]
+    properties:
+      - name: id
+        logicalType: integer
+        required: true
+        classification: confidential
+      - name: email
+        logicalType: string
+        classification: confidential

@@ -61,6 +61,8 @@ import com.datasqrl.planner.Sqrl2FlinkSQLTranslator.MutationBuilder;
 import com.datasqrl.planner.analyzer.TableAnalysis;
 import com.datasqrl.planner.analyzer.TableOrFunctionAnalysis;
 import com.datasqrl.planner.analyzer.cost.CostModel;
+import com.datasqrl.planner.contract.ContractSource;
+import com.datasqrl.planner.contract.DataContractLoader;
 import com.datasqrl.planner.dag.DAGBuilder;
 import com.datasqrl.planner.dag.nodes.ExportNode;
 import com.datasqrl.planner.dag.nodes.PipelineNode;
@@ -168,6 +170,9 @@ public class SqlScriptPlanner {
 
   private final ErrorCollector errorCollector;
 
+  /** Loads the data contract files that sit next to the scripts */
+  private final DataContractLoader contractLoader;
+
   /** Used to assemble the full script with imports as a string */
   @Getter private final SqlScriptWriter completeScript;
 
@@ -194,12 +199,19 @@ public class SqlScriptPlanner {
       SqrlStatementParser sqrlParser,
       PackageJson packageJson,
       ExecutionPipeline pipeline,
-      ExecutionGoal executionGoal) {
+      ExecutionGoal executionGoal,
+      DataContractLoader contractLoader) {
     this.errorCollector = errorCollector;
+    this.contractLoader = contractLoader;
     this.completeScript = new SqlScriptWriter();
     this.scriptContext =
         new ScriptContext(
-            moduleLoaders, FLINK_DEFAULT_DATABASE, true, Optional.empty(), new FailedObjects());
+            moduleLoaders,
+            FLINK_DEFAULT_DATABASE,
+            true,
+            Optional.empty(),
+            new FailedObjects(),
+            ContractSource.NONE);
     this.sqrlParser = sqrlParser;
     this.packageJson = packageJson;
     this.pipeline = pipeline;
@@ -246,6 +258,8 @@ public class SqlScriptPlanner {
       Sqrl2FlinkSQLTranslator sqrlEnv) {
 
     var scriptErrors = errorCollector.withScript(mainScript.getPath(), mainScript.getContent());
+    // The tables that the script defines read their data contract from the file next to it
+    scriptContext = scriptContext.withContracts(contractLoader.forFile(mainScript.getPath()));
     var parsedScript = sqrlParser.parseScript(mainScript.getContent(), scriptErrors);
     var failures = scriptContext.failures();
     List<StackableStatement> statementStack = new ArrayList<>();
@@ -410,6 +424,7 @@ public class SqlScriptPlanner {
               getMutationBuilder(hintsAndDocs),
               scriptContext.mainModuleLoader().getSchemaLoader(),
               hintsAndDocs,
+              scriptContext.contracts(),
               errors)
           .ifPresent(tableAnalysis -> addSourceToDag(tableAnalysis, hintsAndDocs, sqrlEnv));
     } else if (stmt instanceof SqrlDefinition sqrlDef) {
@@ -667,6 +682,7 @@ public class SqlScriptPlanner {
                 getMutationBuilder(hintsAndDocs),
                 scriptContext.mainModuleLoader().getSchemaLoader(),
                 hintsAndDocs,
+                scriptContext.contracts(),
                 errors)
             .ifPresent(tableAnalysis -> addSourceToDag(tableAnalysis, hintsAndDocs, sqrlEnv));
       } else if (node instanceof RichSqlInsert insert) {
@@ -1137,6 +1153,7 @@ public class SqlScriptPlanner {
                     scriptContext.isRootContext(),
                     getStandaloneInclude(object.table())),
                 importedHintsAndDoc,
+                contractLoader.forFile(flinkTable.sourcePath()),
                 flinkTable.errorCollector());
         importedHintsAndDoc.hints().updateColumnNamesHints(tableAnalysis.getRowType());
         addSourceToDag(tableAnalysis, importedHintsAndDoc, sqrlEnv);
@@ -1464,6 +1481,7 @@ public class SqlScriptPlanner {
                 schemaLoader,
                 mutationBuilder,
                 sinkHintsAndDoc,
+                contractLoader.forFile(flinkTable.sourcePath()),
                 flinkTable.errorCollector());
 
         var tableId = addTableResult.baseTableIdentifier();
@@ -1596,7 +1614,14 @@ public class SqlScriptPlanner {
       String databaseName,
       boolean isRootContext,
       Optional<IncludedScript> includedScript,
-      FailedObjects failures) {
+      FailedObjects failures,
+      ContractSource contracts) {
+
+    /** The context with the data contract of the script that is planned in it. */
+    ScriptContext withContracts(ContractSource contracts) {
+      return new ScriptContext(
+          moduleLoaders, databaseName, isRootContext, includedScript, failures, contracts);
+    }
 
     ScriptContext fromImport(
         ModuleLoader moduleLoader, boolean inline, String databaseName, Optional<Path> scriptPath) {
@@ -1606,13 +1631,19 @@ public class SqlScriptPlanner {
 
       return inline
           ? new ScriptContext(
-              importLoaders, this.databaseName, isRootContext, includedScript, failures)
+              importLoaders,
+              this.databaseName,
+              isRootContext,
+              includedScript,
+              failures,
+              ContractSource.NONE)
           : new ScriptContext(
               importLoaders,
               databaseName,
               false,
               includedScript,
-              failures.forImportedScript(databaseName));
+              failures.forImportedScript(databaseName),
+              ContractSource.NONE);
     }
 
     ModuleLoader mainModuleLoader() {

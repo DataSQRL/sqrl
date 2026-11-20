@@ -1,0 +1,19 @@
+{
+  "version": "1",
+  "enabled-engines": ["vertx", "postgres", "kafka", "flink", "iceberg", "duckdb"],
+  "compiler": {
+    "tags": {
+      "classification": { "values": ["public", "internal", "confidential"] },
+      "pii": { "values": ["masked", "raw"] },
+      "gdpr": {}
+    }
+  },
+  "script": {
+    "main": "contracts.sqrl"
+  },
+  "connectors": {
+    "iceberg": {
+      "warehouse": "/tmp/contracts-compile"
+    }
+  }
+}

@@ -1,0 +1,7 @@
+-- The contract file of this script has two YAML documents
+CREATE TABLE Tickets (
+  id BIGINT NOT NULL,
+  note STRING
+) WITH (
+  'connector' = 'datagen'
+);

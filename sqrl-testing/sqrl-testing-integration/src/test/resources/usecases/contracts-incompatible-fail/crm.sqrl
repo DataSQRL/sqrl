@@ -1,0 +1,27 @@
+/** Customer master data @pii=raw @classification=confidential */
+CREATE TABLE Customers (
+  id BIGINT NOT NULL,
+  email STRING COMMENT 'Contact email @gdpr',
+  name STRING NOT NULL,
+  age INT,
+  address ROW<city STRING NOT NULL, zip STRING>,
+  phones ARRAY<STRING>,
+  loaded_at AS NOW(),
+  source_file STRING METADATA FROM 'file.name' VIRTUAL,
+  region STRING NOT NULL,
+  updated_at TIMESTAMP_LTZ(3) NOT NULL,
+  PRIMARY KEY (id, updated_at) NOT ENFORCED,
+  WATERMARK FOR updated_at AS updated_at - INTERVAL '1' SECOND
+) PARTITIONED BY (region) WITH (
+  'connector' = 'filesystem',
+  'path' = 'file:///tmp/contracts-incompatible/customers',
+  'format' = 'flexible-json'
+);
+
+-- The pipeline does not use this table, and its contract is checked nevertheless
+CREATE TABLE _Leads (
+  id BIGINT NOT NULL,
+  source STRING
+) WITH (
+  'connector' = 'datagen'
+);

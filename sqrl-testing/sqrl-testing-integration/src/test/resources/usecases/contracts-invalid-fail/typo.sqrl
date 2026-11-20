@@ -1,0 +1,14 @@
+-- No schema object of the contract of this script matches a table
+CREATE TABLE Payments (
+  id BIGINT NOT NULL,
+  note STRING
+) WITH (
+  'connector' = 'datagen'
+);
+
+CREATE TABLE Refunds (
+  id BIGINT NOT NULL,
+  note STRING
+) WITH (
+  'connector' = 'datagen'
+);

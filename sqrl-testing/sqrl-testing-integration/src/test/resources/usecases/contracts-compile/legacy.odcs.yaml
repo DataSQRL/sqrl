@@ -1,0 +1,20 @@
+# ODCS v3.0 has no timestamp and no map type: a timestamp is a date, and a map is an object
+apiVersion: v3.0.2
+kind: DataContract
+id: urn:catalog:legacy
+version: 1.0.0
+status: active
+schema:
+  - name: Events
+    properties:
+      - name: id
+        logicalType: integer
+        required: true
+      - name: kind
+        logicalType: string
+        required: true
+      - name: payload
+        logicalType: object
+      - name: created_at
+        logicalType: date
+        required: true

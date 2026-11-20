@@ -26,6 +26,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.datasqrl.compile.CompilationProcess;
+import com.datasqrl.compile.CompilationResult;
 import com.datasqrl.compile.TestPlan;
 import com.datasqrl.config.ExecutionEnginesHolder;
 import com.datasqrl.config.PackageJson;
@@ -33,6 +34,7 @@ import com.datasqrl.config.TestRunnerConfiguration;
 import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.packager.Packager;
+import com.datasqrl.planner.contract.DataContracts;
 import com.datasqrl.util.ConfigLoaderUtils;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -40,7 +42,6 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
-import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
@@ -77,7 +78,7 @@ class CompileCmdTest {
     when(sqrlConfig.getTestConfig()).thenReturn(testConfig);
     when(testConfig.getTestDir(projectRoot)).thenReturn(Optional.of(testDir));
     when(compilationProcess.executeCompilation(Optional.of(testDir)))
-        .thenReturn(Pair.of(physicalPlan, testPlan));
+        .thenReturn(new CompilationResult(physicalPlan, testPlan, DataContracts.EMPTY));
 
     try (var configLoader = mockStatic(ConfigLoaderUtils.class);
         var springContext =
@@ -118,7 +119,9 @@ class CompileCmdTest {
     when(sqrlConfig.getTestConfig()).thenReturn(testConfig);
     when(testConfig.getTestDir(projectRoot)).thenReturn(Optional.empty());
     when(compilationProcess.executeCompilation(Optional.empty()))
-        .thenReturn(Pair.of(PhysicalPlan.builder().build(), new TestPlan()));
+        .thenReturn(
+            new CompilationResult(
+                PhysicalPlan.builder().build(), new TestPlan(), DataContracts.EMPTY));
 
     try (var configLoader = mockStatic(ConfigLoaderUtils.class);
         var springContext =

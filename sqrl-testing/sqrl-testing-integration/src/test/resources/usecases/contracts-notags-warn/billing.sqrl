@@ -1,0 +1,7 @@
+/** Invoices of the billing system */
+CREATE TABLE Invoices (
+  id BIGINT NOT NULL,
+  amount DOUBLE NOT NULL
+) WITH (
+  'connector' = 'datagen'
+);

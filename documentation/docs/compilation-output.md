@@ -7,7 +7,7 @@ description: "The files the DataSQRL compiler writes to build and build/deploy, 
 
 The compiler checks the pipeline across every system before deployment, because in an operational pipeline a mismatch between systems fails in production, not in a test query.
 
-The [`compile`](compiler#compile-command) command writes two kinds of output. Compilation outputs in the `build` folder describe the data model and the pipeline the compiler planned. Deployment outputs in `build/deploy/plan` are the artifacts each engine executes. The [`run`](compiler#run-command) and [`test`](compiler#test-command) commands produce the same output before they execute the pipeline.
+The [`compile`](compiler#compile-command) command writes two kinds of output. Compilation outputs in the `build` folder describe the data model and the pipeline the compiler planned. Deployment outputs in `build/deploy` are the artifacts each engine executes, in `build/deploy/plan`, and the data contracts of the pipeline's tables, in `build/deploy/contracts`. The [`run`](compiler#run-command) and [`test`](compiler#test-command) commands produce the same output before they execute the pipeline.
 
 The output is the basis for validating a pipeline before you deploy it, whether you or a coding agent wrote the SQRL script. Each file shows the pipeline at a different level of detail, from the data model down to the physical plan of each engine. This page lists the files and what they contain at a high level. The best way to learn the details is to compile a project and inspect the files:
 
@@ -117,6 +117,18 @@ The `build/deploy/flink` folder contains the data files that sources read locall
 | File        | Contents                                                                                                                   |
 |-------------|----------------------------------------------------------------------------------------------------------------------------|
 | `test.json` | The test plan: database views for tables annotated with `/*+ test */`, and the test queries, mutations, and subscriptions. |
+
+### Data Contracts
+
+The `build/deploy/contracts` folder contains the [data contracts](interface#data-contracts) of the pipeline in ODCS v3 format. They are not needed to run the pipeline: they describe its tables for data catalogs and for the systems that read or write them.
+
+| File                | Contents                                                                                                                                                  |
+|---------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `sources.odcs.yaml` | One schema object for each `CREATE TABLE` that the deployed pipeline reads, including mutation tables.                                                    |
+| `sinks.odcs.yaml`   | One schema object for each table that the pipeline writes with `EXPORT` or `INSERT INTO`, including the topics of `EXPORT … TO log.<name>`.              |
+| `<main>.odcs.yaml`  | One schema object for each visible table or view that lands in a table-format engine such as Iceberg. The file has the name of the main script.           |
+
+A schema object lists the physical columns of the table with their `logicalType`, `physicalType`, and `required`, the keys, the documentation, and the [tags](configuration#tags-in-the-build-output). A table that has a contract in the project has the schema object of that contract, with all its fields. A public table that the pipeline writes is listed with the columns as the engine stores them. A file without tables is not written. The files are only written by a successful compilation.
 
 ### Validating with Deployment Outputs
 

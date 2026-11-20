@@ -14,6 +14,8 @@ Based on the SQRL script, DataSQRL generates the interface for the compiled data
 
 For data lake and database views, DataSQRL generates view definitions as deployment assets in `build/deploy/plan` which can be queried directly.
 
+The compiler also writes [data contracts](#data-contracts) for the tables that the pipeline reads, writes, and publishes, and checks the contracts that the project provides.
+
 The last three are APIs that can be invoked programmatically. Every compiled API model uses the GraphQL execution model.
 The `protocols` [compiler configuration](configuration.md#compiler-compiler) controls which public API protocols the server exposes.
 
@@ -22,6 +24,189 @@ The `protocols` [compiler configuration](configuration.md#compiler-compiler) con
 For data lake and database views, each visible table defined in the SQRL script is exposed as a view or physical table depending on the pipeline optimization. The mapping between visible tables in the SQRL script and exposed tables in the interface is 1-to-1.
 
 We recommend generating unique table names for the physical tables by configuring a table-name suffix in the [connector configuration](configuration-default), e.g. by configuring the `table-name` for `postgres` or the `catalog-table` for `iceberg` to `${sqrl:table-name}_MY_SUFFIX` . This separates views from physical tables to provide modularity and support updates without impacting downstream consumers. 
+
+## Data Contracts
+
+A data contract describes a table that the pipeline shares with other systems: its columns, their types, its keys, and its tags. DataSQRL reads and writes data contracts in the [Open Data Contract Standard](https://bitol-io.github.io/open-data-contract-standard/) (ODCS) v3 format.
+
+The compiler does two things with data contracts:
+
+* It **generates** a contract for the tables the deployed pipeline reads and writes, and for the tables it publishes in a table-format engine such as Iceberg.
+* It **checks** the contracts that the project provides against the `CREATE TABLE` statements they describe. The compilation fails if a table and its contract differ.
+
+Contracts are optional. A project without contract files compiles as before and still gets the generated contracts.
+
+### Generated Contracts
+
+The compiler writes up to three files to `build/deploy/contracts`:
+
+| File                | Tables                                                                                                                                                                             |
+|---------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `sources.odcs.yaml` | The tables that the pipeline reads: every `CREATE TABLE` that the deployed pipeline reads from, including mutation tables.                                                         |
+| `sinks.odcs.yaml`   | The tables that the pipeline writes with `EXPORT` or `INSERT INTO`, including the topics of `EXPORT … TO log.<name>`. The `print` and `logger` sinks are left out.                 |
+| `<main>.odcs.yaml`  | The public tables of the project: the visible tables and views that land in a table-format engine such as Iceberg. The file is named after the main script, e.g. `pipeline.odcs.yaml` for `pipeline.sqrl`. |
+
+Which tables are in these files:
+
+* Only tables that the deployed pipeline uses. A table that nothing reads has no contract, and neither do [test tables](sqrl-language#testing) and the tables that only tests read.
+* A table that the pipeline reads and writes is in both `sources.odcs.yaml` and `sinks.odcs.yaml`.
+* A table in PostgreSQL has no contract, because PostgreSQL serves the API of the deployment and other systems don't query it. A subscription has none either, because it is internal to the deployment. To publish such data under a contract, define a `CREATE TABLE` for the target, such as a Kafka topic, and `EXPORT` to it.
+* Hidden tables that land in a table-format engine have no contract.
+* A table is listed under the name of its `CREATE TABLE`. Two different tables of the same name, such as tables of two scripts, are both listed. In a project with contract files, the compiler warns about them, because a consumer that finds a schema object by its name cannot tell them apart.
+* A file without tables is not written. If the main script is named `sources.sqrl` or `sinks.sqrl`, the public tables are written into that file.
+
+Each table is one schema object of the contract:
+
+```yaml
+apiVersion: v3.2.0
+kind: DataContract
+id: sources
+name: sources
+version: 1.0.0
+schema:
+- name: Products
+  physicalName: shop-products
+  physicalType: topic
+  logicalType: object
+  description: Products of the shop
+  tags:
+  - classification=internal
+  properties:
+  - name: id
+    logicalType: integer
+    logicalTypeOptions:
+      format: i64
+    physicalType: BIGINT
+    required: true
+    primaryKey: true
+    primaryKeyPosition: 1
+    classification: internal
+  - name: price
+    logicalType: number
+    physicalType: "DECIMAL(10, 2)"
+    classification: internal
+```
+
+* The properties are the **physical columns** of the table. Metadata columns and computed columns are not part of a contract.
+* `required` is `true` for a `NOT NULL` column or field, and absent otherwise.
+* `primaryKey` and `partitioned`, with their positions, are the declared `PRIMARY KEY` and `PARTITIONED BY` of a `CREATE TABLE`.
+* `description` is the doc string of the table, and the documentation of the column.
+* `physicalName` and `physicalType` say what stores the table. For a `CREATE TABLE`, the name is the `topic`, `table-name`, `catalog-table`, or `path` option of the connector, and the type is `topic`, `table`, or `file`. For a public table, the name is the name of the table or view in the engine, and the type is `table` or `view`. The properties of a public table that the pipeline writes are the columns as the engine stores them.
+* `tags` and `classification` are described [below](#tags-and-classification).
+
+The schema object of a table that has a contract in the project is the provided one, with all its fields. All other schema objects are generated. One exception: the generated files have ODCS version v3.2.0, so a table whose contract has an older version and that has a type the versions write differently (see below) gets the generated schema object.
+
+#### Type Mapping
+
+| Column type                          | `logicalType`              | `logicalTypeOptions`                    |
+|--------------------------------------|----------------------------|-----------------------------------------|
+| `BOOLEAN`                            | `boolean`                  |                                         |
+| `TINYINT`, `SMALLINT`, `INT`, `BIGINT` | `integer`                | `format`: `i8`, `i16`, `i32`, `i64`     |
+| `DECIMAL(p, s)`                      | `number`                   |                                         |
+| `FLOAT`, `DOUBLE`                    | `number`                   | `format`: `f32`, `f64`                  |
+| `CHAR(n)`, `VARCHAR(n)`, `STRING`    | `string`                   | `maxLength`: `n` (not for `STRING`)     |
+| `BINARY`, `VARBINARY`, `BYTES`       | `string`                   | `format`: `binary`                      |
+| `DATE`                               | `date`                     |                                         |
+| `TIME`                               | `time`                     |                                         |
+| `TIMESTAMP`, `TIMESTAMP_LTZ`         | `timestamp`                | `timezone`: `false`, `true`             |
+| `INTERVAL`                           | `string`                   |                                         |
+| JSON                                 | `object`, without properties |                                       |
+| Vector                               | `array` of `number`        |                                         |
+| `ROW`                                | `object`, with `properties` |                                        |
+| `ARRAY`, `MULTISET`                  | `array`, with `items`      |                                         |
+| `MAP`                                | `map`, with `map.key` and `map.value` |                              |
+
+`physicalType` is the column type as Flink writes it, such as `DECIMAL(10, 2)` or `TIMESTAMP_LTZ(3)`. It keeps what ODCS has no field for, like the precision of a decimal.
+
+Older ODCS versions have fewer types. For a contract with `apiVersion` v3.0.x, a timestamp is a `date` and a time is a `string`. Before v3.2.0, a map is an `object`. Generated contracts use v3.2.0.
+
+#### Tags and Classification
+
+When [tags](configuration#tags-compilertags) are configured, a contract lists them without the `@`: `gdpr` for a boolean tag and `pii=raw` for a tag with a value.
+
+* The tags of a schema object are the tags of the table.
+* The tags of a property are the tags in the documentation of that column, except the classification.
+* The tag named `classification` sets the ODCS `classification` of each property: the value that the column declares, and otherwise the value of the table. Tags count toward the whole table, so a table with one `confidential` column is `confidential`.
+
+### Providing Contracts
+
+To check a table against a contract, put the contract next to the script that defines the table:
+
+```
+connectors/
+├── crm.sqrl         # CREATE TABLE Customers …, CREATE TABLE Orders …
+└── crm.odcs.yaml    # schema objects Customers and Orders
+```
+
+* `<name>.odcs.yaml` belongs to `<name>.sqrl`, or to `<name>.table.sql`, in the same folder. This holds for every script that defines tables: the main script, imported scripts, and the scripts of `EXPORT` targets.
+* A schema object describes the `CREATE TABLE` of the same name. Names are matched ignoring case. The name is the one in the statement, not the alias of an `IMPORT … AS`.
+* A contract can cover some tables of a script. The other tables get a generated schema object.
+* A contract can describe more tables than the script defines, so a contract from a data catalog can be used unchanged. The compile summary lists the schema objects that were not applied.
+* The public tables that the pipeline computes cannot have a provided contract, since no `CREATE TABLE` defines them. To control the contract of such data, define a `CREATE TABLE` and `EXPORT` to it.
+
+A good way to start is to compile without a contract, copy the schema objects you need from `build/deploy/contracts` into `<name>.odcs.yaml` next to the script, add the top-level fields (`apiVersion`, `kind`, `id`, `version`, `status`), and edit from there. Contracts should use `apiVersion` v3.1.0 or later.
+
+#### Contracts and Environments
+
+When a source has one connector table per environment, the contract belongs to the file with the columns that the environments share. A table that takes its columns from a schema table with `LIKE` uses the contract of the file that defines the schema table:
+
+```
+connectors/
+├── crm.sqrl         # CREATE TABLE _Customers_schema (…): the shared columns
+├── crm.odcs.yaml    # schema object Customers
+├── crm-test.sqrl    # CREATE TABLE Customers (…) WITH (…) LIKE _Customers_schema
+└── crm-prod.sqrl    # CREATE TABLE Customers (…) WITH (…) LIKE _Customers_schema
+```
+
+The schema object is named like the table, `Customers`, not like the schema table. Both environments are checked against the same contract. A table can also have its schema object in the contract next to its own script, but not in both files.
+
+### Compatibility Rules
+
+The compiler compares a provided schema object with the `CREATE TABLE` on the fields that matter for the schema and for compliance. It reports every difference at its line of the contract file, and then once per table how many there are:
+
+| Field                         | Rule                                                                                                                                                                                                |
+|-------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Properties                    | The same set as the physical columns of the table, ignoring case and order. A column that the contract doesn't list is an error, and so is a property that is not a physical column of the table.    |
+| `logicalType`                 | Equal, also in the `properties` of an object, the `items` of an array, and the `map.key` and `map.value` of a map.                                                                                  |
+| `required`                    | Equal at every level. A missing `required` is `false`.                                                                                                                                              |
+| `primaryKey`, `partitioned`   | Optional. A key that the contract declares must be the key of the table: the same columns, and the same order if the contract gives the position of each key column.                               |
+| `tags`                        | The tags that are defined in `compiler.tags` must be the tags of the table. Tags count toward the whole table, so the contract can list a tag on the schema object or on any property, and the `classification` of a property counts as the `classification` tag. Other tags are labels of the catalog and are ignored. |
+| `classification`              | A property can leave it out. A classification that the contract gives must be the one of the column: the value that the column declares, and otherwise the value of the table.                    |
+| Everything else               | Ignored: `physicalType`, `physicalName`, descriptions, `logicalTypeOptions`, `quality`, `examples`, `customProperties`, and the top-level fields of the contract.                                   |
+
+Further rules:
+
+* **The watermark column is outside the column match.** The column that the `WATERMARK` of a table is declared on often differs between environments: test data carries it as a physical column, and production reads it from the metadata of the record. A contract may leave out a physical watermark column, and it may list the watermark column when the table reads it from metadata or computes it. Any other physical column must be in the contract.
+* **A table with a contract is checked even if the pipeline doesn't use it**, so a contract cannot drift unnoticed.
+* **A sink with a contract declares the tags of the data written into it.** The contract lists the tags of its table, so the table has to declare them, see [tags](configuration#propagation-and-validation).
+* Without `compiler.tags`, tags and classification are not compared. The compiler warns once for each contract file that declares any.
+
+A pipeline that needs fewer columns than a contract lists still defines all of them in the `CREATE TABLE` and selects the ones it needs in a table of its own.
+
+### Contract Files That Are Not Applied
+
+A contract is found by its file name, so a misnamed file would be ignored silently and look like a contract that passed. The compiler therefore reports every contract file that it doesn't apply:
+
+| Situation                                                                                                   | Result                                                        |
+|-------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------|
+| The contract file has no `<name>.sqrl` or `<name>.table.sql` next to it.                                    | Error                                                         |
+| The file is named `<name>.odcs.yml` or `<name>.odcs.json`.                                                  | Error                                                         |
+| The names of the contract file and the script differ only in case, e.g. `Crm.odcs.yaml` next to `crm.sqrl`. | Error                                                         |
+| None of the schema objects of the file matches a table.                                                     | Error                                                         |
+| A schema object matches more than one table, or a table has a schema object in two contract files.          | Error                                                         |
+| The file has more than one YAML document, or is not valid ODCS v3.                                          | Error                                                         |
+| The script next to the file is not part of this compilation, e.g. the connectors of another environment.    | No error. The compile summary lists the file as not used.     |
+| Some schema objects of the file match no table.                                                             | No error. The compile summary lists them as not applied.      |
+
+These checks only concern contract files. A script without a contract file is never reported, so a project can add contracts one script at a time. The files in the `contracts` folder of a deployment folder are output of the compiler, not contract files of the project, also when an earlier compilation wrote them into a folder of the project.
+
+The compile summary lists each contract file with the tables it was applied to:
+
+```
+Data contracts:       build/deploy/contracts
+  connectors/crm.odcs.yaml: Customers, Orders (not applied: Invoices)
+  sinks/archive-prod.odcs.yaml: not used in this compile
+```
 
 ## APIs
 

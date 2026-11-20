@@ -22,6 +22,7 @@ public class SqrlConstants {
   public static final String BUILD_DIR_NAME = "build";
   public static final String DEPLOY_DIR_NAME = "deploy";
   public static final String PLAN_DIR = "plan";
+  public static final String CONTRACTS_DIR = "contracts";
   public static final String PACKAGE_JSON = "package.json";
   public static final Path DEFAULT_PACKAGE = Path.of(PACKAGE_JSON);
   public static final String DEFAULT_ICEBERG_WAREHOUSE_DIR = "sqrl_iceberg_data";

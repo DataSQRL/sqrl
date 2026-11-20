@@ -30,6 +30,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
@@ -52,7 +53,7 @@ import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
 @RequiredArgsConstructor
 public class TagAnalyzer {
 
-  private final TagDefinitions definitions;
+  @Getter private final TagDefinitions definitions;
 
   /**
    * Reports each tag in a doc string or column comment that is undefined or has an invalid value.

@@ -20,6 +20,7 @@ import static com.datasqrl.SnapshotTestSupport.getResourcesDirectory;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datasqrl.SnapshotTestSupport.TestNameModifier;
+import com.datasqrl.planner.contract.OdcsConstants;
 import com.datasqrl.util.ArgumentsProviders;
 import com.datasqrl.util.SnapshotTest.Snapshot;
 import java.nio.file.Path;
@@ -62,8 +63,10 @@ class EngineValidationTest {
   }
 
   private Predicate<Path> getOutputDirFilter() {
+    // The data contract of the public tables has the name of the script, which contains iceberg
     return path ->
-        path.getFileName().toString().contains("iceberg")
+        (path.getFileName().toString().contains("iceberg")
+                && !path.getFileName().toString().endsWith(OdcsConstants.FILE_EXTENSION))
             || path.getFileName().toString().equals("vertx.json");
   }
 

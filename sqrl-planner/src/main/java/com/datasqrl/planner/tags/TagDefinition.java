@@ -17,6 +17,8 @@ package com.datasqrl.planner.tags;
 
 import com.datasqrl.planner.analyzer.ColumnReference;
 import java.util.List;
+import java.util.Optional;
+import javax.annotation.Nullable;
 import org.apache.calcite.rel.type.RelDataType;
 
 /**
@@ -42,6 +44,19 @@ public record TagDefinition(
     return values.isEmpty()
         ? new TagDefinition(name, List.of(TRUE), true, requiredColumns)
         : new TagDefinition(name, List.copyOf(values), false, requiredColumns);
+  }
+
+  /**
+   * @param value the value as it is written, in any case, or null for a tag without a value
+   * @return the tag with the value, or empty if the tag cannot have it: a boolean tag is written
+   *     without a value, and every other tag needs one of its values
+   */
+  public Optional<TagValue> valueOf(@Nullable String value) {
+    if (value == null && !isBoolean) {
+      return Optional.empty();
+    }
+    var level = values.indexOf(value == null ? TRUE : TagDefinitions.normalize(value));
+    return level < 0 ? Optional.empty() : Optional.of(new TagValue(this, level));
   }
 
   /**

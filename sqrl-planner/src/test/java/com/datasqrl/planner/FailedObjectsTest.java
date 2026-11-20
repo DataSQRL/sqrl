@@ -25,6 +25,7 @@ import com.datasqrl.config.WorkspacePaths;
 import com.datasqrl.engine.stream.flink.FlinkStreamEngine;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.loaders.schema.SchemaLoader;
+import com.datasqrl.planner.contract.ContractSource;
 import com.datasqrl.planner.hint.HintsAndDoc;
 import com.datasqrl.planner.parser.SqrlStatementParser;
 import java.nio.file.Path;
@@ -68,6 +69,7 @@ class FailedObjectsTest {
         Optional.empty(),
         mock(SchemaLoader.class),
         HintsAndDoc.EMPTY,
+        ContractSource.NONE,
         ErrorCollector.root());
   }
 

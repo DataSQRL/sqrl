@@ -23,7 +23,6 @@ import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.WorkspacePaths;
 import com.datasqrl.deployment.model.JdbcStatementModel.Type;
 import com.datasqrl.engine.EnginePhysicalPlan.DeploymentArtifact;
-import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.engine.database.AnalyticDatabaseEngine;
 import com.datasqrl.engine.database.relational.JdbcPhysicalPlan;
 import com.datasqrl.engine.server.ServerPhysicalPlan;
@@ -35,6 +34,7 @@ import com.datasqrl.plan.global.PhysicalPlanRewriter;
 import com.datasqrl.plan.validate.ExecutionGoal;
 import com.datasqrl.planner.SqlScriptPlanner;
 import com.datasqrl.planner.Sqrl2FlinkSQLTranslator;
+import com.datasqrl.planner.contract.DataContractStage;
 import com.datasqrl.planner.dag.DAGPlanner;
 import com.datasqrl.planner.dag.plan.MutationDatabase;
 import com.datasqrl.planner.tables.SqrlTableFunction;
@@ -46,7 +46,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
-import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
@@ -64,9 +63,10 @@ public class CompilationProcess {
   private final GraphqlSourceLoader graphqlSourceLoader;
   private final ServerModelManager serverModelManager;
   private final ExecutionGoal executionGoal;
+  private final DataContractStage dataContractStage;
   private final ErrorCollector errors;
 
-  public Pair<PhysicalPlan, TestPlan> executeCompilation(Optional<Path> testsPath) {
+  public CompilationResult executeCompilation(Optional<Path> testsPath) {
     try (var environment =
         new Sqrl2FlinkSQLTranslator(
             workspacePaths,
@@ -78,16 +78,21 @@ public class CompilationProcess {
     }
   }
 
-  private Pair<PhysicalPlan, TestPlan> executeCompilationInternal(
+  private CompilationResult executeCompilationInternal(
       Optional<Path> testsPath, Sqrl2FlinkSQLTranslator environment) {
 
     planner.planMain(mainScript, Optional.empty(), environment);
+    // The differences between the tables and their data contracts are recorded like tag
+    // violations, so that both are reported together
+    var contractFiles = dataContractStage.check(environment);
     // Tag violations, including those in the tag configuration, are recorded without aborting so
     // that all of them are reported. Don't optimize or assemble a plan with known errors.
     errors.abortOnErrors();
     var dagBuilder = planner.getDagBuilder();
     var dag = dagPlanner.optimize(dagBuilder.getDag());
     var physicalPlan = dagPlanner.assemble(dag, environment);
+    // The physical plan has the public tables as the engines store them
+    var contracts = dataContractStage.generate(dag, physicalPlan, environment, contractFiles);
     var mutationDatabase = physicalPlan.getMutationDatabase(environment);
 
     TestPlan testPlan = null;
@@ -161,7 +166,8 @@ public class CompilationProcess {
                     MutationDatabase.isBackwardsCompatible(
                         mutationDatabase, compareDb, environment, errors),
                     "The mutation tables defined by the script are not backwards compatible with the provided database. See warnings above for incompatibilities."));
-    return Pair.of(physicalPlan, testPlan);
+
+    return new CompilationResult(physicalPlan, testPlan, contracts);
   }
 
   /**

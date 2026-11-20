@@ -1,0 +1,10 @@
+-- This script has no contract file, so its table gets a generated contract
+CREATE TABLE Products (
+  id BIGINT NOT NULL,
+  title STRING NOT NULL,
+  price DECIMAL(10, 2)
+) WITH (
+  'connector' = 'filesystem',
+  'path' = 'file:///tmp/contracts-compile/products',
+  'format' = 'flexible-json'
+);

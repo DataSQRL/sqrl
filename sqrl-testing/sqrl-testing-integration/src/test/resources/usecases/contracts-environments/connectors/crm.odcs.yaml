@@ -1,0 +1,40 @@
+# The contract as the data catalog has it: it names the tables, not the schema tables, and it
+# describes more tables than this project reads
+apiVersion: v3.2.0
+kind: DataContract
+id: urn:catalog:crm
+version: 3.0.0
+status: active
+schema:
+  # The watermark column received_at is not listed: the test environment has it as a physical
+  # column, and production reads it from the metadata of the record
+  - name: Customers
+    properties:
+      - name: id
+        logicalType: integer
+        required: true
+      - name: name
+        logicalType: string
+        required: true
+      - name: email
+        logicalType: string
+  # The watermark column updated_at is part of the payload in every environment
+  - name: Orders
+    properties:
+      - name: id
+        logicalType: integer
+        required: true
+      - name: customer_id
+        logicalType: integer
+        required: true
+      - name: amount
+        logicalType: number
+        required: true
+      - name: updated_at
+        logicalType: timestamp
+        required: true
+  - name: Invoices
+    properties:
+      - name: id
+        logicalType: integer
+        required: true

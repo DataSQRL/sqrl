@@ -25,6 +25,7 @@ import com.datasqrl.loaders.resolver.ResourceResolver;
 import com.datasqrl.packager.FilePreprocessingPipeline;
 import com.datasqrl.packager.Packager;
 import com.datasqrl.packager.preprocess.CopyStaticDataPreprocessor;
+import com.datasqrl.packager.preprocess.DataContractPreprocessor;
 import com.datasqrl.packager.preprocess.JBangPreprocessor;
 import com.datasqrl.packager.preprocess.JarPreprocessor;
 import com.datasqrl.packager.preprocess.SqrlPreprocessor;
@@ -42,6 +43,7 @@ import org.springframework.context.annotation.Import;
   FilePreprocessingPipeline.class,
   Packager.class,
   CopyStaticDataPreprocessor.class,
+  DataContractPreprocessor.class,
   JarPreprocessor.class,
   JBangPreprocessor.class,
   SqrlPreprocessor.class

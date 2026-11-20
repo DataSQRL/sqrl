@@ -1,0 +1,416 @@
+>>>inferred_schema.graphqls
+"Customers that have an email"
+type CustomersWithEmail {
+  id: Long!
+  name: String!
+  email: String
+}
+
+"An RFC-3339 compliant Full Date Scalar"
+scalar Date
+
+"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats"
+scalar DateTime
+
+"A JSON scalar"
+scalar JSON
+
+"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`."
+scalar LocalTime
+
+"A 64-bit signed integer"
+scalar Long
+
+"Orders of the CRM system"
+type Orders {
+  id: Long!
+  customer_id: Long!
+  amount: Float!
+  updated_at: DateTime!
+}
+
+type Query {
+  "Customers that have an email"
+  CustomersWithEmail(limit: Int = 10, offset: Int = 0): [CustomersWithEmail!]
+  "Orders above the review limit"
+  LargeOrders(limit: Int = 10, offset: Int = 0): [Orders!]
+}
+
+enum _McpMethodType {
+  NONE
+  TOOL
+}
+
+enum _McpVisibility {
+  MODEL
+  APP
+}
+
+enum _RestMethodType {
+  NONE
+  GET
+  POST
+}
+
+directive @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String, appName: String, visibility: [_McpVisibility!]) on QUERY | MUTATION | FIELD_DEFINITION
+
+>>>pipeline_explain.txt
+=== Customers
+ID:          default_catalog.crm.Customers
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   received_at
+Row count:   ~1e8
+--- definition ---
+Schema:
+ - id: BIGINT NOT NULL
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+ - received_at: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.crm.Customers__base
+
+=== Orders
+ID:          default_catalog.crm.Orders
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   updated_at
+Row count:   ~1e8
+--- definition ---
+Schema:
+ - id: BIGINT NOT NULL
+ - customer_id: BIGINT NOT NULL
+ - amount: DOUBLE NOT NULL
+ - updated_at: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.crm.Orders__base
+
+=== CustomersWithEmail
+ID:          default_catalog.default_database.CustomersWithEmail
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   -
+Row count:   ~9e7
+--- definition ---
+Schema:
+ - id: BIGINT NOT NULL
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+Inputs:
+ - default_catalog.crm.Customers
+--- physical ---
+Table CustomersWithEmail (postgres):
+ - primary key: __pk_hash (generated hash key)
+
+=== LargeOrders
+ID:          default_catalog.default_database.LargeOrders
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   updated_at
+Row count:   ~5e7
+--- definition ---
+Schema:
+ - id: BIGINT NOT NULL
+ - customer_id: BIGINT NOT NULL
+ - amount: DOUBLE NOT NULL
+ - updated_at: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.crm.Orders
+--- physical ---
+Table LargeOrders (postgres):
+ - primary key: __pk_hash (generated hash key)
+
+>>>flink-sql-no-functions.sql
+CREATE DATABASE IF NOT EXISTS `crm`;
+USE `crm`;
+CREATE TABLE `_Customers_schema` (
+  `id` BIGINT NOT NULL,
+  `name` STRING NOT NULL,
+  `email` STRING
+);
+CREATE TABLE `_Orders_schema` (
+  `id` BIGINT NOT NULL,
+  `customer_id` BIGINT NOT NULL,
+  `amount` DOUBLE NOT NULL,
+  `updated_at` TIMESTAMP_LTZ(3) NOT NULL
+);
+CREATE TABLE `Customers` (
+  `received_at` TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR `received_at` AS `received_at` - INTERVAL '1' SECOND
+)
+WITH (
+  'connector' = 'filesystem',
+  'format' = 'flexible-json',
+  'path' = 'file:///tmp/contracts-environments/customers'
+)
+LIKE `_Customers_schema`;
+CREATE TABLE `Orders` (
+  WATERMARK FOR `updated_at` AS `updated_at` - INTERVAL '1' SECOND
+)
+WITH (
+  'connector' = 'filesystem',
+  'format' = 'flexible-json',
+  'path' = 'file:///tmp/contracts-environments/orders'
+)
+LIKE `_Orders_schema`;
+USE CATALOG `default_catalog`;
+CREATE DATABASE IF NOT EXISTS `default_database`;
+USE `default_database`;
+CREATE VIEW `CustomersWithEmail`
+AS
+SELECT `id`, `name`, `email`
+FROM `crm`.`Customers`
+WHERE `email` IS NOT NULL;
+CREATE VIEW `LargeOrders`
+AS
+SELECT `id`, `customer_id`, `amount`, `updated_at`
+FROM `crm`.`Orders`
+WHERE `amount` > 100;
+CREATE TABLE `CustomersWithEmail_1` (
+  `id` BIGINT NOT NULL,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'CustomersWithEmail',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `LargeOrders_2` (
+  `id` BIGINT NOT NULL,
+  `customer_id` BIGINT NOT NULL,
+  `amount` DOUBLE NOT NULL,
+  `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'LargeOrders',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+EXECUTE STATEMENT SET BEGIN
+INSERT INTO `default_catalog`.`default_database`.`CustomersWithEmail_1`
+SELECT `id`, `name`, `email`, `hash_key`(`id`, `name`, `email`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`CustomersWithEmail`
+ON CONFLICT DO DEDUPLICATE
+;
+INSERT INTO `default_catalog`.`default_database`.`LargeOrders_2`
+SELECT `id`, `customer_id`, `amount`, `updated_at`, `hash_key`(`id`, `customer_id`, `amount`, `updated_at`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`LargeOrders`
+ON CONFLICT DO DEDUPLICATE
+;
+END
+>>>kafka.json
+{
+  "topics" : [ ],
+  "testRunnerTopics" : [ ]
+}
+>>>postgres-schema.sql
+CREATE TABLE IF NOT EXISTS "CustomersWithEmail" ("id" BIGINT NOT NULL, "name" TEXT NOT NULL, "email" TEXT, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"));
+CREATE TABLE IF NOT EXISTS "LargeOrders" ("id" BIGINT NOT NULL, "customer_id" BIGINT NOT NULL, "amount" DOUBLE PRECISION NOT NULL, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"))
+>>>vertx.json
+{
+  "models" : {
+    "v1" : {
+      "queries" : [
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "CustomersWithEmail",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"id\", \"name\", \"email\"\nFROM \"CustomersWithEmail\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "LargeOrders",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"id\", \"customer_id\", \"amount\", \"updated_at\"\nFROM \"LargeOrders\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        }
+      ],
+      "mutations" : [ ],
+      "subscriptions" : [ ],
+      "operations" : [
+        {
+          "function" : {
+            "name" : "GetCustomersWithEmail",
+            "description" : "Customers that have an email",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query CustomersWithEmail($limit: Int = 10, $offset: Int = 0) {\nCustomersWithEmail(limit: $limit, offset: $offset) {\nid\nname\nemail\n}\n\n}",
+            "queryName" : "CustomersWithEmail",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/CustomersWithEmail{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "integer"
+                },
+                "name" : {
+                  "type" : "string"
+                },
+                "email" : {
+                  "type" : "string"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetLargeOrders",
+            "description" : "Orders above the review limit",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query LargeOrders($limit: Int = 10, $offset: Int = 0) {\nLargeOrders(limit: $limit, offset: $offset) {\nid\ncustomer_id\namount\nupdated_at\n}\n\n}",
+            "queryName" : "LargeOrders",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/LargeOrders{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "integer"
+                },
+                "customer_id" : {
+                  "type" : "integer"
+                },
+                "amount" : {
+                  "type" : "number"
+                },
+                "updated_at" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "schema" : {
+        "type" : "string",
+        "schema" : "\"Customers that have an email\"\ntype CustomersWithEmail {\n  id: Long!\n  name: String!\n  email: String\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\n\"Orders of the CRM system\"\ntype Orders {\n  id: Long!\n  customer_id: Long!\n  amount: Float!\n  updated_at: DateTime!\n}\n\ntype Query {\n  \"Customers that have an email\"\n  CustomersWithEmail(limit: Int = 10, offset: Int = 0): [CustomersWithEmail!]\n  \"Orders above the review limit\"\n  LargeOrders(limit: Int = 10, offset: Int = 0): [Orders!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n}\n\nenum _McpVisibility {\n  MODEL\n  APP\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String, appName: String, visibility: [_McpVisibility!]) on QUERY | MUTATION | FIELD_DEFINITION\n"
+      }
+    }
+  }
+}
+>>>sources.odcs.yaml
+apiVersion: v3.2.0
+kind: DataContract
+id: sources
+name: sources
+version: 1.0.0
+schema:
+- name: Customers
+  properties:
+  - name: id
+    logicalType: integer
+    required: true
+  - name: name
+    logicalType: string
+    required: true
+  - name: email
+    logicalType: string
+- name: Orders
+  properties:
+  - name: id
+    logicalType: integer
+    required: true
+  - name: customer_id
+    logicalType: integer
+    required: true
+  - name: amount
+    logicalType: number
+    required: true
+  - name: updated_at
+    logicalType: timestamp
+    required: true
+

@@ -1,0 +1,12 @@
+-- The table does not declare the pii tag of the customer emails that are written into it
+/** Archive of the customer emails @classification=confidential @gdpr */
+CREATE TABLE EmailArchive (
+  id BIGINT NOT NULL,
+  email STRING
+) WITH (
+  'connector' = 'kafka-safe',
+  'topic' = 'email-archive',
+  'properties.bootstrap.servers' = 'localhost:9092',
+  'properties.group.id' = 'contracts',
+  'format' = 'flexible-json'
+);

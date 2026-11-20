@@ -1,0 +1,12 @@
+IMPORT crm.*;
+IMPORT shipping-test.*;
+
+/** Names of the customers @pii=raw @classification=confidential @gdpr */
+CustomerNames := SELECT id, name FROM Customers;
+
+/** Carriers of the shipments */
+ShipmentCarriers := SELECT id, carrier FROM Shipments;
+
+-- The sink has a contract, so it must declare the tags of the data written into it
+_CustomerEmails := SELECT id, email FROM Customers;
+EXPORT _CustomerEmails TO archive.EmailArchive;

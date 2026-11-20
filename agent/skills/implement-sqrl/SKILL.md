@@ -82,6 +82,7 @@ Otherwise, imports are available within a namespace that's equal to the name of 
 * `IMPORT my.custom.script`: Tables are imported into the `script` namespace and can be referenced as `script.MyTable`
 * `IMPORT my.custom.script AS myNamespace`: Tables are imported into the `myNamespace` namespace and can be referenced as `myNamespace.MyTable`
 * `IMPORT connectors.sources-{{environment}} AS sources`: Imports the connector file selected by the `environment` config variable (`sources-test.sqrl`, `sources-prod.sqrl`, …) into the `sources` namespace
+* `IMPORT connectors.crm-{{environment}} AS crm`: A source with a data contract has its own base file (`crm.sqrl` with `crm.odcs.yaml`) and its own environment files, so the main script has one such import per base file, next to the `sources` import (invoke the `/manage-connector` skill).
 * `IMPORT functions.*` / `IMPORT functions.my_func`: Imports Java UDFs from the project's `functions/` folder (invoke the `/implement-udf` skill); `IMPORT stdlib.math.*` imports built-in functions (see [functions.md](functions.md))
 
 ### Import style controls API exposure
@@ -724,7 +725,7 @@ When the package configuration defines tags under `compiler.tags`, the `@name` a
 * A table inherits the tags of every table it reads, including joined and subquery tables. A public table or function must repeat each inherited tag in its doc-string with the same or a higher value, or the compile fails. Copy the tags from the compile error's `inherited from [...]` tables. Hidden tables, relationships and test tables carry their inherited tags without declaring them.
 * Tags in `# Columns:` notes, including nested ones, count toward the whole table.
 * A tag with `required-columns` in `compiler.tags` requires those columns, with a compatible type, in every table that carries the tag, including hidden tables and tables that are only written into. Keep the column in the `SELECT`, or declassify the tag when the requirements allow it.
-* A `CREATE TABLE` that `INSERT INTO` or `EXPORT` writes into must declare the tags of the written data when other tables read it or it is an internal table with an `engine` hint (e.g. an Iceberg or Kafka table in a separate script).
+* A `CREATE TABLE` that `INSERT INTO` or `EXPORT` writes into must declare the tags of the written data when other tables read it, it is an internal table with an `engine` hint (e.g. an Iceberg or Kafka table in a separate script), or it has a data contract.
 * To drop or lower an inherited tag, e.g. for an aggregate that no longer contains personal data, add `/*+declassify(tag, ...) */` and declare the lower value or none. Only declassify when the requirements say the data allows it.
 
 ## Validation rules

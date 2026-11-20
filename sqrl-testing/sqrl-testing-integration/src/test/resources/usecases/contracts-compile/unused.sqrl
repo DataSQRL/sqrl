@@ -1,0 +1,7 @@
+-- The main script does not import this script, so its contract is not used in this compile
+CREATE TABLE Shipments (
+  id BIGINT NOT NULL,
+  carrier STRING
+) WITH (
+  'connector' = 'datagen'
+);
