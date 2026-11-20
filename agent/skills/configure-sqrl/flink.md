@@ -86,5 +86,18 @@ Frequently configured options:
 ## Upgrading from a Savepoint
 
 Flink refuses to restore a savepoint that holds state for an operator the new `flink-compiled-plan.json` no longer has.
-Compare the compiled plans of both versions before upgrading. If stateful operators were removed, restore once with `execution.state-recovery.ignore-unclaimed-state: true` (`job.allowNonRestoredState: true` with the Flink Kubernetes Operator), then remove the option so it cannot hide an unexpected state mismatch later.
+
+Before an upgrade, check that the new plan can restore the state of the running version. Compile the new version with `--check-state-upgrade-from` and the build folder of the running version:
+
+```bash
+/opt/agent/cmd.sh compile -r myproject myproject-shared-package.json myproject-prod-package.json -b myproject --check-state-upgrade-from build/myproject-deployed
+```
+
+- Use the build folder of the running version as the old build. A new compile of an older script can give a different plan than the plan that runs. You can also compile the package files of the running version with their own `-b` folder first. Do this only when the running version has the same script and DataSQRL version.
+- Give each compile its own `-b` folder. Each compile empties its build folder, and the default build folder `build` holds every other build folder.
+- Run the check again after each change to the script or to the package files.
+- The compile fails with one line for each break, for example `operator 7 changed: field 'state' differs (old: ..., new: ...)`. Find the change in the script or the package files that causes the break. Fix the change, or accept the break as described below.
+- When only one build sets `pipeline.max-parallelism`, the compile gives a warning. Set the same value in both builds.
+
+To accept removed stateful operators, restore once with `execution.state-recovery.ignore-unclaimed-state: true`. With the Flink Kubernetes Operator, use `job.allowNonRestoredState: true`. Then remove the option, so that it cannot hide an unexpected state mismatch later.
 The state of the removed operators is dropped. For example, plans compiled by earlier DataSQRL versions write `STREAM` tables through `WatermarkTimestampAssigner` and `SinkMaterializer` operators that current plans no longer have; rows still held in their state are not written to the database after the restore.

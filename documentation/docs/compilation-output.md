@@ -123,7 +123,7 @@ The `build/deploy/flink` folder contains the data files that sources read locall
 The deployment outputs show the physical plan, the most detailed level. Use them to validate how the pipeline executes and whether it will hold up in production:
 
 - **`flink-explained-plan.txt`** shows how Flink executes each table. Check that deduplications use the expected rank strategy, that joins are temporal or interval joins where expected rather than regular joins with unbounded state, and that watermarks are assigned with the intended delay.
-- **`flink-compiled-plan.json`** is the exact plan that runs. Compare it between versions to detect changes that are incompatible with existing savepoints (see [Upgrading from a Savepoint](#upgrading-from-a-savepoint)).
+- **`flink-compiled-plan.json`** is the exact plan that runs. Compile with `--check-state-upgrade-from` to find changes that are incompatible with the state of a running version (see [Upgrading from a Savepoint](#upgrading-from-a-savepoint)).
 - **`postgres-schema.sql`** and **`postgres-views.sql`** show which tables are materialized, which are computed at query time, and which indexes the compiler selected. Check that the API queries in `vertx.json` are served by an index. The compiler warns about a filter that no index can serve because it wraps its column in an expression (see [Automatic index selection](sqrl-language#automatic-index-selection)).
 - **`vertx.json`** and the OpenAPI specification show exactly which SQL each API endpoint executes. Use them to review the cost of queries and to verify that filters and access restrictions are applied.
 - **`flink-config.yaml`**, **`kafka.json`**, and **`vertx-config.json`** show the operational settings. Validate them against your deployment requirements, such as checkpoint intervals, topic retention, and partitioning.
@@ -133,6 +133,19 @@ Together, these files let you build an ensemble of reviews: humans inspect the v
 ### Upgrading from a Savepoint
 
 A running pipeline is upgraded by restoring its Flink job from a savepoint taken with the previous `flink-compiled-plan.json`. Flink maps the saved state to the operators of the new plan and, by default, refuses to start when the savepoint holds state for an operator that the new plan no longer has.
+
+Before an upgrade, check that the new plan can restore the state of the running version. Give the build folder of the running version to `--check-state-upgrade-from` when you compile the new version:
+
+```bash
+docker run --rm -v $PWD:/workspace datasqrl/cmd compile my-project-prod-package.json -b my-project --check-state-upgrade-from build/my-project-deployed
+```
+
+- **The old build:** use the build folder of the running version. A new compile of an older script can give a different plan than the plan that runs. You can also compile the package files of the running version into a separate build folder, for example with `-b my-project-deployed`. Do this only when the running version has the same script and DataSQRL version as the project.
+- **The rule:** each operator of the old plan needs an operator in the new plan with the same `id`, `type` and state fields. The state fields are `state`, `stateMetadata`, `joinSpec`, `inputProperties` and `inputChangelogMode`. An operator that only the new plan has is accepted. When both builds set `pipeline.max-parallelism`, the values must be the same.
+- **The result:** the compile fails with one line for each break, and the line names the operator and the field. When only one build sets `pipeline.max-parallelism`, the compile gives a warning. When the check passes, the compile gives the notice "The new Flink plan can restore the state of the old build".
+- **The folders:** each compile empties its build folder and its target folder. Give each compile its own `-b` folder. The check fails before the compile when the old plan folder is inside one of these folders.
+
+Run the check again after each change to the script or to the package files.
 
 When a new plan removes stateful operators, restore once with `execution.state-recovery.ignore-unclaimed-state: true` in the Flink configuration (`job.allowNonRestoredState: true` with the Flink Kubernetes Operator). Flink then drops the state of the removed operators, so check what that state held before upgrading. Remove the option after the restore, so it cannot hide an unexpected state mismatch in a later upgrade.
 
