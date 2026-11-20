@@ -49,6 +49,7 @@ public class CliCompileTestExtension implements BeforeEachCallback, AfterEachCal
   @Getter private Path outputDir;
   @Getter private Path buildDir;
   @Getter private Path planDir;
+  @Getter private Path contractsDir;
   @Getter @Setter private Snapshot snapshot;
   @Getter private Path tempPackage;
   private Path tempRoot;
@@ -79,6 +80,7 @@ public class CliCompileTestExtension implements BeforeEachCallback, AfterEachCal
     }
     buildDir = null;
     planDir = null;
+    contractsDir = null;
     snapshot = null;
     tempPackage = null;
   }
@@ -112,6 +114,11 @@ public class CliCompileTestExtension implements BeforeEachCallback, AfterEachCal
         buildDir
             .resolve(SqrlConstants.DEPLOY_DIR_NAME)
             .resolve(SqrlConstants.PLAN_DIR)
+            .toAbsolutePath();
+    this.contractsDir =
+        buildDir
+            .resolve(SqrlConstants.DEPLOY_DIR_NAME)
+            .resolve(SqrlConstants.CONTRACTS_DIR)
             .toAbsolutePath();
     var args = new ArrayList<>(argsList);
     args.addAll(1, List.of("-r", projectDir.getFileName().toString()));
@@ -166,9 +173,22 @@ public class CliCompileTestExtension implements BeforeEachCallback, AfterEachCal
       Predicate<Path> buildDirFilter,
       Predicate<Path> outputDirFilter,
       Predicate<Path> planDirFilter) {
+    createSnapshot(buildDirFilter, outputDirFilter, planDirFilter, path -> false);
+  }
+
+  /**
+   * Same as {@link #createSnapshot(Predicate, Predicate, Predicate)}, and adds the selected data
+   * contracts of the deployment.
+   */
+  public void createSnapshot(
+      Predicate<Path> buildDirFilter,
+      Predicate<Path> outputDirFilter,
+      Predicate<Path> planDirFilter,
+      Predicate<Path> contractsDirFilter) {
     SnapshotTestSupport.snapshotFiles(snapshot, buildDir, 1, buildDirFilter);
     SnapshotTestSupport.snapshotFiles(snapshot, outputDir, outputDirFilter);
     SnapshotTestSupport.snapshotFiles(snapshot, planDir, planDirFilter);
+    SnapshotTestSupport.snapshotFiles(snapshot, contractsDir, contractsDirFilter);
     snapshot.createOrValidate();
   }
 

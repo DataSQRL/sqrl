@@ -1,0 +1,4 @@
+CREATE TABLE _Parts_schema (
+  id BIGINT NOT NULL,
+  note STRING
+);

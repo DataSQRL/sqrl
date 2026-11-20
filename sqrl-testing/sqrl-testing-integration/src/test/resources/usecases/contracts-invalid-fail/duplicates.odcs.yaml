@@ -1,0 +1,20 @@
+apiVersion: v3.2.0
+kind: DataContract
+id: urn:catalog:parcels
+version: 1.0.0
+status: active
+schema:
+  - name: Parcels
+    properties:
+      - name: id
+        logicalType: integer
+        required: true
+      - name: note
+        logicalType: string
+  - name: PARCELS
+    properties:
+      - name: id
+        logicalType: integer
+        required: true
+      - name: note
+        logicalType: string

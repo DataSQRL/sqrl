@@ -19,12 +19,11 @@ import static com.datasqrl.config.SqrlConstants.PACKAGE_JSON;
 
 import com.datasqrl.cli.output.OutputFormatter;
 import com.datasqrl.compile.CompilationProcess;
-import com.datasqrl.compile.TestPlan;
+import com.datasqrl.compile.CompilationResult;
 import com.datasqrl.config.ExecutionEnginesHolder;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.ProjectPaths;
 import com.datasqrl.config.SqrlConstants;
-import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrefix;
 import com.datasqrl.packager.Packager;
@@ -40,7 +39,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
 @Slf4j
@@ -155,9 +153,9 @@ public abstract class AbstractCompileCmd extends BasePackageConfCmd {
               .getTestDir(new ProjectPaths(cli.workspaceDir, getProjectRoot()));
       testDir.ifPresent(this::validateTestPath);
 
-      Pair<PhysicalPlan, ? extends TestPlan> plan;
+      CompilationResult result;
       try {
-        plan = compilationProcess.executeCompilation(testDir);
+        result = compilationProcess.executeCompilation(testDir);
 
       } catch (FlinkCompileException e) {
         packager.postprocessFlinkCompileError(e);
@@ -172,7 +170,7 @@ public abstract class AbstractCompileCmd extends BasePackageConfCmd {
         formatter.phaseStart("Generating deployment artifacts");
       }
 
-      packager.postprocess(getTargetDir(), plan.getLeft(), plan.getRight());
+      packager.postprocess(getTargetDir(), result);
     }
   }
 
@@ -253,6 +251,11 @@ public abstract class AbstractCompileCmd extends BasePackageConfCmd {
     formatter.info("Deployment artifacts: " + formatter.relativizeFromCliRoot(getTargetDir()));
     formatter.info("Pipeline DAG:         " + relBuildDir.resolve("pipeline_explain.txt"));
     formatter.info("Visual DAG:           " + relBuildDir.resolve("pipeline_visual.html"));
+    // A compile writes the folder of the data contracts only if it has contracts to write
+    var contractsDir = getTargetDir().resolve(SqrlConstants.CONTRACTS_DIR);
+    if (Files.isDirectory(contractsDir)) {
+      formatter.info("Data contracts:       " + formatter.relativizeFromCliRoot(contractsDir));
+    }
     formatter.newline();
     formatter.buildStatus(true, getElapsedTime(), LocalDateTime.now());
     formatter.newline();

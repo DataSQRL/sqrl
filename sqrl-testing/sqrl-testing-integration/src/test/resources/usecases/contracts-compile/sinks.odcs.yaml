@@ -1,0 +1,20 @@
+apiVersion: v3.2.0
+kind: DataContract
+id: urn:catalog:mailing
+version: 1.1.0
+status: active
+schema:
+  - name: EmailTopic
+    physicalType: topic
+    tags: [pii=raw, classification=confidential, gdpr]
+    customProperties:
+      - property: owner
+        value: mailing-team
+    properties:
+      - name: id
+        logicalType: integer
+        required: true
+        classification: confidential
+      - name: email
+        logicalType: string
+        classification: confidential

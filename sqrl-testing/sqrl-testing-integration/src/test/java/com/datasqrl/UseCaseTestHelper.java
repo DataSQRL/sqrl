@@ -60,6 +60,21 @@ public final class UseCaseTestHelper {
     };
   }
 
+  /**
+   * Data contracts are only part of the snapshot of the use cases that are about them, whose folder
+   * name starts with {@code contracts-}, so that the snapshots of the other use cases don't have
+   * them.
+   */
+  public static Predicate<Path> defaultContractsDirFilter(Path packageFile) {
+    var isContractsUseCase = useCaseName(packageFile).startsWith("contracts-");
+    return file -> isContractsUseCase;
+  }
+
+  /** The name of the folder of the package file, which is the name of the use case. */
+  private static String useCaseName(Path packageFile) {
+    return packageFile.toAbsolutePath().getParent().getFileName().toString();
+  }
+
   /** Compiles the given package file and creates/validates a snapshot of the results. */
   public static void testUseCase(
       CliCompileTestExtension ext,
@@ -103,25 +118,32 @@ public final class UseCaseTestHelper {
       testName = getNestedDisplayName(displayPath);
     }
 
-    snapshot(ext, testClass, testName, hook, buildDirFilter, planDirFilter);
+    snapshot(ext, testClass, testName, hook, packageFile, buildDirFilter, planDirFilter);
   }
 
   /**
    * Either snapshot the results in the plan and build directory (if successful) or the error
-   * message (if it failed).
+   * message (if it failed). The snapshot of a use case whose name ends in {@code -warn} also has
+   * the messages of the compilation, and the one of a {@code contracts-} use case its data
+   * contracts.
    */
   public static void snapshot(
       CliCompileTestExtension ext,
       Class<?> testClass,
       String testname,
       AssertStatusHook hook,
+      Path packageFile,
       Predicate<Path> buildDirFilter,
       Predicate<Path> planDirFilter) {
     ext.setSnapshot(Snapshot.of(testname, testClass));
     if (hook.isFailed()) {
       ext.createMessageSnapshot(hook.getMessages());
-    } else {
-      ext.createSnapshot(buildDirFilter, outputDir -> false, planDirFilter);
+      return;
     }
+    if (useCaseName(packageFile).endsWith("-warn")) {
+      ext.getSnapshot().addContent(hook.getMessages(), "messages");
+    }
+    ext.createSnapshot(
+        buildDirFilter, outputDir -> false, planDirFilter, defaultContractsDirFilter(packageFile));
   }
 }

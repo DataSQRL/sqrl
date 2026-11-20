@@ -1,0 +1,5 @@
+/** Shipments of the orders */
+CREATE TABLE _Shipments_schema (
+  id BIGINT NOT NULL,
+  carrier STRING
+);

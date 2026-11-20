@@ -1,0 +1,2384 @@
+>>>inferred_schema.graphqls
+"Clicks on the web site"
+type Clicks {
+  customer_id: Long!
+  ingested_at: DateTime!
+  url: String!
+  event_time: DateTime!
+}
+
+"Customers per region @pii=raw @classification=confidential @gdpr"
+type CustomerCounts {
+  region: String!
+  num_customers: Long!
+}
+
+"Customer master data @pii=raw @classification=confidential"
+type Customers {
+  id: Long!
+  "Contact email @gdpr"
+  email: String
+  name: String!
+  age: Int
+  score: Float
+  balance: Float
+  active: Boolean
+  birthday: Date
+  address: Customers_addressOutput
+  phones: [Customers_phonesOutput]
+  attributes: JSON
+  region: String!
+  loaded_at: DateTime!
+  updated_at: DateTime!
+}
+
+type Customers_addressOutput {
+  street: String
+  city: String!
+  zip: String
+}
+
+type Customers_phonesOutput {
+  kind: String!
+  number: String
+}
+
+"An RFC-3339 compliant Full Date Scalar"
+scalar Date
+
+"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats"
+scalar DateTime
+
+"Feedback that customers send @pii=masked @classification=internal"
+type Feedback {
+  customer_id: Long!
+  message: String!
+  event_time: DateTime
+}
+
+input FeedbackInput {
+  customer_id: Long!
+  message: String!
+}
+
+type FeedbackResultOutput {
+  customer_id: Long!
+  message: String!
+  event_time: DateTime
+}
+
+"A JSON scalar"
+scalar JSON
+
+"Number of large orders"
+type LargeOrderCount {
+  num_orders: Long!
+}
+
+"Orders above the review limit"
+type LargeOrders {
+  id: Long!
+  amount: Float!
+}
+
+"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`."
+scalar LocalTime
+
+"A 64-bit signed integer"
+scalar Long
+
+type Mutation {
+  "Feedback that customers send @pii=masked @classification=internal"
+  Feedback(event: FeedbackInput!): FeedbackResultOutput!
+}
+
+"Events of the legacy system"
+type MyEvents {
+  id: Long!
+  kind: String!
+  payload: JSON
+  created_at: DateTime!
+}
+
+"New feedback @pii=masked @classification=internal"
+type NewFeedback {
+  customer_id: Long!
+  message: String!
+}
+
+"Total amount of the orders per customer"
+type OrderTotals {
+  customer_id: Long!
+  total: Float!
+}
+
+type Orders {
+  id: Long!
+  customer_id: Long!
+  amount: Float!
+  ordered_at: DateTime!
+}
+
+type Products {
+  id: Long!
+  title: String!
+  price: Float
+}
+
+type Query {
+  "Customers per region @pii=raw @classification=confidential @gdpr"
+  CustomerCounts(limit: Int = 10, offset: Int = 0): [CustomerCounts!]
+  "Total amount of the orders per customer"
+  OrderTotals(limit: Int = 10, offset: Int = 0): [OrderTotals!]
+  "Clicks on the web site"
+  Clicks(limit: Int = 10, offset: Int = 0): [Clicks!]
+  "Orders of the customers"
+  CustomerOrders(limit: Int = 10, offset: Int = 0): [Orders!]
+  "Customer master data @pii=raw @classification=confidential"
+  Customers(limit: Int = 10, offset: Int = 0): [Customers!]
+  "Feedback that customers send @pii=masked @classification=internal"
+  Feedback(limit: Int = 10, offset: Int = 0): [Feedback!]
+  "Number of large orders"
+  LargeOrderCount(limit: Int = 10, offset: Int = 0): [LargeOrderCount!]
+  "Orders above the review limit"
+  LargeOrders(limit: Int = 10, offset: Int = 0): [LargeOrders!]
+  "Events of the legacy system"
+  MyEvents(limit: Int = 10, offset: Int = 0): [MyEvents!]
+  Orders(limit: Int = 10, offset: Int = 0): [Orders!]
+  "Products by price"
+  ProductPrices(limit: Int = 10, offset: Int = 0): [Products!]
+  Products(limit: Int = 10, offset: Int = 0): [Products!]
+}
+
+type Subscription {
+  "New feedback @pii=masked @classification=internal"
+  NewFeedback: NewFeedback
+}
+
+enum _McpMethodType {
+  NONE
+  TOOL
+}
+
+enum _McpVisibility {
+  MODEL
+  APP
+}
+
+enum _RestMethodType {
+  NONE
+  GET
+  POST
+}
+
+directive @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String, appName: String, visibility: [_McpVisibility!]) on QUERY | MUTATION | FIELD_DEFINITION
+
+>>>pipeline_explain.txt
+=== Clicks
+ID:          default_catalog.default_database.Clicks
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   event_time
+Row count:   ~1e8
+--- definition ---
+Schema:
+ - customer_id: BIGINT NOT NULL
+ - ingested_at: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - url: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - event_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.Clicks__base
+--- physical ---
+Table Clicks (postgres):
+ - primary key: __pk_hash (generated hash key)
+
+=== CustomerCounts
+ID:          default_catalog.default_database.CustomerCounts
+Type:        state
+Stage:       iceberg
+Tags:        classification=confidential, gdpr=true, pii=raw
+Primary key: region
+Timestamp:   -
+Row count:   ~1e7
+--- definition ---
+Schema:
+ - region: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - num_customers: BIGINT NOT NULL
+Inputs:
+ - default_catalog.default_database._CustomerRegions
+
+=== CustomerOrders
+ID:          default_catalog.default_database.CustomerOrders
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   ordered_at
+Row count:   ~1e8
+--- definition ---
+Schema:
+ - id: BIGINT NOT NULL
+ - customer_id: BIGINT NOT NULL
+ - amount: DOUBLE NOT NULL
+ - ordered_at: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.Orders
+--- physical ---
+Table CustomerOrders (postgres):
+ - primary key: __pk_hash (generated hash key)
+
+=== Customers
+ID:          default_catalog.default_database.Customers
+Type:        stream
+Stage:       flink
+Tags:        classification=confidential, gdpr=true, pii=raw
+Primary key: -
+Timestamp:   updated_at
+Row count:   ~1e8
+--- definition ---
+Schema:
+ - id: BIGINT NOT NULL
+ - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+ - name: VARCHAR(100) CHARACTER SET "UTF-16LE" NOT NULL
+ - age: SMALLINT
+ - score: FLOAT
+ - balance: DECIMAL(12, 2)
+ - active: BOOLEAN
+ - birthday: DATE
+ - address: RecordType:peek_no_expand(VARCHAR(2147483647) CHARACTER SET "UTF-16LE" street, VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL city, CHAR(5) CHARACTER SET "UTF-16LE" zip)
+ - phones: RecordType:peek_no_expand(VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL kind, VARCHAR(2147483647) CHARACTER SET "UTF-16LE" number) ARRAY
+ - attributes: (VARCHAR(2147483647) CHARACTER SET "UTF-16LE", VARCHAR(2147483647) CHARACTER SET "UTF-16LE") MAP
+ - region: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - loaded_at: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - updated_at: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.Customers__base
+Annotations:
+ - features: DENORMALIZE (feature)
+ - stream-root: Customers
+--- physical ---
+Table Customers (postgres):
+ - primary key: __pk_hash (generated hash key)
+
+=== Feedback
+ID:          default_catalog.default_database.Feedback
+Type:        stream
+Stage:       flink
+Tags:        classification=internal, pii=masked
+Primary key: -
+Timestamp:   event_time
+Row count:   ~1e8
+--- definition ---
+Schema:
+ - customer_id: BIGINT NOT NULL
+ - message: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - event_time: TIMESTAMP_LTZ(3) *ROWTIME*
+Inputs:
+ - default_catalog.default_database.Feedback__base
+--- physical ---
+Table Feedback (postgres):
+ - primary key: __pk_hash (generated hash key)
+
+=== LargeOrderCount
+ID:          default_catalog.default_database.LargeOrderCount
+Type:        state
+Stage:       flink
+Primary key: -
+Timestamp:   -
+Row count:   ~1
+--- definition ---
+Schema:
+ - num_orders: BIGINT NOT NULL
+Inputs:
+ - default_catalog.default_database.LargeOrders
+--- physical ---
+Table LargeOrderCount (postgres):
+ - primary key: __pk_hash (generated hash key)
+
+=== LargeOrders
+ID:          default_catalog.default_database.LargeOrders
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   -
+Row count:   ~1e8
+--- definition ---
+Schema:
+ - id: BIGINT NOT NULL
+ - amount: DOUBLE NOT NULL
+Inputs:
+ - default_catalog.default_database.LargeOrders__base
+--- physical ---
+Table LargeOrders (postgres):
+ - primary key: __pk_hash (generated hash key)
+
+=== LargeOrders
+ID:          default_catalog.default_database.LargeOrders
+Type:        export
+Stage:       flink
+Connector:   filesystem
+--- definition ---
+Inputs:
+ - default_catalog.default_database.LargeOrders_in1
+
+=== LargeOrders_in1
+ID:          default_catalog.default_database.LargeOrders_in1
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   -
+Row count:   ~5e7
+--- definition ---
+Schema:
+ - id: BIGINT NOT NULL
+ - amount: DOUBLE NOT NULL
+Inputs:
+ - default_catalog.default_database.Orders
+
+=== MyEvents
+ID:          default_catalog.default_database.MyEvents
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   created_at
+Row count:   ~1e8
+--- definition ---
+Schema:
+ - id: BIGINT NOT NULL
+ - kind: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - payload: (VARCHAR(2147483647) CHARACTER SET "UTF-16LE", VARCHAR(2147483647) CHARACTER SET "UTF-16LE") MAP
+ - created_at: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.MyEvents__base
+--- physical ---
+Table MyEvents (postgres):
+ - primary key: __pk_hash (generated hash key)
+
+=== NewFeedback
+ID:          default_catalog.default_database.NewFeedback
+Type:        stream
+Stage:       flink
+Tags:        classification=internal, pii=masked
+Primary key: -
+Timestamp:   -
+Row count:   ~1e8
+--- definition ---
+Schema:
+ - customer_id: BIGINT NOT NULL
+ - message: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+Inputs:
+ - default_catalog.default_database.Feedback
+
+=== OrderTotals
+ID:          default_catalog.default_database.OrderTotals
+Type:        state
+Stage:       iceberg
+Primary key: customer_id
+Timestamp:   -
+Row count:   ~1e7
+--- definition ---
+Schema:
+ - customer_id: BIGINT NOT NULL
+ - total: DOUBLE NOT NULL
+Inputs:
+ - default_catalog.default_database.CustomerOrders
+
+=== Orders
+ID:          default_catalog.default_database.Orders
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   ordered_at
+Row count:   ~1e8
+--- definition ---
+Schema:
+ - id: BIGINT NOT NULL
+ - customer_id: BIGINT NOT NULL
+ - amount: DOUBLE NOT NULL
+ - ordered_at: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.Orders__base
+--- physical ---
+Table Orders (postgres):
+ - primary key: __pk_hash (generated hash key)
+
+=== ProductPrices
+ID:          default_catalog.default_database.ProductPrices
+Type:        stream
+Stage:       postgres
+Primary key: -
+Timestamp:   -
+Row count:   ~1e8
+--- definition ---
+Schema:
+ - id: BIGINT NOT NULL
+ - title: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - price: DECIMAL(10, 2)
+Inputs:
+ - default_catalog.default_database.Products
+
+=== Products
+ID:          default_catalog.default_database.Products
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   -
+Row count:   ~1e8
+--- definition ---
+Schema:
+ - id: BIGINT NOT NULL
+ - title: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - price: DECIMAL(10, 2)
+Inputs:
+ - default_catalog.default_database.Products__base
+--- physical ---
+Table Products (postgres):
+ - primary key: __pk_hash (generated hash key)
+
+=== _ClickUrls
+ID:          default_catalog.default_database._ClickUrls
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   -
+Row count:   ~1e8
+--- definition ---
+Schema:
+ - customer_id: BIGINT NOT NULL
+ - url: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+Inputs:
+ - default_catalog.default_database.Clicks
+
+=== _CustomerEmails
+ID:          default_catalog.default_database._CustomerEmails
+Type:        stream
+Stage:       flink
+Tags:        classification=confidential, gdpr=true, pii=raw
+Primary key: -
+Timestamp:   -
+Row count:   ~1e8
+--- definition ---
+Schema:
+ - id: BIGINT NOT NULL
+ - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+Inputs:
+ - default_catalog.default_database.Customers
+Annotations:
+ - stream-root: Customers
+
+=== _CustomerRegions
+ID:          default_catalog.default_database._CustomerRegions
+Type:        stream
+Stage:       flink
+Tags:        classification=confidential, gdpr=true, pii=raw
+Primary key: -
+Timestamp:   updated_at
+Row count:   ~1e8
+--- definition ---
+Schema:
+ - id: BIGINT NOT NULL
+ - region: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - updated_at: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.Customers
+Annotations:
+ - stream-root: Customers
+
+=== _EventKinds
+ID:          default_catalog.default_database._EventKinds
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   created_at
+Row count:   ~1e8
+--- definition ---
+Schema:
+ - kind: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - id: BIGINT NOT NULL
+ - created_at: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.MyEvents
+
+=== EventKinds
+ID:          log.EventKinds
+Type:        export
+Stage:       flink
+--- definition ---
+Inputs:
+ - default_catalog.default_database._EventKinds
+
+=== ClickUrls
+ID:          print.ClickUrls
+Type:        export
+Stage:       flink
+--- definition ---
+Inputs:
+ - default_catalog.default_database._ClickUrls
+
+=== EmailTopic
+ID:          sinks.EmailTopic
+Type:        export
+Stage:       flink
+Connector:   kafka-safe
+--- definition ---
+Inputs:
+ - default_catalog.default_database._CustomerEmails
+
+>>>flink-sql-no-functions.sql
+CREATE TABLE `Customers` (
+  `id` BIGINT NOT NULL,
+  `email` STRING COMMENT 'Contact email @gdpr',
+  `name` VARCHAR(100) NOT NULL,
+  `age` SMALLINT,
+  `score` FLOAT,
+  `balance` DECIMAL(12, 2),
+  `active` BOOLEAN,
+  `birthday` DATE,
+  `address` ROW< `street` STRING, `city` STRING NOT NULL, `zip` CHAR(5) >,
+  `phones` ARRAY< ROW< `kind` STRING NOT NULL, `number` STRING > >,
+  `attributes` MAP< STRING, STRING >,
+  `region` STRING NOT NULL,
+  `loaded_at` AS `NOW`(),
+  `updated_at` TIMESTAMP_LTZ(3) NOT NULL,
+  PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED,
+  WATERMARK FOR `updated_at` AS `updated_at` - INTERVAL '1' SECOND
+)
+PARTITIONED BY (`region`)
+WITH (
+  'connector' = 'filesystem',
+  'format' = 'flexible-json',
+  'path' = 'file:///tmp/contracts-compile/customers'
+);
+CREATE TABLE `Clicks` (
+  `customer_id` BIGINT NOT NULL,
+  `ingested_at` AS `NOW`(),
+  `url` STRING NOT NULL,
+  `event_time` TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp',
+  WATERMARK FOR `event_time` AS `event_time` - INTERVAL '1' SECOND
+)
+WITH (
+  'connector' = 'kafka-safe',
+  'format' = 'flexible-json',
+  'properties.bootstrap.servers' = 'localhost:9092',
+  'properties.group.id' = 'contracts',
+  'topic' = 'web-clicks'
+);
+CREATE TABLE `_Unused` (
+  `id` BIGINT NOT NULL,
+  `note` STRING
+)
+WITH (
+  'connector' = 'datagen'
+);
+CREATE TABLE `_Audits` (
+  `id` BIGINT NOT NULL,
+  `action` STRING NOT NULL
+)
+WITH (
+  'connector' = 'datagen'
+);
+CREATE TABLE `MyEvents` (
+  `id` BIGINT NOT NULL,
+  `kind` STRING NOT NULL,
+  `payload` MAP< STRING, STRING >,
+  `created_at` TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR `created_at` AS `created_at` - INTERVAL '1' SECOND
+)
+WITH (
+  'connector' = 'filesystem',
+  'format' = 'flexible-json',
+  'path' = 'file:///tmp/contracts-compile/events'
+);
+CREATE TABLE `Orders` (
+  `id` BIGINT NOT NULL,
+  `customer_id` BIGINT NOT NULL,
+  `amount` DOUBLE NOT NULL,
+  `ordered_at` TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR `ordered_at` AS `ordered_at` - INTERVAL '1' SECOND
+)
+WITH (
+  'connector' = 'filesystem',
+  'format' = 'flexible-json',
+  'path' = 'file:///tmp/contracts-compile/orders'
+);
+CREATE TABLE `Products` (
+  `id` BIGINT NOT NULL,
+  `title` STRING NOT NULL,
+  `price` DECIMAL(10, 2)
+)
+WITH (
+  'connector' = 'filesystem',
+  'format' = 'flexible-json',
+  'path' = 'file:///tmp/contracts-compile/products'
+);
+CREATE TABLE `Feedback` (
+  `customer_id` BIGINT NOT NULL,
+  `message` STRING NOT NULL,
+  `event_time` TIMESTAMP_LTZ(3) METADATA FROM 'timestamp',
+  WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.0' SECOND
+)
+WITH (
+  'connector' = 'kafka-safe',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'format' = 'flexible-json',
+  'properties.auto.offset.reset' = 'earliest',
+  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
+  'properties.compression.type' = 'zstd',
+  'properties.group.id' = '${KAFKA_GROUP_ID}',
+  'topic' = 'Feedback'
+);
+CREATE TABLE `LargeOrders` (
+  `id` BIGINT NOT NULL,
+  `amount` DOUBLE NOT NULL
+)
+WITH (
+  'connector' = 'filesystem',
+  'format' = 'flexible-json',
+  'path' = 'file:///tmp/contracts-compile/large-orders'
+);
+CREATE VIEW `LargeOrderCount`
+AS
+SELECT COUNT(*) AS `num_orders`
+FROM `LargeOrders`;
+CREATE VIEW `_CustomerEmails`
+AS
+SELECT `id`, `email`
+FROM `Customers`;
+CREATE TABLE `EmailTopic_ex1` (
+  `id` BIGINT NOT NULL,
+  `email` STRING
+)
+WITH (
+  'connector' = 'kafka-safe',
+  'format' = 'flexible-json',
+  'properties.bootstrap.servers' = 'localhost:9092',
+  'properties.group.id' = 'contracts',
+  'topic' = 'mailing-emails'
+);
+CREATE VIEW `_EventKinds`
+AS
+SELECT `kind`, `id`, `created_at`
+FROM `MyEvents`;
+CREATE VIEW `_ClickUrls`
+AS
+SELECT `customer_id`, `url`
+FROM `Clicks`;
+CREATE VIEW `_CustomerRegions`
+AS
+SELECT `id`, `region`, `updated_at`
+FROM `Customers`;
+CREATE VIEW `CustomerCounts`
+AS
+SELECT `region`, COUNT(*) AS `num_customers`
+FROM `_CustomerRegions`
+GROUP BY `region`;
+CREATE VIEW `CustomerOrders`
+AS
+SELECT `id`, `customer_id`, `amount`, `ordered_at`
+FROM `Orders`;
+CREATE VIEW `OrderTotals`
+AS
+SELECT `customer_id`, SUM(`amount`) AS `total`
+FROM `CustomerOrders`
+GROUP BY `customer_id`;
+CREATE VIEW `ProductPrices`
+AS
+SELECT `id`, `title`, `price`
+FROM `Products`;
+CREATE VIEW `NewFeedback`
+AS
+SELECT `customer_id`, `message`
+FROM `Feedback`;
+CREATE TABLE `Clicks_1` (
+  `customer_id` BIGINT NOT NULL,
+  `ingested_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `url` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'Clicks',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `CustomerOrders_2` (
+  `id` BIGINT NOT NULL,
+  `customer_id` BIGINT NOT NULL,
+  `amount` DOUBLE NOT NULL,
+  `ordered_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'CustomerOrders',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `CustomerOrders_3` (
+  `id` BIGINT NOT NULL,
+  `customer_id` BIGINT NOT NULL,
+  `amount` DOUBLE NOT NULL,
+  `ordered_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
+)
+WITH (
+  'catalog-name' = 'default_catalog',
+  'catalog-table' = 'CustomerOrders',
+  'catalog-type' = 'hadoop',
+  'commit.retry.max-wait-ms' = '5000',
+  'commit.retry.min-wait-ms' = '100',
+  'commit.retry.num-retries' = '20',
+  'connector' = 'iceberg',
+  'format-version' = '2',
+  'warehouse' = '/tmp/contracts-compile',
+  'write.distribution-mode' = 'hash'
+);
+CREATE TABLE `Customers_4` (
+  `id` BIGINT NOT NULL,
+  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
+  `name` VARCHAR(100) CHARACTER SET `UTF-16LE` NOT NULL,
+  `age` SMALLINT,
+  `score` FLOAT,
+  `balance` DECIMAL(12, 2),
+  `active` BOOLEAN,
+  `birthday` DATE,
+  `address` RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM='),
+  `phones` RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM='),
+  `attributes` RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM='),
+  `region` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `loaded_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'Customers',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `Feedback_5` (
+  `customer_id` BIGINT NOT NULL,
+  `message` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'Feedback',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `LargeOrderCount_6` (
+  `num_orders` BIGINT NOT NULL,
+  `__pk_hash` INTEGER NOT NULL,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'table-name' = 'LargeOrderCount',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `LargeOrders_7` (
+  `id` BIGINT NOT NULL,
+  `amount` DOUBLE NOT NULL,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'LargeOrders',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `MyEvents_8` (
+  `id` BIGINT NOT NULL,
+  `kind` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `payload` RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM='),
+  `created_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'MyEvents',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `NewFeedback_9` (
+  `customer_id` BIGINT NOT NULL,
+  `message` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL
+)
+WITH (
+  'connector' = 'kafka-safe',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'format' = 'flexible-json',
+  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
+  'properties.compression.type' = 'zstd',
+  'properties.group.id' = '${KAFKA_GROUP_ID}',
+  'topic' = 'NewFeedback'
+);
+CREATE TABLE `Orders_10` (
+  `id` BIGINT NOT NULL,
+  `customer_id` BIGINT NOT NULL,
+  `amount` DOUBLE NOT NULL,
+  `ordered_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'Orders',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `Products_11` (
+  `id` BIGINT NOT NULL,
+  `title` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `price` DECIMAL(10, 2),
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'Products',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `ClickUrls_12` (
+  `customer_id` BIGINT NOT NULL,
+  `url` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL
+)
+WITH (
+  'connector' = 'print',
+  'print-identifier' = 'ClickUrls'
+);
+CREATE TABLE `_CustomerRegions_13` (
+  `id` BIGINT NOT NULL,
+  `region` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
+)
+PARTITIONED BY (`region`)
+WITH (
+  'catalog-name' = 'default_catalog',
+  'catalog-table' = '_CustomerRegions',
+  'catalog-type' = 'hadoop',
+  'commit.retry.max-wait-ms' = '5000',
+  'commit.retry.min-wait-ms' = '100',
+  'commit.retry.num-retries' = '20',
+  'connector' = 'iceberg',
+  'format-version' = '2',
+  'warehouse' = '/tmp/contracts-compile',
+  'write.distribution-mode' = 'hash'
+);
+CREATE TABLE `EventKinds_14` (
+  `kind` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `id` BIGINT NOT NULL,
+  `created_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
+)
+WITH (
+  'connector' = 'kafka-safe',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'format' = 'flexible-json',
+  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
+  'properties.compression.type' = 'zstd',
+  'properties.group.id' = '${KAFKA_GROUP_ID}',
+  'topic' = 'EventKinds'
+);
+EXECUTE STATEMENT SET BEGIN
+INSERT INTO `default_catalog`.`default_database`.`Clicks_1`
+SELECT `customer_id`, `ingested_at`, `url`, `event_time`, `hash_key`(`customer_id`, `ingested_at`, `url`, `event_time`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`Clicks`
+ON CONFLICT DO DEDUPLICATE
+;
+INSERT INTO `default_catalog`.`default_database`.`CustomerOrders_2`
+SELECT `id`, `customer_id`, `amount`, `ordered_at`, `hash_key`(`id`, `customer_id`, `amount`, `ordered_at`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`CustomerOrders`
+ON CONFLICT DO DEDUPLICATE
+;
+INSERT INTO `default_catalog`.`default_database`.`CustomerOrders_3`
+SELECT *
+FROM `default_catalog`.`default_database`.`CustomerOrders`
+;
+INSERT INTO `default_catalog`.`default_database`.`Customers_4`
+SELECT `id`, `email`, `name`, `age`, `score`, `balance`, `active`, `birthday`, `to_jsonb`(`address`) AS `address`, `to_jsonb`(`phones`) AS `phones`, `to_jsonb`(`attributes`) AS `attributes`, `region`, `loaded_at`, `updated_at`, `hash_key`(`id`, `email`, `name`, `age`, `score`, `balance`, `active`, `birthday`, `address`, `phones`, `attributes`, `region`, `loaded_at`, `updated_at`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`Customers`
+ON CONFLICT DO DEDUPLICATE
+;
+INSERT INTO `default_catalog`.`default_database`.`Feedback_5`
+SELECT `customer_id`, `message`, `event_time`, `hash_key`(`customer_id`, `message`, `event_time`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`Feedback`
+ON CONFLICT DO DEDUPLICATE
+;
+INSERT INTO `default_catalog`.`default_database`.`LargeOrderCount_6`
+SELECT `num_orders`, 1 AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`LargeOrderCount`
+ON CONFLICT DO DEDUPLICATE
+;
+INSERT INTO `default_catalog`.`default_database`.`LargeOrders_7`
+SELECT `id`, `amount`, `hash_key`(`id`, `amount`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`LargeOrders`
+ON CONFLICT DO DEDUPLICATE
+;
+INSERT INTO `default_catalog`.`default_database`.`LargeOrders`
+SELECT `id`, `amount`
+FROM `default_catalog`.`default_database`.`Orders`
+WHERE `amount` > 1000
+;
+INSERT INTO `default_catalog`.`default_database`.`MyEvents_8`
+SELECT `id`, `kind`, `to_jsonb`(`payload`) AS `payload`, `created_at`, `hash_key`(`id`, `kind`, `payload`, `created_at`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`MyEvents`
+ON CONFLICT DO DEDUPLICATE
+;
+INSERT INTO `default_catalog`.`default_database`.`NewFeedback_9`
+SELECT *
+FROM `default_catalog`.`default_database`.`NewFeedback`
+;
+INSERT INTO `default_catalog`.`default_database`.`Orders_10`
+SELECT `id`, `customer_id`, `amount`, `ordered_at`, `hash_key`(`id`, `customer_id`, `amount`, `ordered_at`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`Orders`
+ON CONFLICT DO DEDUPLICATE
+;
+INSERT INTO `default_catalog`.`default_database`.`Products_11`
+SELECT `id`, `title`, `price`, `hash_key`(`id`, `title`, `price`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`Products`
+ON CONFLICT DO DEDUPLICATE
+;
+INSERT INTO `default_catalog`.`default_database`.`ClickUrls_12`
+SELECT *
+FROM `default_catalog`.`default_database`.`_ClickUrls`
+;
+INSERT INTO `default_catalog`.`default_database`.`EmailTopic_ex1`
+SELECT *
+FROM `default_catalog`.`default_database`.`_CustomerEmails`
+;
+INSERT INTO `default_catalog`.`default_database`.`_CustomerRegions_13`
+SELECT *
+FROM `default_catalog`.`default_database`.`_CustomerRegions`
+;
+INSERT INTO `default_catalog`.`default_database`.`EventKinds_14`
+SELECT *
+FROM `default_catalog`.`default_database`.`_EventKinds`
+;
+END
+>>>iceberg-duckdb-schema.sql
+CREATE TABLE IF NOT EXISTS "CustomerOrders" ("id" BIGINT NOT NULL, "customer_id" BIGINT NOT NULL, "amount" DOUBLE PRECISION NOT NULL, "ordered_at" TIMESTAMP WITH TIME ZONE NOT NULL);
+CREATE TABLE IF NOT EXISTS "_CustomerRegions" ("id" BIGINT NOT NULL, "region" VARCHAR(65536) NOT NULL, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL)
+>>>iceberg-duckdb-views.sql
+CREATE OR REPLACE VIEW "CustomerCounts"("region", "num_customers") AS SELECT "region", COUNT(*) AS "num_customers"
+FROM "iceberg_scan"('/tmp/contracts-compile/default_database/_CustomerRegions', ALLOW_MOVED_PATHS = TRUE)
+GROUP BY "region";
+CREATE OR REPLACE VIEW "OrderTotals"("customer_id", "total") AS SELECT "customer_id", SUM("amount") AS "total"
+FROM "iceberg_scan"('/tmp/contracts-compile/default_database/CustomerOrders', ALLOW_MOVED_PATHS = TRUE)
+GROUP BY "customer_id"
+>>>iceberg-schema.sql
+CREATE TABLE IF NOT EXISTS "CustomerOrders" ("id" BIGINT NOT NULL, "customer_id" BIGINT NOT NULL, "amount" DOUBLE PRECISION NOT NULL, "ordered_at" TIMESTAMP WITH TIME ZONE NOT NULL);
+CREATE TABLE IF NOT EXISTS "_CustomerRegions" ("id" BIGINT NOT NULL, "region" TEXT NOT NULL, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL) PARTITIONED BY ("region")
+>>>kafka.json
+{
+  "topics" : [
+    {
+      "topicName" : "NewFeedback",
+      "tableName" : "NewFeedback_9",
+      "logicalName" : "NewFeedback",
+      "format" : "flexible-json",
+      "numPartitions" : 1,
+      "replicationFactor" : 3,
+      "type" : "SUBSCRIPTION",
+      "messageKeys" : [ ],
+      "messageSchema" : "",
+      "config" : { },
+      "tags" : {
+        "classification" : "internal",
+        "pii" : "masked"
+      }
+    },
+    {
+      "topicName" : "EventKinds",
+      "tableName" : "EventKinds_14",
+      "logicalName" : "EventKinds",
+      "format" : "flexible-json",
+      "numPartitions" : 1,
+      "replicationFactor" : 3,
+      "type" : "SUBSCRIPTION",
+      "messageKeys" : [ ],
+      "messageSchema" : "",
+      "config" : { }
+    },
+    {
+      "topicName" : "Feedback",
+      "tableName" : "Feedback",
+      "logicalName" : "Feedback",
+      "format" : "flexible-json",
+      "numPartitions" : 1,
+      "replicationFactor" : 3,
+      "type" : "MUTATION",
+      "messageKeys" : [ ],
+      "messageSchema" : "",
+      "config" : { },
+      "tags" : {
+        "classification" : "internal",
+        "pii" : "masked"
+      }
+    }
+  ],
+  "testRunnerTopics" : [ ]
+}
+>>>postgres-schema.sql
+CREATE TABLE IF NOT EXISTS "Clicks" ("customer_id" BIGINT NOT NULL, "ingested_at" TIMESTAMP WITH TIME ZONE NOT NULL, "url" TEXT NOT NULL, "event_time" TIMESTAMP WITH TIME ZONE NOT NULL, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"));
+CREATE TABLE IF NOT EXISTS "CustomerOrders" ("id" BIGINT NOT NULL, "customer_id" BIGINT NOT NULL, "amount" DOUBLE PRECISION NOT NULL, "ordered_at" TIMESTAMP WITH TIME ZONE NOT NULL, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"));
+CREATE TABLE IF NOT EXISTS "Customers" ("id" BIGINT NOT NULL, "email" TEXT, "name" TEXT NOT NULL, "age" SMALLINT, "score" FLOAT, "balance" NUMERIC, "active" BOOLEAN, "birthday" DATE, "address" JSONB, "phones" JSONB, "attributes" JSONB, "region" TEXT NOT NULL, "loaded_at" TIMESTAMP WITH TIME ZONE NOT NULL, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"));
+CREATE TABLE IF NOT EXISTS "Feedback" ("customer_id" BIGINT NOT NULL, "message" TEXT NOT NULL, "event_time" TIMESTAMP WITH TIME ZONE, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"));
+CREATE TABLE IF NOT EXISTS "LargeOrderCount" ("num_orders" BIGINT NOT NULL, "__pk_hash" INTEGER NOT NULL, PRIMARY KEY ("__pk_hash"));
+CREATE TABLE IF NOT EXISTS "LargeOrders" ("id" BIGINT NOT NULL, "amount" DOUBLE PRECISION NOT NULL, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"));
+CREATE TABLE IF NOT EXISTS "MyEvents" ("id" BIGINT NOT NULL, "kind" TEXT NOT NULL, "payload" JSONB, "created_at" TIMESTAMP WITH TIME ZONE NOT NULL, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"));
+CREATE TABLE IF NOT EXISTS "Orders" ("id" BIGINT NOT NULL, "customer_id" BIGINT NOT NULL, "amount" DOUBLE PRECISION NOT NULL, "ordered_at" TIMESTAMP WITH TIME ZONE NOT NULL, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"));
+CREATE TABLE IF NOT EXISTS "Products" ("id" BIGINT NOT NULL, "title" TEXT NOT NULL, "price" NUMERIC, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"))
+>>>postgres-views.sql
+CREATE OR REPLACE VIEW "ProductPrices"("id", "title", "price") AS SELECT "id", "title", "price"
+FROM "Products"
+>>>vertx.json
+{
+  "models" : {
+    "v1" : {
+      "queries" : [
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "CustomerCounts",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"region\", COUNT(*) AS \"num_customers\"\nFROM \"iceberg_scan\"('/tmp/contracts-compile/default_database/_CustomerRegions', ALLOW_MOVED_PATHS = TRUE)\nGROUP BY \"region\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "DUCKDB"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "OrderTotals",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"customer_id\", SUM(\"amount\") AS \"total\"\nFROM \"iceberg_scan\"('/tmp/contracts-compile/default_database/CustomerOrders', ALLOW_MOVED_PATHS = TRUE)\nGROUP BY \"customer_id\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "DUCKDB"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "Clicks",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"customer_id\", \"ingested_at\", \"url\", \"event_time\"\nFROM \"Clicks\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "CustomerOrders",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"id\", \"customer_id\", \"amount\", \"ordered_at\"\nFROM \"CustomerOrders\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "Customers",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"id\", \"email\", \"name\", \"age\", \"score\", \"balance\", \"active\", \"birthday\", \"address\", \"phones\", \"attributes\", \"region\", \"loaded_at\", \"updated_at\"\nFROM \"Customers\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "Feedback",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"customer_id\", \"message\", \"event_time\"\nFROM \"Feedback\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "LargeOrderCount",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"num_orders\"\nFROM \"LargeOrderCount\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "LargeOrders",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"id\", \"amount\"\nFROM \"LargeOrders\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "MyEvents",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"id\", \"kind\", \"payload\", \"created_at\"\nFROM \"MyEvents\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "Orders",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"id\", \"customer_id\", \"amount\", \"ordered_at\"\nFROM \"Orders\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "ProductPrices",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"id\", \"title\", \"price\"\nFROM \"Products\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "Products",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"id\", \"title\", \"price\"\nFROM \"Products\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        }
+      ],
+      "mutations" : [
+        {
+          "type" : "kafka",
+          "fieldName" : "Feedback",
+          "returnList" : false,
+          "topic" : "Feedback",
+          "keyColumns" : [ ],
+          "computedColumns" : {
+            "event_time" : {
+              "metadataType" : "TIMESTAMP",
+              "name" : "",
+              "required" : false
+            }
+          },
+          "transactional" : false,
+          "sinkConfig" : { }
+        }
+      ],
+      "subscriptions" : [
+        {
+          "type" : "kafka",
+          "fieldName" : "NewFeedback",
+          "topic" : "NewFeedback",
+          "sinkConfig" : { },
+          "equalityConditions" : { }
+        }
+      ],
+      "operations" : [
+        {
+          "function" : {
+            "name" : "GetCustomerCounts",
+            "description" : "Customers per region @pii=raw @classification=confidential @gdpr",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query CustomerCounts($limit: Int = 10, $offset: Int = 0) {\nCustomerCounts(limit: $limit, offset: $offset) {\nregion\nnum_customers\n}\n\n}",
+            "queryName" : "CustomerCounts",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/CustomerCounts{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "region" : {
+                  "type" : "string"
+                },
+                "num_customers" : {
+                  "type" : "integer"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetOrderTotals",
+            "description" : "Total amount of the orders per customer",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query OrderTotals($limit: Int = 10, $offset: Int = 0) {\nOrderTotals(limit: $limit, offset: $offset) {\ncustomer_id\ntotal\n}\n\n}",
+            "queryName" : "OrderTotals",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/OrderTotals{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "customer_id" : {
+                  "type" : "integer"
+                },
+                "total" : {
+                  "type" : "number"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetClicks",
+            "description" : "Clicks on the web site",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query Clicks($limit: Int = 10, $offset: Int = 0) {\nClicks(limit: $limit, offset: $offset) {\ncustomer_id\ningested_at\nurl\nevent_time\n}\n\n}",
+            "queryName" : "Clicks",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Clicks{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "customer_id" : {
+                  "type" : "integer"
+                },
+                "ingested_at" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "url" : {
+                  "type" : "string"
+                },
+                "event_time" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetCustomerOrders",
+            "description" : "Orders of the customers",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query CustomerOrders($limit: Int = 10, $offset: Int = 0) {\nCustomerOrders(limit: $limit, offset: $offset) {\nid\ncustomer_id\namount\nordered_at\n}\n\n}",
+            "queryName" : "CustomerOrders",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/CustomerOrders{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "integer"
+                },
+                "customer_id" : {
+                  "type" : "integer"
+                },
+                "amount" : {
+                  "type" : "number"
+                },
+                "ordered_at" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetCustomers",
+            "description" : "Customer master data @pii=raw @classification=confidential",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query Customers($limit: Int = 10, $offset: Int = 0) {\nCustomers(limit: $limit, offset: $offset) {\nid\nemail\nname\nage\nscore\nbalance\nactive\nbirthday\naddress {\nstreet\ncity\nzip\n}\nphones {\nkind\nnumber\n}\nattributes\nregion\nloaded_at\nupdated_at\n}\n\n}",
+            "queryName" : "Customers",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Customers{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "integer"
+                },
+                "email" : {
+                  "type" : "string",
+                  "description" : "Contact email @gdpr"
+                },
+                "name" : {
+                  "type" : "string"
+                },
+                "age" : {
+                  "type" : "integer"
+                },
+                "score" : {
+                  "type" : "number"
+                },
+                "balance" : {
+                  "type" : "number"
+                },
+                "active" : {
+                  "type" : "boolean"
+                },
+                "birthday" : {
+                  "type" : "string",
+                  "format" : "date"
+                },
+                "address" : {
+                  "type" : "object",
+                  "properties" : {
+                    "street" : {
+                      "type" : "string"
+                    },
+                    "city" : {
+                      "type" : "string"
+                    },
+                    "zip" : {
+                      "type" : "string"
+                    }
+                  }
+                },
+                "phones" : {
+                  "type" : "array",
+                  "items" : {
+                    "type" : "object",
+                    "properties" : {
+                      "kind" : {
+                        "type" : "string"
+                      },
+                      "number" : {
+                        "type" : "string"
+                      }
+                    }
+                  }
+                },
+                "attributes" : { },
+                "region" : {
+                  "type" : "string"
+                },
+                "loaded_at" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "updated_at" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetFeedback",
+            "description" : "Feedback that customers send @pii=masked @classification=internal",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query Feedback($limit: Int = 10, $offset: Int = 0) {\nFeedback(limit: $limit, offset: $offset) {\ncustomer_id\nmessage\nevent_time\n}\n\n}",
+            "queryName" : "Feedback",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Feedback{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "customer_id" : {
+                  "type" : "integer"
+                },
+                "message" : {
+                  "type" : "string"
+                },
+                "event_time" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetLargeOrderCount",
+            "description" : "Number of large orders",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query LargeOrderCount($limit: Int = 10, $offset: Int = 0) {\nLargeOrderCount(limit: $limit, offset: $offset) {\nnum_orders\n}\n\n}",
+            "queryName" : "LargeOrderCount",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/LargeOrderCount{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "num_orders" : {
+                  "type" : "integer"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetLargeOrders",
+            "description" : "Orders above the review limit",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query LargeOrders($limit: Int = 10, $offset: Int = 0) {\nLargeOrders(limit: $limit, offset: $offset) {\nid\namount\n}\n\n}",
+            "queryName" : "LargeOrders",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/LargeOrders{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "integer"
+                },
+                "amount" : {
+                  "type" : "number"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetMyEvents",
+            "description" : "Events of the legacy system",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query MyEvents($limit: Int = 10, $offset: Int = 0) {\nMyEvents(limit: $limit, offset: $offset) {\nid\nkind\npayload\ncreated_at\n}\n\n}",
+            "queryName" : "MyEvents",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/MyEvents{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "integer"
+                },
+                "kind" : {
+                  "type" : "string"
+                },
+                "payload" : { },
+                "created_at" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetOrders",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query Orders($limit: Int = 10, $offset: Int = 0) {\nOrders(limit: $limit, offset: $offset) {\nid\ncustomer_id\namount\nordered_at\n}\n\n}",
+            "queryName" : "Orders",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Orders{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "integer"
+                },
+                "customer_id" : {
+                  "type" : "integer"
+                },
+                "amount" : {
+                  "type" : "number"
+                },
+                "ordered_at" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetProductPrices",
+            "description" : "Products by price",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query ProductPrices($limit: Int = 10, $offset: Int = 0) {\nProductPrices(limit: $limit, offset: $offset) {\nid\ntitle\nprice\n}\n\n}",
+            "queryName" : "ProductPrices",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/ProductPrices{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "integer"
+                },
+                "title" : {
+                  "type" : "string"
+                },
+                "price" : {
+                  "type" : "number"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetProducts",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query Products($limit: Int = 10, $offset: Int = 0) {\nProducts(limit: $limit, offset: $offset) {\nid\ntitle\nprice\n}\n\n}",
+            "queryName" : "Products",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Products{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "integer"
+                },
+                "title" : {
+                  "type" : "string"
+                },
+                "price" : {
+                  "type" : "number"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "AddFeedback",
+            "description" : "Feedback that customers send @pii=masked @classification=internal",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "customer_id" : {
+                  "type" : "integer"
+                },
+                "message" : {
+                  "type" : "string"
+                }
+              },
+              "required" : [
+                "customer_id",
+                "message"
+              ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "mutation Feedback($customer_id: Long!, $message: String!) {\nFeedback(event: { customer_id: $customer_id, message: $message }) {\ncustomer_id\nmessage\nevent_time\n}\n\n}",
+            "queryName" : "Feedback",
+            "operationType" : "MUTATION"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "POST",
+          "uriTemplate" : "mutations/Feedback",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "object",
+            "properties" : {
+              "customer_id" : {
+                "type" : "integer"
+              },
+              "message" : {
+                "type" : "string"
+              },
+              "event_time" : {
+                "type" : "string",
+                "format" : "date-time"
+              }
+            }
+          }
+        }
+      ],
+      "schema" : {
+        "type" : "string",
+        "schema" : "\"Clicks on the web site\"\ntype Clicks {\n  customer_id: Long!\n  ingested_at: DateTime!\n  url: String!\n  event_time: DateTime!\n}\n\n\"Customers per region @pii=raw @classification=confidential @gdpr\"\ntype CustomerCounts {\n  region: String!\n  num_customers: Long!\n}\n\n\"Customer master data @pii=raw @classification=confidential\"\ntype Customers {\n  id: Long!\n  \"Contact email @gdpr\"\n  email: String\n  name: String!\n  age: Int\n  score: Float\n  balance: Float\n  active: Boolean\n  birthday: Date\n  address: Customers_addressOutput\n  phones: [Customers_phonesOutput]\n  attributes: JSON\n  region: String!\n  loaded_at: DateTime!\n  updated_at: DateTime!\n}\n\ntype Customers_addressOutput {\n  street: String\n  city: String!\n  zip: String\n}\n\ntype Customers_phonesOutput {\n  kind: String!\n  number: String\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"Feedback that customers send @pii=masked @classification=internal\"\ntype Feedback {\n  customer_id: Long!\n  message: String!\n  event_time: DateTime\n}\n\ninput FeedbackInput {\n  customer_id: Long!\n  message: String!\n}\n\ntype FeedbackResultOutput {\n  customer_id: Long!\n  message: String!\n  event_time: DateTime\n}\n\n\"A JSON scalar\"\nscalar JSON\n\n\"Number of large orders\"\ntype LargeOrderCount {\n  num_orders: Long!\n}\n\n\"Orders above the review limit\"\ntype LargeOrders {\n  id: Long!\n  amount: Float!\n}\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Mutation {\n  \"Feedback that customers send @pii=masked @classification=internal\"\n  Feedback(event: FeedbackInput!): FeedbackResultOutput!\n}\n\n\"Events of the legacy system\"\ntype MyEvents {\n  id: Long!\n  kind: String!\n  payload: JSON\n  created_at: DateTime!\n}\n\n\"New feedback @pii=masked @classification=internal\"\ntype NewFeedback {\n  customer_id: Long!\n  message: String!\n}\n\n\"Total amount of the orders per customer\"\ntype OrderTotals {\n  customer_id: Long!\n  total: Float!\n}\n\ntype Orders {\n  id: Long!\n  customer_id: Long!\n  amount: Float!\n  ordered_at: DateTime!\n}\n\ntype Products {\n  id: Long!\n  title: String!\n  price: Float\n}\n\ntype Query {\n  \"Customers per region @pii=raw @classification=confidential @gdpr\"\n  CustomerCounts(limit: Int = 10, offset: Int = 0): [CustomerCounts!]\n  \"Total amount of the orders per customer\"\n  OrderTotals(limit: Int = 10, offset: Int = 0): [OrderTotals!]\n  \"Clicks on the web site\"\n  Clicks(limit: Int = 10, offset: Int = 0): [Clicks!]\n  \"Orders of the customers\"\n  CustomerOrders(limit: Int = 10, offset: Int = 0): [Orders!]\n  \"Customer master data @pii=raw @classification=confidential\"\n  Customers(limit: Int = 10, offset: Int = 0): [Customers!]\n  \"Feedback that customers send @pii=masked @classification=internal\"\n  Feedback(limit: Int = 10, offset: Int = 0): [Feedback!]\n  \"Number of large orders\"\n  LargeOrderCount(limit: Int = 10, offset: Int = 0): [LargeOrderCount!]\n  \"Orders above the review limit\"\n  LargeOrders(limit: Int = 10, offset: Int = 0): [LargeOrders!]\n  \"Events of the legacy system\"\n  MyEvents(limit: Int = 10, offset: Int = 0): [MyEvents!]\n  Orders(limit: Int = 10, offset: Int = 0): [Orders!]\n  \"Products by price\"\n  ProductPrices(limit: Int = 10, offset: Int = 0): [Products!]\n  Products(limit: Int = 10, offset: Int = 0): [Products!]\n}\n\ntype Subscription {\n  \"New feedback @pii=masked @classification=internal\"\n  NewFeedback: NewFeedback\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n}\n\nenum _McpVisibility {\n  MODEL\n  APP\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String, appName: String, visibility: [_McpVisibility!]) on QUERY | MUTATION | FIELD_DEFINITION\n"
+      }
+    }
+  }
+}
+>>>contracts.odcs.yaml
+apiVersion: v3.2.0
+kind: DataContract
+id: contracts
+name: contracts
+version: 1.0.0
+schema:
+- name: CustomerCounts
+  physicalName: CustomerCounts
+  physicalType: view
+  logicalType: object
+  description: Customers per region @pii=raw @classification=confidential @gdpr
+  tags:
+  - classification=confidential
+  - gdpr
+  - pii=raw
+  properties:
+  - name: region
+    logicalType: string
+    physicalType: STRING
+    required: true
+    classification: confidential
+  - name: num_customers
+    logicalType: integer
+    logicalTypeOptions:
+      format: i64
+    physicalType: BIGINT
+    required: true
+    classification: confidential
+- name: CustomerOrders
+  physicalName: CustomerOrders
+  physicalType: table
+  logicalType: object
+  description: Orders of the customers
+  properties:
+  - name: id
+    logicalType: integer
+    logicalTypeOptions:
+      format: i64
+    physicalType: BIGINT
+    required: true
+  - name: customer_id
+    logicalType: integer
+    logicalTypeOptions:
+      format: i64
+    physicalType: BIGINT
+    required: true
+  - name: amount
+    logicalType: number
+    logicalTypeOptions:
+      format: f64
+    physicalType: DOUBLE
+    required: true
+  - name: ordered_at
+    logicalType: timestamp
+    logicalTypeOptions:
+      timezone: true
+    physicalType: TIMESTAMP_LTZ(3)
+    required: true
+- name: OrderTotals
+  physicalName: OrderTotals
+  physicalType: view
+  logicalType: object
+  description: Total amount of the orders per customer
+  properties:
+  - name: customer_id
+    logicalType: integer
+    logicalTypeOptions:
+      format: i64
+    physicalType: BIGINT
+    required: true
+  - name: total
+    logicalType: number
+    logicalTypeOptions:
+      format: f64
+    physicalType: DOUBLE
+    required: true
+
+>>>sinks.odcs.yaml
+apiVersion: v3.2.0
+kind: DataContract
+id: sinks
+name: sinks
+version: 1.0.0
+schema:
+- name: EmailTopic
+  physicalType: topic
+  tags:
+  - pii=raw
+  - classification=confidential
+  - gdpr
+  customProperties:
+  - property: owner
+    value: mailing-team
+  properties:
+  - name: id
+    logicalType: integer
+    required: true
+    classification: confidential
+  - name: email
+    logicalType: string
+    classification: confidential
+- name: EventKinds
+  physicalType: topic
+  logicalType: object
+  description: Events by kind
+  properties:
+  - name: kind
+    logicalType: string
+    physicalType: STRING
+    required: true
+  - name: id
+    logicalType: integer
+    logicalTypeOptions:
+      format: i64
+    physicalType: BIGINT
+    required: true
+  - name: created_at
+    logicalType: timestamp
+    logicalTypeOptions:
+      timezone: true
+    physicalType: TIMESTAMP_LTZ(3)
+    required: true
+- name: LargeOrders
+  physicalName: file:///tmp/contracts-compile/large-orders
+  physicalType: file
+  logicalType: object
+  description: Orders above the review limit
+  properties:
+  - name: id
+    logicalType: integer
+    logicalTypeOptions:
+      format: i64
+    physicalType: BIGINT
+    required: true
+  - name: amount
+    logicalType: number
+    logicalTypeOptions:
+      format: f64
+    physicalType: DOUBLE
+    required: true
+
+>>>sources.odcs.yaml
+apiVersion: v3.2.0
+kind: DataContract
+id: sources
+name: sources
+version: 1.0.0
+schema:
+- name: Clicks
+  properties:
+  - name: customer_id
+    logicalType: integer
+    required: true
+  - name: url
+    logicalType: string
+    required: true
+- name: CUSTOMERS
+  physicalName: crm.customers
+  description: The customers as the data catalog describes them
+  tags:
+  - pii=raw
+  - classification=confidential
+  - team=crm
+  - golden-source
+  quality:
+  - type: text
+    description: One row per customer and update
+  properties:
+  - name: ID
+    logicalType: integer
+    physicalType: int8
+    required: true
+    primaryKey: true
+    primaryKeyPosition: 1
+    classification: confidential
+  - name: updated_at
+    logicalType: timestamp
+    required: true
+    primaryKey: true
+    primaryKeyPosition: 2
+    classification: confidential
+  - name: name
+    logicalType: string
+    required: true
+    description: Full name
+    classification: confidential
+    logicalTypeOptions:
+      maxLength: 255
+  - name: email
+    logicalType: string
+    classification: confidential
+    tags:
+    - gdpr
+    - contact
+    examples:
+    - jane@example.com
+  - name: age
+    logicalType: integer
+    classification: confidential
+  - name: score
+    logicalType: number
+    classification: confidential
+  - name: balance
+    logicalType: number
+    classification: confidential
+  - name: active
+    logicalType: boolean
+    classification: confidential
+  - name: birthday
+    logicalType: date
+    classification: confidential
+  - name: address
+    logicalType: object
+    classification: confidential
+    properties:
+    - name: city
+      logicalType: string
+      required: true
+    - name: street
+      logicalType: string
+    - name: zip
+      logicalType: string
+  - name: phones
+    logicalType: array
+    classification: confidential
+    items:
+      logicalType: object
+      properties:
+      - name: kind
+        logicalType: string
+        required: true
+      - name: number
+        logicalType: string
+  - name: attributes
+    logicalType: map
+    classification: confidential
+    map:
+      key:
+        logicalType: string
+      value:
+        logicalType: string
+  - name: region
+    logicalType: string
+    required: true
+    partitioned: true
+    partitionKeyPosition: 1
+    classification: confidential
+- name: Events
+  physicalName: file:///tmp/contracts-compile/events
+  physicalType: file
+  logicalType: object
+  description: Events of the legacy system
+  properties:
+  - name: id
+    logicalType: integer
+    logicalTypeOptions:
+      format: i64
+    physicalType: BIGINT
+    required: true
+  - name: kind
+    logicalType: string
+    physicalType: STRING
+    required: true
+  - name: payload
+    logicalType: map
+    physicalType: MAP
+    map:
+      key:
+        logicalType: string
+        physicalType: STRING
+      value:
+        logicalType: string
+        physicalType: STRING
+  - name: created_at
+    logicalType: timestamp
+    logicalTypeOptions:
+      timezone: true
+    physicalType: TIMESTAMP_LTZ(3)
+    required: true
+- name: Feedback
+  tags:
+  - pii=masked
+  - classification=internal
+  properties:
+  - name: customer_id
+    logicalType: integer
+    required: true
+    classification: internal
+  - name: message
+    logicalType: string
+    required: true
+    classification: internal
+- name: LargeOrders
+  physicalName: file:///tmp/contracts-compile/large-orders
+  physicalType: file
+  logicalType: object
+  description: Orders above the review limit
+  properties:
+  - name: id
+    logicalType: integer
+    logicalTypeOptions:
+      format: i64
+    physicalType: BIGINT
+    required: true
+  - name: amount
+    logicalType: number
+    logicalTypeOptions:
+      format: f64
+    physicalType: DOUBLE
+    required: true
+- name: Orders
+  properties:
+  - name: id
+    logicalType: integer
+    required: true
+  - name: customer_id
+    logicalType: integer
+    required: true
+  - name: amount
+    logicalType: number
+    required: true
+  - name: ordered_at
+    logicalType: timestamp
+    required: true
+- name: Products
+  physicalName: file:///tmp/contracts-compile/products
+  physicalType: file
+  logicalType: object
+  properties:
+  - name: id
+    logicalType: integer
+    logicalTypeOptions:
+      format: i64
+    physicalType: BIGINT
+    required: true
+  - name: title
+    logicalType: string
+    physicalType: STRING
+    required: true
+  - name: price
+    logicalType: number
+    physicalType: "DECIMAL(10, 2)"
+

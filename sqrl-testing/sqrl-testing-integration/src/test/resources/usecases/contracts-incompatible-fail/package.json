@@ -1,0 +1,14 @@
+{
+  "version": "1",
+  "enabled-engines": ["vertx", "postgres", "kafka", "flink"],
+  "compiler": {
+    "tags": {
+      "classification": { "values": ["public", "internal", "confidential"] },
+      "pii": { "values": ["masked", "raw"] },
+      "gdpr": {}
+    }
+  },
+  "script": {
+    "main": "incompatible.sqrl"
+  }
+}

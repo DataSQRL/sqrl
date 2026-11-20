@@ -28,8 +28,10 @@ import org.apache.flink.table.catalog.ResolvedSchema;
  * @param mutationDefinition This is set for internal CREATE TABLE definitions that map to mutations
  *     only, otherwise null It contains the metadata information from the log engine on where to
  *     write the data
+ * @param definition What the CREATE TABLE statement of the table declares
  */
 public record SourceSinkTableAnalysis(
     @NonNull FlinkConnectorConfigWrapper connectorConfig,
     @NonNull ResolvedSchema schema,
-    @Nullable MutationTable mutationDefinition) {}
+    @Nullable MutationTable mutationDefinition,
+    @NonNull TableDefinition definition) {}

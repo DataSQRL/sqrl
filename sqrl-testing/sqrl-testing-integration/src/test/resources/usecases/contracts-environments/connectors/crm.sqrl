@@ -1,0 +1,17 @@
+-- The base file has the columns that every environment shares. Its contract, crm.odcs.yaml,
+-- applies to the tables of the environment files that extend these schema tables.
+
+/** Customers of the CRM system */
+CREATE TABLE _Customers_schema (
+  id BIGINT NOT NULL,
+  name STRING NOT NULL,
+  email STRING
+);
+
+/** Orders of the CRM system */
+CREATE TABLE _Orders_schema (
+  id BIGINT NOT NULL,
+  customer_id BIGINT NOT NULL,
+  amount DOUBLE NOT NULL,
+  updated_at TIMESTAMP_LTZ(3) NOT NULL
+);
