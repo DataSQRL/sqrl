@@ -254,6 +254,9 @@ public class GraphQLSchemaConverter {
                 try {
                   ApiOperation op = convert(input.op(), input.fieldDefinition(), config, schema);
                   return Stream.of(op);
+                } catch (UnsupportedApiValueException e) {
+                  // An error in the schema, unlike a field that cannot be an operation
+                  throw e;
                 } catch (Exception e) {
                   log.warn(
                       "Operation could not be converted and is removed: {} ({})",
@@ -701,9 +704,16 @@ public class GraphQLSchemaConverter {
         .findFirst()
         .orElseThrow(
             () ->
-                new IllegalArgumentException(
+                new UnsupportedApiValueException(
                     "Unsupported value '%s' for @api(mcp: ...), supported values are %s"
                         .formatted(value, Arrays.toString(McpMethodType.values()))));
+  }
+
+  /** An argument of an {@code @api} directive has a value that is not supported. */
+  public static class UnsupportedApiValueException extends IllegalArgumentException {
+    public UnsupportedApiValueException(String message) {
+      super(message);
+    }
   }
 
   private Map<String, Object> toArgMap(List<Directive> directives) {

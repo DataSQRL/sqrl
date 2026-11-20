@@ -358,6 +358,25 @@ public class GraphQLSchemaConverterTest {
   }
 
   @Test
+  void givenResourceMcpMethodOnSchemaField_whenConvertSchema_thenFailsWithSupportedValues() {
+    var schema =
+        underTest.getSchema(
+            """
+            enum _McpMethodType { NONE TOOL RESOURCE }
+            directive @api(mcp: _McpMethodType) on QUERY | MUTATION | FIELD_DEFINITION
+
+            type Query {
+              ping: String @api(mcp: RESOURCE)
+            }
+            """);
+
+    assertThatThrownBy(() -> underTest.convertSchema(GraphQLSchemaConverterConfig.DEFAULT, schema))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage(
+            "Unsupported value 'RESOURCE' for @api(mcp: ...), supported values are [NONE, TOOL, APP]");
+  }
+
+  @Test
   void givenOperationWithInputObjectVariable_whenConvertOperations_thenExposesMcpTool() {
     var schema = underTest.getSchema(getTestSchema("nested-mutation.graphqls"));
 
