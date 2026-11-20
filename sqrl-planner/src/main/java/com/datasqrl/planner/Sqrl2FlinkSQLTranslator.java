@@ -191,6 +191,7 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
   private final FlinkInsertConflictPlanner insertConflictPlanner;
   private final FlinkSqlNodePlanner flinkSqlNodePlanner;
   private final RelationAliasExpander relationAliasExpander;
+  private final ViewPlans viewPlans;
 
   @Getter private final Set<String> createdDatabases = new LinkedHashSet<>();
   @Getter private final TableAnalysisLookup tableLookup = new TableAnalysisLookup();
@@ -252,6 +253,7 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
             insertConflictPlanner.getConflictProgram());
     this.tEnv.getConfig().setPlannerConfig(plannerConfigBuilder.build());
     this.catalogManager = tEnv.getCatalogManager();
+    this.viewPlans = new ViewPlans(catalogManager);
 
     execFnFactory = new FlinkExecFunctionFactory(tEnv.getConfig());
     relDataTypeParser = new RelDataTypeParser(this);
@@ -312,6 +314,7 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
    * @return
    */
   public FlinkPhysicalPlan compileFlinkPlan() {
+    viewPlans.restoreViews();
     var execute = planBuilder.getExecuteStatements();
 
     if (executionMode != RuntimeExecutionMode.BATCH && execute.size() > 1) {
@@ -553,6 +556,8 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
               mustDeclareTags,
               errors);
       tableLookup.registerTable(tableAnalysis);
+      // The analyzed plan is the query of the view without its top-level sort, as Flink expands it
+      viewPlans.reuse(identifier, viewAnalysis.originalRelnode());
 
       return tableAnalysis;
     } catch (RuntimeException e) {
@@ -573,6 +578,8 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
    */
   public void removeFailedView(ObjectIdentifier identifier, Throwable failure) {
     try {
+      // Flink does not drop a view while a temporary view shadows it
+      viewPlans.forget(identifier);
       catalogManager.dropView(identifier, true);
       tableLookup.removeView(identifier);
     } catch (RuntimeException e) {
@@ -1375,12 +1382,29 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
   }
 
   private Operation execute(SqlNode sqlNode, boolean addToPlan) {
+    forgetShadowedView(sqlNode);
     if (addToPlan) {
       planBuilder.add(sqlNode);
     }
     var operation = getOperation(sqlNode);
     checkResultOk(tEnv.executeInternal(operation));
     return operation;
+  }
+
+  /**
+   * Makes queries expand a view again before a statement that Flink refuses while a temporary view
+   * shadows the view: one that alters the view, or that creates a temporary view or table of its
+   * name, since there can only be one temporary object of a name.
+   */
+  private void forgetShadowedView(SqlNode sqlNode) {
+    if (sqlNode instanceof SqlAlterViewAs alterView) {
+      viewPlans.forget(
+          catalogManager.qualifyIdentifier(UnresolvedIdentifier.of(alterView.getFullName())));
+    } else if (sqlNode instanceof SqlCreateView view && view.isTemporary()) {
+      viewPlans.forget(qualifyIdentifier(view.getName()));
+    } else if (sqlNode instanceof SqlCreateTable table && table.isTemporary()) {
+      viewPlans.forget(qualifyIdentifier(table.getName()));
+    }
   }
 
   Operation getOperation(SqlNode sqlNode) {
