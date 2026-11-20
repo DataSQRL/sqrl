@@ -105,6 +105,7 @@ The `build/deploy/flink` folder contains the data files that sources read locall
 | `vertx.json`                   | The server model for each API version: the GraphQL schema and, for every query, mutation, and subscription, the parameterized database query or topic it executes. |
 | `vertx-config.json`            | The server configuration: ports, database connection, CORS, and protocol settings.                                                                                 |
 | `vertx-<version>-openapi.json` | The OpenAPI specification of the REST API for the API version.                                                                                                     |
+| `vertx-<version>-mcp-app-<name>.html` | The HTML file of an [MCP app](https://docs.datasqrl.com/docs/main/interface.md#mcp-apps) of the API version. `vertx.json` names the file of each app, and the server reads it at startup. |
 
 ### Tests
 
