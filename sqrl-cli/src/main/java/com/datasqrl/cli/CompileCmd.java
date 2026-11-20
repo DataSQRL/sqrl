@@ -15,8 +15,10 @@
  */
 package com.datasqrl.cli;
 
+import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.plan.validate.ExecutionGoal;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
 
 @Command(
     name = "compile",
@@ -25,8 +27,24 @@ import picocli.CommandLine.Command;
     versionProvider = CliVersionProvider.class)
 public class CompileCmd extends AbstractCompileCmd {
 
+  @Mixin CheckStateUpgradeOption checkStateUpgradeOption = new CheckStateUpgradeOption();
+
   @Override
   public ExecutionGoal getGoal() {
     return ExecutionGoal.COMPILE;
+  }
+
+  @Override
+  protected void runInternal(ErrorCollector errors) throws Exception {
+    // Check the folder first, because the compile empties its build folder and its target folder.
+    checkStateUpgradeOption.checkOldBuildFolder(
+        getProjectRoot(), getBuildDir(), getTargetDir(), errors);
+    super.runInternal(errors);
+  }
+
+  /** Runs after a compile without errors. */
+  @Override
+  protected void execute(ErrorCollector errors) {
+    checkStateUpgradeOption.checkUpgrade(getProjectRoot(), getTargetDir(), errors);
   }
 }

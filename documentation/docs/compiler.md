@@ -170,8 +170,9 @@ docker run --rm -v $PWD:/workspace datasqrl/cmd compile -h
 ```
 
 ```
-Usage: sqrl compile [-BhV] [-b=<buildFolder>] [-r=<projectRoot>]
-                    [-t=<targetFolder>] [<packageFiles>...]
+Usage: sqrl compile [-BhV] [-b=<buildFolder>]
+                    [--check-state-upgrade-from=<build-folder>]
+                    [-r=<projectRoot>] [-t=<targetFolder>] [<packageFiles>...]
 Compiles an SQRL project and produces all build artifacts.
       [<packageFiles>...]   Package configuration file(s) of the project.
                               Default: "package.json".
@@ -186,6 +187,14 @@ Compiles an SQRL project and produces all build artifacts.
                               omitted.
 
   -B, --batch-output        Run in batch output mode (disables colored output).
+      --check-state-upgrade-from=<build-folder>
+                            Build folder of the deployed (old) version, for
+                              example "build/shop-replay". After the compile,
+                              the compile fails when Flink cannot restore the
+                              state of that build from the new compiled plan.
+                              Also accepts a target folder or a plan folder. A
+                              relative path resolves against the project root.
+
   -h, --help                Show this help message and exit.
   -r, --project-root=<projectRoot>
                             Project root folder. Must be a relative path inside

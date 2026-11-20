@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mockConstruction;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
@@ -32,7 +33,9 @@ import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.ProjectPaths;
 import com.datasqrl.config.TestRunnerConfiguration;
 import com.datasqrl.engine.PhysicalPlan;
+import com.datasqrl.error.CollectedException;
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.error.ErrorMessage;
 import com.datasqrl.packager.Packager;
 import com.datasqrl.util.ConfigLoaderUtils;
 import java.io.IOException;
@@ -41,6 +44,8 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -53,6 +58,20 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 
 @ExtendWith(MockitoExtension.class)
 class CompileCmdTest {
+
+  private static final String SOURCE_OPERATOR =
+      "{\"id\": 1, \"type\": \"stream-exec-table-source-scan_2\", \"description\": \"Orders\"}";
+
+  private static final String SINK_OPERATOR =
+      "{\"id\": 2, \"type\": \"stream-exec-sink_1\", \"description\": \"Sink(CustomerCount)\"}";
+
+  private static final String OLD_COMPILED_PLAN =
+      "{\"flinkVersion\": \"2.3\", \"nodes\": [" + SOURCE_OPERATOR + "," + SINK_OPERATOR + "]}";
+
+  private static final String NEW_COMPILED_PLAN_WITH_ALL_OPERATORS = OLD_COMPILED_PLAN;
+
+  private static final String NEW_COMPILED_PLAN_WITHOUT_SINK =
+      "{\"flinkVersion\": \"2.3\", \"nodes\": [" + SOURCE_OPERATOR + "]}";
 
   @Mock private PackageJson sqrlConfig;
   @Mock private TestRunnerConfiguration testConfig;
@@ -305,5 +324,202 @@ class CompileCmdTest {
                 + "', which is outside project root '"
                 + projectRoot
                 + "'");
+  }
+
+  @Test
+  void
+      givenOldBuildIsTheBuildFolderOfThisCompile_whenCompile_thenFailsBeforeCompileAndKeepsOldBuild()
+          throws IOException {
+    var oldPlanFile = createOldBuild("build/shop");
+    var compileCmd = compileCmdWithOldBuild("build/shop", "package.json");
+
+    assertThatThrownBy(() -> compileCmd.runInternal(ErrorCollector.root()))
+        .isInstanceOf(CollectedException.class)
+        .hasMessageContaining("is inside the build folder");
+    assertThat(oldPlanFile).exists();
+  }
+
+  @Test
+  void givenOldBuildIsTheBuildFolderAndOtherTargetFolder_whenCompile_thenFailsBeforeCompile()
+      throws IOException {
+    var oldPlanFile = createOldBuild("build/shop");
+    var compileCmd = compileCmdWithOldBuild("build/shop", "package.json");
+    compileCmd.targetFolder = Optional.of(Path.of("artifacts"));
+
+    assertThatThrownBy(() -> compileCmd.runInternal(ErrorCollector.root()))
+        .isInstanceOf(CollectedException.class)
+        .hasMessageContaining("is inside the build folder");
+    assertThat(oldPlanFile).exists();
+  }
+
+  @Test
+  void givenNoBuildFolderOption_whenCompileWithOtherBuild_thenFailsBeforeCompileAndKeepsOldBuild()
+      throws IOException {
+    var oldPlanFile = createOldBuild("build/shop-replay");
+    var compileCmd = compileCmdWithOldBuild("build/shop-replay", "package.json");
+    compileCmd.buildFolder = Optional.empty();
+
+    assertThatThrownBy(() -> compileCmd.runInternal(ErrorCollector.root()))
+        .isInstanceOf(CollectedException.class)
+        .hasMessageContaining("is inside the build folder");
+    assertThat(oldPlanFile).exists();
+  }
+
+  @Test
+  void givenTargetFolderOptionInsideOldBuild_whenCompile_thenFailsBeforeCompileAndKeepsOldBuild()
+      throws IOException {
+    var oldPlanFile = createOldBuild("build/shop-replay");
+    var compileCmd = compileCmdWithOldBuild("build/shop-replay", "package.json");
+    compileCmd.targetFolder = Optional.of(Path.of("build/shop-replay/deploy"));
+
+    assertThatThrownBy(() -> compileCmd.runInternal(ErrorCollector.root()))
+        .isInstanceOf(CollectedException.class)
+        .hasMessageContaining("is inside the target folder");
+    assertThat(oldPlanFile).exists();
+  }
+
+  @Test
+  void givenCompatibleNewPlan_whenCompileWithStateUpgradeCheck_thenNoticeAndNoErrors()
+      throws Exception {
+    createOldBuild("build/shop-replay");
+    var compileCmd = compileCmdWithOldBuild("build/shop-replay", "package.json");
+    stubCompilationThatWrites(NEW_COMPILED_PLAN_WITH_ALL_OPERATORS);
+
+    var errors = runCompile(compileCmd, ErrorCollector.root());
+
+    assertThat(errors.hasErrors()).isFalse();
+    assertThat(notices(errors)).anyMatch(notice -> notice.contains("can restore the state"));
+  }
+
+  @Test
+  void givenThreePackageFiles_whenCompileWithStateUpgradeCheck_thenLoadsAllFilesAndChecks()
+      throws Exception {
+    createOldBuild("build/shop-replay");
+    var compileCmd =
+        compileCmdWithOldBuild(
+            "build/shop-replay",
+            "shop-shared-package.json",
+            "shop-prod-package.json",
+            "shop-extra-package.json");
+    stubCompilationThatWrites(NEW_COMPILED_PLAN_WITH_ALL_OPERATORS);
+
+    var errors = runCompile(compileCmd, ErrorCollector.root());
+
+    assertThat(errors.hasErrors()).isFalse();
+    assertThat(notices(errors)).anyMatch(notice -> notice.contains("can restore the state"));
+  }
+
+  @Test
+  void givenNewPlanWithoutOldOperator_whenCompileWithStateUpgradeCheck_thenFailsWithBreak()
+      throws Exception {
+    createOldBuild("build/shop-replay");
+    var compileCmd = compileCmdWithOldBuild("build/shop-replay", "package.json");
+    stubCompilationThatWrites(NEW_COMPILED_PLAN_WITHOUT_SINK);
+
+    assertThatThrownBy(() -> runCompile(compileCmd, ErrorCollector.root()))
+        .isInstanceOf(CollectedException.class)
+        .hasMessageContaining("operator 2 removed: Sink(CustomerCount)");
+  }
+
+  @Test
+  void givenCompilationError_whenCompileWithStateUpgradeCheck_thenSkipsCheck() throws Exception {
+    createOldBuild("build/shop-replay");
+    var compileCmd = compileCmdWithOldBuild("build/shop-replay", "package.json");
+    var errors = ErrorCollector.root();
+    when(sqrlConfig.getTestConfig()).thenReturn(testConfig);
+    when(testConfig.getTestDir(new ProjectPaths(tempDir, tempDir))).thenReturn(Optional.empty());
+    when(compilationProcess.executeCompilation(Optional.empty()))
+        .thenAnswer(
+            invocation -> {
+              errors.exception("Table Orders is not defined");
+              return Pair.of(PhysicalPlan.builder().build(), new TestPlan());
+            });
+
+    runCompile(compileCmd, errors);
+
+    assertThat(errors.hasErrors()).isTrue();
+    assertThat(StreamSupport.stream(errors.spliterator(), false).map(ErrorMessage::getMessage))
+        .containsExactly("Table Orders is not defined");
+    verify(packager, never()).postprocess(any(), any(), any());
+  }
+
+  /** Writes {@link #OLD_COMPILED_PLAN} into the build folder and returns the plan file. */
+  private Path createOldBuild(String oldBuildFolder) throws IOException {
+    var oldPlanFile =
+        tempDir.resolve(oldBuildFolder).resolve("deploy/plan/flink-compiled-plan.json");
+    Files.createDirectories(oldPlanFile.getParent());
+    Files.writeString(oldPlanFile, OLD_COMPILED_PLAN);
+    return oldPlanFile;
+  }
+
+  /**
+   * Returns {@code compile -b shop --check-state-upgrade-from <oldBuildFolder> <packageFiles>}, and
+   * writes each package file into the project root.
+   */
+  private CompileCmd compileCmdWithOldBuild(String oldBuildFolder, String... packageFileNames)
+      throws IOException {
+    for (var packageFileName : packageFileNames) {
+      Files.writeString(tempDir.resolve(packageFileName), "{}");
+    }
+
+    var compileCmd = new CompileCmd();
+    compileCmd.cli = new DatasqrlCli(tempDir, StatusHook.NONE, true);
+    compileCmd.packageFiles = Stream.of(packageFileNames).map(Path::of).toList();
+    compileCmd.buildFolder = Optional.of(Path.of("shop"));
+    compileCmd.checkStateUpgradeOption.oldBuildFolder = Optional.of(Path.of(oldBuildFolder));
+    return compileCmd;
+  }
+
+  /** Makes the compile succeed, and makes the mocked packager write {@code newCompiledPlan}. */
+  private void stubCompilationThatWrites(String newCompiledPlan) throws Exception {
+    when(sqrlConfig.getTestConfig()).thenReturn(testConfig);
+    when(testConfig.getTestDir(new ProjectPaths(tempDir, tempDir))).thenReturn(Optional.empty());
+    when(compilationProcess.executeCompilation(Optional.empty()))
+        .thenReturn(Pair.of(PhysicalPlan.builder().build(), new TestPlan()));
+    doAnswer(
+            invocation -> {
+              Path newPlanDir = invocation.<Path>getArgument(0).resolve("plan");
+              Files.createDirectories(newPlanDir);
+              Files.writeString(newPlanDir.resolve("flink-compiled-plan.json"), newCompiledPlan);
+              return null;
+            })
+        .when(packager)
+        .postprocess(any(), any(), any());
+  }
+
+  /**
+   * Runs the command (compile and check) with the mocked Spring context. The package configuration
+   * loads only for the exact list of package files of the command, so a test fails if the compile
+   * drops a file.
+   */
+  private ErrorCollector runCompile(CompileCmd compileCmd, ErrorCollector errors) throws Exception {
+    var packageFilePaths = compileCmd.formatGivenPackageFiles();
+
+    try (var configLoader = mockStatic(ConfigLoaderUtils.class);
+        var springContext =
+            mockConstruction(
+                AnnotationConfigApplicationContext.class,
+                (mock, context) -> {
+                  when(mock.getBean(ExecutionEnginesHolder.class)).thenReturn(engineHolder);
+                  when(mock.getBean(Packager.class)).thenReturn(packager);
+                  when(mock.getBean(CompilationProcess.class)).thenReturn(compilationProcess);
+                })) {
+      configLoader
+          .when(
+              () ->
+                  ConfigLoaderUtils.loadUnresolvedConfig(
+                      any(ErrorCollector.class), eq(packageFilePaths)))
+          .thenReturn(sqrlConfig);
+
+      compileCmd.runInternal(errors);
+      return errors;
+    }
+  }
+
+  private static List<String> notices(ErrorCollector errors) {
+    return StreamSupport.stream(errors.spliterator(), false)
+        .filter(ErrorMessage::isNotice)
+        .map(ErrorMessage::getMessage)
+        .toList();
   }
 }
