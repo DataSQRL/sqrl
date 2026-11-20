@@ -79,8 +79,8 @@ final class ViewPlans {
   }
 
   /**
-   * Makes queries expand a view again, e.g. before it is altered, which Flink does not allow while
-   * a temporary view shadows it.
+   * Makes queries expand a view again, e.g. before it is altered or a temporary object of its name
+   * is created, which Flink does not allow while a temporary view shadows it.
    */
   void forget(ObjectIdentifier view) {
     if (shadowed.remove(view)) {
