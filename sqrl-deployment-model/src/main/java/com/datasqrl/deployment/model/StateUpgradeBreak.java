@@ -15,14 +15,12 @@
  */
 package com.datasqrl.deployment.model;
 
-/** One reason why a new compiled Flink plan cannot restore the state of an old one. */
+/** One reason why Flink cannot restore the state of an old build from a new build. */
 public sealed interface StateUpgradeBreak
     permits StateUpgradeBreak.RemovedOperator,
         StateUpgradeBreak.ChangedOperatorType,
-        StateUpgradeBreak.ChangedStateField {
-
-  /** The {@code id} of the operator in the old plan. */
-  String operatorId();
+        StateUpgradeBreak.ChangedStateField,
+        StateUpgradeBreak.ChangedMaxParallelism {
 
   /** The break as one line of text. */
   String toMessage();
@@ -65,6 +63,20 @@ public sealed interface StateUpgradeBreak
     public String toMessage() {
       return "operator %s changed: field '%s' differs (old: %s, new: %s)"
           .formatted(operatorId, fieldName, oldDescription, newDescription);
+    }
+  }
+
+  /**
+   * The two builds set different values for {@code pipeline.max-parallelism}. Flink divides the
+   * state into this number of key groups, so a restore needs the same value.
+   */
+  record ChangedMaxParallelism(int oldMaxParallelism, int newMaxParallelism)
+      implements StateUpgradeBreak {
+
+    @Override
+    public String toMessage() {
+      return "pipeline.max-parallelism differs: %d -> %d"
+          .formatted(oldMaxParallelism, newMaxParallelism);
     }
   }
 }
