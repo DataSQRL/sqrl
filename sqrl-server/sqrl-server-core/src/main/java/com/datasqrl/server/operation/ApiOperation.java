@@ -18,6 +18,7 @@ package com.datasqrl.server.operation;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.List;
 import java.util.Objects;
 import lombok.Builder;
 import lombok.NonNull;
@@ -49,6 +50,12 @@ public class ApiOperation {
    */
   String appName;
 
+  /**
+   * Who the MCP tool is for, from the {@code visibility} of the {@code @api} directive, or null if
+   * the directive does not set it. Then the tool is for the model and for MCP apps.
+   */
+  List<McpVisibility> mcpVisibility;
+
   public static ApiOperationBuilder getBuilder(FunctionDefinition function, GraphQLQuery apiQuery) {
     return builder()
         .function(function)
@@ -68,7 +75,8 @@ public class ApiOperation {
       @JsonProperty("uriTemplate") String uriTemplate,
       @JsonProperty("format") ResultFormat format,
       @JsonProperty("resultDefinition") ResultDefinition resultDefinition,
-      @JsonProperty("appName") String appName) {
+      @JsonProperty("appName") String appName,
+      @JsonProperty("mcpVisibility") List<McpVisibility> mcpVisibility) {
     this.function = function;
     this.apiQuery = apiQuery;
     this.mcpMethod = mcpMethod;
@@ -77,6 +85,7 @@ public class ApiOperation {
     this.format = format;
     this.resultDefinition = resultDefinition;
     this.appName = appName;
+    this.mcpVisibility = mcpVisibility;
   }
 
   /**

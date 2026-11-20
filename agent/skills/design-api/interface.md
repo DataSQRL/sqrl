@@ -148,9 +148,10 @@ The name of the operation is the name of the MCP tool and REST endpoint and must
 
 The `@api` directive is applied to the directive to control how the operation is exposed:
 * `rest`: `NONE`, `GET`, or `POST` to configure the HTTP method or not expose as REST endpoint.
-* `mcp`: `NONE`, `TOOL`, or `APP` to configure whether the operation is exposed as an MCP tool. `TOOL`, the default, is a tool for the model that [MCP apps](#mcp-apps) can call as well. `APP` is a tool for MCP apps: hosts with MCP Apps support hide it from the model. It is not an access restriction: other MCP clients list it and can call it, and it keeps its REST endpoint unless you set `rest: NONE`.
+* `mcp`: `NONE` or `TOOL` to configure whether the operation is exposed as an MCP tool. `TOOL` is the default.
 * `uri`: An RFC 6570 template to configure the REST path. Any operation arguments that are not defined in the uri template are considered part of the payload for REST (and the method must be POST).
 * `appName`: The name of the [MCP app](#mcp-apps) that renders the tool's result. An empty value (`appName: ""`) links no app.
+* `visibility`: `[MODEL]`, `[APP]`, or `[MODEL, APP]` (the default) to configure who an MCP tool is for when [MCP apps](#mcp-apps) are used. Hosts with MCP Apps support hide a tool without `MODEL` from the model, and the extension requires them to reject calls from apps to a tool without `APP`, which not every host does. Hosts without MCP Apps support ignore it and show every tool to the model. It is not an access restriction: the server lists and runs the tool for every MCP client, and the operation keeps its REST endpoint unless you set `rest: NONE`.
 
 ```graphql
 # Returns up to 10 people of the given age.
@@ -195,27 +196,28 @@ Each app is a single, self-contained `.html` file directly in the apps directory
 A tool is linked to an app as follows. All names match regardless of case.
 * By default, a tool is linked to the app with the tool's name. For example, the operation `GetSales` is linked to `api/apps-v1/GetSales.html`.
 * `@api(appName: "SalesChart")` links the tool to the app `SalesChart` instead, and `@api(appName: "")` links no app. One app can serve several tools.
-* An `APP` tool doesn't need an app of its own. Typical `APP` tools are helpers that an app calls, such as a drill-down query or a mutation that the user submits from a form.
+* A tool with `visibility: [APP]` doesn't need an app of its own. Typical app-only tools are helpers that an app calls, such as a drill-down query or a mutation that the user submits from a form. Use `visibility: [MODEL]` for a tool that apps must not call.
 
 ```graphql
 # Sales by region and product for a time range.
 query GetSales($from: DateTime!, $to: DateTime!) @api(mcp: TOOL, appName: "SalesChart") { ... }
 
 # Daily sales for one region. Called by the SalesChart app for drill-downs.
-query GetDailySales($region: String!, $from: DateTime!, $to: DateTime!) @api(mcp: APP) { ... }
+query GetDailySales($region: String!, $from: DateTime!, $to: DateTime!) @api(visibility: [APP]) { ... }
 ```
 
-DataSQRL serves each app as the MCP resource `ui://apps/<name>` with the MIME type `text/html;profile=mcp-app`, and lists it in `resources/list`. When the project is compiled, each app is written to the deployment assets as `vertx-<version>-mcp-app-<name>.html`, next to the server model `vertx.json`, which names the file of each app. The server reads these files when it starts, so deploy them together with `vertx.json`. A tool linked to an app has the app's URI in `_meta.ui.resourceUri`. With MCP Apps support, each tool has `_meta.ui.visibility`: `["model", "app"]` for `TOOL` and `["app"]` for `APP`. The server advertises the `io.modelcontextprotocol/ui` extension on `initialize`. Tool results don't change: apps parse the JSON in the result's `content`.
+DataSQRL serves each app as the MCP resource `ui://apps/<name>` with the MIME type `text/html;profile=mcp-app`, and lists it in `resources/list`. When the project is compiled, each app is written to the deployment assets as `vertx-<version>-mcp-app-<name>.html`, next to the server model `vertx.json`, which names the file of each app. The server reads these files when it starts, so deploy them together with `vertx.json`. A tool linked to an app has the app's URI in `_meta.ui.resourceUri`. With MCP Apps support, each tool has `_meta.ui.visibility`: its `visibility`, or `["model", "app"]` if it sets none. The server advertises the `io.modelcontextprotocol/ui` extension on `initialize`. Tool results don't change: apps parse the JSON in the result's `content`.
 
-When you define your own GraphQL schema, declare `APP` and `appName` in the `@api` directive:
+When you define your own GraphQL schema, declare `appName` and `visibility` in the `@api` directive:
 
 ```graphql
-enum _McpMethodType { NONE, TOOL, APP }
+enum _McpMethodType { NONE, TOOL }
+enum _McpVisibility { MODEL, APP }
 enum _RestMethodType { NONE, GET, POST }
-directive @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String, appName: String) on QUERY | MUTATION | FIELD_DEFINITION
+directive @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String, appName: String, visibility: [_McpVisibility!]) on QUERY | MUTATION | FIELD_DEFINITION
 ```
 
-The compilation fails when the apps directory doesn't exist or has no apps, when an app's file name is not a valid app name, when the names of two apps differ only in case, when an `appName` names an app that doesn't exist, and when an operation with `mcp: NONE` has a non-empty `appName`. It warns about an app that is linked to no tool, about an `APP` tool in an API version that serves MCP without `mcp-apps`, and about an app whose markup loads external or relative resources with `<script src>`, `<link href>`, or `<img src>` other than `data:` URLs. That last check does not see what scripts and stylesheets load.
+The compilation fails when the apps directory doesn't exist or has no apps, when an app's file name is not a valid app name, when the names of two apps differ only in case, when an `appName` names an app that doesn't exist, when an operation with `mcp: NONE` has a non-empty `appName` or a `visibility`, and when a `visibility` is empty. It warns about an app that is linked to no tool, about a tool with `visibility: [APP]` in an API version that serves MCP without `mcp-apps`, and about an app whose markup loads external or relative resources with `<script src>`, `<link href>`, or `<img src>` other than `data:` URLs. That last check does not see what scripts and stylesheets load.
 
 ### OpenAPI and API Versioning
 

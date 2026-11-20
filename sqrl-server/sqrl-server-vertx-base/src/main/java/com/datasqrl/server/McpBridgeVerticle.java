@@ -22,7 +22,7 @@ import com.datasqrl.server.graphql.RootGraphQLModel;
 import com.datasqrl.server.mcp.VertxMcpTransport;
 import com.datasqrl.server.operation.ApiOperation;
 import com.datasqrl.server.operation.McpApp;
-import com.datasqrl.server.operation.McpMethodType;
+import com.datasqrl.server.operation.McpVisibility;
 import com.datasqrl.util.JsonUtils;
 import com.datasqrl.util.ProjectConstants;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -51,6 +51,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -73,8 +74,9 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
 
   private static final TypeReference<Map<String, Object>> MAP_TYPE = new TypeReference<>() {};
 
-  private static final String VISIBILITY_MODEL = "model";
-  private static final String VISIBILITY_APP = "app";
+  /** The visibility of a tool that does not set one: the default of the MCP Apps extension. */
+  private static final List<McpVisibility> DEFAULT_VISIBILITY =
+      List.of(McpVisibility.MODEL, McpVisibility.APP);
 
   private final List<ApiOperation> tools;
 
@@ -189,7 +191,8 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
 
   /**
    * Returns the {@code _meta} of the tool with the MCP Apps fields: the {@code resourceUri} of its
-   * app, and its {@code visibility}. Without MCP Apps support, only an app-only tool has them.
+   * app, and its {@code visibility}. Without MCP Apps support, only a tool that sets a visibility
+   * has them.
    */
   private Map<String, Object> toolMeta(ApiOperation operation) {
     var ui = new LinkedHashMap<String, Object>();
@@ -204,10 +207,14 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
             operation.getAppName());
       }
     }
-    if (operation.getMcpMethod() == McpMethodType.APP) {
-      ui.put("visibility", List.of(VISIBILITY_APP));
-    } else if (apps != null) {
-      ui.put("visibility", List.of(VISIBILITY_MODEL, VISIBILITY_APP));
+    var visibility = operation.getMcpVisibility();
+    if (visibility == null && apps != null) {
+      visibility = DEFAULT_VISIBILITY;
+    }
+    if (visibility != null) {
+      ui.put(
+          "visibility",
+          visibility.stream().map(value -> value.name().toLowerCase(Locale.ROOT)).toList());
     }
     return ui.isEmpty() ? null : Map.of("ui", ui);
   }

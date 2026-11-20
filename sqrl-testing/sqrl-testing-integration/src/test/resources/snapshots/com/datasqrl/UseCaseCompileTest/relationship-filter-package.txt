@@ -44,6 +44,10 @@ type Tombstone {
 enum _McpMethodType {
   NONE
   TOOL
+}
+
+enum _McpVisibility {
+  MODEL
   APP
 }
 
@@ -53,7 +57,7 @@ enum _RestMethodType {
   POST
 }
 
-directive @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String, appName: String) on QUERY | MUTATION | FIELD_DEFINITION
+directive @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String, appName: String, visibility: [_McpVisibility!]) on QUERY | MUTATION | FIELD_DEFINITION
 
 >>>pipeline_explain.txt
 === Detail
@@ -930,7 +934,7 @@ CREATE TABLE IF NOT EXISTS "subqueryQuery" ("id" TEXT NOT NULL, "label" TEXT NOT
       ],
       "schema" : {
         "type" : "string",
-        "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\ntype Detail {\n  id: String!\n  info: String!\n}\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Query {\n  Detail(limit: Int = 10, offset: Int = 0): [Detail!]\n  Thing(limit: Int = 10, offset: Int = 0): [Thing!]\n  Tombstone(limit: Int = 10, offset: Int = 0): [Tombstone!]\n  cleanQuery(limit: Int = 10, offset: Int = 0): [Thing!]\n  joinQuery(limit: Int = 10, offset: Int = 0): [Thing!]\n  subqueryQuery(limit: Int = 10, offset: Int = 0): [Thing!]\n  sortedQuery(minId: String!, limit: Int = 10, offset: Int = 0): [Thing!]\n}\n\ntype Thing {\n  id: String!\n  label: String!\n  timestamp: DateTime!\n  detail: Detail\n  relatedByTimestamp(limit: Int = 10, offset: Int = 0): [Thing!]\n}\n\ntype Tombstone {\n  id: String!\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  APP\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String, appName: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+        "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\ntype Detail {\n  id: String!\n  info: String!\n}\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Query {\n  Detail(limit: Int = 10, offset: Int = 0): [Detail!]\n  Thing(limit: Int = 10, offset: Int = 0): [Thing!]\n  Tombstone(limit: Int = 10, offset: Int = 0): [Tombstone!]\n  cleanQuery(limit: Int = 10, offset: Int = 0): [Thing!]\n  joinQuery(limit: Int = 10, offset: Int = 0): [Thing!]\n  subqueryQuery(limit: Int = 10, offset: Int = 0): [Thing!]\n  sortedQuery(minId: String!, limit: Int = 10, offset: Int = 0): [Thing!]\n}\n\ntype Thing {\n  id: String!\n  label: String!\n  timestamp: DateTime!\n  detail: Detail\n  relatedByTimestamp(limit: Int = 10, offset: Int = 0): [Thing!]\n}\n\ntype Tombstone {\n  id: String!\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n}\n\nenum _McpVisibility {\n  MODEL\n  APP\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String, appName: String, visibility: [_McpVisibility!]) on QUERY | MUTATION | FIELD_DEFINITION\n"
       }
     }
   }

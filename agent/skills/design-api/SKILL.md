@@ -69,9 +69,10 @@ query GetPersonByAge($age: Int!)
 
 **`@api` Directive:**
 - `rest`: `NONE` | `GET` | `POST` (HTTP method or disable)
-- `mcp`: `NONE` | `TOOL` | `APP` (not exposed, MCP tool for the model and apps, or MCP tool for apps that hosts with MCP Apps support hide from the model; `APP` is not an access restriction)
+- `mcp`: `NONE` | `TOOL` (not exposed, or MCP tool)
 - `uri`: RFC 6570 template (args in template = path params, others = payload requiring POST)
 - `appName`: links the tool to the MCP app of that name; `appName: ""` links none (see MCP Apps in [interface.md](interface.md))
+- `visibility`: `[MODEL]` | `[APP]` | `[MODEL, APP]` (who an MCP tool is for when MCP apps are used; default both; applied by the host, not an access restriction)
 
 **Rules:**
 - Operation name = MCP tool name = REST endpoint name (must be unique)

@@ -29,6 +29,7 @@ import com.datasqrl.server.operation.FunctionDefinition.Argument;
 import com.datasqrl.server.operation.GraphQLQuery;
 import com.datasqrl.server.operation.McpApp;
 import com.datasqrl.server.operation.McpMethodType;
+import com.datasqrl.server.operation.McpVisibility;
 import com.datasqrl.util.JsonUtils;
 import com.fasterxml.jackson.databind.JsonNode;
 import graphql.GraphQL;
@@ -420,11 +421,15 @@ class McpEndpointTest {
                         case "GetSensors" -> operation.toBuilder().appName("SalesChart").build();
                         case "AddReading" ->
                             operation.toBuilder()
-                                .mcpMethod(McpMethodType.APP)
+                                .mcpVisibility(List.of(McpVisibility.APP))
                                 .appName("SalesChart")
                                 .build();
                         case "GetFailing" ->
-                            operation.toBuilder().mcpMethod(McpMethodType.APP).build();
+                            operation.toBuilder().mcpVisibility(List.of(McpVisibility.APP)).build();
+                        case "GetStatus" ->
+                            operation.toBuilder()
+                                .mcpVisibility(List.of(McpVisibility.MODEL))
+                                .build();
                         default -> operation;
                       })
               .toList();
@@ -477,6 +482,8 @@ class McpEndpointTest {
                     Map.of("resourceUri", "ui://apps/SalesChart", "visibility", List.of("app"))));
         assertThat(tool(tools, "GetFailing").meta())
             .isEqualTo(Map.of("ui", Map.of("visibility", List.of("app"))));
+        assertThat(tool(tools, "GetStatus").meta())
+            .isEqualTo(Map.of("ui", Map.of("visibility", List.of("model"))));
         assertThat(tool(tools, "GetForbidden").meta())
             .isEqualTo(Map.of("ui", Map.of("visibility", List.of("model", "app"))));
       }
@@ -573,7 +580,7 @@ class McpEndpointTest {
               .map(
                   operation ->
                       operation.getName().equals("GetFailing")
-                          ? operation.toBuilder().mcpMethod(McpMethodType.APP).build()
+                          ? operation.toBuilder().mcpVisibility(List.of(McpVisibility.APP)).build()
                           : operation)
               .toList();
       McpEndpointTest.this.startServer(

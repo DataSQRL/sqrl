@@ -62,6 +62,10 @@ type Subscription {
 enum _McpMethodType {
   NONE
   TOOL
+}
+
+enum _McpVisibility {
+  MODEL
   APP
 }
 
@@ -71,7 +75,7 @@ enum _RestMethodType {
   POST
 }
 
-directive @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String, appName: String) on QUERY | MUTATION | FIELD_DEFINITION
+directive @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String, appName: String, visibility: [_McpVisibility!]) on QUERY | MUTATION | FIELD_DEFINITION
 
 >>>pipeline_explain.txt
 === AuthInputData
@@ -994,7 +998,7 @@ CREATE TABLE IF NOT EXISTS "MyTable" ("val" INTEGER NOT NULL, PRIMARY KEY ("val"
       ],
       "schema" : {
         "type" : "string",
-        "schema" : "type AuthInputData {\n  event_id: String!\n  val: Long!\n  payload: JSON\n  event_time: DateTime!\n}\n\ninput AuthInputDataInput {\n  payload: JSON\n}\n\ntype AuthInputDataResultOutput {\n  event_id: String!\n  val: Long!\n  payload: JSON\n  event_time: DateTime!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Mutation {\n  AuthInputData(event: AuthInputDataInput!): AuthInputDataResultOutput!\n}\n\ntype MyStringTable {\n  val: String!\n}\n\ntype MyTable {\n  val: Int!\n}\n\ntype Query {\n  MyStringTable(limit: Int = 10, offset: Int = 0): [MyStringTable!]\n  MyTable(limit: Int = 10, offset: Int = 0): [MyTable!]\n  AuthMyTable(limit: Int = 10, offset: Int = 0): [MyTable!]\n  AuthMyTableValues(limit: Int = 10, offset: Int = 0): [MyTable!]\n  AuthNamespacedNestedClaimMyTable(limit: Int = 10, offset: Int = 0): [MyTable!]\n  AuthNestedArrayClaimMyTable(limit: Int = 10, offset: Int = 0): [MyTable!]\n  AuthNestedClaimMyTable(limit: Int = 10, offset: Int = 0): [MyTable!]\n  AuthStringMyTableValues(limit: Int = 10, offset: Int = 0): [MyStringTable!]\n}\n\ntype Subscription {\n  MessageSubscription: AuthInputData\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  APP\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String, appName: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+        "schema" : "type AuthInputData {\n  event_id: String!\n  val: Long!\n  payload: JSON\n  event_time: DateTime!\n}\n\ninput AuthInputDataInput {\n  payload: JSON\n}\n\ntype AuthInputDataResultOutput {\n  event_id: String!\n  val: Long!\n  payload: JSON\n  event_time: DateTime!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Mutation {\n  AuthInputData(event: AuthInputDataInput!): AuthInputDataResultOutput!\n}\n\ntype MyStringTable {\n  val: String!\n}\n\ntype MyTable {\n  val: Int!\n}\n\ntype Query {\n  MyStringTable(limit: Int = 10, offset: Int = 0): [MyStringTable!]\n  MyTable(limit: Int = 10, offset: Int = 0): [MyTable!]\n  AuthMyTable(limit: Int = 10, offset: Int = 0): [MyTable!]\n  AuthMyTableValues(limit: Int = 10, offset: Int = 0): [MyTable!]\n  AuthNamespacedNestedClaimMyTable(limit: Int = 10, offset: Int = 0): [MyTable!]\n  AuthNestedArrayClaimMyTable(limit: Int = 10, offset: Int = 0): [MyTable!]\n  AuthNestedClaimMyTable(limit: Int = 10, offset: Int = 0): [MyTable!]\n  AuthStringMyTableValues(limit: Int = 10, offset: Int = 0): [MyStringTable!]\n}\n\ntype Subscription {\n  MessageSubscription: AuthInputData\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n}\n\nenum _McpVisibility {\n  MODEL\n  APP\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String, appName: String, visibility: [_McpVisibility!]) on QUERY | MUTATION | FIELD_DEFINITION\n"
       }
     }
   }

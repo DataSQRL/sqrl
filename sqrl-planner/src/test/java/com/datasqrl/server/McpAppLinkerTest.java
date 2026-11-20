@@ -24,6 +24,7 @@ import com.datasqrl.server.operation.ApiOperation;
 import com.datasqrl.server.operation.FunctionDefinition;
 import com.datasqrl.server.operation.GraphQLQuery;
 import com.datasqrl.server.operation.McpMethodType;
+import com.datasqrl.server.operation.McpVisibility;
 import graphql.language.OperationDefinition.Operation;
 import java.util.Arrays;
 import java.util.List;
@@ -52,7 +53,7 @@ class McpAppLinkerTest {
     var operations =
         List.of(
             tool("GetSales", McpMethodType.TOOL, "saleschart"),
-            tool("GetDailySales", McpMethodType.APP, "SalesChart"));
+            appTool("GetDailySales", "SalesChart"));
 
     var linked = link(operations, "SalesChart", "GetSales");
 
@@ -76,7 +77,7 @@ class McpAppLinkerTest {
 
   @Test
   void givenAppToolWithoutApp_whenLinking_thenLinksNoApp() {
-    var operations = List.of(tool("GetDailySales", McpMethodType.APP, null));
+    var operations = List.of(appTool("GetDailySales", null));
 
     var linked = link(operations, "SalesChart");
 
@@ -85,7 +86,7 @@ class McpAppLinkerTest {
         .satisfies(
             operation -> {
               assertThat(operation.getAppName()).isNull();
-              assertThat(operation.getMcpMethod()).isEqualTo(McpMethodType.APP);
+              assertThat(operation.getMcpVisibility()).containsExactly(McpVisibility.APP);
             });
   }
 
@@ -140,7 +141,7 @@ class McpAppLinkerTest {
 
   @Test
   void givenAppToolWithoutAppsSupport_whenLinking_thenWarnsThatNoAppCanCallIt() {
-    var operations = List.of(tool("GetDailySales", McpMethodType.APP, null));
+    var operations = List.of(appTool("GetDailySales", null));
 
     var linked = linkWithoutApps(operations, true);
 
@@ -149,8 +150,8 @@ class McpAppLinkerTest {
         .singleElement()
         .asString()
         .contains(
-            "The operation 'GetDailySales' is a tool for MCP apps only (mcp: APP), but API version"
-                + " 'v1' has no MCP apps that could call it");
+            "The operation 'GetDailySales' is a tool for MCP apps only (visibility: [APP]), but"
+                + " API version 'v1' has no MCP apps that could call it");
   }
 
   @Test
@@ -163,6 +164,47 @@ class McpAppLinkerTest {
     var linked = linkWithoutApps(operations, false);
 
     assertThat(linked).extracting(ApiOperation::getAppName).containsOnlyNulls();
+    assertThat(warnings()).isEmpty();
+  }
+
+  @Test
+  void givenModelOnlyTool_whenLinking_thenLinksAppAndKeepsVisibility() {
+    var operations =
+        List.of(tool("GetSales", McpMethodType.TOOL, null, List.of(McpVisibility.MODEL)));
+
+    var linked = link(operations, "GetSales");
+
+    assertThat(linked)
+        .singleElement()
+        .satisfies(
+            operation -> {
+              assertThat(operation.getAppName()).isEqualTo("GetSales");
+              assertThat(operation.getMcpVisibility()).containsExactly(McpVisibility.MODEL);
+            });
+    assertThat(warnings()).isEmpty();
+  }
+
+  @Test
+  void givenVisibilityOnOperationNotExposedOverMcp_whenLinking_thenFails() {
+    var operations =
+        List.of(tool("GetSales", McpMethodType.NONE, null, List.of(McpVisibility.APP)));
+
+    assertThatThrownBy(() -> linkWithoutApps(operations, true))
+        .hasMessageContaining(
+            "The operation 'GetSales' has visibility [APP] but is not exposed over MCP");
+    assertThatThrownBy(() -> link(operations, "SalesChart"))
+        .hasMessageContaining(
+            "The operation 'GetSales' has visibility [APP] but is not exposed over MCP");
+  }
+
+  @Test
+  void givenVisibilityWithoutMcp_whenLinking_thenIgnoresItWithoutError() {
+    var operations =
+        List.of(tool("GetSales", McpMethodType.NONE, null, List.of(McpVisibility.APP)));
+
+    var linked = linkWithoutApps(operations, false);
+
+    assertThat(linked).containsExactlyElementsOf(operations);
     assertThat(warnings()).isEmpty();
   }
 
@@ -183,7 +225,16 @@ class McpAppLinkerTest {
         .toList();
   }
 
+  private static ApiOperation appTool(String name, String appName) {
+    return tool(name, McpMethodType.TOOL, appName, List.of(McpVisibility.APP));
+  }
+
   private static ApiOperation tool(String name, McpMethodType mcpMethod, String appName) {
+    return tool(name, mcpMethod, appName, null);
+  }
+
+  private static ApiOperation tool(
+      String name, McpMethodType mcpMethod, String appName, List<McpVisibility> visibility) {
     var function =
         FunctionDefinition.builder()
             .name(name)
@@ -194,6 +245,7 @@ class McpAppLinkerTest {
             new GraphQLQuery("query " + name + " { sales { id } }", name, Operation.QUERY))
         .mcpMethod(mcpMethod)
         .appName(appName)
+        .mcpVisibility(visibility)
         .build();
   }
 }

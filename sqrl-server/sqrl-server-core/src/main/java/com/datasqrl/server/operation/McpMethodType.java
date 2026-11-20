@@ -18,11 +18,6 @@ package com.datasqrl.server.operation;
 public enum McpMethodType {
   /** Not exposed over MCP */
   NONE,
-  /** A tool for the model, which MCP apps can call as well */
-  TOOL,
-  /**
-   * A tool for MCP apps: hosts with MCP Apps support hide it from the model. The server lists and
-   * runs it like any other tool, so this is not an access restriction.
-   */
-  APP;
+  /** An MCP tool. {@link McpVisibility} says whether it is for the model, for MCP apps, or both */
+  TOOL;
 }

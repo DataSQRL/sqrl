@@ -18,6 +18,7 @@ package com.datasqrl.server;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.server.operation.ApiOperation;
 import com.datasqrl.server.operation.McpMethodType;
+import com.datasqrl.server.operation.McpVisibility;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -30,7 +31,8 @@ import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
 /**
- * Links the MCP tools of an API version to its MCP apps.
+ * Links the MCP tools of an API version to its MCP apps, and checks the settings that the {@code
+ * @api} directive has for them.
  *
  * <p>A tool is linked to the app that the {@code appName} of its {@code @api} directive names, or
  * else to the app with the tool's name. An empty {@code appName} links no app. Names match
@@ -43,7 +45,8 @@ public final class McpAppLinker {
    * Returns the operations with the {@code appName} of each tool that is linked to an app set to
    * the name of that app, and cleared for all other operations. Without MCP Apps support, no
    * operation is linked: then an {@code appName} on an operation is an error if the API version
-   * serves MCP, and ignored if it doesn't.
+   * serves MCP, and ignored if it doesn't. In an API version that serves MCP, an {@code appName} or
+   * a {@code visibility} on an operation that is not an MCP tool is an error.
    *
    * @param operations the operations of the API version
    * @param apps the apps of the API version, or empty if it has no MCP Apps support
@@ -58,6 +61,9 @@ public final class McpAppLinker {
       boolean mcpEnabled,
       String apiVersion,
       ErrorCollector errors) {
+    if (mcpEnabled) {
+      operations.forEach(operation -> checkToolSettings(operation, errors));
+    }
     if (apps.isPresent()) {
       return linkToApps(operations, apps.get(), errors);
     }
@@ -65,6 +71,29 @@ public final class McpAppLinker {
       checkWithoutApps(operations, apiVersion, errors);
     }
     return operations.stream().map(operation -> withAppName(operation, null)).toList();
+  }
+
+  /**
+   * Checks the settings that only an MCP tool can have: an {@code appName} or a {@code visibility}
+   * on an operation with {@code mcp: NONE} is an error.
+   */
+  private static void checkToolSettings(ApiOperation operation, ErrorCollector errors) {
+    if (operation.isMcpEndpoint()) {
+      return;
+    }
+    var appName = operation.getAppName();
+    errors.checkFatal(
+        appName == null || appName.isEmpty(),
+        "The operation '%s' has appName '%s' but is not exposed over MCP (mcp: %s)",
+        operation.getName(),
+        appName,
+        McpMethodType.NONE);
+    errors.checkFatal(
+        operation.getMcpVisibility() == null,
+        "The operation '%s' has visibility %s but is not exposed over MCP (mcp: %s)",
+        operation.getName(),
+        operation.getMcpVisibility(),
+        McpMethodType.NONE);
   }
 
   private static List<ApiOperation> linkToApps(
@@ -103,12 +132,12 @@ public final class McpAppLinker {
           operation.getAppName(),
           apiVersion,
           apiVersion);
-      if (operation.getMcpMethod() == McpMethodType.APP) {
+      if (isForAppsOnly(operation)) {
         errors.warn(
-            "The operation '%s' is a tool for MCP apps only (mcp: %s), but API version '%s' has"
-                + " no MCP apps that could call it: configure their directory in"
+            "The operation '%s' is a tool for MCP apps only (visibility: %s), but API version '%s'"
+                + " has no MCP apps that could call it: configure their directory in"
                 + " 'script.api.%s.mcp-apps'",
-            operation.getName(), McpMethodType.APP, apiVersion, apiVersion);
+            operation.getName(), operation.getMcpVisibility(), apiVersion, apiVersion);
       }
     }
   }
@@ -116,16 +145,10 @@ public final class McpAppLinker {
   /** Returns the name of the app that the operation is linked to, if any. */
   private static Optional<String> findApp(
       ApiOperation operation, Map<String, String> appNamesByKey, ErrorCollector errors) {
-    var appName = operation.getAppName();
     if (!operation.isMcpEndpoint()) {
-      errors.checkFatal(
-          appName == null || appName.isEmpty(),
-          "The operation '%s' has appName '%s' but is not exposed over MCP (mcp: %s)",
-          operation.getName(),
-          appName,
-          McpMethodType.NONE);
       return Optional.empty();
     }
+    var appName = operation.getAppName();
     if (appName == null) {
       return Optional.ofNullable(appNamesByKey.get(key(operation.getName())));
     }
@@ -139,6 +162,12 @@ public final class McpAppLinker {
         operation.getName(),
         appName);
     return Optional.ofNullable(linkedAppName);
+  }
+
+  /** Whether hosts hide the tool from the model, so that only MCP apps can call it. */
+  private static boolean isForAppsOnly(ApiOperation operation) {
+    var visibility = operation.getMcpVisibility();
+    return visibility != null && !visibility.contains(McpVisibility.MODEL);
   }
 
   private static ApiOperation withAppName(ApiOperation operation, String appName) {

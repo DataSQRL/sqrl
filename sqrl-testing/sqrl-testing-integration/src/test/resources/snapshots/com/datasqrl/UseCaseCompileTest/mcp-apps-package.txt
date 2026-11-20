@@ -28,6 +28,10 @@ type Sales {
 enum _McpMethodType {
   NONE
   TOOL
+}
+
+enum _McpVisibility {
+  MODEL
   APP
 }
 
@@ -37,7 +41,7 @@ enum _RestMethodType {
   POST
 }
 
-directive @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String, appName: String) on QUERY | MUTATION | FIELD_DEFINITION
+directive @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String, appName: String, visibility: [_McpVisibility!]) on QUERY | MUTATION | FIELD_DEFINITION
 
 >>>pipeline_explain.txt
 === Sales
@@ -243,11 +247,11 @@ CREATE TABLE IF NOT EXISTS "Sales" ("region" TEXT NOT NULL, "product" TEXT NOT N
             }
           },
           "apiQuery" : {
-            "query" : "query GetRegionSales($region: String!) @api(mcp: APP) {\n  SalesByRegion(region: $region) {\n    product\n    amount\n  }\n}\n",
+            "query" : "query GetRegionSales($region: String!) @api(visibility: [APP]) {\n  SalesByRegion(region: $region) {\n    product\n    amount\n  }\n}\n",
             "queryName" : "GetRegionSales",
             "operationType" : "QUERY"
           },
-          "mcpMethod" : "APP",
+          "mcpMethod" : "TOOL",
           "restMethod" : "GET",
           "uriTemplate" : "queries/GetRegionSales{?region}",
           "format" : "JSON",
@@ -264,7 +268,10 @@ CREATE TABLE IF NOT EXISTS "Sales" ("region" TEXT NOT NULL, "product" TEXT NOT N
                 }
               }
             }
-          }
+          },
+          "mcpVisibility" : [
+            "APP"
+          ]
         },
         {
           "function" : {
@@ -318,7 +325,7 @@ CREATE TABLE IF NOT EXISTS "Sales" ("region" TEXT NOT NULL, "product" TEXT NOT N
       ],
       "schema" : {
         "type" : "string",
-        "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Query {\n  Sales(limit: Int = 10, offset: Int = 0): [Sales!]\n  SalesByRegion(region: String!, limit: Int = 10, offset: Int = 0): [Sales!]\n}\n\ntype Sales {\n  region: String!\n  product: String!\n  amount: Float!\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  APP\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String, appName: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+        "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Query {\n  Sales(limit: Int = 10, offset: Int = 0): [Sales!]\n  SalesByRegion(region: String!, limit: Int = 10, offset: Int = 0): [Sales!]\n}\n\ntype Sales {\n  region: String!\n  product: String!\n  amount: Float!\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n}\n\nenum _McpVisibility {\n  MODEL\n  APP\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String, appName: String, visibility: [_McpVisibility!]) on QUERY | MUTATION | FIELD_DEFINITION\n"
       },
       "mcpApps" : [
         {
