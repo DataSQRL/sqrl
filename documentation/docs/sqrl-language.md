@@ -412,7 +412,7 @@ Hints live in a `/*+ ... */` comment placed **immediately before** the definitio
 | **test**                    | `test` or `test(no_rows)`                                                              | table          | marks test case, only executed with [`test` command](compiler#test-command).                                                                                                                                                                                                                                                                                                                                                                                |
 | **workload**                | `workload`                                                                             | table          | retained as sink for DAG optimization but hidden from interface                                                                                                                                                                                                                                                                                                                                                                                             |
 | **declassify**              | `declassify(tag, ...)`                                                                 | table          | lets the table drop or lower the listed inherited tags: each listed tag takes the value the doc string declares, or no value. Only applies when tags are configured (see [Tags](configuration#tags-compilertags))                                                                                                                                                                                                                                       |
-| **row_count**               | `row_count(count)` or `row_count(col1, col2, ..., count)`                              | table          | specifies estimated row count for the table (e.g. `1e6`) or distinct count for column combinations. Used for query optimization. A table with a row count of at most 100 (by default) gets no [automatic indexes](#automatic-index-selection).                                                                                                                                                                                                                                                                                                                            |
+| **row_count**               | `row_count(count)` or `row_count(col1, col2, ..., count)`                              | table          | specifies the estimated row count of the table (e.g. `1e6`), or the number of distinct values of a column combination. [Automatic index selection](#automatic-index-selection) uses both: a table with a row count of at most 100 (by default) gets no automatic index, and a distinct count tells how many rows an equality on those columns matches. |
 
 This example configures the vector length and a vector index for the `SensorTempByHour` table:
 
@@ -463,6 +463,19 @@ the other side of the comparison so that `agency_id` stands alone.
 ```
 
 Rewrite the filter as the warning says: move arithmetic to the other side, like `agency_id = :agency - 1`, compare a column with a value of its own type instead of casting the column, and compute any other expression, like `LOWER(email)`, as a column of a table that Flink computes (`/*+engine(flink) */`). An expression from a table that PostgreSQL computes ends up in the filter of every query that reads the table, so the warning can show a `CAST` or a function that the query itself does not contain.
+
+The compiler has no data, so it assumes that an equality on a column matches 5% of the rows of the table. A `row_count` hint with column names gives the number of distinct values of those columns, and the compiler then assumes that an equality on those columns matches one row in that many. With the distinct count of a column that is unique, or almost unique, the compiler indexes that column alone:
+
+```sql
+/*+row_count(1e6), row_count(email, 1e6) */
+CREATE TABLE Customers (...);
+
+-- Customers gets a hash index on email. Without the second hint, it gets a btree index on (email, country).
+CustomersByEmail(email STRING NOT NULL, country STRING NOT NULL) := SELECT * FROM Customers
+  WHERE email = :email AND country = :country;
+```
+
+A distinct count of several columns, like `row_count(country, city, 2e3)`, applies only to a query with an equality on all of them. A filter with `<`, `<=`, `>` or `>=` on a column does not use its distinct count.
 
 A table that holds at most 100 rows gets no automatic index and no such warning. The limit is the [`small-table-row-limit`](configuration-engine/postgres#index-selection) of the `postgres` engine. PostgreSQL reads it in about one page, so an index makes no query faster. PostgreSQL also never analyzes a table that small on its own, and without statistics it can probe an index once for each row of a join instead of building a hash join. The compiler takes the size from the definition of the table, like a `VALUES` list, or from a `row_count` hint. A table that reads another table, even a small one, does not count.
 

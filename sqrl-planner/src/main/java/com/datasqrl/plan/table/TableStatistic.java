@@ -15,17 +15,20 @@
  */
 package com.datasqrl.plan.table;
 
+import java.util.Map;
+import java.util.Set;
 import javax.annotation.Nullable;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Value;
+import lombok.With;
 
 @Value
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class TableStatistic {
 
   public static final TableStatistic UNKNOWN =
-      new TableStatistic(Double.NaN, true, Double.POSITIVE_INFINITY);
+      new TableStatistic(Double.NaN, true, Double.POSITIVE_INFINITY, Map.of());
 
   private static final double DEFAULT_ROW_COUNT = 1e15;
 
@@ -38,6 +41,12 @@ public class TableStatistic {
    */
   private final double maxRowCount;
 
+  /**
+   * The number of distinct value combinations of a set of columns, by the indexes of those columns.
+   * It comes from the {@code row_count} hints that name columns, and is empty without such hints.
+   */
+  @With private final Map<Set<Integer>, Double> distinctCounts;
+
   public static TableStatistic fromEstimate(double rowCount) {
     return fromEstimate(rowCount, null);
   }
@@ -48,7 +57,8 @@ public class TableStatistic {
    */
   public static TableStatistic fromEstimate(
       @Nullable Double rowCount, @Nullable Double maxRowCount) {
-    return new TableStatistic(rowCount == null ? Double.NaN : rowCount, true, bound(maxRowCount));
+    return new TableStatistic(
+        rowCount == null ? Double.NaN : rowCount, true, bound(maxRowCount), Map.of());
   }
 
   public static TableStatistic fromHint(double rowCount) {
@@ -57,7 +67,7 @@ public class TableStatistic {
 
   /** A row count from a hint, and the most rows the table can hold, unbounded if {@code null}. */
   public static TableStatistic fromHint(double rowCount, @Nullable Double maxRowCount) {
-    return new TableStatistic(rowCount, false, bound(maxRowCount));
+    return new TableStatistic(rowCount, false, bound(maxRowCount), Map.of());
   }
 
   private static double bound(@Nullable Double maxRowCount) {

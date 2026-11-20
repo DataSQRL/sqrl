@@ -328,7 +328,8 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
 
   /**
    * The row count from a {@code row_count} hint, or else the metadata estimate, and the most rows
-   * that the plan allows, like the size of a {@code VALUES} list. Any table scan is unbounded.
+   * that the plan allows, like the size of a {@code VALUES} list. Any table scan is unbounded. The
+   * {@code row_count} hints that name columns give the distinct counts.
    */
   private TableStatistic getTableStatistic(PlannerHints hints, RelNode relNode) {
     // Our custom metadata query looks up the statistics of other tables from tableLookup
@@ -337,10 +338,11 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
 
     return hints
         .getHints(RowCountHint.class)
-        .filter(hint -> hint.getColumnNames().isEmpty())
+        .filter(RowCountHint::isTableRowCount)
         .findFirst()
         .map(hint -> TableStatistic.fromHint(hint.getRowCount(), maxRowCount))
-        .orElseGet(() -> TableStatistic.fromEstimate(mq.getRowCount(relNode), maxRowCount));
+        .orElseGet(() -> TableStatistic.fromEstimate(mq.getRowCount(relNode), maxRowCount))
+        .withDistinctCounts(RowCountHint.distinctCounts(hints.getHints(RowCountHint.class)));
   }
 
   private RelNodeAnalysis fromSource(TableAnalysis tableAnalysis, RelNode input) {

@@ -17,6 +17,8 @@ package com.datasqrl.plan.table;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.Map;
+import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 class TableStatisticTest {
@@ -67,5 +69,21 @@ class TableStatisticTest {
     var statistic = TableStatistic.fromEstimate(null, 1.0);
 
     assertThat(statistic.hasAtMostRows(100)).isTrue();
+  }
+
+  @Test
+  void givenNoDistinctCounts_whenGetDistinctCounts_thenEmpty() {
+    assertThat(TableStatistic.fromHint(1e6).getDistinctCounts()).isEmpty();
+  }
+
+  @Test
+  void givenRowCountHint_whenWithDistinctCounts_thenKeepsTheRowCount() {
+    var distinctCounts = Map.of(Set.of(0), 1e6);
+
+    var statistic = TableStatistic.fromHint(2e6).withDistinctCounts(distinctCounts);
+
+    assertThat(statistic.getDistinctCounts()).isEqualTo(distinctCounts);
+    assertThat(statistic.getRowCount()).isEqualTo(2e6);
+    assertThat(statistic.isEstimated()).isFalse();
   }
 }

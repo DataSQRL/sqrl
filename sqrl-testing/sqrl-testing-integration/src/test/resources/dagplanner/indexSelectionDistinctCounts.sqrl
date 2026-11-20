@@ -1,0 +1,34 @@
+/* Index selection uses the distinct count of a row_count hint as the selectivity of an equality on
+   those columns (issue #2622). Each case reads its own table, so that their indexes don't
+   interfere. */
+
+/* No distinct count: each equality column gets the default selectivity, and CustomersPlain gets a
+   btree index on both columns. */
+/*+row_count(1e6) */
+CREATE TABLE CustomersPlain (email STRING NOT NULL, country STRING NOT NULL, ts TIMESTAMP_LTZ(3) NOT NULL, WATERMARK FOR ts AS ts) WITH ('connector' = 'datagen', 'number-of-rows' = '10');
+CustomersPlainByEmail(email STRING NOT NULL, country STRING NOT NULL) := SELECT * FROM CustomersPlain
+  WHERE email = :email AND country = :country;
+
+/* A unique column: an equality on email matches one row, so country adds nothing, and
+   CustomersUnique gets a hash index on email alone. */
+/*+row_count(1e6), row_count(email, 1e6) */
+CREATE TABLE CustomersUnique (email STRING NOT NULL, country STRING NOT NULL, ts TIMESTAMP_LTZ(3) NOT NULL, WATERMARK FOR ts AS ts) WITH ('connector' = 'datagen', 'number-of-rows' = '10');
+CustomersUniqueByEmail(email STRING NOT NULL, country STRING NOT NULL) := SELECT * FROM CustomersUnique
+  WHERE email = :email AND country = :country;
+
+/* A distinct count of a column pair applies to an equality on both columns: the pair matches one
+   row, so zip adds nothing. The index on country and city serves both queries, and AddressesPair
+   gets no index that also has zip. */
+/*+row_count(1e6), row_count(country, city, 1e6) */
+CREATE TABLE AddressesPair (country STRING NOT NULL, city STRING NOT NULL, zip STRING NOT NULL, ts TIMESTAMP_LTZ(3) NOT NULL, WATERMARK FOR ts AS ts) WITH ('connector' = 'datagen', 'number-of-rows' = '10');
+AddressesPairByCity(country STRING NOT NULL, city STRING NOT NULL) := SELECT * FROM AddressesPair
+  WHERE country = :country AND city = :city;
+AddressesPairByZip(country STRING NOT NULL, city STRING NOT NULL, zip STRING NOT NULL) := SELECT * FROM AddressesPair
+  WHERE country = :country AND city = :city AND zip = :zip;
+
+/* The distinct count of a column pair says nothing about one of its columns: country gets the
+   default selectivity, and AddressesPartial gets a btree index on country and zip. */
+/*+row_count(1e6), row_count(country, city, 1e6) */
+CREATE TABLE AddressesPartial (country STRING NOT NULL, city STRING NOT NULL, zip STRING NOT NULL, ts TIMESTAMP_LTZ(3) NOT NULL, WATERMARK FOR ts AS ts) WITH ('connector' = 'datagen', 'number-of-rows' = '10');
+AddressesPartialByZip(country STRING NOT NULL, zip STRING NOT NULL) := SELECT * FROM AddressesPartial
+  WHERE country = :country AND zip = :zip;
