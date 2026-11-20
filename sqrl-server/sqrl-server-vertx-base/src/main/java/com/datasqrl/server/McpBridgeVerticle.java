@@ -173,11 +173,10 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
         function.getParameters() == null
             ? Map.of("type", "object")
             : getSchemaMapper().convertValue(function.getParameters(), MAP_TYPE);
+
     var tool =
-        McpSchema.Tool.builder()
-            .name(operation.getName())
+        McpSchema.Tool.builder(operation.getName(), inputSchema)
             .description(description)
-            .inputSchema(inputSchema)
             .annotations(
                 McpSchema.ToolAnnotations.builder()
                     .readOnlyHint(operationType != Operation.MUTATION)
@@ -216,14 +215,15 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
   /** Serves the app as a resource, with the content of its file, which is read once. */
   private AsyncResourceSpecification resourceSpecification(McpApp app) {
     var resource =
-        McpSchema.Resource.builder()
-            .uri(app.uri())
-            .name(app.name())
+        McpSchema.Resource.builder(app.uri(), app.name()).mimeType(app.mimeType()).build();
+
+    var textContent =
+        McpSchema.TextResourceContents.builder(app.uri(), readFile(app))
             .mimeType(app.mimeType())
             .build();
-    var contents =
-        new McpSchema.ReadResourceResult(
-            List.of(new McpSchema.TextResourceContents(app.uri(), app.mimeType(), readFile(app))));
+
+    var contents = McpSchema.ReadResourceResult.builder(List.of(textContent)).build();
+
     return new AsyncResourceSpecification(
         resource, (transportContext, request) -> Mono.just(contents));
   }
@@ -240,9 +240,11 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
 
   private Mono<CallToolResult> callTool(
       McpTransportContext transportContext, ApiOperation operation, CallToolRequest request) {
+
     var ctx = (RoutingContext) transportContext.get(VertxMcpTransport.ROUTING_CONTEXT_KEY);
     // A call of a tool without required arguments may leave out the arguments
     var arguments = request.arguments() == null ? Map.<String, Object>of() : request.arguments();
+
     return Mono.defer(
             () ->
                 Mono.fromCompletionStage(
@@ -254,20 +256,24 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
   /** Returns the GraphQL errors, or else the data, as the tool result. */
   private static CallToolResult toToolResult(ExecutionResult result, ApiOperation operation) {
     if (!result.getErrors().isEmpty()) {
-      List<Content> errors =
+      var errors =
           result.getErrors().stream()
               .<Content>map(
                   error ->
-                      new TextContent("Tool Error[" + error.getPath() + "]: " + error.getMessage()))
+                      TextContent.builder(
+                              "Tool Error[" + error.getPath() + "]: " + error.getMessage())
+                          .build())
               .toList();
       return CallToolResult.builder().content(errors).isError(true).build();
     }
+
     final String data;
     try {
       data = JsonUtils.MAPPER.writeValueAsString(getExecutionData(result, operation));
     } catch (JsonProcessingException e) {
       throw new IllegalStateException("Could not serialize the result: " + e.getMessage(), e);
     }
+
     return CallToolResult.builder().addTextContent(data).isError(false).build();
   }
 
