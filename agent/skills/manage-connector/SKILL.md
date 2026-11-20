@@ -206,6 +206,35 @@ Rules:
 - Test data with no timestamp: add the field to the test data.
 - Production with no usable event time (append-only object stores, full dumps): both connectors use the computed ingestion time. See **Watermarks on production file-based sources** for the two conditions that decide this, and the `/implement-sqrl` skill (File-based sources) for aggregating such a source without double-counting.
 
+### Sources with a data contract
+
+A source or sink can have a data contract: an ODCS v3 file that lists the columns, keys and tags of the table, usually taken from a data catalog. The compiler checks the `CREATE TABLE` against it and fails the compile when they differ (see the [data contracts documentation](https://docs.datasqrl.com/docs/interface#data-contracts)).
+
+The layout above stays as it is for sources without a contract. A source with a contract gets its **own base file**, named like the contract, with the contract next to it:
+
+```
+<project>/
+└── connectors/
+    ├── sources.sqrl          # schema tables of the sources without a contract
+    ├── sources-<env>.sqrl
+    ├── crm.sqrl              # schema tables of the sources that crm.odcs.yaml describes
+    ├── crm.odcs.yaml         # the contract: one schema object per table, named like the table
+    └── crm-<env>.sqrl        # connector tables — `IMPORT crm.*;`, then `... LIKE _X_schema`
+```
+
+- `<name>.odcs.yaml` belongs to `<name>.sqrl` in the same folder. The extension is `.odcs.yaml`: `.odcs.yml` and `.odcs.json` are compile errors, and so is a contract file without a script of the same name.
+- A schema object is named like the connector table (`Customers`), not like the schema table (`_Customers_schema`). The connector tables of every environment find it through their `LIKE _Customers_schema`, so the contract sits next to the base file only. Do not copy it next to the environment files.
+- One base file matches one contract. Do not merge the tables of two contracts into one file, and do not put a table without a schema object into the base file of a contract unless it should get a generated contract.
+- The **schema table has exactly the columns of the schema object**: every property of the contract is a physical column with the matching type, and `NOT NULL` where the contract says `required: true`. Declare all of them, also the ones the pipeline does not need, and select the needed columns in the main script.
+- The **connector table adds only the event-time column** the `WATERMARK` is declared on, plus `METADATA FROM` and computed columns. The contract need not list the watermark column, and metadata and computed columns are never part of a contract. Any other physical column that a connector table adds must be in the contract, so add it to the schema table instead.
+- A primary key or `PARTITIONED BY` that the contract declares must be the one of the table. A contract without a key accepts any key.
+- With `compiler.tags` configured, the table declares exactly the tags of the contract that are defined in `compiler.tags`. Tags count toward the whole table, so it does not matter whether the contract lists a tag on the schema object or on a property: declare each of them in the doc-string of the table or in the comment of the column it concerns. A `classification: <value>` on a property is the tag `@classification=<value>`: declare it in the comment of that column. A sink with a contract must declare the tags of the data written into it.
+- Never edit a contract from a data catalog to make the compile pass. Change the `CREATE TABLE`, or report the mismatch to the user.
+
+Type mapping from the contract to the column: `integer` → `TINYINT`/`SMALLINT`/`INT`/`BIGINT` (by `format` `i8`–`i64`, default `BIGINT`), `number` → `DECIMAL`/`FLOAT`/`DOUBLE` (by `format` `f32`/`f64`, or the `physicalType`), `string` → `STRING` (or `VARCHAR(n)` for `maxLength`), `boolean` → `BOOLEAN`, `date` → `DATE`, `time` → `TIME`, `timestamp` → `TIMESTAMP_LTZ(3)` (`TIMESTAMP(3)` for `timezone: false`), `object` with `properties` → `ROW<...>`, `array` → `ARRAY<...>`, `map` → `MAP<..., ...>`.
+
+After a successful compile, `build/deploy/contracts/sources.odcs.yaml` and `sinks.odcs.yaml` hold a schema object for every source and sink of the pipeline. To start a contract for a table that has none, copy its schema object from there.
+
 ## Schema Loading with LIKE Clause
 
 **From Avro Schema Files:**

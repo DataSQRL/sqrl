@@ -15,18 +15,19 @@
  */
 package com.datasqrl.packager;
 
-import com.datasqrl.compile.TestPlan;
+import com.datasqrl.compile.CompilationResult;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.PackageJson.IncludeConfig;
 import com.datasqrl.config.SqrlConstants;
 import com.datasqrl.config.WorkspacePaths;
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.EnginePhysicalPlan.DeploymentArtifact;
-import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.engine.PhysicalPlan.PhysicalStagePlan;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.packager.preprocess.JBangJars;
 import com.datasqrl.plan.MainScript;
+import com.datasqrl.planner.contract.DataContracts;
+import com.datasqrl.planner.contract.OdcsYaml;
 import com.datasqrl.util.FlinkCompileException;
 import com.datasqrl.util.SqrlObjectMapper;
 import com.fasterxml.jackson.core.util.DefaultIndenter;
@@ -103,7 +104,11 @@ public class Packager {
   }
 
   @SneakyThrows
-  public void postprocess(Path targetDir, PhysicalPlan plan, TestPlan testPlan) {
+  public void postprocess(Path targetDir, CompilationResult result) {
+    var plan = result.physicalPlan();
+    var testPlan = result.testPlan();
+    writeDataContracts(targetDir.resolve(SqrlConstants.CONTRACTS_DIR), result.dataContracts());
+
     Path planDir = targetDir.resolve(SqrlConstants.PLAN_DIR);
     Files.createDirectories(planDir);
     // We'll write a single asset for each folder in the physical plan stage, plus any deployment
@@ -117,6 +122,18 @@ public class Packager {
       SqrlObjectMapper.INSTANCE
           .writerWithDefaultPrettyPrinter()
           .writeValue(path.toFile(), testPlan);
+    }
+  }
+
+  /** Writes one file per data contract. A compilation without tables writes none. */
+  private void writeDataContracts(Path contractsDir, DataContracts contracts) throws IOException {
+    if (contracts.documents().isEmpty()) {
+      return;
+    }
+    Files.createDirectories(contractsDir);
+    for (var document : contracts.documents()) {
+      writeTextToFile(
+          contractsDir.resolve(document.fileName()), OdcsYaml.write(document.toContract()));
     }
   }
 

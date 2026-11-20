@@ -17,6 +17,21 @@ For data products, each visible table defined in the SQRL script is exposed as a
 
 We recommend generating unique table names for the physical tables by configuring a table-name suffix in the connector configuration, e.g. by configuring the `table-name` for `postgres` or the `catalog-table` for `iceberg` to `${sqrl:table-name}_MY_SUFFIX` . This separates views from physical tables to provide modularity and support updates without impacting downstream consumers.
 
+### Data Contracts
+
+Every compile writes data contracts in ODCS v3 format to `build/deploy/contracts`. They describe the tables that other systems read or write: columns, types, keys, documentation, and tags.
+
+| File | Tables |
+|---|---|
+| `sources.odcs.yaml` | The `CREATE TABLE`s that the deployed pipeline reads, including mutation tables. |
+| `sinks.odcs.yaml` | The tables that the pipeline writes with `EXPORT` or `INSERT INTO`, including `EXPORT … TO log.<name>` topics. |
+| `<main>.odcs.yaml` | The data product: the visible tables and views that land in a table-format engine such as Iceberg. The file has the name of the main script. |
+
+- A visible table in PostgreSQL and a subscription get no contract: they serve the API of the deployment. To publish such data under a contract, define a `CREATE TABLE` for the target (e.g. a Kafka topic) and `EXPORT` to it.
+- Hidden tables and test tables get no contract.
+- The doc-string of a table and of its columns becomes the `description` in the contract, so write them for the consumers of the data product.
+- The contract of a data product table is always generated and cannot be provided. To check a source or sink against a contract from a data catalog, invoke the `/manage-connector` skill (Sources with a data contract).
+
 ## APIs
 
 When a server engine is configured, the tables, relationships, and functions defined in a SQRL script map to API endpoints exposed by the server.

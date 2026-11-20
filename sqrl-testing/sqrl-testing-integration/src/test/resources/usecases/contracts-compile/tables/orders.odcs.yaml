@@ -1,0 +1,20 @@
+apiVersion: v3.1.0
+kind: DataContract
+id: urn:catalog:orders
+version: 1.0.0
+status: active
+schema:
+  - name: Orders
+    properties:
+      - name: id
+        logicalType: integer
+        required: true
+      - name: customer_id
+        logicalType: integer
+        required: true
+      - name: amount
+        logicalType: number
+        required: true
+      - name: ordered_at
+        logicalType: timestamp
+        required: true

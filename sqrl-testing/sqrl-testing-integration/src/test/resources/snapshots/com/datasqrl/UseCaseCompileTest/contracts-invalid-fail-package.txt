@@ -1,0 +1,128 @@
+[FATAL] Invalid YAML: while parsing a flow sequence
+ in 'reader', line 10, column 22:
+            logicalType: [integer
+                         ^
+expected ',' or ']', but got <stream end>
+ in 'reader', line 11, column 1:
+    
+    ^
+
+in script:syntax.odcs.yaml [10:30]:
+    properties:
+      - name: id
+        logicalType: [integer
+-----------------------------^
+
+[FATAL] Contract file [syntax.odcs.yaml] is not a valid data contract and is not applied
+Invalid data contract file.
+
+A data contract is an ODCS v3 file next to the script that defines its tables:
+`mytables.odcs.yaml` belongs to `mytables.sqrl` in the same folder. A schema object describes the
+`CREATE TABLE` of the same name, ignoring case.
+
+[FATAL] version: number found, string expected. Quote the value to make it a string
+in script:violations.odcs.yaml [3:10]:
+apiVersion: v3.2.0
+kind: DataContract
+version: 1.0
+---------^
+
+[FATAL] logicalType: does not have a value in the enumeration ["string", "date", "timestamp", "time", "number", "integer", "object", "array", "boolean", "map", "vector"]
+in script:violations.odcs.yaml [9:22]:
+    properties:
+      - name: id
+        logicalType: bigint
+---------------------^
+
+[FATAL] required: string found, boolean expected
+in script:violations.odcs.yaml [10:19]:
+      - name: id
+        logicalType: bigint
+        required: yes please
+------------------^
+
+[FATAL] unknownField: not a field that ODCS defines for this element
+in script:violations.odcs.yaml [13:23]:
+      - name: note
+        logicalType: string
+        unknownField: true
+----------------------^
+
+[FATAL] required property 'id' not found
+in script:violations.odcs.yaml [1:1]:
+apiVersion: v3.2.0
+^
+
+[FATAL] Contract file [violations.odcs.yaml] is not a valid data contract and is not applied
+Invalid data contract file.
+
+A data contract is an ODCS v3 file next to the script that defines its tables:
+`mytables.odcs.yaml` belongs to `mytables.sqrl` in the same folder. A schema object describes the
+`CREATE TABLE` of the same name, ignoring case.
+
+[FATAL] apiVersion [v2.2.2] is not supported: convert the contract to ODCS v3
+in script:oldversion.odcs.yaml [1:13]:
+apiVersion: v2.2.2
+------------^
+
+[FATAL] Contract file [oldversion.odcs.yaml] is not a valid data contract and is not applied
+Invalid data contract file.
+
+A data contract is an ODCS v3 file next to the script that defines its tables:
+`mytables.odcs.yaml` belongs to `mytables.sqrl` in the same folder. A schema object describes the
+`CREATE TABLE` of the same name, ignoring case.
+
+[FATAL] Schema objects [Parcels] and [PARCELS] differ only in case. Table names are matched ignoring case
+in script:duplicates.odcs.yaml [14:5]:
+      - name: note
+        logicalType: string
+  - name: PARCELS
+----^
+
+[FATAL] Contract file [duplicates.odcs.yaml] is not a valid data contract and is not applied
+Invalid data contract file.
+
+A data contract is an ODCS v3 file next to the script that defines its tables:
+`mytables.odcs.yaml` belongs to `mytables.sqrl` in the same folder. A schema object describes the
+`CREATE TABLE` of the same name, ignoring case.
+
+[FATAL] Contract file [Crm.odcs.yaml] differs from the name of [crm.sqrl] only in case and is not read. Rename it to [crm.odcs.yaml]
+Invalid data contract file.
+
+A data contract is an ODCS v3 file next to the script that defines its tables:
+`mytables.odcs.yaml` belongs to `mytables.sqrl` in the same folder. A schema object describes the
+`CREATE TABLE` of the same name, ignoring case.
+
+[FATAL] Table [Parts] has a schema object in two contract files: here, next to its script, and in [base.odcs.yaml] next to the script of the schema table it extends. Keep one of them
+in script:base-env.odcs.yaml [7:5]:
+status: active
+schema:
+  - name: Parts
+----^
+Invalid data contract file.
+
+A data contract is an ODCS v3 file next to the script that defines its tables:
+`mytables.odcs.yaml` belongs to `mytables.sqrl` in the same folder. A schema object describes the
+`CREATE TABLE` of the same name, ignoring case.
+
+[FATAL] The contract file has 2 YAML documents. A contract file holds one document
+in script:multi.odcs.yaml
+[FATAL] Contract file [multi.odcs.yaml] is not a valid data contract and is not applied
+Invalid data contract file.
+
+A data contract is an ODCS v3 file next to the script that defines its tables:
+`mytables.odcs.yaml` belongs to `mytables.sqrl` in the same folder. A schema object describes the
+`CREATE TABLE` of the same name, ignoring case.
+
+[FATAL] Contract file [typo.odcs.yaml] was not applied: none of its schema objects [Paymnts, Refnds] matches a table
+in script:typo.odcs.yaml [7:3]:
+status: active
+schema:
+  - name: Paymnts
+--^
+Invalid data contract file.
+
+A data contract is an ODCS v3 file next to the script that defines its tables:
+`mytables.odcs.yaml` belongs to `mytables.sqrl` in the same folder. A schema object describes the
+`CREATE TABLE` of the same name, ignoring case.
+

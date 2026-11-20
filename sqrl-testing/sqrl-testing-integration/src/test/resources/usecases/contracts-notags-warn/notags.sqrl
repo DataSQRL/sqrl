@@ -1,0 +1,8 @@
+IMPORT crm.*;
+IMPORT billing.*;
+
+/** Names of the customers */
+CustomerNames := SELECT id, name FROM Customers;
+
+/** Amounts of the invoices */
+InvoiceAmounts := SELECT id, amount FROM Invoices;

@@ -1,0 +1,7 @@
+-- The contract of this script has two schema objects for the table
+CREATE TABLE Parcels (
+  id BIGINT NOT NULL,
+  note STRING
+) WITH (
+  'connector' = 'datagen'
+);

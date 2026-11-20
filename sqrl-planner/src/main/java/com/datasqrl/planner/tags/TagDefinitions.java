@@ -167,20 +167,15 @@ public final class TagDefinitions {
     }
 
     var def = definition.get();
-    if (value == null && !def.isBoolean()) {
+    var tagValue = def.valueOf(value);
+    if (tagValue.isEmpty()) {
       onInvalid.accept(
-          "Tag [%s] requires a value: allowed values are %s".formatted(tag, def.values()));
-      return Optional.empty();
+          (value == null
+                  ? "Tag [%s] requires a value: allowed values are %s"
+                  : "Tag [%s] has an invalid value: allowed values are %s")
+              .formatted(tag, def.values()));
     }
-
-    var level = def.values().indexOf(value == null ? TagDefinition.TRUE : normalize(value));
-    if (level < 0) {
-      onInvalid.accept(
-          "Tag [%s] has an invalid value: allowed values are %s".formatted(tag, def.values()));
-      return Optional.empty();
-    }
-
-    return Optional.of(new TagValue(def, level));
+    return tagValue;
   }
 
   /** Tag names and values are case-insensitive, so they are compared in lower case. */

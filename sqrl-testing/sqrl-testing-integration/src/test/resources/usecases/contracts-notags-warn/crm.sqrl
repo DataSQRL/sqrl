@@ -1,0 +1,8 @@
+/** Customers of the CRM system */
+CREATE TABLE Customers (
+  id BIGINT NOT NULL,
+  name STRING NOT NULL,
+  email STRING
+) WITH (
+  'connector' = 'datagen'
+);

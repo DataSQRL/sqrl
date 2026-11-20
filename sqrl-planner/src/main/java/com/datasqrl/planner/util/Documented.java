@@ -38,6 +38,20 @@ public interface Documented {
     default Lookup nested(String name) {
       return NO_LOOKUP;
     }
+
+    /**
+     * Returns the lookup for the fields nested in the field at the given path.
+     *
+     * @param path the path of the field
+     * @param fromIndex the index of the first element of the path that is a field of this lookup
+     */
+    default Lookup nested(NamePath path, int fromIndex) {
+      var docs = this;
+      for (var i = fromIndex; i < path.size(); i++) {
+        docs = docs.nested(path.get(i).getDisplay());
+      }
+      return docs;
+    }
   }
 
   /**

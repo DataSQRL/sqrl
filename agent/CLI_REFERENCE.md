@@ -45,7 +45,7 @@ Adds a Java UDF template to the `functions/` folder of an existing project. `-r`
 
 ### compile
 
-Compiles the project and writes `build/pipeline_explain.txt`, `build/pipeline_visual.html`, and the deployment artifacts in `build/deploy` (plans in `build/deploy/plan`).
+Compiles the project and writes `build/pipeline_explain.txt`, `build/pipeline_visual.html`, and the deployment artifacts in `build/deploy` (plans in `build/deploy/plan`, data contracts of the pipeline's tables in `build/deploy/contracts`).
 
 ```bash
 /opt/agent/cmd.sh compile -r myproject myproject-shared-package.json myproject-prod-package.json

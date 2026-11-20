@@ -1,0 +1,7 @@
+IMPORT connectors.crm-{{environment}} AS crm;
+
+/** Customers that have an email */
+CustomersWithEmail := SELECT id, name, email FROM crm.Customers WHERE email IS NOT NULL;
+
+/** Orders above the review limit */
+LargeOrders := SELECT id, customer_id, amount, updated_at FROM crm.Orders WHERE amount > 100;

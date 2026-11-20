@@ -1,0 +1,179 @@
+[NOTICE] This table does not propagate the source row time columns: default_catalog.default_database.Customers[updated_at]
+in script:incompatible.sqrl [4:1]:
+IMPORT shipping-test.*;
+
+/** Names of the customers @pii=raw @classification=confidential @gdpr */
+^
+
+[NOTICE] This table does not propagate the source row time columns: default_catalog.default_database.Shipments[received_at]
+in script:incompatible.sqrl [7:1]:
+CustomerNames := SELECT id, name FROM Customers;
+
+/** Carriers of the shipments */
+^
+
+[NOTICE] This table does not propagate the source row time columns: default_catalog.default_database.Customers[updated_at]
+in script:incompatible.sqrl [11:1]:
+
+-- The sink has a contract, so it must declare the tags of the data written into it
+_CustomerEmails := SELECT id, email FROM Customers;
+^
+
+[FATAL] Table [EmailArchive] must declare tag [@pii=raw] inherited from [_CustomerEmails]: declare it in the doc string of the table
+in script:incompatible.sqrl [12:1]:
+-- The sink has a contract, so it must declare the tags of the data written into it
+_CustomerEmails := SELECT id, email FROM Customers;
+EXPORT _CustomerEmails TO archive.EmailArchive;
+^
+
+[FATAL] required is false in the contract, but column [id] is NOT NULL
+in script:crm.odcs.yaml [13:9]:
+    properties:
+      # required is missing for a NOT NULL column, and the primary key is only a part of the key
+      - name: id
+--------^
+
+[FATAL] required is true in the contract, but column [email] is nullable
+in script:crm.odcs.yaml [21:19]:
+      - name: email
+        logicalType: string
+        required: true
+------------------^
+
+[FATAL] classification is [public] in the contract, but column [email] of table [Customers] has [confidential]
+in script:crm.odcs.yaml [22:25]:
+        logicalType: string
+        required: true
+        classification: public
+------------------------^
+
+[FATAL] Column [age] has logicalType [string] in the contract, but the table has [integer]
+in script:crm.odcs.yaml [26:22]:
+      # another type
+      - name: age
+        logicalType: string
+---------------------^
+
+[FATAL] Field [address.city] has logicalType [integer] in the contract, but the table has [string]
+in script:crm.odcs.yaml [34:26]:
+        properties:
+          - name: city
+            logicalType: integer
+-------------------------^
+
+[FATAL] Field [phones[]] has logicalType [integer] in the contract, but the table has [string]
+in script:crm.odcs.yaml [43:24]:
+        classification: confidential
+        items:
+          logicalType: integer
+-----------------------^
+
+[FATAL] Column [name] (STRING NOT NULL) of table [Customers] is missing from the contract
+in script:crm.odcs.yaml [9:5]:
+  # The column name is missing, and so is the tag pii of the table. The tag gdpr is listed on a
+  # property, which is as good as on the schema object
+  - name: Customers
+----^
+
+[FATAL] Contract property [loaded_at] is a computed column of table [Customers]. A contract contains physical columns only
+in script:crm.odcs.yaml [45:9]:
+          logicalType: integer
+      # a computed column and a metadata column
+      - name: loaded_at
+--------^
+
+[FATAL] Contract property [source_file] is a metadata column of table [Customers]. A contract contains physical columns only
+in script:crm.odcs.yaml [47:9]:
+      - name: loaded_at
+        logicalType: timestamp
+      - name: source_file
+--------^
+
+[FATAL] Contract property [nickname] does not match a column of table [Customers]; columns are: id, email, name, age, address, phones, region, updated_at
+in script:crm.odcs.yaml [60:9]:
+        classification: confidential
+      # not a column of the table
+      - name: nickname
+--------^
+
+[FATAL] The contract declares primary key (id) but table [Customers] has primary key (id, updated_at)
+in script:crm.odcs.yaml [15:21]:
+      - name: id
+        logicalType: integer
+        primaryKey: true
+--------------------^
+
+[FATAL] The contract declares partition key (id) but table [Customers] has partition key (region)
+in script:crm.odcs.yaml [16:22]:
+        logicalType: integer
+        primaryKey: true
+        partitioned: true
+---------------------^
+
+[FATAL] The contract declares tag [pii=masked] but table [Customers] has [pii=raw]
+in script:crm.odcs.yaml [54:16]:
+        required: true
+        classification: confidential
+        tags: [pii=masked]
+---------------^
+
+[FATAL] Table [Customers] differs from its data contract in 13 places
+in script:crm.odcs.yaml [9:5]:
+  # The column name is missing, and so is the tag pii of the table. The tag gdpr is listed on a
+  # property, which is as good as on the schema object
+  - name: Customers
+----^
+The data contract does not match the table.
+
+A schema object lists the physical columns of the `CREATE TABLE` of the same name, with the same
+`logicalType` and `required`, and the tags and classification that the table declares. Change the
+contract or the table so that they match. The compiler writes the contract that it generates for
+each table to `build/deploy/contracts`.
+
+[FATAL] Column [id] has logicalType [string] in the contract, but the table has [integer]
+in script:crm.odcs.yaml [67:22]:
+    properties:
+      - name: id
+        logicalType: string
+---------------------^
+
+[FATAL] The contract declares tag [gdpr] that table [_Leads] does not have
+in script:crm.odcs.yaml [64:12]:
+  # another type, and a tag that the table does not have
+  - name: _Leads
+    tags: [gdpr]
+-----------^
+
+[FATAL] Table [_Leads] differs from its data contract in 2 places
+in script:crm.odcs.yaml [63:5]:
+        logicalType: string
+  # another type, and a tag that the table does not have
+  - name: _Leads
+----^
+The data contract does not match the table.
+
+A schema object lists the physical columns of the `CREATE TABLE` of the same name, with the same
+`logicalType` and `required`, and the tags and classification that the table declares. Change the
+contract or the table so that they match. The compiler writes the contract that it generates for
+each table to `build/deploy/contracts`.
+
+[FATAL] Column [batch_id] (STRING) of table [Shipments] is missing from the contract
+in script:shipping.odcs.yaml [7:5]:
+status: active
+schema:
+  - name: Shipments
+----^
+
+[FATAL] Table [Shipments] differs from its data contract in one place
+in script:shipping.odcs.yaml [7:5]:
+status: active
+schema:
+  - name: Shipments
+----^
+The data contract does not match the table.
+
+A schema object lists the physical columns of the `CREATE TABLE` of the same name, with the same
+`logicalType` and `required`, and the tags and classification that the table declares. Change the
+contract or the table so that they match. The compiler writes the contract that it generates for
+each table to `build/deploy/contracts`.
+

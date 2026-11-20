@@ -1,0 +1,13 @@
+apiVersion: v3.2.0
+kind: DataContract
+id: urn:catalog:shipping
+version: 1.0.0
+status: active
+schema:
+  - name: Shipments
+    properties:
+      - name: id
+        logicalType: integer
+        required: true
+      - name: carrier
+        logicalType: string

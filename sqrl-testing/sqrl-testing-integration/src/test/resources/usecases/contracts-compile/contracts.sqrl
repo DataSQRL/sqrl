@@ -1,0 +1,72 @@
+IMPORT sources.*;
+-- The contract matches the name of the table in its script, not the name it is imported under
+IMPORT legacy.Events AS MyEvents;
+IMPORT tables.orders;
+IMPORT plain.Products;
+
+-- A mutation table of the main script finds its contract in contracts.odcs.yaml
+/** Feedback that customers send @pii=masked @classification=internal */
+/*+engine(kafka) */
+CREATE TABLE Feedback (
+  customer_id BIGINT NOT NULL,
+  message STRING NOT NULL,
+  event_time TIMESTAMP_LTZ(3) METADATA FROM 'timestamp'
+);
+
+-- A table that the script writes with INSERT INTO and also reads is a source and a sink
+/** Orders above the review limit */
+CREATE TABLE LargeOrders (
+  id BIGINT NOT NULL,
+  amount DOUBLE NOT NULL
+) WITH (
+  'connector' = 'filesystem',
+  'path' = 'file:///tmp/contracts-compile/large-orders',
+  'format' = 'flexible-json'
+);
+
+INSERT INTO LargeOrders SELECT id, amount FROM Orders WHERE amount > 1000;
+
+/** Number of large orders */
+LargeOrderCount := SELECT COUNT(*) AS num_orders FROM LargeOrders;
+
+_CustomerEmails := SELECT id, email FROM Customers;
+EXPORT _CustomerEmails TO sinks.EmailTopic;
+
+-- A log export writes a topic, which is in the sinks contract
+/** Events by kind */
+_EventKinds := SELECT kind, id, created_at FROM MyEvents;
+EXPORT _EventKinds TO log.EventKinds;
+
+-- The print sink is not a sink that other systems read
+_ClickUrls := SELECT customer_id, url FROM Clicks;
+EXPORT _ClickUrls TO print.ClickUrls;
+
+-- A hidden table that lands in the table-format engine has no contract
+/*+partition_key(region) */
+_CustomerRegions := SELECT id, region, updated_at FROM Customers;
+
+-- A visible table in the table-format engine is a public table of the project
+/*+exec(iceberg) */
+/** Customers per region @pii=raw @classification=confidential @gdpr */
+CustomerCounts := SELECT region, COUNT(*) AS num_customers FROM _CustomerRegions GROUP BY region;
+
+-- A visible table that the pipeline writes into the table-format engine is a public table too
+/** Orders of the customers */
+CustomerOrders := SELECT id, customer_id, amount, ordered_at FROM Orders;
+
+/*+exec(iceberg) */
+/** Total amount of the orders per customer */
+OrderTotals := SELECT customer_id, SUM(amount) AS total FROM CustomerOrders GROUP BY customer_id;
+
+-- A visible table in Postgres serves the API and has no contract
+/*+exec(postgres) */
+/** Products by price */
+ProductPrices := SELECT id, title, price FROM Products;
+
+-- A subscription is internal to the deployment and has no contract
+/** New feedback @pii=masked @classification=internal */
+NewFeedback := SUBSCRIBE SELECT customer_id, message FROM Feedback;
+
+-- A test table and the tables that only tests read have no contract
+/*+test */
+AuditTest := SELECT action, COUNT(*) AS num FROM _Audits GROUP BY action;

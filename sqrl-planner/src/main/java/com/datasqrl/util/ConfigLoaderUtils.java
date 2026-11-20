@@ -26,7 +26,6 @@ import com.datasqrl.deployment.model.KafkaPlanModel;
 import com.datasqrl.deployment.model.MutationDatabaseModel;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorMessage;
-import com.datasqrl.error.ResourceFileUtil;
 import com.datasqrl.planner.util.NonSecretEnvVarResolver;
 import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
@@ -37,9 +36,6 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.annotations.VisibleForTesting;
-import com.networknt.schema.SchemaRegistry;
-import com.networknt.schema.SchemaRegistryConfig;
-import com.networknt.schema.dialect.Dialects;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
@@ -185,29 +181,22 @@ public final class ConfigLoaderUtils {
     }
 
     var collector = errors.abortOnFatal(false);
-    var schemaText = ResourceFileUtil.readResourceFileContents(jsonSchemaResource);
-    JsonNode schemaNode;
+    List<JsonSchemaValidator.Violation> violations;
     try {
-      schemaNode = MAPPER.readTree(schemaText);
+      violations = JsonSchemaValidator.validate(json, jsonSchemaResource);
     } catch (IOException e) {
       collector.fatal("Could not parse json schema file [%s]: %s", jsonSchemaResource, e);
       return false;
     }
 
-    var schemaRegistryConf = SchemaRegistryConfig.builder().formatAssertionsEnabled(true).build();
-    var schema =
-        SchemaRegistry.withDefaultDialect(
-                Dialects.getDraft202012(),
-                builder -> builder.schemaRegistryConfig(schemaRegistryConf))
-            .getSchema(schemaNode);
-
-    var messages = schema.validate(json);
-    if (messages.isEmpty()) {
+    if (violations.isEmpty()) {
       return true;
     }
 
-    messages.forEach(
-        vm -> collector.fatal("%s at location [%s]", vm.getMessage(), vm.getInstanceLocation()));
+    violations.forEach(
+        violation ->
+            collector.fatal(
+                "%s at location [%s]", violation.message(), violation.instancePointer()));
 
     return false;
   }

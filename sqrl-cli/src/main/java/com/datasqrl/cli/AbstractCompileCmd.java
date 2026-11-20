@@ -19,15 +19,15 @@ import static com.datasqrl.config.SqrlConstants.PACKAGE_JSON;
 
 import com.datasqrl.cli.output.OutputFormatter;
 import com.datasqrl.compile.CompilationProcess;
-import com.datasqrl.compile.TestPlan;
+import com.datasqrl.compile.CompilationResult;
 import com.datasqrl.config.ExecutionEnginesHolder;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.SqrlConstants;
-import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrefix;
 import com.datasqrl.packager.Packager;
 import com.datasqrl.plan.validate.ExecutionGoal;
+import com.datasqrl.planner.contract.DataContracts;
 import com.datasqrl.util.ConfigLoaderUtils;
 import com.datasqrl.util.DirectoryUtils;
 import com.datasqrl.util.FlinkCompileException;
@@ -39,7 +39,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
 @Slf4j
@@ -123,9 +122,9 @@ public abstract class AbstractCompileCmd extends BasePackageConfCmd {
       var testDir = sqrlConfig.getTestConfig().getTestDir(getProjectRoot());
       testDir.ifPresent(this::validateTestPath);
 
-      Pair<PhysicalPlan, ? extends TestPlan> plan;
+      CompilationResult result;
       try {
-        plan = compilationProcess.executeCompilation(testDir);
+        result = compilationProcess.executeCompilation(testDir);
 
       } catch (FlinkCompileException e) {
         packager.postprocessFlinkCompileError(e);
@@ -140,10 +139,10 @@ public abstract class AbstractCompileCmd extends BasePackageConfCmd {
         formatter.phaseStart("Generating deployment artifacts");
       }
 
-      packager.postprocess(getTargetDir(), plan.getLeft(), plan.getRight());
+      packager.postprocess(getTargetDir(), result);
 
       if (getGoal() == ExecutionGoal.COMPILE) {
-        printCompilationResults(formatter);
+        printCompilationResults(formatter, result.dataContracts());
       }
     }
   }
@@ -204,13 +203,41 @@ public abstract class AbstractCompileCmd extends BasePackageConfCmd {
     }
   }
 
-  private void printCompilationResults(OutputFormatter formatter) {
+  /**
+   * @param buildFile a file that preprocessing copied into the build folder
+   * @return the file of the project that it was copied from, or the copy if the file is not in the
+   *     project, such as a file of an included project
+   */
+  private Path sourceOf(Path buildFile) {
+    var buildDir = getBuildDir().toAbsolutePath().normalize();
+    var file = buildFile.toAbsolutePath().normalize();
+    if (!file.startsWith(buildDir)) {
+      return buildFile;
+    }
+    var source = getProjectRoot().resolve(buildDir.relativize(file));
+    return Files.exists(source) ? source : buildFile;
+  }
+
+  private void printCompilationResults(OutputFormatter formatter, DataContracts contracts) {
     var relBuildDir = formatter.relativizeFromCliRoot(getBuildDir());
 
     formatter.sectionHeader("Compilation Results");
     formatter.info("Deployment artifacts: " + formatter.relativizeFromCliRoot(getTargetDir()));
     formatter.info("Pipeline DAG:         " + relBuildDir.resolve("pipeline_explain.txt"));
     formatter.info("Visual DAG:           " + relBuildDir.resolve("pipeline_visual.html"));
+    if (!contracts.documents().isEmpty()) {
+      formatter.info(
+          "Data contracts:       "
+              + formatter.relativizeFromCliRoot(
+                  getTargetDir().resolve(SqrlConstants.CONTRACTS_DIR)));
+    }
+    // Shows which contract files of the project were picked up, and for which tables
+    contracts
+        .files()
+        .forEach(
+            file ->
+                formatter.info(
+                    "  " + file.describe(formatter.relativizeFromCliRoot(sourceOf(file.file())))));
     formatter.newline();
     formatter.buildStatus(true, getElapsedTime(), LocalDateTime.now());
     formatter.newline();

@@ -1,0 +1,6 @@
+CREATE TABLE Memos (
+  id BIGINT NOT NULL,
+  note STRING
+) WITH (
+  'connector' = 'datagen'
+);
