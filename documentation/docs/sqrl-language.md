@@ -195,9 +195,20 @@ Arguments are referenced with `:name` in the `SELECT` query. Argument definition
 CustomerByEmail(email STRING) := SELECT * FROM Customer WHERE email = :email;
 ```
 
+When the compile fails with `Illegal use of dynamic parameter`, cast the argument at that position, for example `LOWER(CAST(:name AS STRING))`. The compiler cannot find the type of an argument inside most function calls, in a `||` concatenation and in the `SELECT` list. A comparison with a column, such as `email = :email`, needs no cast.
+
 #### Accessing JWT Payload
 
-To access the JWT payload included in the Authorization HTTP header, you can use the `METADATA` expression within the function definition. The text after `auth.` is the name of a claim in the JWT payload:
+`METADATA FROM 'auth.<claim>'` fills a value with a claim of the JWT in the `Authorization` HTTP header. The server sets the value, so it is not part of the API: a client cannot send it or change it. Use it to give each caller only their own data, and to record who sent a mutation.
+
+A claim can fill four things:
+
+* A function argument, as in `AuthFilter` below.
+* A relationship argument, as in `Regions.myOrders` below.
+* A `SUBSCRIBE` function argument, so that each caller receives only their own new records. On a mutation table, write the function as `SUBSCRIBE SELECT * FROM <table> WHERE <column> = :<argument>`. Join more than one such condition with `AND`. A column list in place of `*`, a constant condition such as `item = 'pen'`, or another operator such as `<>` stops the compile.
+* A column of a mutation table (`/*+engine(kafka)*/ CREATE TABLE`), as in `OrderRequests` below. The server writes the claim into each record.
+
+The text after `auth.` is the name of a claim in the JWT payload:
 
 * `'auth.val'` reads the top-level claim `val`.
 * `'auth.org.id'` reads the field `id` of the object claim `org`. A path can go to any depth, for example `'auth.org.location.zip'`.
@@ -206,6 +217,8 @@ To access the JWT payload included in the Authorization HTTP header, you can use
 * Array indexing does not work. For example, `'auth.realm_access.roles.0'` does not read the first role. The server treats it as a missing claim. To check for one item, read the full array and use `array_contains` in the query.
 * Each segment of the path must have a name. A key with an empty segment, such as `'auth.org.'` or `'auth.org..id'`, stops the compile.
 * When the token has no claim at the path, a request fails with `403 Forbidden` for a `NOT NULL` argument. A nullable argument gets `null`.
+* When the claim has the value `null`, a request fails with `Claim '<name>' must not be null` for a `NOT NULL` argument.
+* A claim column of a mutation table follows the same two rules. For a `NOT NULL` column, a missing claim or a `null` claim fails the mutation, and the mutation writes no record. A nullable column gets `null`.
 
 In the example below, the JWT payload contains a val field, which is an integer.
 
@@ -215,6 +228,38 @@ AuthFilter(mySecretId BIGINT NOT NULL METADATA FROM 'auth.val') :=
   FROM Customer c 
   WHERE c.customerId = :mySecretId;
 ```
+
+In the example below, the relationship `myOrders` shows only the orders of the caller in each region.
+
+```sql
+Regions.myOrders(customer_id STRING NOT NULL METADATA FROM 'auth.sub') :=
+  SELECT * FROM Orders o WHERE o.region = this.region AND o.customer_id = :customer_id;
+```
+
+In the example below, the mutation table `OrderRequests` takes the owner of each record from the claim `sub`.
+
+```sql
+/*+no_query, engine(kafka) */
+CREATE TABLE OrderRequests (
+  customer_id STRING NOT NULL METADATA FROM 'auth.sub',
+  item STRING NOT NULL,
+  requested_at TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp'
+);
+
+/** The order requests of the caller. */
+MyOrderRequests(customer_id STRING NOT NULL METADATA FROM 'auth.sub') :=
+  SELECT * FROM OrderRequests WHERE customer_id = :customer_id;
+```
+
+The claim column is not part of the mutation input, so a caller cannot write a record for somebody else. The mutation returns the claim column in its result.
+
+Add `no_query` to each table that holds the rows of all callers, such as `OrderRequests` above. Without it, the table gets its own query endpoint, and every caller reads every row. The mutation stays.
+
+Follow these rules for the type of a claim, and for a claim argument in the query:
+
+* **Type**: declare the SQL type of the JSON value: a string is `STRING`, an integer is `INT` or `BIGINT`, a decimal number is `DOUBLE`, a boolean is `BOOLEAN`, and an array of strings is `ARRAY<STRING>`. The server does not convert the value. For an argument, the string claim `"tier": "2"` fails a `BIGINT` argument at request time. For a claim column of a mutation table, the server writes the value as it is, and the mutation succeeds. The Flink job that reads the table then fails when it cannot convert the value, for example `"tier": "abc"` for a `BIGINT` column.
+* **Optional claim**: a nullable argument gets `NULL` for a missing claim. Postgres cannot find the type of a `NULL` argument in a test such as `:tier IS NULL`, and the request fails with `could not determine data type of parameter $1`. Cast the argument in that test: `WHERE CAST(:tier AS BIGINT) IS NULL OR price < 100 * :tier`.
+* **Roles**: check an array claim with `array_contains(CAST(:roles AS ARRAY<STRING>), 'admin')`. Without the cast, the compile fails with `Illegal use of dynamic parameter`.
 
 The server reads a claim only from a token that it checks. A script that reads a claim needs an auth provider in `engines.vertx.config`. This applies to a function argument and to a mutation column. The provider is an `auth` block with at least one issuer (see [Authentication Configuration](configuration-engine/vertx.md#authentication-configuration)). The deprecated `jwtAuth`, or `oauthConfig` with `oauth2Options.site`, also gives a provider. Without a provider, the server checks no token. The compile then fails with the error `The script reads JWT claims (...), but engines.vertx.config has no auth provider.`
 
@@ -345,6 +390,7 @@ Defines an internal table that is not exposed in the interface.
 
 CREATE TABLE statements that define an [internal data source](#create-table-internal-vs-external) are exposed as topics in the log, or GraphQL mutations in the server.
 The input type is defined by mapping all column types to native data types of the interface schema. Computed and metadata columns are not included in the input type since those are computed on insert.
+The mutation returns the metadata columns in its result, so a caller sees the `auth.<claim>` values that the server wrote.
 
 ## EXPORT Statement
 

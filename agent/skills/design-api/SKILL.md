@@ -148,7 +148,7 @@ This definition maps to query endpoint `CustomerByIdRange(fromId: Long!, toId: L
 
 ### Authentication & Authorization
 
-DataSQRL authenticates JWT tokens as configured in the server engine and maps claims to function arguments with `METADATA FROM 'auth.[claim-name]'`. A dot in the claim name steps into a nested object claim: `'auth.org.id'` reads the field `id` of the claim `org`. A key can also contain dots, at the top level and inside an object. At each level, the server uses the longest key that it finds in the token, and steps into objects only for the rest of the path. For example, `'auth.https://example.com/org_id'` reads the top-level claim `https://example.com/org_id`, `'auth.https://example.com/org.id'` reads the field `id` of the claim `https://example.com/org`, and `'auth.resource_access.com.example.app.roles'` reads the field `roles` of the key `com.example.app` inside the claim `resource_access`.
+DataSQRL authenticates JWT tokens as configured in the server engine and maps claims to function arguments and mutation columns with `METADATA FROM 'auth.[claim-name]'`. Use the `/implement-sqrl` skill for the SQRL rules of a claim: where a claim can go, its type, and required and optional claims. A dot in the claim name steps into a nested object claim: `'auth.org.id'` reads the field `id` of the claim `org`. A key can also contain dots, at the top level and inside an object. At each level, the server uses the longest key that it finds in the token, and steps into objects only for the rest of the path. For example, `'auth.https://example.com/org_id'` reads the top-level claim `https://example.com/org_id`, `'auth.https://example.com/org.id'` reads the field `id` of the claim `https://example.com/org`, and `'auth.resource_access.com.example.app.roles'` reads the field `roles` of the key `com.example.app` inside the claim `resource_access`.
 
 ```sql
 MyUser(customerId BIGINT NOT NULL METADATA FROM 'auth.userId') :=
@@ -158,6 +158,30 @@ MyUser(customerId BIGINT NOT NULL METADATA FROM 'auth.userId') :=
 Maps to query endpoint `MyUser: Customer`; `customerId` is populated from the `userId` claim and is not a caller-supplied API argument.
 
 Read [authorization configuration](authorization.md) to configure authentication with the `auth` block and to generate test tokens.
+
+With an auth provider, every GraphQL, REST and MCP request needs a valid token, also for a query that reads no claim. A request without a valid token gets the status `401` and the error `JWT auth failed`. So no query of this deployment can be public.
+
+#### Record the caller of a mutation
+
+Take the owner of a mutation record from the token. Declare the owner column on the mutation table with `METADATA FROM 'auth.<claim>'`. The column is then not part of the mutation input, so a caller cannot write a record for somebody else.
+Add `no_query` to the mutation table, and give callers a claim function that returns their own records. Without `no_query`, the table gets its own query endpoint, and every caller reads every record. The mutation stays.
+
+```sql
+/*+no_query, engine(kafka) */
+CREATE TABLE Reviews (
+  review_id STRING NOT NULL METADATA FROM 'uuid',
+  author_id STRING NOT NULL METADATA FROM 'auth.sub',
+  product_id STRING NOT NULL,
+  rating INT NOT NULL,
+  created_at TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp'
+);
+
+/** The reviews of the caller. */
+MyReviews(author_id STRING NOT NULL METADATA FROM 'auth.sub') :=
+  SELECT * FROM Reviews WHERE author_id = :author_id;
+```
+
+For a hand-written GraphQL schema, read [interface.md](interface.md), section "Schema Customization", before you write the schema. It has the rules for the metadata columns of a mutation and for the scalar types. Leave each claim argument out of the query field.
 
 ## API Versioning and OpenAPI
 
