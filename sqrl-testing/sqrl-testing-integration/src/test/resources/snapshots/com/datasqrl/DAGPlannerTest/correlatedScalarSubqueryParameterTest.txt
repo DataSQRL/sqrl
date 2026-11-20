@@ -426,7 +426,7 @@ END
             ],
             "query" : {
               "type" : "SqlQuery",
-              "sql" : "SELECT *\nFROM \"Customer_1\"\nWHERE (((SELECT COUNT(*)\n     FROM \"Orders_2\"\n     WHERE \"customerid\" = \"Customer_10\".\"customerid\" AND \"time\" > $2))) > $1",
+              "sql" : "SELECT *\nFROM \"Customer_1\" AS \"Customer_10\"\nWHERE (((SELECT COUNT(*)\n     FROM \"Orders_2\"\n     WHERE \"customerid\" = \"Customer_10\".\"customerid\" AND \"time\" > $2))) > $1",
               "parameters" : [
                 {
                   "type" : "arg",

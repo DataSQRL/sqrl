@@ -26,6 +26,9 @@ type Query {
   cleanQuery(limit: Int = 10, offset: Int = 0): [Thing!]
   joinQuery(limit: Int = 10, offset: Int = 0): [Thing!]
   subqueryQuery(limit: Int = 10, offset: Int = 0): [Thing!]
+  correlatedQuery(minId: String!, limit: Int = 10, offset: Int = 0): [ThingRecord!]
+  countQuery(minId: String!, limit: Int = 10, offset: Int = 0): [countQuery!]
+  joinCountQuery(minId: String!, limit: Int = 10, offset: Int = 0): [joinCountQuery!]
   sortedQuery(minId: String!, limit: Int = 10, offset: Int = 0): [Thing!]
 }
 
@@ -35,6 +38,11 @@ type Thing {
   timestamp: DateTime!
   detail: Detail
   relatedByTimestamp(limit: Int = 10, offset: Int = 0): [Thing!]
+}
+
+type ThingRecord {
+  label: String!
+  info: String
 }
 
 type Tombstone {
@@ -57,6 +65,18 @@ enum _RestMethodType {
   POST
 }
 
+type countQuery {
+  id: String!
+  num: Long!
+  label: String
+}
+
+type joinCountQuery {
+  id: String!
+  info: String!
+  n: Long
+}
+
 directive @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String, appName: String, visibility: [_McpVisibility!]) on QUERY | MUTATION | FIELD_DEFINITION
 
 >>>pipeline_explain.txt
@@ -75,6 +95,20 @@ Schema:
 Table Detail (postgres):
  - primary key: id
 
+=== DetailCount
+ID:          default_catalog.default_database.DetailCount
+Type:        state
+Stage:       postgres
+Primary key: id
+Timestamp:   -
+Row count:   ~1e7
+--- definition ---
+Schema:
+ - id: CHAR(1) CHARACTER SET "UTF-16LE" NOT NULL
+ - num: BIGINT NOT NULL
+Inputs:
+ - default_catalog.default_database.Detail
+
 === Thing
 ID:          default_catalog.default_database.Thing
 Type:        state
@@ -90,6 +124,22 @@ Schema:
 --- physical ---
 Table Thing (postgres):
  - primary key: id
+
+=== ThingRecord
+ID:          default_catalog.default_database.ThingRecord
+Type:        state
+Stage:       postgres
+Primary key: _id
+Timestamp:   -
+Row count:   ~1e8
+--- definition ---
+Schema:
+ - label: CHAR(7) CHARACTER SET "UTF-16LE" NOT NULL
+ - info: CHAR(8) CHARACTER SET "UTF-16LE"
+ - _id: CHAR(1) CHARACTER SET "UTF-16LE" NOT NULL
+Inputs:
+ - default_catalog.default_database.Detail
+ - default_catalog.default_database.Thing
 
 === Tombstone
 ID:          default_catalog.default_database.Tombstone
@@ -122,6 +172,44 @@ Inputs:
 --- physical ---
 Table cleanQuery (postgres):
  - primary key: id
+
+=== correlatedQuery
+ID:          default_catalog.default_database.correlatedQuery
+Type:        query
+Stage:       postgres
+--- definition ---
+Inputs:
+ - default_catalog.default_database.ThingRecord
+ - default_catalog.default_database.Tombstone
+Annotations:
+ - parameters: minId
+ - base-table: ThingRecord
+
+=== countQuery
+ID:          default_catalog.default_database.countQuery
+Type:        query
+Stage:       postgres
+--- definition ---
+Inputs:
+ - default_catalog.default_database.DetailCount
+ - default_catalog.default_database.Thing
+ - default_catalog.default_database.Tombstone
+Annotations:
+ - parameters: minId
+ - base-table: countQuery
+
+=== joinCountQuery
+ID:          default_catalog.default_database.joinCountQuery
+Type:        query
+Stage:       postgres
+--- definition ---
+Inputs:
+ - default_catalog.default_database.Detail
+ - default_catalog.default_database.Thing
+ - default_catalog.default_database.Tombstone
+Annotations:
+ - parameters: minId
+ - base-table: joinCountQuery
 
 === joinQuery
 ID:          default_catalog.default_database.joinQuery
@@ -207,6 +295,16 @@ SELECT `th`.*
 FROM `Thing` AS `th`
  LEFT JOIN `Tombstone` AS `tomb` ON `th`.`id` = `tomb`.`id`
 WHERE `tomb`.`id` IS NULL;
+CREATE VIEW `ThingRecord`
+AS
+SELECT `th`.`label`, `d`.`info`, `th`.`id` AS `_id`
+FROM `Thing` AS `th`
+ LEFT JOIN `Detail` AS `d` ON `th`.`id` = `d`.`id`;
+CREATE VIEW `DetailCount`
+AS
+SELECT `d`.`id`, COUNT(*) AS `num`
+FROM `Detail` AS `d`
+GROUP BY `d`.`id`;
 CREATE TABLE `Detail_1` (
   `id` CHAR(1) CHARACTER SET `UTF-16LE` NOT NULL,
   `info` CHAR(8) CHARACTER SET `UTF-16LE` NOT NULL,
@@ -529,6 +627,111 @@ CREATE TABLE IF NOT EXISTS "subqueryQuery" ("id" TEXT NOT NULL, "label" TEXT NOT
               "type" : "SqlQuery",
               "sql" : "SELECT *\nFROM \"subqueryQuery\"",
               "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "correlatedQuery",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "minId"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"Thing\".\"label\", \"Detail\".\"info\", \"Thing\".\"id\" AS \"_id\"\n  FROM \"Thing\"\n   LEFT JOIN \"Detail\" ON \"Thing\".\"id\" = \"Detail\".\"id\") AS \"t\"\nWHERE NOT EXISTS (SELECT *\n  FROM \"Tombstone\"\n  WHERE \"id\" = \"t\".\"_id\") AND \"_id\" >= $1\nORDER BY \"label\" DESC NULLS LAST",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "minId",
+                  "sqlType" : "VARCHAR"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "countQuery",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "minId"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"id\", \"num\", (((SELECT \"label\"\n    FROM \"Thing\"\n    WHERE \"id\" = \"t2\".\"id\"))) AS \"label\"\nFROM (SELECT *\n  FROM (SELECT \"id\", COUNT(*) AS \"num\"\n    FROM \"Detail\"\n    GROUP BY \"id\") AS \"t0\"\n  WHERE NOT EXISTS (SELECT *\n    FROM \"Tombstone\"\n    WHERE \"id\" = \"t0\".\"id\") AND \"id\" >= $1) AS \"t2\"\nORDER BY \"id\" NULLS FIRST",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "minId",
+                  "sqlType" : "VARCHAR"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "joinCountQuery",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "minId"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"Thing\".\"id\", \"Detail\".\"info\", (((SELECT COUNT(*)\n    FROM \"Tombstone\"\n    WHERE \"id\" = \"Thing\".\"id\"))) AS \"n\"\nFROM \"Thing\"\n INNER JOIN \"Detail\" ON \"Thing\".\"id\" = \"Detail\".\"id\"\nWHERE \"Thing\".\"id\" >= $1\nORDER BY \"Thing\".\"id\" NULLS FIRST",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "minId",
+                  "sqlType" : "VARCHAR"
+                }
+              ],
               "pagination" : "LIMIT_AND_OFFSET",
               "cacheDurationMs" : 0,
               "database" : "POSTGRES"
@@ -873,6 +1076,147 @@ CREATE TABLE IF NOT EXISTS "subqueryQuery" ("id" TEXT NOT NULL, "label" TEXT NOT
         },
         {
           "function" : {
+            "name" : "GetcorrelatedQuery",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                },
+                "minId" : {
+                  "type" : "string"
+                }
+              },
+              "required" : [
+                "minId"
+              ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query correlatedQuery($minId: String!, $limit: Int = 10, $offset: Int = 0) {\ncorrelatedQuery(minId: $minId, limit: $limit, offset: $offset) {\nlabel\ninfo\n}\n\n}",
+            "queryName" : "correlatedQuery",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/correlatedQuery{?offset,limit,minId}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "label" : {
+                  "type" : "string"
+                },
+                "info" : {
+                  "type" : "string"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetcountQuery",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                },
+                "minId" : {
+                  "type" : "string"
+                }
+              },
+              "required" : [
+                "minId"
+              ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query countQuery($minId: String!, $limit: Int = 10, $offset: Int = 0) {\ncountQuery(minId: $minId, limit: $limit, offset: $offset) {\nid\nnum\nlabel\n}\n\n}",
+            "queryName" : "countQuery",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/countQuery{?offset,limit,minId}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "string"
+                },
+                "num" : {
+                  "type" : "integer"
+                },
+                "label" : {
+                  "type" : "string"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetjoinCountQuery",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                },
+                "minId" : {
+                  "type" : "string"
+                }
+              },
+              "required" : [
+                "minId"
+              ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query joinCountQuery($minId: String!, $limit: Int = 10, $offset: Int = 0) {\njoinCountQuery(minId: $minId, limit: $limit, offset: $offset) {\nid\ninfo\nn\n}\n\n}",
+            "queryName" : "joinCountQuery",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/joinCountQuery{?offset,limit,minId}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "string"
+                },
+                "info" : {
+                  "type" : "string"
+                },
+                "n" : {
+                  "type" : "integer"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
             "name" : "GetsortedQuery",
             "parameters" : {
               "type" : "object",
@@ -934,7 +1278,7 @@ CREATE TABLE IF NOT EXISTS "subqueryQuery" ("id" TEXT NOT NULL, "label" TEXT NOT
       ],
       "schema" : {
         "type" : "string",
-        "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\ntype Detail {\n  id: String!\n  info: String!\n}\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Query {\n  Detail(limit: Int = 10, offset: Int = 0): [Detail!]\n  Thing(limit: Int = 10, offset: Int = 0): [Thing!]\n  Tombstone(limit: Int = 10, offset: Int = 0): [Tombstone!]\n  cleanQuery(limit: Int = 10, offset: Int = 0): [Thing!]\n  joinQuery(limit: Int = 10, offset: Int = 0): [Thing!]\n  subqueryQuery(limit: Int = 10, offset: Int = 0): [Thing!]\n  sortedQuery(minId: String!, limit: Int = 10, offset: Int = 0): [Thing!]\n}\n\ntype Thing {\n  id: String!\n  label: String!\n  timestamp: DateTime!\n  detail: Detail\n  relatedByTimestamp(limit: Int = 10, offset: Int = 0): [Thing!]\n}\n\ntype Tombstone {\n  id: String!\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n}\n\nenum _McpVisibility {\n  MODEL\n  APP\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String, appName: String, visibility: [_McpVisibility!]) on QUERY | MUTATION | FIELD_DEFINITION\n"
+        "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\ntype Detail {\n  id: String!\n  info: String!\n}\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Query {\n  Detail(limit: Int = 10, offset: Int = 0): [Detail!]\n  Thing(limit: Int = 10, offset: Int = 0): [Thing!]\n  Tombstone(limit: Int = 10, offset: Int = 0): [Tombstone!]\n  cleanQuery(limit: Int = 10, offset: Int = 0): [Thing!]\n  joinQuery(limit: Int = 10, offset: Int = 0): [Thing!]\n  subqueryQuery(limit: Int = 10, offset: Int = 0): [Thing!]\n  correlatedQuery(minId: String!, limit: Int = 10, offset: Int = 0): [ThingRecord!]\n  countQuery(minId: String!, limit: Int = 10, offset: Int = 0): [countQuery!]\n  joinCountQuery(minId: String!, limit: Int = 10, offset: Int = 0): [joinCountQuery!]\n  sortedQuery(minId: String!, limit: Int = 10, offset: Int = 0): [Thing!]\n}\n\ntype Thing {\n  id: String!\n  label: String!\n  timestamp: DateTime!\n  detail: Detail\n  relatedByTimestamp(limit: Int = 10, offset: Int = 0): [Thing!]\n}\n\ntype ThingRecord {\n  label: String!\n  info: String\n}\n\ntype Tombstone {\n  id: String!\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n}\n\nenum _McpVisibility {\n  MODEL\n  APP\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ntype countQuery {\n  id: String!\n  num: Long!\n  label: String\n}\n\ntype joinCountQuery {\n  id: String!\n  info: String!\n  n: Long\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String, appName: String, visibility: [_McpVisibility!]) on QUERY | MUTATION | FIELD_DEFINITION\n"
       }
     }
   }

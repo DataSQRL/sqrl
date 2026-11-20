@@ -19,10 +19,12 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.core.Correlate;
 import org.apache.calcite.rel.core.CorrelationId;
+import org.apache.calcite.rel.core.Filter;
 import org.apache.calcite.rel.core.Project;
 import org.apache.calcite.rel.core.TableScan;
 import org.apache.calcite.rel.type.RelDataType;
@@ -38,6 +40,7 @@ import org.apache.calcite.sql.SqlJoin;
 import org.apache.calcite.sql.SqlLiteral;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
+import org.apache.calcite.sql.SqlSelect;
 import org.apache.calcite.sql.SqlUtil;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
@@ -62,8 +65,7 @@ public class RelToSqlConverterWithHints extends org.apache.calcite.rel.rel2sql.R
   // SQRL: add hints
   @Override
   public SqlImplementor.Result visit(Project e) {
-    var x = this.visitInput(e, 0, new SqlImplementor.Clause[] {Clause.SELECT});
-    this.parseCorrelTable(e, x);
+    var x = visitCorrelInput(e, Clause.SELECT);
     var builder = x.builder(e);
     if (!isStar(e.getProjects(), e.getInput().getRowType(), e.getRowType())) {
       List<SqlNode> selectList = new ArrayList();
@@ -101,6 +103,53 @@ public class RelToSqlConverterWithHints extends org.apache.calcite.rel.rel2sql.R
     builder.select.setHints(new SqlNodeList(hints, SqlParserPos.ZERO));
 
     return builder.result();
+  }
+
+  /**
+   * SQRL: see {@link #visitCorrelInput}. Calcite fixed this for filters in CALCITE-7505, which is
+   * not in the Calcite version that Flink ships. Remove this override once it is.
+   */
+  @Override
+  public SqlImplementor.Result visit(Filter e) {
+    if (e.getVariablesSet().isEmpty()) {
+      return super.visit(e);
+    }
+    var x = visitCorrelInput(e, Clause.WHERE);
+    var builder = x.builder(e);
+    builder.setWhere(builder.context.toSql((RexProgram) null, e.getCondition()));
+    return builder.result();
+  }
+
+  /**
+   * SQRL: Calcite records the correlation variables of a rel against the aliases of the rel's
+   * input. If that input needs an alias (a subquery, or a table whose name is taken), the query
+   * built on it either does not declare the alias or hides the recorded ones behind it. Expecting
+   * FROM makes Calcite start a new query on {@code <input> AS <alias>}, and the variables resolve
+   * against that alias.
+   *
+   * <p>A SELECT over a join that the rel extends in place is left as it is: its FROM declares the
+   * aliases the variables are recorded against, and wrapping it in {@code SELECT *} would give the
+   * derived table duplicate column names when both sides of the join have a column of that name.
+   */
+  private SqlImplementor.Result visitCorrelInput(RelNode e, Clause clause) {
+    var x = this.visitInput(e, 0, new SqlImplementor.Clause[] {clause});
+    if (!e.getVariablesSet().isEmpty()
+        && x.neededAlias != null
+        && !isJoinExtendedInPlace(x, clause)) {
+      x = x.resetAlias().withExpectedClauses(false, Set.of(clause, Clause.FROM), e);
+    }
+    parseCorrelTable(e, x);
+    return x;
+  }
+
+  /**
+   * Whether {@code x} is a SELECT over a join to which {@code clause} can be added without starting
+   * a new query, because all of its clauses come before {@code clause}.
+   */
+  private static boolean isJoinExtendedInPlace(SqlImplementor.Result x, Clause clause) {
+    return x.node instanceof SqlSelect select
+        && select.getFrom() instanceof SqlJoin
+        && x.clauses.stream().allMatch(c -> c.ordinal() < clause.ordinal());
   }
 
   private SqlNode castNullType(SqlNode nullLiteral, RelDataType type) {
