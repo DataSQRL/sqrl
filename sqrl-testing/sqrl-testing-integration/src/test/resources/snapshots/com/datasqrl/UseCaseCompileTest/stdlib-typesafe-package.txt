@@ -71,7 +71,11 @@ type UnderwritingJudgments {
 enum _McpMethodType {
   NONE
   TOOL
-  RESOURCE
+}
+
+enum _McpVisibility {
+  MODEL
+  APP
 }
 
 enum _RestMethodType {
@@ -80,7 +84,7 @@ enum _RestMethodType {
   POST
 }
 
-directive @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION
+directive @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String, appName: String, visibility: [_McpVisibility!]) on QUERY | MUTATION | FIELD_DEFINITION
 
 >>>pipeline_explain.txt
 === Applications
@@ -574,7 +578,7 @@ CREATE TABLE IF NOT EXISTS "UnderwritingJudgments" ("application_id" TEXT NOT NU
       ],
       "schema" : {
         "type" : "string",
-        "schema" : "type Applications {\n  application_id: String!\n  submitted_at: DateTime!\n  case_file: Applications_case_fileOutput\n}\n\ntype Applications_case_fileOutput {\n  loan: Applications_case_file_loanOutput\n  applicant: Applications_case_file_applicantOutput\n  underwriter_notes: String\n}\n\ntype Applications_case_file_applicantOutput {\n  employer: String\n  job_title: String\n  stated_annual_income: Float\n  credit_score: Long\n  verification_notes: String\n}\n\ntype Applications_case_file_loanOutput {\n  amount: Float\n  term_months: Long\n  purpose: String\n}\n\ntype DailyUnderwriting {\n  window_start: DateTime!\n  window_end: DateTime!\n  applications: Long!\n  errors: Long!\n  verified_income: Int!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Query {\n  Applications(limit: Int = 10, offset: Int = 0): [Applications!]\n  DailyUnderwriting(limit: Int = 10, offset: Int = 0): [DailyUnderwriting!]\n  UnderwritingJudgments(limit: Int = 10, offset: Int = 0): [UnderwritingJudgments!]\n}\n\ntype UnderwritingJudgments {\n  application_id: String!\n  submitted_at: DateTime!\n  income_verified: Float\n  purpose: String\n  purpose_confidence: Float\n  business_probability: Float\n  scrutiny: Float\n  scrutiny_probabilities: [Float]\n  model: String!\n  error: String\n  rowtime: DateTime!\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+        "schema" : "type Applications {\n  application_id: String!\n  submitted_at: DateTime!\n  case_file: Applications_case_fileOutput\n}\n\ntype Applications_case_fileOutput {\n  loan: Applications_case_file_loanOutput\n  applicant: Applications_case_file_applicantOutput\n  underwriter_notes: String\n}\n\ntype Applications_case_file_applicantOutput {\n  employer: String\n  job_title: String\n  stated_annual_income: Float\n  credit_score: Long\n  verification_notes: String\n}\n\ntype Applications_case_file_loanOutput {\n  amount: Float\n  term_months: Long\n  purpose: String\n}\n\ntype DailyUnderwriting {\n  window_start: DateTime!\n  window_end: DateTime!\n  applications: Long!\n  errors: Long!\n  verified_income: Int!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Query {\n  Applications(limit: Int = 10, offset: Int = 0): [Applications!]\n  DailyUnderwriting(limit: Int = 10, offset: Int = 0): [DailyUnderwriting!]\n  UnderwritingJudgments(limit: Int = 10, offset: Int = 0): [UnderwritingJudgments!]\n}\n\ntype UnderwritingJudgments {\n  application_id: String!\n  submitted_at: DateTime!\n  income_verified: Float\n  purpose: String\n  purpose_confidence: Float\n  business_probability: Float\n  scrutiny: Float\n  scrutiny_probabilities: [Float]\n  model: String!\n  error: String\n  rowtime: DateTime!\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n}\n\nenum _McpVisibility {\n  MODEL\n  APP\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String, appName: String, visibility: [_McpVisibility!]) on QUERY | MUTATION | FIELD_DEFINITION\n"
       }
     }
   }

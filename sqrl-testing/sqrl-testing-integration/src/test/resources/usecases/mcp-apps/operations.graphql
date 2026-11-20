@@ -1,0 +1,16 @@
+# Sales by region and product.
+query GetSales @api(mcp: TOOL, appName: "SalesChart") {
+  Sales(limit: 100) {
+    region
+    product
+    amount
+  }
+}
+
+# Sales of one region. Called by the SalesChart app for drill-downs.
+query GetRegionSales($region: String!) @api(visibility: [APP]) {
+  SalesByRegion(region: $region) {
+    product
+    amount
+  }
+}

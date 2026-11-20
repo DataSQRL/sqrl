@@ -44,6 +44,7 @@ import graphql.schema.GraphQLDirective;
 import graphql.schema.GraphQLEnumType;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLInputType;
+import graphql.schema.GraphQLList;
 import graphql.schema.GraphQLNonNull;
 import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLOutputType;
@@ -456,12 +457,10 @@ public class GraphqlSchemaFactory {
 
   private void addApiDirectiveTypes(GraphQLSchema.Builder graphQLSchemaBuilder) {
     var mcpMethodType =
-        GraphQLEnumType.newEnum()
-            .name("_McpMethodType")
-            .value("NONE")
-            .value("TOOL")
-            .value("RESOURCE")
-            .build();
+        GraphQLEnumType.newEnum().name("_McpMethodType").value("NONE").value("TOOL").build();
+
+    var mcpVisibilityType =
+        GraphQLEnumType.newEnum().name("_McpVisibility").value("MODEL").value("APP").build();
 
     var restMethodType =
         GraphQLEnumType.newEnum()
@@ -487,9 +486,17 @@ public class GraphqlSchemaFactory {
                     .name("rest")
                     .type(new GraphQLTypeReference("_RestMethodType")))
             .argument(GraphQLArgument.newArgument().name("uri").type(Scalars.GraphQLString))
+            .argument(GraphQLArgument.newArgument().name("appName").type(Scalars.GraphQLString))
+            .argument(
+                GraphQLArgument.newArgument()
+                    .name("visibility")
+                    .type(
+                        GraphQLList.list(
+                            GraphQLNonNull.nonNull(new GraphQLTypeReference("_McpVisibility")))))
             .build();
 
     graphQLSchemaBuilder.additionalType(mcpMethodType);
+    graphQLSchemaBuilder.additionalType(mcpVisibilityType);
     graphQLSchemaBuilder.additionalType(restMethodType);
     graphQLSchemaBuilder.additionalDirective(apiDirective);
   }

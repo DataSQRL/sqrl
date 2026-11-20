@@ -16,7 +16,8 @@
 package com.datasqrl.server.operation;
 
 public enum McpMethodType {
+  /** Not exposed over MCP */
   NONE,
-  TOOL,
-  RESOURCE;
+  /** An MCP tool. {@link McpVisibility} says whether it is for the model, for MCP apps, or both */
+  TOOL;
 }

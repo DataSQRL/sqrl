@@ -23,6 +23,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ScriptApiConfigImpl implements ScriptApiConfig {
 
+  public static final String MCP_APPS_KEY = "mcp-apps";
+
   private final SqrlConfig sqrlConfig;
 
   @Override
@@ -43,5 +45,10 @@ public class ScriptApiConfigImpl implements ScriptApiConfig {
   @Override
   public Optional<String> getOpenApi() {
     return sqrlConfig.asString("openapi").getOptional();
+  }
+
+  @Override
+  public Optional<String> getMcpApps() {
+    return sqrlConfig.asString(MCP_APPS_KEY).getOptional();
   }
 }

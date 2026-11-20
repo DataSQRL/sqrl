@@ -78,7 +78,6 @@ type SensorUpdatesResultOutput {
 enum _McpMethodType {
   NONE
   TOOL
-  RESOURCE
 }
 
 enum _RestMethodType {

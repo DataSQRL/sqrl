@@ -24,10 +24,12 @@ import com.datasqrl.server.operation.FunctionDefinition.Argument;
 import com.datasqrl.server.operation.FunctionDefinition.Parameters;
 import com.datasqrl.server.operation.GraphQLQuery;
 import com.datasqrl.server.operation.McpMethodType;
+import com.datasqrl.server.operation.McpVisibility;
 import com.datasqrl.server.operation.RestMethodType;
 import com.datasqrl.server.operation.ResultDefinition;
 import com.datasqrl.server.operation.ResultFormat;
 import com.google.common.base.Preconditions;
+import graphql.language.ArrayValue;
 import graphql.language.BooleanValue;
 import graphql.language.Comment;
 import graphql.language.Definition;
@@ -37,6 +39,7 @@ import graphql.language.EnumValue;
 import graphql.language.Field;
 import graphql.language.ListType;
 import graphql.language.NonNullType;
+import graphql.language.NullValue;
 import graphql.language.OperationDefinition;
 import graphql.language.OperationDefinition.Operation;
 import graphql.language.SelectionSet;
@@ -254,6 +257,9 @@ public class GraphQLSchemaConverter {
                 try {
                   ApiOperation op = convert(input.op(), input.fieldDefinition(), config, schema);
                   return Stream.of(op);
+                } catch (UnsupportedApiValueException e) {
+                  // An error in the schema, unlike a field that cannot be an operation
+                  throw e;
                 } catch (Exception e) {
                   log.warn(
                       "Operation could not be converted and is removed: {} ({})",
@@ -682,7 +688,7 @@ public class GraphQLSchemaConverter {
     if (args == null || args.isEmpty()) return;
     Object v;
     if ((v = args.get("mcp")) != null) {
-      builder.mcpMethod(McpMethodType.valueOf(v.toString().toUpperCase()));
+      builder.mcpMethod(toApiEnum(McpMethodType.class, "mcp", v));
     }
     if ((v = args.get("rest")) != null) {
       builder.restMethod(RestMethodType.valueOf(v.toString().toUpperCase()));
@@ -691,6 +697,43 @@ public class GraphQLSchemaConverter {
       builder.format(ResultFormat.valueOf(v.toString().toUpperCase()));
     }
     if ((v = args.get("uri")) != null) builder.uriTemplate(v.toString());
+    if ((v = args.get("appName")) != null) builder.appName(v.toString());
+    if ((v = args.get("visibility")) != null) builder.mcpVisibility(toMcpVisibility(v));
+  }
+
+  /** Returns the visibility in the order of the enum, without duplicates. */
+  private static List<McpVisibility> toMcpVisibility(Object value) {
+    // GraphQL accepts a single value for a list argument
+    List<?> values = value instanceof List<?> list ? list : List.of(value);
+    if (values.isEmpty()) {
+      throw new UnsupportedApiValueException(
+          "Empty @api(visibility: ...), supported values are %s"
+              .formatted(Arrays.toString(McpVisibility.values())));
+    }
+    return values.stream()
+        .map(element -> toApiEnum(McpVisibility.class, "visibility", element))
+        .distinct()
+        .sorted()
+        .toList();
+  }
+
+  private static <E extends Enum<E>> E toApiEnum(Class<E> type, String argument, Object value) {
+    var name = String.valueOf(value).toUpperCase();
+    return Arrays.stream(type.getEnumConstants())
+        .filter(constant -> constant.name().equals(name))
+        .findFirst()
+        .orElseThrow(
+            () ->
+                new UnsupportedApiValueException(
+                    "Unsupported value '%s' for @api(%s: ...), supported values are %s"
+                        .formatted(value, argument, Arrays.toString(type.getEnumConstants()))));
+  }
+
+  /** An argument of an {@code @api} directive has a value that is not supported. */
+  public static class UnsupportedApiValueException extends IllegalArgumentException {
+    public UnsupportedApiValueException(String message) {
+      super(message);
+    }
   }
 
   private Map<String, Object> toArgMap(List<Directive> directives) {
@@ -718,7 +761,10 @@ public class GraphQLSchemaConverter {
   }
 
   private Object convertLanguageValue(Value<?> value) {
-    if (value == null) return null;
+    if (value == null || value instanceof NullValue) return null;
+    if (value instanceof ArrayValue av) {
+      return av.getValues().stream().map(this::convertLanguageValue).toList();
+    }
     if (value instanceof BooleanValue bv) return bv.isValue();
     if (value instanceof StringValue sv) return sv.getValue();
     if (value instanceof EnumValue ev) return ev.getName();

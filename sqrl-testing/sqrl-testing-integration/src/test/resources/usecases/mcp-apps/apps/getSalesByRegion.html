@@ -1,0 +1,49 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Sales of one region</title>
+  </head>
+  <body>
+    <img alt="logo" src="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
+    <ul id="sales"></ul>
+    <script>
+      // The smallest MCP app: it initializes with the host and shows the result of its tool
+      const host = window.parent;
+
+      window.addEventListener("message", (event) => {
+        const message = event.data;
+        if (event.source !== host || !message) {
+          return;
+        }
+        if (message.id === 1 && message.result) {
+          // The host answered ui/initialize. It sends the tool's result once the app is ready
+          host.postMessage({ jsonrpc: "2.0", method: "ui/notifications/initialized" }, "*");
+        } else if (message.method === "ui/notifications/tool-result" && !message.params.isError) {
+          // DataSQRL returns the rows of a query as JSON in the text of the tool result
+          const sales = JSON.parse(message.params.content?.[0]?.text ?? "[]");
+          const entries = sales.map((sale) => {
+            const entry = document.createElement("li");
+            entry.textContent = `${sale.product}: ${sale.amount}`;
+            return entry;
+          });
+          document.getElementById("sales").replaceChildren(...entries);
+        }
+      });
+
+      host.postMessage(
+        {
+          jsonrpc: "2.0",
+          id: 1,
+          method: "ui/initialize",
+          params: {
+            appInfo: { name: "Sales of one region", version: "1.0.0" },
+            appCapabilities: {},
+            protocolVersion: "2026-01-26",
+          },
+        },
+        "*",
+      );
+    </script>
+  </body>
+</html>

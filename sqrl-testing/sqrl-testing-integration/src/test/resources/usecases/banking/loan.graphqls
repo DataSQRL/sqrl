@@ -186,7 +186,7 @@ type Query {
   LoanTypesStream(limit: Int = 10, offset: Int = 0): [LoanTypesStream!]
 }
 
-enum _McpMethodType { NONE, TOOL, RESOURCE }
+enum _McpMethodType { NONE, TOOL }
 enum _RestMethodType { NONE, GET, POST }
 directive @api(
   mcp: _McpMethodType,

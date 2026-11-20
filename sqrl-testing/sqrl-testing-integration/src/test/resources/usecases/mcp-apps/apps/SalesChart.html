@@ -1,0 +1,96 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Sales Chart</title>
+    <style>
+      body { font-family: sans-serif; }
+      button { font: inherit; }
+    </style>
+  </head>
+  <body>
+    <ul id="sales"></ul>
+    <ul id="products"></ul>
+    <script>
+      // An MCP app talks to its host with JSON-RPC messages over postMessage
+      const host = window.parent;
+      const pending = new Map();
+      let nextId = 1;
+
+      function request(method, params) {
+        const id = nextId++;
+        host.postMessage({ jsonrpc: "2.0", id, method, params }, "*");
+        return new Promise((resolve, reject) => pending.set(id, { resolve, reject }));
+      }
+
+      function notify(method, params = {}) {
+        host.postMessage({ jsonrpc: "2.0", method, params }, "*");
+      }
+
+      // DataSQRL returns the rows of a query as JSON in the text of the tool result
+      function rows(result) {
+        return result.isError ? [] : JSON.parse(result.content?.[0]?.text ?? "[]");
+      }
+
+      function show(listId, items) {
+        const entries = items.map((item) => {
+          const entry = document.createElement("li");
+          entry.append(item);
+          return entry;
+        });
+        document.getElementById(listId).replaceChildren(...entries);
+        // The host sizes the app's frame to what the app reports
+        const { width, height } = document.documentElement.getBoundingClientRect();
+        notify("ui/notifications/size-changed", {
+          width: Math.ceil(width),
+          height: Math.ceil(height),
+        });
+      }
+
+      function showSales(sales) {
+        show(
+          "sales",
+          sales.map((sale) => {
+            const button = document.createElement("button");
+            button.textContent = `${sale.region}: ${sale.amount}`;
+            button.onclick = () => showRegion(sale.region);
+            return button;
+          }),
+        );
+      }
+
+      // The drill-down calls the app-only tool GetRegionSales through the host
+      async function showRegion(region) {
+        const result = await request("tools/call", {
+          name: "GetRegionSales",
+          arguments: { region },
+        });
+        show(
+          "products",
+          rows(result).map((sale) => `${region} ${sale.product}: ${sale.amount}`),
+        );
+      }
+
+      window.addEventListener("message", (event) => {
+        const message = event.data;
+        if (event.source !== host || !message) {
+          return;
+        }
+        if (message.method === "ui/notifications/tool-result") {
+          showSales(rows(message.params));
+        } else if (!message.method && pending.has(message.id)) {
+          const { resolve, reject } = pending.get(message.id);
+          pending.delete(message.id);
+          message.error ? reject(new Error(message.error.message)) : resolve(message.result);
+        }
+      });
+
+      // The host sends the tool's input and result only after this handshake
+      request("ui/initialize", {
+        appInfo: { name: "Sales Chart", version: "1.0.0" },
+        appCapabilities: {},
+        protocolVersion: "2026-01-26",
+      }).then(() => notify("ui/notifications/initialized"));
+    </script>
+  </body>
+</html>

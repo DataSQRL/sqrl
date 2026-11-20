@@ -179,13 +179,17 @@
                 },
                 "openapi": {
                   "type": "string"
+                },
+                "mcp-apps": {
+                  "type": "string"
                 }
               },
               "additionalProperties": false,
               "anyOf": [
                 { "required": ["schema"] },
                 { "required": ["operations"] },
-                { "required": ["openapi"] }
+                { "required": ["openapi"] },
+                { "required": ["mcp-apps"] }
               ]
             }
           },

@@ -39,6 +39,7 @@ import io.vertx.ext.web.RoutingContext;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -53,12 +54,18 @@ public abstract class AbstractBridgeVerticle extends AbstractVerticle {
   protected static final String JSON_ERROR = "error";
   protected static final String JSON_MESSAGE = "message";
 
+  private static final ObjectMapper SCHEMA_MAPPER =
+      JsonUtils.MAPPER.copy().setDefaultPropertyInclusion(JsonInclude.Include.NON_NULL);
+
   protected final Router router;
   protected final ServerConfig config;
   protected final String modelVersion;
   protected final RootGraphQLModel model;
   protected final List<AuthenticationProvider> authProviders;
   protected final GraphQLServerVerticle graphQLServerVerticle;
+
+  /** The compiled parameter schema of each operation, by operation id. */
+  private final Map<String, Schema> parameterSchemas = new ConcurrentHashMap<>();
 
   protected void handleError(
       Throwable err, RoutingContext ctx, int statusCode, String errorMessage) {
@@ -143,23 +150,11 @@ public abstract class AbstractBridgeVerticle extends AbstractVerticle {
     if (parameters == null) {
       return; // No validation required
     }
-    final JsonNode arguments;
-    final Schema schema;
-    try {
-      // Build a JSON Schema from the parameters definition
-      var schemaText = getSchemaMapper().writeValueAsString(parameters);
-      var schemaRegistry = SchemaRegistry.withDefaultDialect(Dialects.getDraft202012());
-      schema = schemaRegistry.getSchema(schemaText);
-
-      // Convert the collected variables to a JsonNode
-      if (variables == null || variables.isEmpty()) {
-        arguments = JsonUtils.MAPPER.readTree("{}");
-      } else {
-        arguments = JsonUtils.MAPPER.valueToTree(variables);
-      }
-    } catch (JsonProcessingException e) {
-      throw new ValidationException("Could not parse parameter JSON:" + e.getMessage());
-    }
+    var schema = parameterSchema(operation);
+    JsonNode arguments =
+        variables == null || variables.isEmpty()
+            ? JsonUtils.MAPPER.createObjectNode()
+            : JsonUtils.MAPPER.valueToTree(variables);
 
     // Validate against the schema
     var schemaErrors = schema.validate(arguments);
@@ -171,8 +166,30 @@ public abstract class AbstractBridgeVerticle extends AbstractVerticle {
     }
   }
 
+  /**
+   * Returns the JSON Schema of the operation's parameters, compiled on first use and then reused,
+   * since compiling it is much more expensive than validating against it.
+   */
+  Schema parameterSchema(ApiOperation operation) {
+    return parameterSchemas.computeIfAbsent(
+        operation.getId(), id -> compileSchema(operation.getFunction().getParameters()));
+  }
+
+  private static Schema compileSchema(FunctionDefinition.Parameters parameters) {
+    final Schema schema;
+    try {
+      var schemaRegistry = SchemaRegistry.withDefaultDialect(Dialects.getDraft202012());
+      schema = schemaRegistry.getSchema(SCHEMA_MAPPER.writeValueAsString(parameters));
+    } catch (JsonProcessingException e) {
+      throw new ValidationException("Could not parse parameter JSON:" + e.getMessage());
+    }
+    // Load all validators now, so that concurrent validations don't initialize them lazily
+    schema.initializeValidators();
+    return schema;
+  }
+
   protected ObjectMapper getSchemaMapper() {
-    return JsonUtils.MAPPER.copy().setDefaultPropertyInclusion(JsonInclude.Include.NON_NULL);
+    return SCHEMA_MAPPER;
   }
 
   protected Future<ExecutionResult> executeGraphQLAsync(

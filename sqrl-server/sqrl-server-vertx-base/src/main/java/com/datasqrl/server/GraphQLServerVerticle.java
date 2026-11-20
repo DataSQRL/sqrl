@@ -17,6 +17,7 @@ package com.datasqrl.server;
 
 import static com.datasqrl.server.config.ServerConfigUtil.createVersionedGraphiQLHandlerOptions;
 
+import com.datasqrl.server.auth.AuthHandlerFactory;
 import com.datasqrl.server.auth.AuthMetadataReader;
 import com.datasqrl.server.auth.JwtFailureHandler;
 import com.datasqrl.server.config.ServerConfig;
@@ -44,11 +45,7 @@ import graphql.execution.instrumentation.Instrumentation;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
 import io.vertx.ext.auth.authentication.AuthenticationProvider;
-import io.vertx.ext.auth.jwt.JWTAuth;
 import io.vertx.ext.web.Router;
-import io.vertx.ext.web.handler.AuthenticationHandler;
-import io.vertx.ext.web.handler.ChainAuthHandler;
-import io.vertx.ext.web.handler.JWTAuthHandler;
 import io.vertx.ext.web.handler.graphql.GraphQLHandler;
 import io.vertx.ext.web.handler.graphql.GraphiQLHandler;
 import io.vertx.ext.web.handler.graphql.ws.GraphQLWSHandler;
@@ -143,7 +140,7 @@ public class GraphQLServerVerticle extends AbstractVerticle {
           this.config.getServletConfig().getGraphQLEndpoint(modelVersion));
       // Required for adding auth on ws handler
       System.setProperty("io.vertx.web.router.setup.lenient", "true");
-      handler.handler(createChainAuthHandler());
+      handler.handler(AuthHandlerFactory.create(authProviders));
       handler.failureHandler(new JwtFailureHandler());
     }
 
@@ -160,30 +157,6 @@ public class GraphQLServerVerticle extends AbstractVerticle {
     }
 
     return readers.build();
-  }
-
-  /**
-   * Creates a chained authentication handler that accepts any of the configured auth methods. Uses
-   * ChainAuthHandler.any() so a request is authenticated if ANY provider succeeds.
-   */
-  private AuthenticationHandler createChainAuthHandler() {
-    if (authProviders.size() == 1) {
-      return createAuthHandler(authProviders.get(0));
-    }
-
-    var chain = ChainAuthHandler.any();
-    for (var provider : authProviders) {
-      chain.add(createAuthHandler(provider));
-    }
-    return chain;
-  }
-
-  private AuthenticationHandler createAuthHandler(AuthenticationProvider auth) {
-    if (auth instanceof JWTAuth jwtAuth) {
-      return JWTAuthHandler.create(jwtAuth);
-    } else {
-      throw new IllegalArgumentException("Unsupported auth provider type: " + auth.getClass());
-    }
   }
 
   public GraphQL createGraphQL(

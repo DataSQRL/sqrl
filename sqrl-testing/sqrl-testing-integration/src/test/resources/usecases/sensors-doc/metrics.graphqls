@@ -54,7 +54,6 @@ type Subscription {
 enum _McpMethodType {
   NONE
   TOOL
-  RESOURCE
 }
 
 enum _RestMethodType {

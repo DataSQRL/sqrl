@@ -52,11 +52,12 @@ Maps to GraphQL query `Customer(limit: Int = 10, offset: Int = 0): [Customer!]` 
 - `@api(mcp: NONE)` on a query or mutation field omits its generated operation from MCP
 - Results follow relationships in GraphQL up to configured `max-result-depth`
 - Mutation input types are followed to the leaf input types to construct the expected request payload. 
+- MCP apps (interactive HTML UIs for MCP tools) are self-contained `.html` files in the directory set by `script.api.<version>.mcp-apps`. A tool is linked to the app with its name, or to the one its `appName` names; names match regardless of case (see [interface.md](interface.md))
 - MCP is served over Streamable HTTP at `/<version>/mcp` (e.g. `/v1/mcp`) and supports MCP protocol versions `2024-11-05`, `2025-03-26`, `2025-06-18`, and `2025-11-25`. The server echoes the client's requested version if supported, otherwise it responds with `2025-11-25` (see [interface.md](interface.md)).
 
 ### Custom Operations
 
-Defined in `.graphql` files and configured in `package.json` under `script.operations`, or under `script.api.<version>.operations` for a versioned API.
+Defined in `.graphql` files and configured in `package.json` under `script.api.<version>.operations`. The top-level `script.operations` is deprecated.
 
 ```graphql
 # Returns up to 10 people of the given age.
@@ -68,8 +69,10 @@ query GetPersonByAge($age: Int!)
 
 **`@api` Directive:**
 - `rest`: `NONE` | `GET` | `POST` (HTTP method or disable)
-- `mcp`: `NONE` | `TOOL` | `RESOURCE` (MCP exposure type)
+- `mcp`: `NONE` | `TOOL` (not exposed, or MCP tool)
 - `uri`: RFC 6570 template (args in template = path params, others = payload requiring POST)
+- `appName`: links the tool to the MCP app of that name; `appName: ""` links none (see MCP Apps in [interface.md](interface.md))
+- `visibility`: `[MODEL]` | `[APP]` | `[MODEL, APP]` (who an MCP tool is for when MCP apps are used; default both; applied by the host, not an access restriction)
 
 **Rules:**
 - Operation name = MCP tool name = REST endpoint name (must be unique)
@@ -83,7 +86,7 @@ API consumers read these descriptions in GraphQL, REST (OpenAPI) and MCP. Each o
 |---|---|
 | Generated schema | The SQRL `/** ... */` doc-strings, with their `# Columns:` and `# Arguments:` sections (see `/implement-sqrl`, Comments & Doc-strings) |
 | Custom schema | The `"..."` or `"""..."""` descriptions in the schema file. A `#` line above a type, field, argument, input field or enum value without a `"..."` description also becomes its description. The SQRL doc-strings do not reach the API |
-| Custom operation | All `#` lines above the operation, back to the end of the previous operation or to the top of the file, joined with spaces into one text. So a `#` note between two operations, or in the file header, becomes part of the next operation's description. They describe the REST operation and the MCP tool or resource. A `#` line above a variable describes that argument in MCP, and in the REST request body of a `POST` operation. A `"""` description before an operation fails the compile with `Invalid syntax` |
+| Custom operation | All `#` lines above the operation, back to the end of the previous operation or to the top of the file, joined with spaces into one text. So a `#` note between two operations, or in the file header, becomes part of the next operation's description. They describe the REST operation and the MCP tool. A `#` line above a variable describes that argument in MCP, and in the REST request body of a `POST` operation. A `"""` description before an operation fails the compile with `Invalid syntax` |
 
 Write every description for the API consumer. Describe each field, argument, input field and enum value whose name does not show its full meaning. For a mutation field in a custom schema, state what it creates or changes and what it returns.
 

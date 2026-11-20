@@ -15,63 +15,78 @@
  */
 package com.datasqrl.server;
 
+import com.datasqrl.server.auth.AuthHandlerFactory;
 import com.datasqrl.server.auth.OAuthFailureHandler;
 import com.datasqrl.server.config.ServerConfig;
 import com.datasqrl.server.graphql.RootGraphQLModel;
+import com.datasqrl.server.mcp.VertxMcpTransport;
 import com.datasqrl.server.operation.ApiOperation;
-import com.datasqrl.server.operation.McpMethodType;
+import com.datasqrl.server.operation.McpApp;
+import com.datasqrl.server.operation.McpVisibility;
 import com.datasqrl.util.JsonUtils;
 import com.datasqrl.util.ProjectConstants;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import graphql.ExecutionResult;
 import graphql.language.OperationDefinition.Operation;
-import io.vertx.core.Future;
+import io.modelcontextprotocol.common.McpTransportContext;
+import io.modelcontextprotocol.json.jackson2.JacksonMcpJsonMapper;
+import io.modelcontextprotocol.server.McpServer;
+import io.modelcontextprotocol.server.McpStatelessAsyncServer;
+import io.modelcontextprotocol.server.McpStatelessServerFeatures.AsyncResourceSpecification;
+import io.modelcontextprotocol.server.McpStatelessServerFeatures.AsyncToolSpecification;
+import io.modelcontextprotocol.spec.McpSchema;
+import io.modelcontextprotocol.spec.McpSchema.CallToolRequest;
+import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
+import io.modelcontextprotocol.spec.McpSchema.Content;
+import io.modelcontextprotocol.spec.McpSchema.TextContent;
 import io.vertx.core.Promise;
-import io.vertx.core.http.HttpHeaders;
-import io.vertx.core.http.HttpServerResponse;
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.authentication.AuthenticationProvider;
-import io.vertx.ext.auth.jwt.JWTAuth;
-import io.vertx.ext.auth.oauth2.OAuth2Auth;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
-import io.vertx.ext.web.handler.AuthenticationHandler;
-import io.vertx.ext.web.handler.ChainAuthHandler;
-import io.vertx.ext.web.handler.JWTAuthHandler;
-import io.vertx.ext.web.handler.OAuth2AuthHandler;
 import java.io.IOException;
-import java.util.Collection;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import reactor.core.publisher.Mono;
 
+/**
+ * Exposes the operations that are MCP tools over the Model Context Protocol, and executes each tool
+ * call as its GraphQL operation. The protocol is handled by the stateless server of the MCP Java
+ * SDK, which {@link VertxMcpTransport} serves on the MCP endpoint.
+ *
+ * <p>With MCP Apps support, it also serves the MCP apps of the model as resources, from their files
+ * in the plan directory, and links the tools to them as the MCP Apps extension ({@value
+ * McpApp#EXTENSION_ID}) defines.
+ */
 @Slf4j
 public class McpBridgeVerticle extends AbstractBridgeVerticle {
 
-  private static final String JSONRPC_VERSION = "2.0";
-  // Supported MCP protocol versions, ordered from oldest to latest
-  static final List<String> PROTOCOL_VERSIONS =
-      List.of("2024-11-05", "2025-03-26", "2025-06-18", "2025-11-25");
-  static final String LATEST_PROTOCOL_VERSION = PROTOCOL_VERSIONS.get(PROTOCOL_VERSIONS.size() - 1);
-  private static final String CT_JSON = "application/json";
-  private static final String CT_SSE = "text/event-stream";
+  private static final String SERVER_NAME = "datasqrl-mcp-server";
 
-  private static final String RESOURCES_RESULT_KEY = "resources";
-  private static final String RESOURCE_TEMPLATES_RESULT_KEY = "resourceTemplates";
+  private static final TypeReference<Map<String, Object>> MAP_TYPE = new TypeReference<>() {};
 
-  private final ConcurrentHashMap<String, SseConnection> sseConnections = new ConcurrentHashMap<>();
+  /** The visibility of a tool that does not set one: the default of the MCP Apps extension. */
+  private static final List<McpVisibility> DEFAULT_VISIBILITY =
+      List.of(McpVisibility.MODEL, McpVisibility.APP);
 
-  private final Map<String, ApiOperation> tools;
-  private final JsonObject toolsList;
-  private final List<ApiOperation> resources;
-  private final JsonObject resourceList;
-  private final JsonObject resourceTemplatesList;
+  private final List<ApiOperation> tools;
+
+  /** The MCP apps by name, or null if the model has no MCP Apps support. */
+  private final Map<String, McpApp> apps;
+
+  /** The plan directory, which has the files of the MCP apps. */
+  private final Path planDir;
+
+  private McpStatelessAsyncServer mcpServer;
 
   public McpBridgeVerticle(
       Router router,
@@ -79,628 +94,208 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
       String modelVersion,
       RootGraphQLModel model,
       List<AuthenticationProvider> authProviders,
-      GraphQLServerVerticle graphQLServerVerticle) {
+      GraphQLServerVerticle graphQLServerVerticle,
+      Path planDir) {
     super(router, config, modelVersion, model, authProviders, graphQLServerVerticle);
-    this.tools =
-        model.getOperations().stream()
-            .filter(op -> op.getMcpMethod() == McpMethodType.TOOL)
-            .collect(Collectors.toMap(ApiOperation::getId, Function.identity()));
-    this.toolsList = getToolsList(this.tools.values());
-    this.resources =
-        model.getOperations().stream()
-            .filter(op -> op.getMcpMethod() == McpMethodType.RESOURCE)
-            .toList();
-    this.resourceList =
-        getResourceList(
-            RESOURCES_RESULT_KEY,
-            resources.stream()
-                .filter(op -> op.getFunction().getParameters().getProperties().isEmpty())
-                .collect(Collectors.toList()));
-    this.resourceTemplatesList =
-        getResourceList(
-            RESOURCE_TEMPLATES_RESULT_KEY,
-            resources.stream()
-                .filter(op -> !op.getFunction().getParameters().getProperties().isEmpty())
-                .collect(Collectors.toList()));
+    this.planDir = planDir;
+    this.tools = model.getOperations().stream().filter(ApiOperation::isMcpEndpoint).toList();
+    this.apps =
+        model.getMcpApps() == null
+            ? null
+            : model.getMcpApps().stream()
+                .collect(
+                    Collectors.toMap(
+                        McpApp::name,
+                        Function.identity(),
+                        (first, second) -> first,
+                        LinkedHashMap::new));
   }
 
   @Override
   public void start(Promise<Void> startPromise) {
-    var mcpRoutePrefix = config.getServletConfig().getMcpEndpoint(modelVersion);
-    log.info("Starting McpBridgeVerticle with endpoint prefix: {}", mcpRoutePrefix);
-    log.info("Available tools: {}", tools.keySet());
-    log.info("Available resources: {}", resources.size());
-
-    // Debug: Log ALL incoming requests to help identify what the MCP client is doing
-    router
-        .route("/*")
-        .handler(
-            ctx -> {
-              String path = ctx.request().path();
-              if (path.contains("/mcp") || path.contains("/v1")) {
-                log.info(
-                    "Request received: {} {} - Headers: {}",
-                    ctx.request().method(),
-                    path,
-                    ctx.request().headers().names());
-              }
-              ctx.next();
-            });
-
-    // Add CORS support for MCP endpoint
-    router
-        .route(mcpRoutePrefix + "*")
-        .handler(
-            ctx -> {
-              log.info("MCP route matched: {} {}", ctx.request().method(), ctx.request().path());
-              ctx.response()
-                  .putHeader("Access-Control-Allow-Origin", "*")
-                  .putHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-                  .putHeader("Access-Control-Allow-Headers", "Content-Type, Accept, Authorization");
-              ctx.next();
-            });
-
-    // Handle preflight OPTIONS requests
-    router
-        .options(mcpRoutePrefix)
-        .handler(
-            ctx -> {
-              log.debug("Handling OPTIONS request for MCP endpoint");
-              ctx.response().setStatusCode(204).end();
-            });
-
-    // Add a catch-all GET handler for MCP endpoint to help with debugging
-    router
-        .get(mcpRoutePrefix)
-        .handler(
-            ctx -> {
-              log.info(
-                  "Received GET request to MCP endpoint - this might be a client capability check");
-              ctx.response()
-                  .setStatusCode(405)
-                  .putHeader("Content-Type", "application/json")
-                  .putHeader("Allow", "POST, OPTIONS")
-                  .end(
-                      "{\"jsonrpc\":\"2.0\",\"error\":{\"code\":-32601,\"message\":\"Method not allowed. Use POST for MCP requests.\"}}");
-            });
-
-    // MCP endpoint - handles POST for messages
-    var postRoute = router.post(mcpRoutePrefix);
-    var authFailureHandler =
-        new OAuthFailureHandler(config.getProtectedResourceMetadata().orElse(null));
-
-    // Add JWT/OAuth auth if configured
-    if (!authProviders.isEmpty()) {
-      log.info(
-          "Applying {} authentication provider(s) to MCP endpoint: {}",
-          authProviders.size(),
-          mcpRoutePrefix);
-      postRoute.handler(createChainAuthHandler());
-      postRoute.failureHandler(authFailureHandler);
+    var endpoint = config.getServletConfig().getMcpEndpoint(modelVersion);
+    var jsonMapper = new JacksonMcpJsonMapper(new ObjectMapper());
+    var transport = new VertxMcpTransport(jsonMapper);
+    try {
+      var capabilities = McpSchema.ServerCapabilities.builder().tools(false);
+      var server =
+          McpServer.async(transport)
+              .jsonMapper(jsonMapper)
+              .serverInfo(SERVER_NAME, ProjectConstants.SQRL_VERSION)
+              // The bridge validates the arguments, once it has removed optional nulls
+              .validateToolInputs(false)
+              .tools(tools.stream().map(this::toolSpecification).toList());
+      if (apps != null) {
+        capabilities
+            .resources(false, false)
+            .extensions(
+                Map.of(McpApp.EXTENSION_ID, Map.of("mimeTypes", List.of(McpApp.MIME_TYPE))));
+        server.resources(apps.values().stream().map(this::resourceSpecification).toList());
+      }
+      mcpServer = server.capabilities(capabilities.build()).build();
+    } catch (RuntimeException e) {
+      startPromise.fail(e);
+      return;
     }
 
-    postRoute.handler(
-        ctx -> {
-          log.debug("Received POST request to MCP endpoint: {}", mcpRoutePrefix);
-          try {
-            var payload = JsonUtils.MAPPER.readTree(ctx.body().buffer().getBytes());
-            log.debug("Parsed payload: {}", payload);
-            processIncomingMessages(ctx, payload);
-          } catch (IOException e) { // TODO: improve error handling
-            log.error("Failed to parse MCP request payload", e);
-            ctx.response()
-                .setStatusCode(400)
-                .putHeader("Content-Type", "application/json")
-                .end(
-                    "{\"jsonrpc\":\"2.0\",\"error\":{\"code\":-32700,\"message\":\"Parse error\"}}");
-          }
-        });
-
-    // SSE endpoint for server-to-client streaming
-    var sseRoute = router.get(mcpRoutePrefix + "/sse");
-
-    // Add JWT/OAuth auth to SSE endpoint if configured
+    var postRoute = router.post(endpoint);
     if (!authProviders.isEmpty()) {
-      log.info(
-          "Applying {} authentication provider(s) to MCP SSE endpoint: {}/sse",
-          authProviders.size(),
-          mcpRoutePrefix);
-      sseRoute.handler(createChainAuthHandler());
-      sseRoute.failureHandler(authFailureHandler);
+      postRoute.handler(AuthHandlerFactory.create(authProviders));
+      postRoute.failureHandler(
+          new OAuthFailureHandler(config.getProtectedResourceMetadata().orElse(null)));
     }
+    postRoute.handler(transport::handlePost);
+    router.get(endpoint).handler(transport::handleGet);
 
-    sseRoute.handler(
-        ctx -> {
-          log.info("Received SSE connection request to: {}/sse", mcpRoutePrefix);
-          if (!accepts(ctx, CT_SSE)) {
-            log.warn("SSE request rejected - client doesn't accept text/event-stream");
-            ctx.response().setStatusCode(406).end();
-            return;
-          }
-          var response = ctx.response();
-
-          // Set up SSE headers
-          response
-              .putHeader("Content-Type", "text/event-stream")
-              .putHeader("Cache-Control", "no-cache")
-              .putHeader("Connection", "keep-alive")
-              .putHeader("Access-Control-Allow-Origin", "*")
-              .setChunked(true);
-
-          var connectionId = UUID.randomUUID().toString();
-          var connection = new SseConnection(connectionId, response);
-          sseConnections.put(connectionId, connection);
-          log.info("New SSE connection established: {}", connectionId);
-
-          // Send initial connection event
-          sendSseMessage(
-              connection, "connected", new JsonObject().put("connectionId", connectionId));
-
-          // Send heartbeat every 30 seconds
-          var timerId =
-              vertx.setPeriodic(
-                  30000,
-                  id -> {
-                    if (sseConnections.containsKey(connectionId)) {
-                      sendSseMessage(
-                          connection,
-                          "heartbeat",
-                          new JsonObject().put("timestamp", System.currentTimeMillis()));
-                    }
-                  });
-
-          // Handle connection close
-          response.closeHandler(
-              v -> {
-                vertx.cancelTimer(timerId);
-                sseConnections.remove(connectionId);
-                log.info("SSE connection closed: {}", connectionId);
-              });
-
-          // Handle client disconnect
-          response.exceptionHandler(
-              throwable -> {
-                vertx.cancelTimer(timerId);
-                sseConnections.remove(connectionId);
-                log.warn("SSE connection error: {} - {}", connectionId, throwable.getMessage());
-              });
-        });
+    log.info(
+        "MCP endpoint {} serves {} tool(s) and {} app(s) with {} authentication provider(s)",
+        endpoint,
+        tools.size(),
+        apps == null ? 0 : apps.size(),
+        authProviders.size());
     startPromise.complete();
   }
 
-  private void sendSseMessage(SseConnection connection, String event, JsonObject data) {
+  @Override
+  public void stop() {
+    if (mcpServer != null) {
+      mcpServer.close();
+    }
+  }
+
+  private AsyncToolSpecification toolSpecification(ApiOperation operation) {
+    var function = operation.getFunction();
+    var operationType = operation.getApiQuery().operationType();
+    var description = function.getDescription();
+    if (description == null) {
+      description =
+          "Invokes %s %s".formatted(function.getName(), operationType.name().toLowerCase());
+    }
+    Map<String, Object> inputSchema =
+        function.getParameters() == null
+            ? Map.of("type", "object")
+            : getSchemaMapper().convertValue(function.getParameters(), MAP_TYPE);
+
+    var tool =
+        McpSchema.Tool.builder(operation.getName(), inputSchema)
+            .description(description)
+            .annotations(
+                McpSchema.ToolAnnotations.builder()
+                    .readOnlyHint(operationType != Operation.MUTATION)
+                    .build())
+            .meta(toolMeta(operation))
+            .build();
+    return new AsyncToolSpecification(
+        tool, (transportContext, request) -> callTool(transportContext, operation, request));
+  }
+
+  /**
+   * Returns the {@code _meta} of the tool with the MCP Apps fields: the {@code resourceUri} of its
+   * app, and its {@code visibility}. Without MCP Apps support, only a tool that sets a visibility
+   * has them.
+   */
+  private Map<String, Object> toolMeta(ApiOperation operation) {
+    var ui = new LinkedHashMap<String, Object>();
+    if (operation.getAppName() != null && apps != null) {
+      var app = apps.get(operation.getAppName());
+      if (app != null) {
+        ui.put("resourceUri", app.uri());
+      } else {
+        log.warn(
+            "MCP tool {} is linked to the unknown app {}",
+            operation.getName(),
+            operation.getAppName());
+      }
+    }
+    var visibility = operation.getMcpVisibility();
+    if (visibility == null && apps != null) {
+      visibility = DEFAULT_VISIBILITY;
+    }
+    if (visibility != null) {
+      ui.put(
+          "visibility",
+          visibility.stream().map(value -> value.name().toLowerCase(Locale.ROOT)).toList());
+    }
+    return ui.isEmpty() ? null : Map.of("ui", ui);
+  }
+
+  /** Serves the app as a resource, with the content of its file, which is read once. */
+  private AsyncResourceSpecification resourceSpecification(McpApp app) {
+    var resource =
+        McpSchema.Resource.builder(app.uri(), app.name()).mimeType(app.mimeType()).build();
+
+    var textContent =
+        McpSchema.TextResourceContents.builder(app.uri(), readFile(app))
+            .mimeType(app.mimeType())
+            .build();
+
+    var contents = McpSchema.ReadResourceResult.builder(List.of(textContent)).build();
+
+    return new AsyncResourceSpecification(
+        resource, (transportContext, request) -> Mono.just(contents));
+  }
+
+  private String readFile(McpApp app) {
+    var file = planDir.resolve(app.file());
     try {
-      String message = String.format("event: %s\ndata: %s\n\n", event, data.encode());
-      connection.response.write(message);
-    } catch (Exception e) {
-      log.error("Error sending SSE message: {}", e.getMessage());
-      sseConnections.remove(connection.id);
+      return Files.readString(file);
+    } catch (IOException e) {
+      throw new UncheckedIOException(
+          "Could not read the file %s of the MCP app %s".formatted(file, app.name()), e);
     }
   }
 
-  // Broadcast a message to all connected SSE clients
-  public void broadcast(String event, JsonObject data) {
-    sseConnections.values().forEach(connection -> sendSseMessage(connection, event, data));
+  private Mono<CallToolResult> callTool(
+      McpTransportContext transportContext, ApiOperation operation, CallToolRequest request) {
+
+    var ctx = (RoutingContext) transportContext.get(VertxMcpTransport.ROUTING_CONTEXT_KEY);
+    // A call of a tool without required arguments may leave out the arguments
+    var arguments = request.arguments() == null ? Map.<String, Object>of() : request.arguments();
+
+    return Mono.defer(
+            () ->
+                Mono.fromCompletionStage(
+                    bridgeRequestToGraphQL(ctx, operation, arguments).toCompletionStage()))
+        .map(result -> toToolResult(result, operation))
+        .onErrorResume(error -> Mono.just(toErrorResult(operation, error)));
   }
 
-  public Future<JsonObject> handleRequest(RoutingContext ctx, JsonNode request) {
-    var method = request.get("method").asText();
-    var id = request.get("id");
-    var params = request.get("params");
-
-    log.info(
-        "Handling MCP request - method: {}, id: {}", method, id != null ? id.asText() : "null");
-    log.debug("Request params: {}", params);
-
-    // Handle notifications (messages without id) - these should not return responses
-    if (id == null) {
-      log.debug("Processing notification for method: {}", method);
-      return handleNotification(method, params);
+  /** Returns the GraphQL errors, or else the data, as the tool result. */
+  private static CallToolResult toToolResult(ExecutionResult result, ApiOperation operation) {
+    if (!result.getErrors().isEmpty()) {
+      var errors =
+          result.getErrors().stream()
+              .<Content>map(
+                  error ->
+                      TextContent.builder(
+                              "Tool Error[" + error.getPath() + "]: " + error.getMessage())
+                          .build())
+              .toList();
+      return CallToolResult.builder().content(errors).isError(true).build();
     }
 
+    final String data;
     try {
-      Future<JsonObject> resultFuture =
-          switch (method) {
-            case "initialize" -> {
-              log.info("Handling initialize request");
-              yield Future.succeededFuture(handleInitialize(params));
-            }
-            case "tools/list" -> {
-              log.info("Handling tools/list request - returning {} tools", tools.size());
-              yield Future.succeededFuture(toolsList);
-            }
-            case "tools/call" -> {
-              log.info("Handling tools/call request");
-              yield handleCallTool(ctx, params);
-            }
-            case "resources/list" -> {
-              log.info(
-                  "Handling resources/list request - returning {} resources", resources.size());
-              yield Future.succeededFuture(resourceList);
-            }
-            case "resources/templates/list" -> {
-              log.info("Handling resources/templates/list request");
-              yield Future.succeededFuture(resourceTemplatesList);
-            }
-            case "resources/read" -> {
-              log.info("Handling resources/read request");
-              yield handleReadResource(ctx, params);
-            }
-            case "ping" -> {
-              log.debug("Handling ping request");
-              yield Future.succeededFuture(new JsonObject());
-            }
-            default -> {
-              log.warn("Unknown MCP method: {}", method);
-              yield Future.failedFuture(new McpException(-32601, "Method not found"));
-            }
-          };
-
-      return resultFuture
-          .map(
-              result -> {
-                log.debug("Request {} completed successfully", method);
-                return createResponse(id, result);
-              })
-          .recover(
-              error -> {
-                log.error(
-                    "Error handling MCP request method '{}': {}",
-                    method,
-                    error.getMessage(),
-                    error);
-                var errorResponse =
-                    error instanceof McpException e
-                        ? createErrorResponse(id, e.code, e.getMessage())
-                        : createErrorResponse(id, -32603, "Internal error: " + error.getMessage());
-
-                // Enhanced debugging for tool call errors
-                if ("tools/call".equals(method)) {
-                  log.error("Tool call error response: {}", errorResponse.encode());
-                }
-
-                return Future.succeededFuture(errorResponse);
-              });
-    } catch (ValidationException e) {
-      var json = new JsonObject();
-      json.put(
-          "content",
-          List.of(
-              new JsonObject()
-                  .put("type", "text")
-                  .put("text", "Validation error: " + e.getMessage())));
-      json.put("isError", true);
-      var response = createResponse(id, json);
-      return Future.succeededFuture(response);
-    } catch (Exception e) {
-      var errorResponse = createErrorResponse(id, -32603, "Internal error: " + e.getMessage());
-      log.error("Request error: {}", errorResponse.encode());
-      return Future.succeededFuture(errorResponse);
+      data = JsonUtils.MAPPER.writeValueAsString(getExecutionData(result, operation));
+    } catch (JsonProcessingException e) {
+      throw new IllegalStateException("Could not serialize the result: " + e.getMessage(), e);
     }
+
+    return CallToolResult.builder().addTextContent(data).isError(false).build();
   }
 
   /**
-   * Handle notifications (messages without id field). Notifications should not return responses.
+   * Returns a failed tool call as a tool result, not a protocol error, so that the model sees why
+   * it failed.
    */
-  private Future<JsonObject> handleNotification(String method, JsonNode params) {
-    switch (method) {
-      case "notifications/initialized":
-        // Handle the initialized notification - just log it
-        log.info("Client initialized notification received");
-        break;
-      case "notifications/cancelled":
-        // Handle cancellation notifications if needed
-        log.info("Request cancelled notification received");
-        break;
-      default:
-        // Unknown notifications are ignored (as per JSON-RPC spec)
-        log.warn("Unknown notification: {}", method);
-        break;
-    }
-
-    // Return null to indicate no response should be sent for notifications
-    return Future.succeededFuture(null);
-  }
-
-  private JsonObject handleInitialize(JsonNode params) {
-    var protocolVersion = negotiateProtocolVersion(params);
-    log.info("Initializing MCP server with protocol version: {}", protocolVersion);
-    var capabilities =
-        new JsonObject()
-            .put("tools", new JsonObject())
-            .put("resources", new JsonObject().put("subscribe", false).put("listChanged", false));
-
-    var serverInfo =
-        new JsonObject()
-            .put("name", "datasqrl-mcp-server")
-            .put("version", ProjectConstants.SQRL_VERSION);
-
-    var response =
-        new JsonObject()
-            .put("protocolVersion", protocolVersion)
-            .put("capabilities", capabilities)
-            .put("serverInfo", serverInfo);
-
-    log.info("Initialize response: {}", response.encodePrettily());
-    return response;
-  }
-
-  /**
-   * Echoes the protocol version requested by the client if it is supported, otherwise falls back to
-   * the latest supported version, as mandated by the MCP lifecycle specification.
-   */
-  static String negotiateProtocolVersion(JsonNode params) {
-    var requested = params == null ? null : params.path("protocolVersion").asText(null);
-    if (requested != null && PROTOCOL_VERSIONS.contains(requested)) {
-      return requested;
-    }
-    return LATEST_PROTOCOL_VERSION;
-  }
-
-  /**
-   * Dummy implementation for now
-   *
-   * @param params
-   * @return
-   */
-  private Future<JsonObject> handleReadResource(RoutingContext ctx, JsonNode params) {
-    var uri = params.get("uri").asText();
-    if (uri == null) {
-      return Future.failedFuture(new McpException(-32602, "URI parameter required"));
-    }
-    if (uri.isBlank())
-      return Future.failedFuture(new McpException(-32602, "Resource not found: " + uri));
-    var contents =
-        new JsonArray()
-            .add(
-                new JsonObject()
-                    .put("uri", uri)
-                    .put("mimeType", "application/json")
-                    .put("text", new JsonObject().encodePrettily()));
-    return Future.succeededFuture(new JsonObject().put("contents", contents));
-  }
-
-  private Future<JsonObject> handleCallTool(RoutingContext ctx, JsonNode params) {
-    var toolName = params.get("name").asText();
-    var arguments = params.get("arguments");
-
-    var tool = tools.get(toolName);
-    if (tool == null) {
-      return Future.failedFuture(new McpException(-32602, "Tool not found: " + toolName));
-    }
-    var variables =
-        JsonUtils.MAPPER.<Map<String, Object>>convertValue(arguments, new TypeReference<>() {});
-    return bridgeRequestToGraphQL(ctx, tool, variables)
-        .map(
-            executionResult -> {
-              var json = new JsonObject();
-              if (!executionResult.getErrors().isEmpty()) {
-                json.put(
-                    "content",
-                    executionResult.getErrors().stream()
-                        .map(
-                            err ->
-                                new JsonObject()
-                                    .put("type", "text")
-                                    .put(
-                                        "text",
-                                        "Tool Error[" + err.getPath() + "]: " + err.getMessage()))
-                        .toList());
-                json.put("isError", true);
-              } else {
-                var result = getExecutionData(executionResult, tool);
-                try {
-                  json.put(
-                      "content",
-                      List.of(
-                          new JsonObject()
-                              .put("type", "text")
-                              .put("text", JsonUtils.MAPPER.writeValueAsString(result))));
-                  json.put("isError", false);
-                } catch (JsonProcessingException e) {
-                  throw new RuntimeException(e);
-                }
-              }
-              return json;
-            })
-        .recover(
-            error -> {
-              // Return tool error within the result (not as MCP protocol error)
-              var errorContent =
-                  new JsonArray()
-                      .add(
-                          new JsonObject()
-                              .put("type", "text")
-                              .put("text", "Tool error: " + error.getMessage()));
-
-              var errorResult = new JsonObject().put("content", errorContent).put("isError", true);
-
-              return Future.succeededFuture(errorResult);
-            });
-  }
-
-  private JsonObject getToolsList(Collection<ApiOperation> toolOperations) {
-    var toolsArray = new JsonArray();
-
-    for (var tool : toolOperations) {
-      var inputSchema =
-          getSchemaMapper()
-              .convertValue(
-                  tool.getFunction().getParameters(), new TypeReference<Map<String, Object>>() {});
-      var description = tool.getFunction().getDescription();
-      if (description == null) {
-        description =
-            "Invokes %s %s"
-                .formatted(
-                    tool.getFunction().getName(),
-                    tool.getApiQuery().operationType().name().toLowerCase());
-      }
-      var isReadOnly = tool.getApiQuery().operationType() != Operation.MUTATION;
-      var toolInfo =
-          new JsonObject()
-              .put("name", tool.getName())
-              .put("description", description)
-              .put("inputSchema", inputSchema)
-              .put("annotations", new JsonObject().put("readOnlyHint", isReadOnly));
-      toolsArray.add(toolInfo);
-    }
-    return new JsonObject().put("tools", toolsArray);
-  }
-
-  private JsonObject getResourceList(
-      String resultKey, Collection<ApiOperation> resourceOperations) {
-    var resourcesArray = new JsonArray();
-    for (var resource : resourceOperations) {
-      var description = resource.getFunction().getDescription();
-      if (description == null) {
-        description = "Returns %s resource".formatted(resource.getFunction().getName());
-      }
-      var resourceDef =
-          new JsonObject()
-              .put("uri", resource.getUriTemplate())
-              .put("name", resource.getName())
-              .put("description", description)
-              .put("mimeType", "application/json");
-      resourcesArray.add(resourceDef);
-    }
-    return new JsonObject().put(resultKey, resourcesArray);
-  }
-
-  private JsonObject createResponse(Object id, JsonObject result) {
-    return new JsonObject().put("jsonrpc", JSONRPC_VERSION).put("id", id).put("result", result);
-  }
-
-  private JsonObject createErrorResponse(Object id, int code, String message) {
-    var error = new JsonObject().put("code", code).put("message", message);
-    return new JsonObject().put("jsonrpc", JSONRPC_VERSION).put("id", id).put("error", error);
-  }
-
-  // ---------------------------------------------------------------------------
-  // MCP Streamable‑HTTP helpers
-  // ---------------------------------------------------------------------------
-
-  private void processIncomingMessages(RoutingContext ctx, JsonNode payload) {
-    var containsRequest = containsRequestObjects(payload);
-
-    // Pure notifications (no "method" requests) → 202 Accepted
-    if (!containsRequest) {
-      ctx.response().setStatusCode(202).end();
-      return;
-    }
-
-    var clientAcceptsSse =
-        accepts(ctx, CT_SSE) && !accepts(ctx, CT_JSON); // prefer JSON if both present
-
-    if (clientAcceptsSse && requestNeedsStreaming(payload)) {
-      streamResponse(ctx, payload);
+  private static CallToolResult toErrorResult(ApiOperation operation, Throwable error) {
+    final String text;
+    if (error instanceof ValidationException) {
+      text = "Validation error: " + error.getMessage();
     } else {
-      singleJsonResponse(ctx, payload);
+      log.warn("MCP tool {} failed", operation.getName(), error);
+      text = "Tool error: " + error.getMessage();
     }
-  }
-
-  private void singleJsonResponse(RoutingContext ctx, JsonNode payload) {
-    if (!payload.isObject()) {
-      ctx.fail(400, new IllegalArgumentException("Batch requests not supported yet"));
-      return;
-    }
-    handleRequest(ctx, payload)
-        .onSuccess(
-            result -> {
-              log.debug("Request completed successfully");
-              if (result != null) {
-                ctx.response().putHeader(HttpHeaders.CONTENT_TYPE, CT_JSON).end(result.encode());
-              } else {
-                ctx.response().setStatusCode(204).end();
-              }
-            })
-        .onFailure(
-            error -> {
-              log.error("Request failed: {}", error.getMessage(), error);
-              ctx.response()
-                  .setStatusCode(500)
-                  .putHeader("Content-Type", "application/json")
-                  .end(
-                      "{\"jsonrpc\":\"2.0\",\"error\":{\"code\":-32603,\"message\":\"Internal error\"}}");
-            });
-  }
-
-  private void streamResponse(RoutingContext ctx, JsonNode payload) {
-    if (!payload.isObject()) {
-      ctx.fail(400, new IllegalArgumentException("Batch requests not supported in streaming mode"));
-      return;
-    }
-    var res = ctx.response();
-    res.setChunked(true)
-        .putHeader(HttpHeaders.CONTENT_TYPE, CT_SSE)
-        .putHeader("Cache-Control", "no-cache");
-
-    handleRequest(ctx, payload)
-        .onSuccess(
-            result -> {
-              // send single chunk – for true multi‑chunk you'd wire this to reactive execution
-              res.write("data: " + result.encode() + "\n\n").onComplete(ar -> res.end());
-            })
-        .onFailure(
-            err -> {
-              res.write(
-                      "data: " + new JsonObject().put("error", err.getMessage()).encode() + "\n\n")
-                  .onComplete(ar -> res.end());
-            });
-  }
-
-  private static boolean containsRequestObjects(JsonNode node) {
-    if (node.isArray()) {
-      for (var n : node) {
-        if (n.hasNonNull("method")) return true;
-      }
-      return false;
-    }
-    return node.hasNonNull("method");
-  }
-
-  /** Minimal heuristic: initialise & streamed tool calls need SSE */
-  private static boolean requestNeedsStreaming(JsonNode payload) {
-    if (!payload.isObject()) return false;
-    var method = payload.path("method").asText("");
-    return "initialize".equals(method)
-        || ("tools/call".equals(method) && payload.path("params").path("stream").asBoolean(false));
-  }
-
-  private static boolean accepts(RoutingContext ctx, String mime) {
-    var accept = ctx.request().headers().getAll(HttpHeaders.ACCEPT);
-    return accept.stream().anyMatch(h -> h.contains(mime));
-  }
-
-  private AuthenticationHandler createChainAuthHandler() {
-    if (authProviders.size() == 1) {
-      return createAuthHandler(authProviders.get(0));
-    }
-
-    var chain = ChainAuthHandler.any();
-    for (var provider : authProviders) {
-      chain.add(createAuthHandler(provider));
-    }
-    return chain;
-  }
-
-  private AuthenticationHandler createAuthHandler(AuthenticationProvider auth) {
-    if (auth instanceof JWTAuth jwtAuth) {
-      return JWTAuthHandler.create(jwtAuth);
-    } else if (auth instanceof OAuth2Auth oauth2Auth) {
-      return OAuth2AuthHandler.create(vertx, oauth2Auth);
-    } else {
-      throw new IllegalArgumentException("Unsupported auth provider type: " + auth.getClass());
-    }
-  }
-
-  private record SseConnection(String id, HttpServerResponse response) {}
-
-  static class McpException extends RuntimeException {
-    final int code;
-
-    McpException(int code, String message) {
-      super(message);
-      this.code = code;
-    }
+    return CallToolResult.builder().addTextContent(text).isError(true).build();
   }
 }

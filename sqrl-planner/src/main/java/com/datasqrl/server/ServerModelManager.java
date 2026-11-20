@@ -17,7 +17,9 @@ package com.datasqrl.server;
 
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.WorkspacePaths;
+import com.datasqrl.engine.EnginePhysicalPlan.DeploymentArtifact;
 import com.datasqrl.engine.server.ServerPhysicalPlan;
+import com.datasqrl.engine.server.VertxEngineFactory;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.server.config.ServerConfig;
 import com.datasqrl.server.converter.GraphQLSchemaConverter;
@@ -26,11 +28,15 @@ import com.datasqrl.server.graphql.RootGraphQLModel;
 import com.datasqrl.server.graphql.RootGraphQLModel.StringSchema;
 import com.datasqrl.server.openapi.OpenApiService;
 import com.datasqrl.server.operation.ApiOperation;
+import com.datasqrl.server.operation.ApiProtocol;
+import com.datasqrl.server.operation.McpApp;
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 import lombok.AllArgsConstructor;
 import org.openapitools.openapidiff.core.OpenApiCompare;
 import org.openapitools.openapidiff.core.model.ChangedOpenApi;
@@ -41,6 +47,9 @@ import org.springframework.stereotype.Component;
 @Component
 @AllArgsConstructor
 public class ServerModelManager {
+
+  /** The file suffix of an MCP app in the plan directory, by API version and app name. */
+  private static final String MCP_APP_FILE_SUFFIX_TEMPLATE = "-%s-mcp-app-%s.html";
 
   private final PackageJson packageConfig;
   private final WorkspacePaths workspacePaths;
@@ -93,13 +102,66 @@ public class ServerModelManager {
     // Third, distincting preserves only the first operation by id
     var dedupedOperations = definedOperations.stream().distinct().toList();
 
+    // Fourth, link the MCP tools to the MCP apps
+    var mcpEnabled = apiConfig.getProtocols().contains(ApiProtocol.MCP);
+    var mcpAppSources = loadMcpApps(api.version(), mcpEnabled);
+    var operations =
+        McpAppLinker.link(dedupedOperations, mcpAppSources, mcpEnabled, api.version(), errors);
+    var mcpApps = mcpAppSources.map(sources -> addMcpAppFiles(sources, api.version(), serverPlan));
+
     return RootGraphQLModel.builder()
         .queries(graphqlModelGenerator.getQueryCoords())
         .mutations(graphqlModelGenerator.getMutations())
         .subscriptions(graphqlModelGenerator.getSubscriptions())
-        .operations(dedupedOperations)
+        .operations(operations)
         .schema(schema)
+        .mcpApps(mcpApps.orElse(null))
         .build();
+  }
+
+  /**
+   * Adds the HTML file of each app to the deployment artifacts of the server plan, so that the
+   * server model does not carry the HTML, and returns the apps of the server model, which name
+   * their files in the plan directory.
+   */
+  private static List<McpApp> addMcpAppFiles(
+      List<McpAppSource> sources, String apiVersion, ServerPhysicalPlan serverPlan) {
+    var apps = new ArrayList<McpApp>();
+    for (var source : sources) {
+      var fileSuffix = MCP_APP_FILE_SUFFIX_TEMPLATE.formatted(apiVersion, source.name());
+      serverPlan.getDeploymentArtifacts().add(new DeploymentArtifact(fileSuffix, source.content()));
+      // The packager names each deployment artifact by the engine of the plan and the suffix
+      apps.add(McpApp.of(source.name(), VertxEngineFactory.ENGINE_NAME + fileSuffix));
+    }
+    return apps;
+  }
+
+  /**
+   * Loads the MCP apps of the API version from its apps directory in the build directory, where the
+   * packager copies the {@code .html} files with the other source files, or returns empty if it has
+   * no MCP Apps support: no apps directory is configured, or MCP is not one of the API protocols.
+   */
+  private Optional<List<McpAppSource>> loadMcpApps(String apiVersion, boolean mcpEnabled) {
+    var directory = findApiConfig(apiVersion).flatMap(PackageJson.ScriptApiConfig::getMcpApps);
+    if (directory.isEmpty()) {
+      return Optional.empty();
+    }
+    if (!mcpEnabled) {
+      errors.warn(
+          "The MCP apps in '%s' are not served because 'compiler.api.protocols' does not include"
+              + " MCP",
+          directory.get());
+      return Optional.empty();
+    }
+    return Optional.of(
+        McpAppLoader.load(
+            workspacePaths.buildDir().resolve(directory.get()), directory.get(), errors));
+  }
+
+  private Optional<PackageJson.ScriptApiConfig> findApiConfig(String apiVersion) {
+    return packageConfig.getScriptConfig().getScriptApiConfigs().stream()
+        .filter(apiConfig -> apiConfig.getVersion().equals(apiVersion))
+        .findFirst();
   }
 
   public String generateOpenApiJson(
@@ -119,10 +181,7 @@ public class ServerModelManager {
 
   private void validateOpenApiJsonIfNeeded(String apiVersion, String generatedOpenApi) {
     var configuredFilenameOpt =
-        packageConfig.getScriptConfig().getScriptApiConfigs().stream()
-            .filter(apiConfig -> apiConfig.getVersion().equals(apiVersion))
-            .findFirst()
-            .flatMap(PackageJson.ScriptApiConfig::getOpenApi);
+        findApiConfig(apiVersion).flatMap(PackageJson.ScriptApiConfig::getOpenApi);
 
     if (configuredFilenameOpt.isEmpty()) {
       return;

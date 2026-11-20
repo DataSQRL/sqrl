@@ -23,7 +23,7 @@ Every deployment consists of the same components, regardless of where they run:
 | Kafka topics  | `kafka.json`                                                          | Any Kafka-compatible service                                                               |
 | Database      | `postgres-schema.sql`, `postgres-views.sql`                           | PostgreSQL, with the extensions listed in `postgres.json`                                  |
 | Data lake     | `iceberg-schema.sql` and the query engine schema                      | Object storage with an Iceberg catalog, plus the configured [query engine](configuration-engine/iceberg-query) |
-| API server    | `vertx.json`, `vertx-config.json`                                     | The [`datasqrl/sqrl-server`](https://hub.docker.com/r/datasqrl/sqrl-server) Docker image, which serves GraphQL, REST, and MCP |
+| API server    | `vertx.json`, `vertx-config.json`, and the `vertx-<version>-mcp-app-<name>.html` file of each [MCP app](interface#mcp-apps) | The [`datasqrl/sqrl-server`](https://hub.docker.com/r/datasqrl/sqrl-server) Docker image, which serves GraphQL, REST, and MCP |
 
 A deployment creates the Kafka topics and database schemas first, then starts the API server and the Flink job. Only the components for the engines enabled in your [configuration](configuration) are generated.
 The topics under `includedTopics` in `kafka.json` belong to a [standalone included project](configuration#standalone-includes), whose own deployment creates and writes them, so deploy that project first.
@@ -36,7 +36,7 @@ Managed services are the easiest way to operate a pipeline yourself, because the
 - **Kafka:** Amazon MSK, Azure Event Hubs (through its Kafka endpoint), Confluent Cloud, or Redpanda Cloud.
 - **PostgreSQL:** Amazon RDS or Aurora, Azure Database for PostgreSQL, or Google Cloud SQL.
 - **Iceberg:** Amazon S3, Azure Data Lake Storage, or Google Cloud Storage with an Iceberg catalog, queried by a managed engine such as Spark SQL, Snowflake, Redshift, Athena, or Trino.
-- **API server:** any container service, such as Amazon ECS, Azure Container Apps, or Google Cloud Run, runs the server image with the server model and configuration mounted.
+- **API server:** any container service, such as Amazon ECS, Azure Container Apps, or Google Cloud Run, runs the server image with the server model, the configuration, and the files of any MCP apps mounted.
 
 ## Option B: Kubernetes
 

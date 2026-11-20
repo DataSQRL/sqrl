@@ -222,7 +222,8 @@ Always read [Cloud Deployment Configuration](cloud-deployment.md) when configuri
       "v1": { //default API version
         "schema": "fraud_store-api/schema.v1.graphqls", // GraphQL schema defines the API
         "operations": ["fraud_store-api/operations.v1.graphql"], //List of GraphQL queries that define operations which are exposed as API endpoints
-        "openapi": "fraud_store-api/openapi.v1.json" //Optional OpenAPI baseline. See the /from-api skill
+        "openapi": "fraud_store-api/openapi.v1.json", //Optional OpenAPI baseline. See the /from-api skill
+        "mcp-apps": "fraud_store-api/apps-v1" //Optional directory of MCP apps (HTML UIs for MCP tools). See the /design-api skill
       }
     },
     "config": { //Arbitrary JSON object used by the mustache templating engine to instantiate SQRL file templating variables
@@ -234,9 +235,9 @@ Always read [Cloud Deployment Configuration](cloud-deployment.md) when configuri
 
 ### API Versioning and Compatibility
 
-`script.api` serves one or more versioned APIs. Version keys must be `v` followed by a number (`v1`, `v2`); each version requires a `schema`, `operations`, or an `openapi` compatibility specification. SQRL infers the schema from the SQRL script when one is not configured, and generates an OpenAPI specification for every version. Set `openapi` to a previously generated specification when compilation must reject backward-incompatible API changes.
+`script.api` serves one or more versioned APIs. Version keys must be `v` followed by a number (`v1`, `v2`); each version requires a `schema`, `operations`, an `openapi` compatibility specification, or an `mcp-apps` directory. SQRL infers the schema from the SQRL script when one is not configured, and generates an OpenAPI specification for every version. Set `openapi` to a previously generated specification when compilation must reject backward-incompatible API changes. Set `mcp-apps` to the directory with the self-contained `.html` files of the version's MCP apps; there is no top-level `script.mcp-apps`.
 
-For one `v1` API only, the legacy top-level fields are also supported:
+For one `v1` API only, the legacy top-level fields are also supported. The top-level `operations` field is deprecated, so configure operations under `script.api` in new projects:
 
 ```json
 {

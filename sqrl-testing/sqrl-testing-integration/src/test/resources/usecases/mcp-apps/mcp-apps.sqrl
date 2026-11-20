@@ -1,0 +1,5 @@
+Sales := SELECT * FROM (VALUES ('north', 'widget', 120.5), ('south', 'gadget', 80.0)) AS t(region, product, amount);
+
+SalesByRegion(region STRING NOT NULL) := SELECT * FROM Sales WHERE region = :region;
+
+EXPORT Sales TO print.sales;

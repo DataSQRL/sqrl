@@ -69,7 +69,7 @@ The `config` JSON object is passed to the Mustache templating engine to substitu
   "script": {
     "main": "my-project.sqrl",                         // Main SQRL script for pipeline
     "graphql": "api/schema.v1.graphqls",               // GraphQL schema defines the API
-    "operations": ["api/operations-v1/myop1.graphql"], // List of GraphQL queries that define operations which are exposed as API endpoints
+    "operations": ["api/operations-v1/myop1.graphql"], // Deprecated: configure operations per API version in script.api (see below)
     "database": "my-mutation-database.json",           // Check backward compatibility for mutation schema during compilation
     "config": {                                        // Arbitrary JSON object used by the mustache templating engine to instantiate SQRL files
       "excludedTenant": 123,
@@ -108,8 +108,9 @@ MyTable :=
 ### API Versioning
 
 The top-level `script.graphql` and `script.operations` fields configure a single API at version `v1`.
-To serve multiple API versions concurrently, configure them under `script.api` instead.
-API version names must start with `v` followed by a number, such as `v1` or `v2`. Each version must define a GraphQL `schema`, GraphQL `operations`, or an `openapi` compatibility specification. When a version does not define a schema, DataSQRL infers its GraphQL schema from the SQRL script.
+The top-level `script.operations` field is deprecated: configure the API under `script.api` instead.
+To serve multiple API versions concurrently, configure them under `script.api`.
+API version names must start with `v` followed by a number, such as `v1` or `v2`. Each version must define a GraphQL `schema`, GraphQL `operations`, an `openapi` compatibility specification, or an `mcp-apps` directory. When a version does not define a schema, DataSQRL infers its GraphQL schema from the SQRL script.
 
 DataSQRL serves each API version with its version as an endpoint prefix. With the default server configuration, the `v1` endpoints include `/v1/graphql`, `/v1/rest`, and `/v1/mcp`.
 
@@ -123,7 +124,8 @@ Use either the top-level fields or `script.api`. When `script.api` is configured
       "v1": {
         "schema": "api/schema.v1.graphqls",
         "operations": ["api/operations-v1/myop1.graphql"],
-        "openapi": "api/openapi-v1.json"
+        "openapi": "api/openapi-v1.json",
+        "mcp-apps": "api/apps-v1"
       },
       "v2": {
         "schema": "api/schema.v2.graphqls",
@@ -136,6 +138,8 @@ Use either the top-level fields or `script.api`. When `script.api` is configured
 
 DataSQRL generates an OpenAPI specification for every API version. Set the optional `openapi` field to a previously generated specification to check backward compatibility during compilation.
 Compilation fails if the generated specification contains backward-incompatible changes.
+
+Set the optional `mcp-apps` field to a directory of MCP apps, interactive HTML UIs that MCP hosts render for the MCP tools of the API version. See [MCP Apps](interface.md#mcp-apps). Without `mcp-apps`, the API version has no MCP Apps support. There is no top-level `script.mcp-apps`.
 
 ### Include Other Sources
 

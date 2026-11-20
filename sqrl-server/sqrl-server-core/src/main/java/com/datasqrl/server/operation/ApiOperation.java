@@ -18,6 +18,7 @@ package com.datasqrl.server.operation;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.List;
 import java.util.Objects;
 import lombok.Builder;
 import lombok.NonNull;
@@ -28,7 +29,7 @@ import lombok.Value;
  * passed to the LLM as a tool and the {@link GraphQLQuery} that is executed.
  */
 @Value
-@Builder
+@Builder(toBuilder = true)
 public class ApiOperation {
 
   @NonNull FunctionDefinition function;
@@ -36,11 +37,24 @@ public class ApiOperation {
   McpMethodType mcpMethod; // The MCP endpoint type or NONE if no MCP
   RestMethodType restMethod; // The REST Method for the operation or NONE if no REST
 
-  /** RFC 6570 URI template for Resource endpoint (both MCP and REST) */
+  /** RFC 6570 URI template for the REST endpoint */
   String uriTemplate;
 
   ResultFormat format;
   ResultDefinition resultDefinition;
+
+  /**
+   * The name of the MCP app that renders the result of the tool, or null for none. The compiler
+   * resolves it to the name of an {@link McpApp}; before that, it holds the {@code appName} of the
+   * {@code @api} directive, where an empty name turns off linking the app by the tool's name.
+   */
+  String appName;
+
+  /**
+   * Who the MCP tool is for, from the {@code visibility} of the {@code @api} directive, or null if
+   * the directive does not set it. Then the tool is for the model and for MCP apps.
+   */
+  List<McpVisibility> mcpVisibility;
 
   public static ApiOperationBuilder getBuilder(FunctionDefinition function, GraphQLQuery apiQuery) {
     return builder()
@@ -60,7 +74,9 @@ public class ApiOperation {
       @JsonProperty("restMethod") RestMethodType restMethod,
       @JsonProperty("uriTemplate") String uriTemplate,
       @JsonProperty("format") ResultFormat format,
-      @JsonProperty("resultDefinition") ResultDefinition resultDefinition) {
+      @JsonProperty("resultDefinition") ResultDefinition resultDefinition,
+      @JsonProperty("appName") String appName,
+      @JsonProperty("mcpVisibility") List<McpVisibility> mcpVisibility) {
     this.function = function;
     this.apiQuery = apiQuery;
     this.mcpMethod = mcpMethod;
@@ -68,6 +84,8 @@ public class ApiOperation {
     this.uriTemplate = uriTemplate;
     this.format = format;
     this.resultDefinition = resultDefinition;
+    this.appName = appName;
+    this.mcpVisibility = mcpVisibility;
   }
 
   /**

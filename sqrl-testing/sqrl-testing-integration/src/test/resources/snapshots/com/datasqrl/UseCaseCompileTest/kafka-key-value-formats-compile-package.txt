@@ -80,7 +80,11 @@ type UnkeyedReadingResultOutput {
 enum _McpMethodType {
   NONE
   TOOL
-  RESOURCE
+}
+
+enum _McpVisibility {
+  MODEL
+  APP
 }
 
 enum _RestMethodType {
@@ -89,7 +93,7 @@ enum _RestMethodType {
   POST
 }
 
-directive @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION
+directive @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String, appName: String, visibility: [_McpVisibility!]) on QUERY | MUTATION | FIELD_DEFINITION
 
 >>>pipeline_explain.txt
 === KeyedReading
@@ -723,7 +727,7 @@ CREATE TABLE IF NOT EXISTS "UnkeyedReading" ("sensorid" INTEGER NOT NULL, "tempe
       ],
       "schema" : {
         "type" : "string",
-        "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\ntype KeyedReading {\n  sensorid: Int!\n  temperature: Float!\n  event_time: DateTime!\n}\n\ninput KeyedReadingInput {\n  sensorid: Int!\n  temperature: Float!\n}\n\ntype KeyedReadingResultOutput {\n  sensorid: Int!\n  temperature: Float!\n  event_time: DateTime!\n}\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Mutation {\n  KeyedReading(event: KeyedReadingInput!): KeyedReadingResultOutput!\n  SensorUpdate(event: SensorUpdateInput!): SensorUpdateResultOutput!\n  UnkeyedReading(event: UnkeyedReadingInput!): UnkeyedReadingResultOutput!\n}\n\ntype Query {\n  KeyedReading(limit: Int = 10, offset: Int = 0): [KeyedReading!]\n  SensorUpdate(limit: Int = 10, offset: Int = 0): [SensorUpdate!]\n  UnkeyedReading(limit: Int = 10, offset: Int = 0): [UnkeyedReading!]\n}\n\ntype SensorUpdate {\n  sensorid: Int!\n  sensor_name: String!\n  event_time: DateTime!\n}\n\ninput SensorUpdateInput {\n  sensorid: Int!\n  sensor_name: String!\n}\n\ntype SensorUpdateResultOutput {\n  sensorid: Int!\n  sensor_name: String!\n  event_time: DateTime!\n}\n\ntype UnkeyedReading {\n  sensorid: Int!\n  temperature: Float!\n  event_time: DateTime!\n}\n\ninput UnkeyedReadingInput {\n  sensorid: Int!\n  temperature: Float!\n}\n\ntype UnkeyedReadingResultOutput {\n  sensorid: Int!\n  temperature: Float!\n  event_time: DateTime!\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+        "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\ntype KeyedReading {\n  sensorid: Int!\n  temperature: Float!\n  event_time: DateTime!\n}\n\ninput KeyedReadingInput {\n  sensorid: Int!\n  temperature: Float!\n}\n\ntype KeyedReadingResultOutput {\n  sensorid: Int!\n  temperature: Float!\n  event_time: DateTime!\n}\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Mutation {\n  KeyedReading(event: KeyedReadingInput!): KeyedReadingResultOutput!\n  SensorUpdate(event: SensorUpdateInput!): SensorUpdateResultOutput!\n  UnkeyedReading(event: UnkeyedReadingInput!): UnkeyedReadingResultOutput!\n}\n\ntype Query {\n  KeyedReading(limit: Int = 10, offset: Int = 0): [KeyedReading!]\n  SensorUpdate(limit: Int = 10, offset: Int = 0): [SensorUpdate!]\n  UnkeyedReading(limit: Int = 10, offset: Int = 0): [UnkeyedReading!]\n}\n\ntype SensorUpdate {\n  sensorid: Int!\n  sensor_name: String!\n  event_time: DateTime!\n}\n\ninput SensorUpdateInput {\n  sensorid: Int!\n  sensor_name: String!\n}\n\ntype SensorUpdateResultOutput {\n  sensorid: Int!\n  sensor_name: String!\n  event_time: DateTime!\n}\n\ntype UnkeyedReading {\n  sensorid: Int!\n  temperature: Float!\n  event_time: DateTime!\n}\n\ninput UnkeyedReadingInput {\n  sensorid: Int!\n  temperature: Float!\n}\n\ntype UnkeyedReadingResultOutput {\n  sensorid: Int!\n  temperature: Float!\n  event_time: DateTime!\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n}\n\nenum _McpVisibility {\n  MODEL\n  APP\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String, appName: String, visibility: [_McpVisibility!]) on QUERY | MUTATION | FIELD_DEFINITION\n"
       }
     }
   }

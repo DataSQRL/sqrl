@@ -23,12 +23,14 @@ import static graphql.Scalars.GraphQLInt;
 import static graphql.Scalars.GraphQLString;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.datasqrl.server.converter.GraphQLSchemaConverter;
 import com.datasqrl.server.converter.GraphQLSchemaConverterConfig;
 import com.datasqrl.server.graphql.CustomScalars;
 import com.datasqrl.server.operation.ApiOperation;
 import com.datasqrl.server.operation.McpMethodType;
+import com.datasqrl.server.operation.McpVisibility;
 import com.datasqrl.server.operation.RestMethodType;
 import com.datasqrl.util.FileUtil;
 import com.datasqrl.util.SnapshotTest;
@@ -38,6 +40,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import graphql.parser.Parser;
 import graphql.schema.GraphQLScalarType;
+import graphql.schema.GraphQLSchema;
 import java.io.IOException;
 import java.util.List;
 import java.util.stream.Stream;
@@ -271,7 +274,7 @@ public class GraphQLSchemaConverterTest {
     var schema =
         underTest.getSchema(
             """
-            enum _McpMethodType { NONE TOOL RESOURCE }
+            enum _McpMethodType { NONE TOOL }
             enum _RestMethodType { NONE GET POST }
             directive @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION
 
@@ -302,6 +305,118 @@ public class GraphQLSchemaConverterTest {
   }
 
   @Test
+  void givenAppDirectiveArguments_whenConvertOperations_thenSetsAppNameAndVisibility() {
+    var schema = appsSchema("ping: String");
+
+    var operations =
+        underTest.convertOperations(
+            """
+            query GetSales @api(mcp: TOOL, appName: "SalesChart") { ping }
+            query GetDailySales @api(visibility: [APP]) { ping }
+            query GetTotals @api(visibility: MODEL) { ping }
+            query GetBoth @api(visibility: [APP, MODEL, APP]) { ping }
+            query GetPlain @api(appName: "", visibility: null) { ping }
+            """,
+            GraphQLSchemaConverterConfig.DEFAULT,
+            schema);
+
+    assertThat(getOperation(operations, "GetSales").getAppName()).isEqualTo("SalesChart");
+    assertThat(getOperation(operations, "GetSales").getMcpVisibility()).isNull();
+    assertThat(getOperation(operations, "GetDailySales").getMcpMethod())
+        .isEqualTo(McpMethodType.TOOL);
+    assertThat(getOperation(operations, "GetDailySales").getAppName()).isNull();
+    assertThat(getOperation(operations, "GetDailySales").getMcpVisibility())
+        .containsExactly(McpVisibility.APP);
+    assertThat(getOperation(operations, "GetTotals").getMcpVisibility())
+        .containsExactly(McpVisibility.MODEL);
+    assertThat(getOperation(operations, "GetBoth").getMcpVisibility())
+        .containsExactly(McpVisibility.MODEL, McpVisibility.APP);
+    assertThat(getOperation(operations, "GetPlain").getAppName()).isEmpty();
+    assertThat(getOperation(operations, "GetPlain").getMcpVisibility()).isNull();
+  }
+
+  @Test
+  void givenVisibilityOnSchemaField_whenConvertSchema_thenSetsVisibility() {
+    var schema = appsSchema("Sales: String @api(visibility: [APP])");
+
+    var operations = underTest.convertSchema(GraphQLSchemaConverterConfig.DEFAULT, schema);
+
+    assertThat(getOperation(operations, "GetSales").getMcpVisibility())
+        .containsExactly(McpVisibility.APP);
+  }
+
+  @ParameterizedTest
+  @MethodSource("unsupportedApiValueProvider")
+  void givenUnsupportedApiValue_whenConvertOperations_thenFailsWithSupportedValues(
+      String argument, String message) {
+    var schema = appsSchema("ping: String");
+
+    assertThatThrownBy(
+            () ->
+                underTest.convertOperations(
+                    "query Ping @api(%s) { ping }".formatted(argument),
+                    GraphQLSchemaConverterConfig.DEFAULT,
+                    schema))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage(message);
+  }
+
+  static Stream<Arguments> unsupportedApiValueProvider() {
+    return Stream.of(
+        Arguments.of(
+            "visibility: []", "Empty @api(visibility: ...), supported values are [MODEL, APP]"),
+        Arguments.of(
+            "visibility: [USER]",
+            "Unsupported value 'USER' for @api(visibility: ...), supported values are [MODEL, APP]"),
+        Arguments.of(
+            "mcp: APP",
+            "Unsupported value 'APP' for @api(mcp: ...), supported values are [NONE, TOOL]"));
+  }
+
+  @Test
+  void givenResourceMcpMethod_whenConvertOperations_thenFailsWithSupportedValues() {
+    var schema =
+        underTest.getSchema(
+            """
+            enum _McpMethodType { NONE TOOL RESOURCE }
+            directive @api(mcp: _McpMethodType) on QUERY | MUTATION | FIELD_DEFINITION
+
+            type Query {
+              ping: String
+            }
+            """);
+
+    assertThatThrownBy(
+            () ->
+                underTest.convertOperations(
+                    "query Ping @api(mcp: RESOURCE) { ping }",
+                    GraphQLSchemaConverterConfig.DEFAULT,
+                    schema))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage(
+            "Unsupported value 'RESOURCE' for @api(mcp: ...), supported values are [NONE, TOOL]");
+  }
+
+  @Test
+  void givenResourceMcpMethodOnSchemaField_whenConvertSchema_thenFailsWithSupportedValues() {
+    var schema =
+        underTest.getSchema(
+            """
+            enum _McpMethodType { NONE TOOL RESOURCE }
+            directive @api(mcp: _McpMethodType) on QUERY | MUTATION | FIELD_DEFINITION
+
+            type Query {
+              ping: String @api(mcp: RESOURCE)
+            }
+            """);
+
+    assertThatThrownBy(() -> underTest.convertSchema(GraphQLSchemaConverterConfig.DEFAULT, schema))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage(
+            "Unsupported value 'RESOURCE' for @api(mcp: ...), supported values are [NONE, TOOL]");
+  }
+
+  @Test
   void givenOperationWithInputObjectVariable_whenConvertOperations_thenExposesMcpTool() {
     var schema = underTest.getSchema(getTestSchema("nested-mutation.graphqls"));
 
@@ -329,6 +444,21 @@ public class GraphQLSchemaConverterTest {
 
     assertThat(getOperation(operations, "PlaceHiddenOrder").getMcpMethod())
         .isEqualTo(McpMethodType.NONE);
+  }
+
+  /** Returns a schema with the {@code @api} arguments for MCP apps and the given query field. */
+  private GraphQLSchema appsSchema(String queryField) {
+    return underTest.getSchema(
+        """
+        enum _McpMethodType { NONE TOOL }
+        enum _McpVisibility { MODEL APP }
+        directive @api(mcp: _McpMethodType, appName: String, visibility: [_McpVisibility!]) on QUERY | MUTATION | FIELD_DEFINITION
+
+        type Query {
+          %s
+        }
+        """
+            .formatted(queryField));
   }
 
   private static ApiOperation getOperation(List<ApiOperation> operations, String name) {

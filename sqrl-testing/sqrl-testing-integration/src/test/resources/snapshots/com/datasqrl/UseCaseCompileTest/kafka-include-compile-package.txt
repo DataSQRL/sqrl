@@ -80,7 +80,11 @@ type Query {
 enum _McpMethodType {
   NONE
   TOOL
-  RESOURCE
+}
+
+enum _McpVisibility {
+  MODEL
+  APP
 }
 
 enum _RestMethodType {
@@ -89,7 +93,7 @@ enum _RestMethodType {
   POST
 }
 
-directive @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION
+directive @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String, appName: String, visibility: [_McpVisibility!]) on QUERY | MUTATION | FIELD_DEFINITION
 
 >>>pipeline_explain.txt
 === CustomerEvent
@@ -747,7 +751,7 @@ CREATE TABLE IF NOT EXISTS "OrderEvent" ("orderid" BIGINT NOT NULL, "customerid"
       ],
       "schema" : {
         "type" : "string",
-        "schema" : "type CustomerEvent {\n  customerid: Long!\n  name: String!\n  event_time: DateTime!\n}\n\ninput CustomerEventInput {\n  customerid: Long!\n  name: String!\n}\n\ntype CustomerEventResultOutput {\n  customerid: Long!\n  name: String!\n  event_time: DateTime!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\ntype Feedback {\n  customerid: Long!\n  message: String!\n  event_time: DateTime!\n}\n\ninput FeedbackInput {\n  customerid: Long!\n  message: String!\n}\n\ntype FeedbackResultOutput {\n  customerid: Long!\n  message: String!\n  event_time: DateTime!\n}\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Mutation {\n  CustomerEvent(event: CustomerEventInput!): CustomerEventResultOutput!\n  Feedback(event: FeedbackInput!): FeedbackResultOutput!\n  OrderEvent(event: OrderEventInput!): OrderEventResultOutput!\n}\n\ntype OrderEvent {\n  orderid: Long!\n  customerid: Long!\n  event_time: DateTime!\n}\n\ninput OrderEventInput {\n  orderid: Long!\n  customerid: Long!\n}\n\ntype OrderEventResultOutput {\n  orderid: Long!\n  customerid: Long!\n  event_time: DateTime!\n}\n\ntype Query {\n  CustomerEvent(limit: Int = 10, offset: Int = 0): [CustomerEvent!]\n  Feedback(limit: Int = 10, offset: Int = 0): [Feedback!]\n  OrderEvent(limit: Int = 10, offset: Int = 0): [OrderEvent!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+        "schema" : "type CustomerEvent {\n  customerid: Long!\n  name: String!\n  event_time: DateTime!\n}\n\ninput CustomerEventInput {\n  customerid: Long!\n  name: String!\n}\n\ntype CustomerEventResultOutput {\n  customerid: Long!\n  name: String!\n  event_time: DateTime!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\ntype Feedback {\n  customerid: Long!\n  message: String!\n  event_time: DateTime!\n}\n\ninput FeedbackInput {\n  customerid: Long!\n  message: String!\n}\n\ntype FeedbackResultOutput {\n  customerid: Long!\n  message: String!\n  event_time: DateTime!\n}\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Mutation {\n  CustomerEvent(event: CustomerEventInput!): CustomerEventResultOutput!\n  Feedback(event: FeedbackInput!): FeedbackResultOutput!\n  OrderEvent(event: OrderEventInput!): OrderEventResultOutput!\n}\n\ntype OrderEvent {\n  orderid: Long!\n  customerid: Long!\n  event_time: DateTime!\n}\n\ninput OrderEventInput {\n  orderid: Long!\n  customerid: Long!\n}\n\ntype OrderEventResultOutput {\n  orderid: Long!\n  customerid: Long!\n  event_time: DateTime!\n}\n\ntype Query {\n  CustomerEvent(limit: Int = 10, offset: Int = 0): [CustomerEvent!]\n  Feedback(limit: Int = 10, offset: Int = 0): [Feedback!]\n  OrderEvent(limit: Int = 10, offset: Int = 0): [OrderEvent!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n}\n\nenum _McpVisibility {\n  MODEL\n  APP\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String, appName: String, visibility: [_McpVisibility!]) on QUERY | MUTATION | FIELD_DEFINITION\n"
       }
     }
   }

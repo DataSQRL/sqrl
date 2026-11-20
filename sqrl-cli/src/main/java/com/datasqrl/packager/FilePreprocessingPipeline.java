@@ -90,6 +90,8 @@ public class FilePreprocessingPipeline {
     copyExtensions.add(SqrlConstants.GRAPHQL_EXTENSION);
     copyExtensions.add(SqrlConstants.CONFIG_EXTENSION);
     copyExtensions.add(SqrlConstants.GRAPHQL_SCHEMA_EXTENSION);
+    // MCP apps
+    copyExtensions.add(SqrlConstants.HTML_EXTENSION);
     return copyExtensions;
   }
 
