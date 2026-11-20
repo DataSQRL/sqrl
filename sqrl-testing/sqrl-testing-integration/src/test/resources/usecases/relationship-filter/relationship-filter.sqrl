@@ -57,3 +57,10 @@ FROM DetailCount c
 WHERE NOT EXISTS (SELECT 1 FROM Tombstone tomb WHERE tomb.id = c.id)
 AND c.id >= :minId
 ORDER BY c.id;
+
+-- G) correlated subquery in the SELECT list over a filtered join
+joinCountQuery(minId String NOT NULL) := SELECT th.id, d.info,
+(SELECT COUNT(*) FROM Tombstone tomb WHERE tomb.id = th.id) AS n
+FROM Thing th JOIN Detail d ON th.id = d.id
+WHERE th.id >= :minId
+ORDER BY th.id;
