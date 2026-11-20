@@ -109,6 +109,10 @@ class McpEndpointTest {
   private Vertx vertx;
   private String baseUrl;
 
+  private static final String SALES_CHART =
+      "<!doctype html><html><body><script>render()</script></body></html>";
+  private static final String SALES_CHART_FILE = "vertx-v1-mcp-app-SalesChart.html";
+
   /** The plan directory, from which the server reads the files of the MCP apps. */
   @TempDir Path planDir;
 
@@ -404,10 +408,6 @@ class McpEndpointTest {
   @Nested
   class WithApps {
 
-    private static final String SALES_CHART =
-        "<!doctype html><html><body><script>render()</script></body></html>";
-    private static final String SALES_CHART_FILE = "vertx-v1-mcp-app-SalesChart.html";
-
     @BeforeEach
     @SneakyThrows
     void startServer() {
@@ -527,13 +527,15 @@ class McpEndpointTest {
     }
 
     @Test
-    void givenUnknownUri_whenReadingResource_thenFails() {
+    void givenUnknownUri_whenReadingResource_thenFailsWithResourceNotFound() {
       try (var client = createClient(null)) {
         client.initialize();
 
         assertThatThrownBy(
                 () -> client.readResource(new McpSchema.ReadResourceRequest("ui://apps/Missing")))
-            .isInstanceOf(McpError.class);
+            .isInstanceOfSatisfying(
+                McpError.class,
+                error -> assertThat(error.getJsonRpcError().code()).isEqualTo(-32002));
       }
     }
 
@@ -609,6 +611,7 @@ class McpEndpointTest {
     private JWTAuth jwtAuth;
 
     @BeforeEach
+    @SneakyThrows
     void startServer() {
       jwtAuth =
           JWTAuth.create(
@@ -625,7 +628,14 @@ class McpEndpointTest {
                       "issuer", "https://issuer.example.com",
                       "audiences", List.of("datasqrl"),
                       "jwksUri", "https://issuer.example.com/jwks"))));
-      McpEndpointTest.this.startServer(config, List.of(jwtAuth));
+      Files.writeString(planDir.resolve(SALES_CHART_FILE), SALES_CHART);
+      McpEndpointTest.this.startServer(
+          config,
+          List.of(jwtAuth),
+          RootGraphQLModel.builder()
+              .operations(createModel().getOperations())
+              .mcpApps(List.of(McpApp.of("SalesChart", SALES_CHART_FILE)))
+              .build());
     }
 
     @Test
@@ -645,6 +655,34 @@ class McpEndpointTest {
         client.initialize();
 
         assertThat(client.listTools().tools()).hasSize(5);
+      }
+    }
+
+    @Test
+    void givenNoToken_whenReadingApp_thenRejectsWithoutTheApp() {
+      var response =
+          post(
+              "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"resources/read\","
+                  + "\"params\":{\"uri\":\"ui://apps/SalesChart\"}}");
+
+      assertThat(response.statusCode()).isEqualTo(401);
+      assertThat(response.body()).doesNotContain("render()");
+    }
+
+    @Test
+    void givenValidToken_whenReadingApp_thenReturnsApp() {
+      var token = jwtAuth.generateToken(new JsonObject().put("sub", "agent"));
+
+      try (var client = createClient(token)) {
+        client.initialize();
+
+        var result = client.readResource(new McpSchema.ReadResourceRequest("ui://apps/SalesChart"));
+
+        assertThat(result.contents())
+            .singleElement()
+            .isInstanceOfSatisfying(
+                McpSchema.TextResourceContents.class,
+                contents -> assertThat(contents.text()).isEqualTo(SALES_CHART));
       }
     }
   }
