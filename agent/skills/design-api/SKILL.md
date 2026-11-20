@@ -57,7 +57,7 @@ Maps to GraphQL query `Customer(limit: Int = 10, offset: Int = 0): [Customer!]` 
 
 ### Custom Operations
 
-Defined in `.graphql` files and configured in `package.json` under `script.operations`, or under `script.api.<version>.operations` for a versioned API.
+Defined in `.graphql` files and configured in `package.json` under `script.api.<version>.operations`. The top-level `script.operations` is deprecated.
 
 ```graphql
 # Returns up to 10 people of the given age.
@@ -69,7 +69,7 @@ query GetPersonByAge($age: Int!)
 
 **`@api` Directive:**
 - `rest`: `NONE` | `GET` | `POST` (HTTP method or disable)
-- `mcp`: `NONE` | `TOOL` | `APP` (not exposed, MCP tool for the model and apps, or MCP tool for apps only)
+- `mcp`: `NONE` | `TOOL` | `APP` (not exposed, MCP tool for the model and apps, or MCP tool for apps that hosts with MCP Apps support hide from the model; `APP` is not an access restriction)
 - `uri`: RFC 6570 template (args in template = path params, others = payload requiring POST)
 - `appName`: links the tool to the MCP app of that name; `appName: ""` links none (see MCP Apps in [interface.md](interface.md))
 

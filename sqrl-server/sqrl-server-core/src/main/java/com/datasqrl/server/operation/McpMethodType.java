@@ -20,6 +20,9 @@ public enum McpMethodType {
   NONE,
   /** A tool for the model, which MCP apps can call as well */
   TOOL,
-  /** A tool that only MCP apps can call, hidden from the model */
+  /**
+   * A tool for MCP apps: hosts with MCP Apps support hide it from the model. The server lists and
+   * runs it like any other tool, so this is not an access restriction.
+   */
   APP;
 }

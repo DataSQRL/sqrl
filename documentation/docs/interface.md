@@ -60,7 +60,7 @@ Hidden columns, i.e. columns where the name starts with an underscore `_`, are n
 If no GraphQL schema is configured, the compiler infers one from the SQRL script and writes it to `build/inferred_schema.graphqls`.
 
 To provide and customize a schema for the default `v1` API, configure its path as `script.graphql` in [`package.json`](configuration.md#source-files-script).
-To serve multiple API versions, configure each version under `script.api`. Each version must define a GraphQL `schema`, GraphQL `operations`, or an `openapi` compatibility specification. When a version does not define a schema, the compiler infers its GraphQL schema from the SQRL script. See [API Versioning](configuration.md#api-versioning).
+To serve multiple API versions, configure each version under `script.api`. Each version must define a GraphQL `schema`, GraphQL `operations`, an `openapi` compatibility specification, or an `mcp-apps` directory. When a version does not define a schema, the compiler infers its GraphQL schema from the SQRL script. See [API Versioning](configuration.md#api-versioning).
 
 A useful customization workflow is to compile without a configured schema, copy `build/inferred_schema.graphqls` into the project (for example, `api/schema.v1.graphqls`), then configure that file as the API schema.
 
@@ -187,14 +187,14 @@ DataSQRL exposes MCP and REST endpoints by converting GraphQL operations. With t
 * Generated queries are mapped to GET REST endpoints under `rest/queries`; generated mutations are mapped to POST REST endpoints under `rest/mutations`. For generated result sets, DataSQRL follows relationship fields up to the configured `max-result-depth` without loops.
 * When `add-prefix` is enabled (the default), generated query and mutation operations are named with `Get` and `Add` prefixes respectively. MCP exposes generated operations as tools. Nested input types, such as mutation inputs with nested rows or lists of rows, are passed to MCP tools as nested JSON objects and arrays. Add `@api(mcp: NONE)` to a query or mutation field in the GraphQL schema to omit its generated operation from MCP.
 
-For complete control over the exposed MCP tools and REST endpoints, define named GraphQL queries or mutations in one or more `.graphql` files configured under `script.operations` (or a version's `script.api.<version>.operations`) in [`package.json`](configuration.md#source-files-script).
+For complete control over the exposed MCP tools and REST endpoints, define named GraphQL queries or mutations in one or more `.graphql` files configured under `script.api.<version>.operations` (or under the deprecated top-level `script.operations`) in [`package.json`](configuration.md#api-versioning).
 
 The GraphQL file defining the operations contains named queries or mutations.
 The name of the operation is the name of the MCP tool and REST endpoint and must be unique.
 
 Apply the `@api` directive to an operation to control how it is exposed:
 * `rest`: `NONE`, `GET`, or `POST` to configure the HTTP method or not expose as REST endpoint.
-* `mcp`: `NONE`, `TOOL`, or `APP` to configure whether the operation is exposed as an MCP tool. `TOOL`, the default, is a tool for the model that [MCP apps](#mcp-apps) can call as well. `APP` is a tool that only MCP apps can call, hidden from the model.
+* `mcp`: `NONE`, `TOOL`, or `APP` to configure whether the operation is exposed as an MCP tool. `TOOL`, the default, is a tool for the model that [MCP apps](#mcp-apps) can call as well. `APP` is a tool for MCP apps: hosts with MCP Apps support hide it from the model. It is not an access restriction: other MCP clients list it and can call it, and it keeps its REST endpoint unless you set `rest: NONE`.
 * `uri`: An RFC 6570 template to configure the REST path. Any operation arguments that are not defined in the uri template are considered part of the payload for REST (and the method must be POST).
 * `appName`: The name of the [MCP app](#mcp-apps) that renders the tool's result. An empty value (`appName: ""`) links no app.
 
@@ -236,7 +236,7 @@ Configure the directory with the apps of an API version in `script.api.<version>
 
 Without `mcp-apps`, the API version has no MCP Apps support. Apps are only served when `compiler.api.protocols` includes `MCP`.
 
-Each app is a single, self-contained `.html` file directly in the apps directory, with all scripts, styles, and assets inlined. Subdirectories and other files are ignored. The app's name is its file name without `.html`. You can build apps with any framework that writes single-file HTML into the apps directory, for example Vite with `vite-plugin-singlefile`. DataSQRL only picks up the finished files.
+Each app is a single, self-contained `.html` file directly in the apps directory, with all scripts, styles, and assets inlined. Subdirectories and other files are ignored. The app's name is its file name without `.html`. It must start with a letter, a digit, or `_`, and may only contain letters, digits, `_`, `-`, and `.`. You can build apps with any framework that writes single-file HTML into the apps directory, for example Vite with `vite-plugin-singlefile`. DataSQRL only picks up the finished files.
 
 A tool is linked to an app as follows. All names match regardless of case.
 * By default, a tool is linked to the app with the tool's name. For example, the operation `GetSales` is linked to `api/apps-v1/GetSales.html`.
@@ -251,7 +251,7 @@ query GetSales($from: DateTime!, $to: DateTime!) @api(mcp: TOOL, appName: "Sales
 query GetDailySales($region: String!, $from: DateTime!, $to: DateTime!) @api(mcp: APP) { ... }
 ```
 
-DataSQRL serves each app as the MCP resource `ui://apps/<name>` with the MIME type `text/html;profile=mcp-app`, and lists it in `resources/list`. The app's file is loaded when the project is compiled. A tool linked to an app has the app's URI in `_meta.ui.resourceUri`. With MCP Apps support, each tool has `_meta.ui.visibility`: `["model", "app"]` for `TOOL` and `["app"]` for `APP`. The server advertises the `io.modelcontextprotocol/ui` extension on `initialize`. Tool results don't change: apps parse the JSON in the result's `content`.
+DataSQRL serves each app as the MCP resource `ui://apps/<name>` with the MIME type `text/html;profile=mcp-app`, and lists it in `resources/list`. When the project is compiled, each app is written to the deployment assets as `vertx-<version>-mcp-app-<name>.html`, next to the server model `vertx.json`, which names the file of each app. The server reads these files when it starts, so deploy them together with `vertx.json`. A tool linked to an app has the app's URI in `_meta.ui.resourceUri`. With MCP Apps support, each tool has `_meta.ui.visibility`: `["model", "app"]` for `TOOL` and `["app"]` for `APP`. The server advertises the `io.modelcontextprotocol/ui` extension on `initialize`. Tool results don't change: apps parse the JSON in the result's `content`.
 
 When you define your own GraphQL schema, declare `APP` and `appName` in the `@api` directive:
 
@@ -261,7 +261,7 @@ enum _RestMethodType { NONE, GET, POST }
 directive @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String, appName: String) on QUERY | MUTATION | FIELD_DEFINITION
 ```
 
-The compilation fails when the apps directory doesn't exist or has no apps, when an `appName` names an app that doesn't exist, when an operation with `mcp: NONE` has a non-empty `appName`, and when the names of two apps differ only in case. It warns about an app that is linked to no tool, and about an app that loads external or relative resources with `<script src>`, `<link href>`, or `<img src>` other than `data:` URLs.
+The compilation fails when the apps directory doesn't exist or has no apps, when an app's file name is not a valid app name, when the names of two apps differ only in case, when an `appName` names an app that doesn't exist, and when an operation with `mcp: NONE` has a non-empty `appName`. It warns about an app that is linked to no tool, about an `APP` tool in an API version that serves MCP without `mcp-apps`, and about an app whose markup loads external or relative resources with `<script src>`, `<link href>`, or `<img src>` other than `data:` URLs. That last check does not see what scripts and stylesheets load.
 
 ### OpenAPI
 
