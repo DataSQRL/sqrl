@@ -1,0 +1,436 @@
+/*
+ * Copyright © 2021 DataSQRL (contact@datasqrl.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.datasqrl.cli;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+import com.datasqrl.deployment.model.FlinkJobPlan;
+import com.datasqrl.error.CollectedException;
+import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.error.ErrorMessage;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Optional;
+import java.util.function.Predicate;
+import java.util.stream.StreamSupport;
+import lombok.SneakyThrows;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+
+class CheckStateUpgradeOptionTest {
+
+  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+
+  private static final String SOURCE_OPERATOR =
+      "{\"id\": 1, \"type\": \"stream-exec-table-source-scan_2\", \"description\": \"Orders\"}";
+
+  private static final String SINK_OPERATOR =
+      "{\"id\": 2, \"type\": \"stream-exec-sink_1\", \"description\": \"Sink(CustomerCount)\"}";
+
+  @Nested
+  class OldBuildFolder {
+
+    @TempDir private Path projectRoot;
+
+    @Test
+    void givenOptionNotSet_whenCheckOldBuildFolderAndCheckUpgrade_thenNoMessages() {
+      var option = new CheckStateUpgradeOption();
+      var errors = ErrorCollector.root();
+
+      option.checkOldBuildFolder(projectRoot, buildDir(), targetDir(), errors);
+      option.checkUpgrade(projectRoot, targetDir(), errors);
+
+      assertThat(errors.hasErrorsWarningsOrNotices()).isFalse();
+    }
+
+    @Test
+    void givenOtherBuildFolder_whenCheckOldBuildFolder_thenNoErrors() throws IOException {
+      writeCompiledPlan(projectRoot.resolve("build/shop-replay/deploy/plan"));
+
+      assertThat(checkOldBuildFolder("build/shop-replay").hasErrors()).isFalse();
+    }
+
+    @Test
+    void givenSiblingFolderWithSameNamePrefix_whenCheckOldBuildFolder_thenNoErrors()
+        throws IOException {
+      writeCompiledPlan(projectRoot.resolve("build/shop2/deploy/plan"));
+
+      assertThat(checkOldBuildFolder("build/shop2").hasErrors()).isFalse();
+    }
+
+    @Test
+    void givenBuildOfDefaultBuildFolder_whenCheckOldBuildFolderWithOtherBuildFolder_thenNoErrors()
+        throws IOException {
+      writeCompiledPlan(projectRoot.resolve("build/deploy/plan"));
+
+      assertThat(checkOldBuildFolder("build").hasErrors()).isFalse();
+    }
+
+    @Test
+    void givenMissingFolder_whenCheckOldBuildFolder_thenFatalDoesNotExist() {
+      assertThatThrownBy(() -> checkOldBuildFolder("build/does-not-exist"))
+          .isInstanceOf(CollectedException.class)
+          .hasMessageContaining("does not exist");
+    }
+
+    @Test
+    void givenFolderWithoutPlanFolder_whenCheckOldBuildFolder_thenFatalCannotFindPlanFolder()
+        throws IOException {
+      Files.createDirectories(projectRoot.resolve("sources"));
+
+      assertThatThrownBy(() -> checkOldBuildFolder("sources"))
+          .isInstanceOf(CollectedException.class)
+          .hasMessageContaining("Cannot find the plan folder in");
+    }
+
+    @Test
+    void givenPlanFile_whenCheckOldBuildFolder_thenFatalCannotFindPlanFolder() throws IOException {
+      writeCompiledPlan(projectRoot.resolve("build/shop-replay/deploy/plan"));
+
+      assertThatThrownBy(
+              () -> checkOldBuildFolder("build/shop-replay/deploy/plan/flink-compiled-plan.json"))
+          .isInstanceOf(CollectedException.class)
+          .hasMessageContaining("Cannot find the plan folder in");
+    }
+
+    @Test
+    void
+        givenOldBuildIsTheBuildFolderOfThisCompile_whenCheckOldBuildFolder_thenFatalInsideBuildFolder()
+            throws IOException {
+      writeCompiledPlan(targetDir().resolve("plan"));
+
+      assertThatThrownBy(() -> checkOldBuildFolder("build/shop"))
+          .isInstanceOf(CollectedException.class)
+          .hasMessageContaining("is inside the build folder")
+          .hasMessageContaining(buildDir().toString());
+    }
+
+    @Test
+    void givenOldBuildInsideDefaultBuildFolder_whenCheckOldBuildFolder_thenFatalInsideBuildFolder()
+        throws IOException {
+      writeCompiledPlan(projectRoot.resolve("build/shop-replay/deploy/plan"));
+      var defaultBuildDir = projectRoot.resolve("build");
+
+      assertThatThrownBy(
+              () ->
+                  option("build/shop-replay")
+                      .checkOldBuildFolder(
+                          projectRoot,
+                          defaultBuildDir,
+                          defaultBuildDir.resolve("deploy"),
+                          ErrorCollector.root()))
+          .isInstanceOf(CollectedException.class)
+          .hasMessageContaining("is inside the build folder");
+    }
+
+    @Test
+    void
+        givenSymbolicLinkToBuildFolderOfThisCompile_whenCheckOldBuildFolder_thenFatalInsideBuildFolder()
+            throws IOException {
+      writeCompiledPlan(targetDir().resolve("plan"));
+      Files.createSymbolicLink(projectRoot.resolve("link-to-shop"), buildDir());
+
+      assertThatThrownBy(() -> checkOldBuildFolder("link-to-shop"))
+          .isInstanceOf(CollectedException.class)
+          .hasMessageContaining("is inside the build folder");
+    }
+
+    @Test
+    void givenOldBuildInsideTargetFolderOption_whenCheckOldBuildFolder_thenFatalInsideTargetFolder()
+        throws IOException {
+      writeCompiledPlan(projectRoot.resolve("artifacts/plan"));
+      var targetFolderOption = projectRoot.resolve("artifacts");
+
+      assertThatThrownBy(
+              () ->
+                  option("artifacts")
+                      .checkOldBuildFolder(
+                          projectRoot, buildDir(), targetFolderOption, ErrorCollector.root()))
+          .isInstanceOf(CollectedException.class)
+          .hasMessageContaining("is inside the target folder");
+    }
+
+    @Test
+    void givenRelativeBuildFolder_whenCheckUpgrade_thenComparesDeployPlanFromProjectRoot()
+        throws IOException {
+      var oldPlanDir = writeCompiledPlan(projectRoot.resolve("build/shop-replay/deploy/plan"));
+
+      assertThat(checkUpgradeNotices("build/shop-replay"))
+          .singleElement()
+          .asString()
+          .contains("can restore the state of the old build in " + oldPlanDir);
+    }
+
+    @Test
+    void givenTargetFolder_whenCheckUpgrade_thenComparesItsPlanFolder() throws IOException {
+      var oldPlanDir = writeCompiledPlan(projectRoot.resolve("artifacts/plan"));
+
+      assertThat(checkUpgradeNotices("artifacts"))
+          .singleElement()
+          .asString()
+          .contains("old build in " + oldPlanDir);
+    }
+
+    @Test
+    void givenPlanFolder_whenCheckUpgrade_thenComparesIt() throws IOException {
+      var oldPlanDir = writeCompiledPlan(projectRoot.resolve("deployed-plan"));
+
+      assertThat(checkUpgradeNotices("deployed-plan"))
+          .singleElement()
+          .asString()
+          .contains("old build in " + oldPlanDir);
+    }
+
+    @Test
+    void givenBuildFolderWithoutFlinkPlan_whenCheckUpgrade_thenNoticeNoFlinkPlan()
+        throws IOException {
+      Files.createDirectories(projectRoot.resolve("build/shop-replay/deploy/plan"));
+
+      assertThat(checkUpgradeNotices("build/shop-replay"))
+          .singleElement()
+          .asString()
+          .contains("has no Flink plan");
+    }
+
+    private CheckStateUpgradeOption option(String oldBuildFolder) {
+      var option = new CheckStateUpgradeOption();
+      option.oldBuildFolder = Optional.of(Path.of(oldBuildFolder));
+      return option;
+    }
+
+    /** Checks the folder for a compile with {@code -b shop}. */
+    private ErrorCollector checkOldBuildFolder(String oldBuildFolder) {
+      var errors = ErrorCollector.root();
+      option(oldBuildFolder).checkOldBuildFolder(projectRoot, buildDir(), targetDir(), errors);
+      return errors;
+    }
+
+    /** Writes a compatible new plan into the target folder and returns the notices of the check. */
+    private List<String> checkUpgradeNotices(String oldBuildFolder) throws IOException {
+      writeCompiledPlan(targetDir().resolve("plan"));
+      var errors = ErrorCollector.root();
+
+      option(oldBuildFolder).checkUpgrade(projectRoot, targetDir(), errors);
+
+      assertThat(errors.hasErrors()).isFalse();
+      return messages(errors, ErrorMessage::isNotice);
+    }
+
+    /** The build folder of a compile with {@code -b shop}. */
+    private Path buildDir() {
+      return projectRoot.resolve("build/shop");
+    }
+
+    private Path targetDir() {
+      return buildDir().resolve("deploy");
+    }
+
+    private static Path writeCompiledPlan(Path planDir) throws IOException {
+      Files.createDirectories(planDir);
+      Files.writeString(planDir.resolve("flink-compiled-plan.json"), plan("2.3", SOURCE_OPERATOR));
+      return planDir;
+    }
+  }
+
+  @Nested
+  class CompareBuildPlans {
+
+    @Test
+    void givenCompatiblePlans_whenCompareBuildPlans_thenNoticeAndNoErrors() {
+      var errors = ErrorCollector.root();
+
+      CheckStateUpgradeOption.compareBuildPlans(
+          buildPlan(plan("2.3", SOURCE_OPERATOR), Optional.of(128)),
+          buildPlan(plan("2.3", SOURCE_OPERATOR, SINK_OPERATOR), Optional.of(128)),
+          errors);
+
+      assertThat(errors.hasErrors()).isFalse();
+      assertThat(messages(errors, ErrorMessage::isNotice))
+          .singleElement()
+          .asString()
+          .contains("can restore the state");
+    }
+
+    @Test
+    void givenRemovedOperator_whenCompareBuildPlans_thenFatalWithBreakLineAndHint() {
+      var oldBuildPlan = buildPlan(plan("2.3", SOURCE_OPERATOR, SINK_OPERATOR), Optional.empty());
+      var newBuildPlan = buildPlan(plan("2.3", SOURCE_OPERATOR), Optional.empty());
+
+      assertThatThrownBy(
+              () ->
+                  CheckStateUpgradeOption.compareBuildPlans(
+                      oldBuildPlan, newBuildPlan, ErrorCollector.root()))
+          .isInstanceOf(CollectedException.class)
+          .hasMessageContaining("cannot restore the state")
+          .hasMessageContaining("operator 2 removed: Sink(CustomerCount)")
+          .hasMessageContaining("execution.state-recovery.ignore-unclaimed-state");
+    }
+
+    @Test
+    void givenDescriptionWithPercentSign_whenCompareBuildPlans_thenMessageKeepsIt() {
+      var operatorWithPercentSign =
+          "{\"id\": 2, \"type\": \"stream-exec-calc_1\", \"description\": \"Calc(where=[LIKE(name, '%a%')])\"}";
+      var oldBuildPlan = buildPlan(plan("2.3", operatorWithPercentSign), Optional.empty());
+      var newBuildPlan = buildPlan(plan("2.3"), Optional.empty());
+
+      assertThatThrownBy(
+              () ->
+                  CheckStateUpgradeOption.compareBuildPlans(
+                      oldBuildPlan, newBuildPlan, ErrorCollector.root()))
+          .isInstanceOf(CollectedException.class)
+          .hasMessageContaining("LIKE(name, '%a%')");
+    }
+
+    @Test
+    void givenOldBuildWithoutFlinkPlan_whenCompareBuildPlans_thenNoticeAndNoErrors() {
+      var errors = ErrorCollector.root();
+
+      CheckStateUpgradeOption.compareBuildPlans(
+          buildPlan(null, Optional.empty()),
+          buildPlan(plan("2.3", SOURCE_OPERATOR), Optional.empty()),
+          errors);
+
+      assertThat(errors.hasErrors()).isFalse();
+      assertThat(messages(errors, ErrorMessage::isNotice))
+          .singleElement()
+          .asString()
+          .contains("old build", "has no Flink plan");
+    }
+
+    @Test
+    void givenOldBuildWithoutFlinkPlanAndNewMaxParallelism_whenCompareBuildPlans_thenNoWarning() {
+      var errors = ErrorCollector.root();
+
+      CheckStateUpgradeOption.compareBuildPlans(
+          buildPlan(null, Optional.empty()),
+          buildPlan(plan("2.3", SOURCE_OPERATOR), Optional.of(144)),
+          errors);
+
+      assertThat(messages(errors, ErrorMessage::isWarning)).isEmpty();
+      assertThat(messages(errors, ErrorMessage::isNotice))
+          .singleElement()
+          .asString()
+          .contains("has no Flink plan");
+    }
+
+    @Test
+    void givenNewBuildWithoutFlinkPlan_whenCompareBuildPlans_thenNoticeAndNoErrors() {
+      var errors = ErrorCollector.root();
+
+      CheckStateUpgradeOption.compareBuildPlans(
+          buildPlan(plan("2.3", SOURCE_OPERATOR), Optional.empty()),
+          buildPlan(null, Optional.empty()),
+          errors);
+
+      assertThat(errors.hasErrors()).isFalse();
+      assertThat(messages(errors, ErrorMessage::isNotice))
+          .singleElement()
+          .asString()
+          .contains("new compile has no Flink plan");
+    }
+
+    @Test
+    void givenDifferentFlinkVersion_whenCompareBuildPlans_thenFlinkVersionNotice() {
+      var errors = ErrorCollector.root();
+
+      CheckStateUpgradeOption.compareBuildPlans(
+          buildPlan(plan("2.2", SOURCE_OPERATOR), Optional.empty()),
+          buildPlan(plan("2.3", SOURCE_OPERATOR), Optional.empty()),
+          errors);
+
+      assertThat(errors.hasErrors()).isFalse();
+      assertThat(messages(errors, ErrorMessage::isNotice))
+          .anySatisfy(message -> assertThat(message).contains("2.2 -> 2.3"));
+    }
+
+    @Test
+    void givenDifferentMaxParallelism_whenCompareBuildPlans_thenFatal() {
+      var oldBuildPlan = buildPlan(plan("2.3", SOURCE_OPERATOR), Optional.of(128));
+      var newBuildPlan = buildPlan(plan("2.3", SOURCE_OPERATOR), Optional.of(144));
+
+      assertThatThrownBy(
+              () ->
+                  CheckStateUpgradeOption.compareBuildPlans(
+                      oldBuildPlan, newBuildPlan, ErrorCollector.root()))
+          .isInstanceOf(CollectedException.class)
+          .hasMessageContaining("pipeline.max-parallelism differs: 128 -> 144");
+    }
+
+    @Test
+    void givenOnlyOldMaxParallelism_whenCompareBuildPlans_thenWarning() {
+      var errors = ErrorCollector.root();
+
+      CheckStateUpgradeOption.compareBuildPlans(
+          buildPlan(plan("2.3", SOURCE_OPERATOR), Optional.of(128)),
+          buildPlan(plan("2.3", SOURCE_OPERATOR), Optional.empty()),
+          errors);
+
+      assertThat(errors.hasErrors()).isFalse();
+      assertThat(messages(errors, ErrorMessage::isWarning))
+          .singleElement()
+          .asString()
+          .contains("Only the old build sets pipeline.max-parallelism (128)");
+    }
+
+    @Test
+    void givenOnlyNewMaxParallelism_whenCompareBuildPlans_thenWarning() {
+      var errors = ErrorCollector.root();
+
+      CheckStateUpgradeOption.compareBuildPlans(
+          buildPlan(plan("2.3", SOURCE_OPERATOR), Optional.empty()),
+          buildPlan(plan("2.3", SOURCE_OPERATOR), Optional.of(144)),
+          errors);
+
+      assertThat(errors.hasErrors()).isFalse();
+      assertThat(messages(errors, ErrorMessage::isWarning))
+          .singleElement()
+          .asString()
+          .contains("Only the new build sets pipeline.max-parallelism (144)");
+    }
+
+    /** A build plan, or a build without a Flink job when {@code compiledPlan} is null. */
+    private static FlinkBuildPlan buildPlan(String compiledPlan, Optional<Integer> maxParallelism) {
+      return new FlinkBuildPlan(
+          Path.of("build/deploy/plan"),
+          Optional.ofNullable(compiledPlan)
+              .map(plan -> new FlinkJobPlan(json(plan), maxParallelism)));
+    }
+  }
+
+  private static List<String> messages(
+      ErrorCollector errors, Predicate<ErrorMessage> severityFilter) {
+    return StreamSupport.stream(errors.spliterator(), false)
+        .filter(severityFilter)
+        .map(ErrorMessage::getMessage)
+        .toList();
+  }
+
+  private static String plan(String flinkVersion, String... operators) {
+    return "{\"flinkVersion\": \"%s\", \"nodes\": [%s]}"
+        .formatted(flinkVersion, String.join(",", operators));
+  }
+
+  @SneakyThrows
+  private static JsonNode json(String text) {
+    return OBJECT_MAPPER.readTree(text);
+  }
+}

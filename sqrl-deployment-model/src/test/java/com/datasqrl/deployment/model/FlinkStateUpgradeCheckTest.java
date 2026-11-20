@@ -1,0 +1,274 @@
+/*
+ * Copyright © 2021 DataSQRL (contact@datasqrl.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.datasqrl.deployment.model;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+import com.datasqrl.deployment.model.StateUpgradeBreak.ChangedMaxParallelism;
+import com.datasqrl.deployment.model.StateUpgradeBreak.ChangedOperatorType;
+import com.datasqrl.deployment.model.StateUpgradeBreak.ChangedStateField;
+import com.datasqrl.deployment.model.StateUpgradeBreak.RemovedOperator;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import java.util.List;
+import java.util.Optional;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+
+class FlinkStateUpgradeCheckTest {
+
+  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+
+  @Test
+  void givenSamePlan_whenCheck_thenNoBreaks() {
+    var result =
+        check(
+            plan("2.3", sourceOperator(), aggregateOperator(), sinkOperator()),
+            plan("2.3", sourceOperator(), aggregateOperator(), sinkOperator()));
+
+    assertThat(result.breaks()).isEmpty();
+    assertThat(result.warnings()).isEmpty();
+  }
+
+  @Test
+  void givenOperatorOnlyInNewPlan_whenCheck_thenNoBreaks() {
+    var result =
+        check(
+            plan("2.3", sourceOperator(), aggregateOperator()),
+            plan("2.3", sourceOperator(), aggregateOperator(), sinkOperator()));
+
+    assertThat(result.breaks()).isEmpty();
+  }
+
+  @Test
+  void givenOperatorMissingInNewPlan_whenCheck_thenRemovedOperator() {
+    var result =
+        check(
+            plan("2.3", sourceOperator(), aggregateOperator(), sinkOperator()),
+            plan("2.3", sourceOperator(), sinkOperator()));
+
+    assertThat(result.breaks())
+        .containsExactly(new RemovedOperator("2", "GroupAggregate(groupBy=[customerid])"));
+    assertThat(result.breaks().get(0).toMessage())
+        .isEqualTo("operator 2 removed: GroupAggregate(groupBy=[customerid])");
+  }
+
+  @Test
+  void givenTypeChanged_whenCheck_thenChangedOperatorType() {
+    var result =
+        check(
+            plan("2.3", sinkOperator()),
+            plan("2.3", sinkOperator().put("type", "stream-exec-sink_2")));
+
+    assertThat(result.breaks())
+        .containsExactly(
+            new ChangedOperatorType(
+                "3", "stream-exec-sink_1", "stream-exec-sink_2", "Sink(table=[CustomerCount])"));
+    assertThat(result.breaks().get(0).toMessage())
+        .isEqualTo(
+            "operator 3 changed: field 'type' differs:"
+                + " stream-exec-sink_1 -> stream-exec-sink_2 (Sink(table=[CustomerCount]))");
+  }
+
+  @ParameterizedTest
+  @ValueSource(
+      strings = {"state", "stateMetadata", "joinSpec", "inputProperties", "inputChangelogMode"})
+  void givenStateFieldChanged_whenCheck_thenChangedStateFieldOnThatField(String fieldName) {
+    var result =
+        check(plan("2.3", joinOperator()), plan("2.3", joinOperator().put(fieldName, "changed")));
+
+    assertThat(result.breaks())
+        .containsExactly(
+            new ChangedStateField(
+                "4", fieldName, "Join(joinType=[InnerJoin])", "Join(joinType=[InnerJoin])"));
+  }
+
+  @Test
+  void givenStateAndDescriptionChanged_whenCheck_thenMessageShowsBothDescriptions() {
+    var result =
+        check(
+            plan("2.3", aggregateOperator()),
+            plan(
+                "2.3",
+                aggregateOperator()
+                    .put("state", "otherState")
+                    .put("description", "GroupAggregate(groupBy=[customerid, region])")));
+
+    assertThat(result.breaks()).hasSize(1);
+    assertThat(result.breaks().get(0).toMessage())
+        .isEqualTo(
+            "operator 2 changed: field 'state' differs"
+                + " (old: GroupAggregate(groupBy=[customerid]),"
+                + " new: GroupAggregate(groupBy=[customerid, region]))");
+  }
+
+  @Test
+  void givenTypeAndStateChanged_whenCheck_thenOneBreakForEachField() {
+    var result =
+        check(
+            plan("2.3", aggregateOperator()),
+            plan(
+                "2.3",
+                aggregateOperator()
+                    .put("type", "stream-exec-group-aggregate_2")
+                    .put("state", "otherState")));
+
+    var aggregateDescription = "GroupAggregate(groupBy=[customerid])";
+    assertThat(result.breaks())
+        .containsExactly(
+            new ChangedOperatorType(
+                "2",
+                "stream-exec-group-aggregate_1",
+                "stream-exec-group-aggregate_2",
+                aggregateDescription),
+            new ChangedStateField("2", "state", aggregateDescription, aggregateDescription));
+  }
+
+  @Test
+  void givenMissingFieldAndJsonNull_whenCheck_thenNoBreaks() {
+    var result = check(plan("2.3", joinOperator()), plan("2.3", joinOperator().putNull("state")));
+
+    assertThat(result.breaks()).isEmpty();
+  }
+
+  @Test
+  void givenNumericAndTextId_whenCheck_thenSameOperator() {
+    var result = check(plan("2.3", sourceOperator()), plan("2.3", sourceOperator().put("id", "1")));
+
+    assertThat(result.breaks()).isEmpty();
+  }
+
+  @Test
+  void givenNewPlanWithoutNodes_whenCheck_thenEveryOldOperatorRemoved() {
+    var result =
+        check(
+            plan("2.3", sourceOperator(), aggregateOperator(), sinkOperator()),
+            OBJECT_MAPPER.createObjectNode());
+
+    assertThat(result.breaks())
+        .containsExactly(
+            new RemovedOperator("1", "TableSourceScan(table=[Orders])"),
+            new RemovedOperator("2", "GroupAggregate(groupBy=[customerid])"),
+            new RemovedOperator("3", "Sink(table=[CustomerCount])"));
+  }
+
+  @Test
+  void givenDifferentFlinkVersion_whenCheck_thenFlinkVersionChange() {
+    assertThat(check(plan("2.2"), plan("2.3")).flinkVersionChange()).contains("2.2 -> 2.3");
+  }
+
+  @Test
+  void givenSameFlinkVersion_whenCheck_thenNoFlinkVersionChange() {
+    assertThat(check(plan("2.3"), plan("2.3")).flinkVersionChange()).isEmpty();
+  }
+
+  @Test
+  void givenPlanWithoutFlinkVersion_whenCheck_thenNoFlinkVersionChange() {
+    assertThat(check(plan("2.3"), OBJECT_MAPPER.createObjectNode()).flinkVersionChange()).isEmpty();
+  }
+
+  @Test
+  void givenDifferentMaxParallelism_whenCheck_thenChangedMaxParallelism() {
+    var result =
+        FlinkStateUpgradeCheck.check(
+            jobPlan(plan("2.3"), Optional.of(128)), jobPlan(plan("2.3"), Optional.of(144)));
+
+    assertThat(result.breaks()).containsExactly(new ChangedMaxParallelism(128, 144));
+    assertThat(result.breaks().get(0).toMessage())
+        .isEqualTo("pipeline.max-parallelism differs: 128 -> 144");
+    assertThat(result.warnings()).isEmpty();
+  }
+
+  @Test
+  void givenSameMaxParallelism_whenCheck_thenNoBreaksAndNoWarnings() {
+    var result =
+        FlinkStateUpgradeCheck.check(
+            jobPlan(plan("2.3"), Optional.of(128)), jobPlan(plan("2.3"), Optional.of(128)));
+
+    assertThat(result.breaks()).isEmpty();
+    assertThat(result.warnings()).isEmpty();
+  }
+
+  @Test
+  void givenOnlyOldMaxParallelism_whenCheck_thenWarning() {
+    var result =
+        FlinkStateUpgradeCheck.check(
+            jobPlan(plan("2.3"), Optional.of(128)), jobPlan(plan("2.3"), Optional.empty()));
+
+    assertThat(result.breaks()).isEmpty();
+    assertThat(result.warnings())
+        .singleElement()
+        .asString()
+        .startsWith("Only the old build sets pipeline.max-parallelism (128).");
+  }
+
+  @Test
+  void givenOnlyNewMaxParallelism_whenCheck_thenWarning() {
+    var result =
+        FlinkStateUpgradeCheck.check(
+            jobPlan(plan("2.3"), Optional.empty()), jobPlan(plan("2.3"), Optional.of(144)));
+
+    assertThat(result.breaks()).isEmpty();
+    assertThat(result.warnings())
+        .singleElement()
+        .asString()
+        .startsWith("Only the new build sets pipeline.max-parallelism (144).");
+  }
+
+  /** Checks two plans that do not set {@code pipeline.max-parallelism}. */
+  private static StateUpgradeResult check(JsonNode oldCompiledPlan, JsonNode newCompiledPlan) {
+    return FlinkStateUpgradeCheck.check(
+        jobPlan(oldCompiledPlan, Optional.empty()), jobPlan(newCompiledPlan, Optional.empty()));
+  }
+
+  private static FlinkJobPlan jobPlan(JsonNode compiledPlan, Optional<Integer> maxParallelism) {
+    return new FlinkJobPlan(compiledPlan, maxParallelism);
+  }
+
+  private static ObjectNode sourceOperator() {
+    return operator(1, "stream-exec-table-source-scan_2", "TableSourceScan(table=[Orders])");
+  }
+
+  private static ObjectNode aggregateOperator() {
+    return operator(2, "stream-exec-group-aggregate_1", "GroupAggregate(groupBy=[customerid])")
+        .put("state", "groupAggregateState");
+  }
+
+  private static ObjectNode sinkOperator() {
+    return operator(3, "stream-exec-sink_1", "Sink(table=[CustomerCount])")
+        .put("inputChangelogMode", "INSERT, UPDATE_AFTER");
+  }
+
+  private static ObjectNode joinOperator() {
+    return operator(4, "stream-exec-join_1", "Join(joinType=[InnerJoin])");
+  }
+
+  private static ObjectNode operator(int id, String type, String description) {
+    return OBJECT_MAPPER
+        .createObjectNode()
+        .put("id", id)
+        .put("type", type)
+        .put("description", description);
+  }
+
+  private static JsonNode plan(String flinkVersion, ObjectNode... operators) {
+    var plan = OBJECT_MAPPER.createObjectNode().put("flinkVersion", flinkVersion);
+    plan.putArray("nodes").addAll(List.of(operators));
+    return plan;
+  }
+}
