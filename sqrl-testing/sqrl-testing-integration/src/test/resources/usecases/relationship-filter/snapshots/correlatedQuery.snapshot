@@ -1,0 +1,11 @@
+{
+  "data" : {
+    "correlatedQuery" : [ {
+      "label" : "label-b",
+      "info" : "detail-b"
+    }, {
+      "label" : "label-a",
+      "info" : "detail-a"
+    } ]
+  }
+}

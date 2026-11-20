@@ -36,3 +36,24 @@ sortedQuery(minId String NOT NULL) := SELECT th.* FROM Thing th
 JOIN Detail d ON th.id = d.id
 WHERE th.id >= :minId
 ORDER BY d.info DESC;
+
+-- E) correlated subquery filter on a join that the database computes
+/*+no_query, engine(postgres) */
+ThingRecord := SELECT th.label, d.info, th.id AS _id FROM Thing th
+LEFT JOIN Detail d ON th.id = d.id;
+
+correlatedQuery(minId String NOT NULL) := SELECT r.* FROM ThingRecord r
+WHERE NOT EXISTS (SELECT 1 FROM Tombstone tomb WHERE tomb.id = r._id)
+AND r._id >= :minId
+ORDER BY r.label DESC;
+
+-- F) correlated subqueries on an aggregate that the database computes and in the SELECT list
+/*+no_query, engine(postgres) */
+DetailCount := SELECT d.id, COUNT(*) AS num FROM Detail d GROUP BY d.id;
+
+countQuery(minId String NOT NULL) := SELECT c.id, c.num,
+(SELECT th.label FROM Thing th WHERE th.id = c.id) AS label
+FROM DetailCount c
+WHERE NOT EXISTS (SELECT 1 FROM Tombstone tomb WHERE tomb.id = c.id)
+AND c.id >= :minId
+ORDER BY c.id;

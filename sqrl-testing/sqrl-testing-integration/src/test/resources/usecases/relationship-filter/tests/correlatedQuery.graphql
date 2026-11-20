@@ -1,0 +1,6 @@
+query correlatedQuery {
+    correlatedQuery(minId: "a") {
+        label
+        info
+    }
+}

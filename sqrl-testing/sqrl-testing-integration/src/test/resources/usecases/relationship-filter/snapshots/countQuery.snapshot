@@ -1,0 +1,13 @@
+{
+  "data" : {
+    "countQuery" : [ {
+      "id" : "a",
+      "num" : 1,
+      "label" : "label-a"
+    }, {
+      "id" : "b",
+      "num" : 1,
+      "label" : "label-b"
+    } ]
+  }
+}
