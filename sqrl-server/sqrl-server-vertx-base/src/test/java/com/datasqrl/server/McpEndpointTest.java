@@ -87,6 +87,7 @@ class McpEndpointTest {
       """
       type Query {
         sensors(sensorId: Int!, limit: Int): [Sensor]
+        status: String
         failing: String
         forbidden: String
       }
@@ -145,7 +146,8 @@ class McpEndpointTest {
 
         assertThat(tools)
             .extracting(McpSchema.Tool::name)
-            .containsExactlyInAnyOrder("GetSensors", "AddReading", "GetFailing", "GetForbidden");
+            .containsExactlyInAnyOrder(
+                "GetSensors", "AddReading", "GetStatus", "GetFailing", "GetForbidden");
 
         var getSensors = tool(tools, "GetSensors");
         assertThat(getSensors.description()).isEqualTo("Returns the readings of a sensor.");
@@ -297,12 +299,43 @@ class McpEndpointTest {
     }
 
     @Test
-    void givenToolCallWithoutParams_whenRequesting_thenFailsWithInternalError() {
+    void givenNoProtocolVersion_whenInitializing_thenReturnsLatestVersion() {
+      var response =
+          post(
+              "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\",\"params\":"
+                  + "{\"capabilities\":{},\"clientInfo\":{\"name\":\"test\",\"version\":\"1.0\"}}}");
+
+      assertThat(response.statusCode()).isEqualTo(200);
+      assertThat(body(response).at("/result/protocolVersion").asText()).isEqualTo("2025-11-25");
+    }
+
+    @Test
+    void givenToolCallWithoutArguments_whenRequesting_thenCallsToolWithoutArguments() {
+      var response =
+          post(
+              "{\"jsonrpc\":\"2.0\",\"id\":7,\"method\":\"tools/call\","
+                  + "\"params\":{\"name\":\"GetStatus\"}}");
+
+      assertThat(response.statusCode()).isEqualTo(200);
+      assertThat(body(response).at("/result/isError").asBoolean()).isFalse();
+      assertThat(body(response).at("/result/content/0/text").asText()).isEqualTo("\"ok\"");
+    }
+
+    @Test
+    void givenInitializeWithoutParams_whenRequesting_thenReturnsLatestVersion() {
+      var response = post("{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\"}");
+
+      assertThat(response.statusCode()).isEqualTo(200);
+      assertThat(body(response).at("/result/protocolVersion").asText()).isEqualTo("2025-11-25");
+    }
+
+    @Test
+    void givenToolCallWithoutParams_whenRequesting_thenFailsWithInvalidParams() {
       var response = post("{\"jsonrpc\":\"2.0\",\"id\":6,\"method\":\"tools/call\"}");
 
       assertThat(response.statusCode()).isEqualTo(200);
       assertThat(body(response).at("/id").asInt()).isEqualTo(6);
-      assertThat(body(response).at("/error/code").asInt()).isEqualTo(-32603);
+      assertThat(body(response).at("/error/code").asInt()).isEqualTo(-32602);
     }
 
     @Test
@@ -417,7 +450,8 @@ class McpEndpointTest {
 
         assertThat(tools)
             .extracting(McpSchema.Tool::name)
-            .containsExactlyInAnyOrder("GetSensors", "AddReading", "GetFailing", "GetForbidden");
+            .containsExactlyInAnyOrder(
+                "GetSensors", "AddReading", "GetStatus", "GetFailing", "GetForbidden");
         assertThat(tool(tools, "GetSensors").meta())
             .isEqualTo(
                 Map.of(
@@ -577,7 +611,7 @@ class McpEndpointTest {
       try (var client = createClient(token)) {
         client.initialize();
 
-        assertThat(client.listTools().tools()).hasSize(4);
+        assertThat(client.listTools().tools()).hasSize(5);
       }
     }
   }
@@ -671,6 +705,7 @@ class McpEndpointTest {
                                   .mapToObj(i -> Map.of("sensorId", sensorId, "temperature", 21.5))
                                   .toList();
                             })
+                        .dataFetcher("status", env -> "ok")
                         .dataFetcher(
                             "failing",
                             env -> {
@@ -723,6 +758,15 @@ class McpEndpointTest {
                     + " { sensorId temperature } }",
                 Operation.MUTATION)
             .build();
+    var getStatus =
+        operation(
+                "GetStatus",
+                "Returns the status.",
+                Map.of(),
+                List.of(),
+                "query GetStatus { status }",
+                Operation.QUERY)
+            .build();
     var getFailing =
         operation(
                 "GetFailing",
@@ -753,7 +797,8 @@ class McpEndpointTest {
             .build();
     return RootGraphQLModel.builder()
         .operations(
-            new ArrayList<>(List.of(getSensors, addReading, getFailing, getForbidden, getHidden)))
+            new ArrayList<>(
+                List.of(getSensors, addReading, getStatus, getFailing, getForbidden, getHidden)))
         .build();
   }
 

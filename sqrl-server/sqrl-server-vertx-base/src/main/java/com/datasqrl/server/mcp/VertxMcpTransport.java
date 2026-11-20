@@ -105,7 +105,8 @@ public class VertxMcpTransport implements McpStatelessServerTransport {
     }
 
     var transportContext = McpTransportContext.create(Map.of(ROUTING_CONTEXT_KEY, ctx));
-    if (message instanceof JSONRPCRequest request) {
+    if (message instanceof JSONRPCRequest received) {
+      var request = withParams(received);
       toFuture(ctx, transportContext, () -> mcpHandler.handleRequest(transportContext, request))
           .recover(
               error -> {
@@ -135,6 +136,16 @@ public class VertxMcpTransport implements McpStatelessServerTransport {
       // A response to a server-to-client request, which this server never sends
       end(ctx, 202);
     }
+  }
+
+  /**
+   * Returns the request with empty params if it has none, which JSON-RPC allows. Without params,
+   * the SDK answers a method that reads them, such as initialize, with an internal error.
+   */
+  private static JSONRPCRequest withParams(JSONRPCRequest request) {
+    return request.params() != null
+        ? request
+        : new JSONRPCRequest(request.jsonrpc(), request.method(), request.id(), Map.of());
   }
 
   /** Handles a GET to the MCP endpoint, which would open a server-to-client stream. */

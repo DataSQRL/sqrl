@@ -222,11 +222,12 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
   private Mono<CallToolResult> callTool(
       McpTransportContext transportContext, ApiOperation operation, CallToolRequest request) {
     var ctx = (RoutingContext) transportContext.get(VertxMcpTransport.ROUTING_CONTEXT_KEY);
+    // A call of a tool without required arguments may leave out the arguments
+    var arguments = request.arguments() == null ? Map.<String, Object>of() : request.arguments();
     return Mono.defer(
             () ->
                 Mono.fromCompletionStage(
-                    bridgeRequestToGraphQL(ctx, operation, request.arguments())
-                        .toCompletionStage()))
+                    bridgeRequestToGraphQL(ctx, operation, arguments).toCompletionStage()))
         .map(result -> toToolResult(result, operation))
         .onErrorResume(error -> Mono.just(toErrorResult(operation, error)));
   }
