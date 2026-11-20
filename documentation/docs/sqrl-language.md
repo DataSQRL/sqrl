@@ -428,6 +428,23 @@ Specify the sort order for each column in a `BTREE` or `PBTREE` index with `ASC`
 RecentSensorReadings := SELECT ... ;
 ```
 
+### Column names in hints
+
+SQL matches column names case-sensitively, as Flink does. The column names in the hints `primary_key`, `index`, `partition_key`, `vector_dim`, `query_by_all`, `query_by_any` and `row_count` match like identifiers in PostgreSQL:
+
+- A plain name matches the column with the same name, ignoring case: `primary_key(CUSTOMERID)` matches the column `customerId`. When a plain name matches several columns whose names differ only in case, the compile fails and asks for the name in backticks.
+- A name in backticks only matches the column with exactly that name. A backtick that is part of the name is doubled, as in Flink SQL.
+
+Unlike PostgreSQL, a plain name is not folded to lower case, because Flink keeps the case of column names. For a table with the columns `cnt` and `CNT`, `index(BTREE, CNT)` fails, and ``index(BTREE, `CNT`)`` indexes `CNT`:
+
+```sql
+/*+primary_key(CUSTOMERID), index(BTREE, `CNT` DESC) */
+CustomerOrders := SELECT customerId, COUNT(*) AS cnt, SUM(amount) AS CNT
+                  FROM Orders GROUP BY customerId;
+```
+
+The required columns of a tag in `compiler.tags` match the same way, see [Tags](configuration#tags-compilertags).
+
 ### Automatic index selection
 
 Without an `index` hint, the compiler selects the PostgreSQL indexes for a table from the filters of the API queries that read it: the `WHERE` clauses of table functions and relationships, `query_by_*` arguments, the `JOIN ... ON` conditions for the table on the right side of the join, and the filters inside subqueries. An index on a column serves a filter only when the column stands alone on one side of `=`, `<`, `<=`, `>` or `>=`, like `customer_id = :customerId`. A comparison with an uncorrelated scalar subquery, like `customer_id = (SELECT MAX(customer_id) FROM ...)`, counts as a comparison with a parameter.
@@ -551,6 +568,7 @@ The following produce compile time errors:
 * `DISTINCT` must reference existing columns; `ORDER BY` column(s) must be monotonically increasing.
 * Basetable inference failure for relationships (see [base tables](interface#base-tables)).
 * Malformed or invalid hints (wrong delimiter, other text in the hint block that is not a hint, invalid arguments to a known hint such as `ttl`, or more than one `query_by_*` or `no_query` hint on a table).
+* A column name in a hint that matches no column, or that matches several columns whose names differ only in case (see [Column names in hints](#column-names-in-hints)).
 * Tag violations when [`compiler.tags`](configuration#tags-compilertags) is configured: an undefined tag or value, an inherited tag that a table does not declare or declares lower, or a missing required column.
 
 An unknown hint name is not an error: the compiler prints the warning `Unrecognized hint: [<name>]` and ignores the hint, so a misspelled hint has no effect.

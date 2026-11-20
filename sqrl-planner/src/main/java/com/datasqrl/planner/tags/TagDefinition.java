@@ -15,6 +15,7 @@
  */
 package com.datasqrl.planner.tags;
 
+import com.datasqrl.planner.analyzer.ColumnReference;
 import java.util.List;
 import org.apache.calcite.rel.type.RelDataType;
 
@@ -46,9 +47,10 @@ public record TagDefinition(
   /**
    * A column that every table carrying the tag must have.
    *
-   * @param name the column name
+   * @param name the column name as configured, which matches the column of a table as described in
+   *     {@link ColumnReference}
    * @param typeName the type as configured
    * @param type the parsed type
    */
-  public record RequiredColumn(String name, String typeName, RelDataType type) {}
+  public record RequiredColumn(ColumnReference name, String typeName, RelDataType type) {}
 }

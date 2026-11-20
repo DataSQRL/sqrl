@@ -1138,7 +1138,7 @@ public class SqlScriptPlanner {
                     getStandaloneInclude(object.table())),
                 importedHintsAndDoc,
                 flinkTable.errorCollector());
-        importedHintsAndDoc.hints().updateColumnNamesHints(tableAnalysis::getField);
+        importedHintsAndDoc.hints().updateColumnNamesHints(tableAnalysis.getRowType());
         addSourceToDag(tableAnalysis, importedHintsAndDoc, sqrlEnv);
         completeScript.append(tableAnalysis.getOriginalSql());
       } catch (Throwable e) {

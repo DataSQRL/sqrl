@@ -31,6 +31,18 @@ CustomerRegions := SELECT id, address AS region FROM Customers;
 /** Wrong type for the column required by the jurisdiction tag @jurisdiction */
 CustomerJurisdictions := SELECT id, 1 AS jurisdiction FROM Customers;
 
+/*+declassify(pii, classification) */
+/** Columns whose names differ only in case match the required column ambiguously @jurisdiction */
+CustomerJurisdictionCases := SELECT id, 1 AS JURISDICTION, address AS jurisdiction FROM Customers;
+
+/*+declassify(pii, classification) */
+/** Has the column that the country tag requires in backticks, with the exact name @country */
+CustomerCountryCases := SELECT id, 1 AS country, address AS Country FROM Customers;
+
+/*+declassify(pii, classification) */
+/** Misses the column that the country tag requires in backticks, the name differs in case @country */
+CustomerCountries := SELECT id, address AS country FROM Customers;
+
 /*+engine(kafka) */
 CREATE TABLE ContactEvents (
   id BIGINT NOT NULL,

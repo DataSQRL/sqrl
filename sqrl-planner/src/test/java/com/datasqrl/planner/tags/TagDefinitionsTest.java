@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datasqrl.config.PackageJson.TagConfig;
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.planner.analyzer.ColumnReference;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -113,10 +114,33 @@ class TagDefinitionsTest {
     assertThat(messages())
         .containsExactly(
             "Duplicate required column [JURISDICTION] of tag [jurisdiction] in compiler.tags:"
-                + " column names are case-insensitive");
+                + " column names are case-insensitive unless they are in backticks");
     assertThat(definitions.get("jurisdiction").orElseThrow().requiredColumns())
         .extracting(TagDefinition.RequiredColumn::name)
-        .containsExactly("jurisdiction");
+        .containsExactly(new ColumnReference("jurisdiction", false));
+  }
+
+  @Test
+  void givenRequiredColumnsInBackticks_whenFrom_thenOnlyExactNamesAreDuplicates() {
+    var columns = new LinkedHashMap<String, String>();
+    columns.put("`jurisdiction`", "STRING");
+    columns.put("`JURISDICTION`", "STRING");
+    columns.put("Jurisdiction", "STRING");
+
+    var definitions =
+        TagDefinitions.from(
+            Optional.of(Map.of("jurisdiction", config(List.of(), columns))),
+            this::parseType,
+            errors);
+
+    assertThat(messages())
+        .containsExactly(
+            "Duplicate required column [Jurisdiction] of tag [jurisdiction] in compiler.tags:"
+                + " column names are case-insensitive unless they are in backticks");
+    assertThat(definitions.get("jurisdiction").orElseThrow().requiredColumns())
+        .extracting(TagDefinition.RequiredColumn::name)
+        .containsExactly(
+            new ColumnReference("jurisdiction", true), new ColumnReference("JURISDICTION", true));
   }
 
   @Test

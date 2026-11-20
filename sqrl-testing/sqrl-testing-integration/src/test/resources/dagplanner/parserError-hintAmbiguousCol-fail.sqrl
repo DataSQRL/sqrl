@@ -1,0 +1,5 @@
+IMPORT ecommerceTs.orders AS _OrdersStream;
+
+/*+index(btree, CNT) */
+CustomerOrderCounts := SELECT customerid, COUNT(*) AS cnt, SUM(id) AS CNT
+                       FROM _OrdersStream GROUP BY customerid;

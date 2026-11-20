@@ -23,6 +23,7 @@ import com.datasqrl.planner.parser.StatementParserException;
 import com.google.auto.service.AutoService;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 import lombok.Getter;
 import org.apache.calcite.rel.RelFieldCollation.Direction;
 
@@ -50,6 +51,13 @@ public class IndexHint extends ColumnNamesHint {
 
   @AutoService(Factory.class)
   public static class IndexHintFactory implements Factory {
+
+    /**
+     * A column name, plain or in backticks, optionally followed by a sort direction. A name in
+     * backticks may contain whitespace, see {@link com.datasqrl.planner.analyzer.ColumnReference}.
+     */
+    private static final Pattern COLUMN_SPECIFICATION =
+        Pattern.compile("(?<name>`(?:[^`]|``)+`|\\S+)(?:\\s+(?<direction>\\S+))?");
 
     @Override
     public PlannerHint create(ParsedObject<SqrlHint> source) {
@@ -90,17 +98,17 @@ public class IndexHint extends ColumnNamesHint {
       var directions = new ArrayList<Direction>();
 
       for (var argument : arguments) {
-        var terms = argument.trim().split("\\s+");
+        var specification = COLUMN_SPECIFICATION.matcher(argument.trim());
 
-        if (argument.isBlank() || terms.length > 2) {
+        if (!specification.matches()) {
           throw invalidColumnSpecification(source, argument);
         }
 
-        columnNames.add(terms[0]);
+        columnNames.add(specification.group("name"));
 
-        Direction direction = Direction.ASCENDING;
-        if (terms.length > 1) {
-          direction = parseDirection(source, argument, terms[1]);
+        var direction = Direction.ASCENDING;
+        if (specification.group("direction") != null) {
+          direction = parseDirection(source, argument, specification.group("direction"));
         }
 
         if (direction.isDescending() && !indexType.supportsSortOrder()) {

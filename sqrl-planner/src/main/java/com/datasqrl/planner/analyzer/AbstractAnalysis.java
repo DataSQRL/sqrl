@@ -41,25 +41,24 @@ public interface AbstractAnalysis {
     return getRowType().getFieldList().get(idx);
   }
 
+  /**
+   * Looks up a column by its exact name, returns null if there is no such column. A column name
+   * that a user writes in a hint or in {@code compiler.tags} resolves through {@link
+   * ColumnReference} instead.
+   */
   default RelDataTypeField getField(String name) {
-    return getRowType().getField(name, false, false);
+    return getRowType().getField(name, true, false);
   }
 
   default String getFieldName(int idx) {
     return getField(idx).getName();
   }
 
+  /** The index of the column with the exact name, or -1 if there is no such column. */
   default int getFieldIndex(String fieldName) {
-    RelDataTypeField field = getRowType().getField(fieldName, false, false);
-    if (field == null) {
-      return -1;
-    } else {
-      return field.getIndex();
-    }
-  }
+    var field = getField(fieldName);
 
-  default boolean hasField(String fieldName) {
-    return getRowType().getField(fieldName, false, false) != null;
+    return field != null ? field.getIndex() : -1;
   }
 
   default Optional<Integer> getRowTime() {

@@ -928,10 +928,9 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
     var schema = table.getSourceSinkTable().orElseThrow().schema();
     tagAnalyzer.checkRequiredColumns(
         result.statementName(),
-        column ->
-            typeFactory
-                .createFieldTypeFromLogicalType(schema.toSourceRowDataType().getLogicalType())
-                .getField(column, false, false),
+        () ->
+            typeFactory.createFieldTypeFromLogicalType(
+                schema.toSourceRowDataType().getLogicalType()),
         table.getTags(),
         errors);
   }

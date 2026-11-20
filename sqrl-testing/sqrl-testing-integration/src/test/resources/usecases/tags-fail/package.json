@@ -6,7 +6,8 @@
       "pii": { "values": ["masked", "raw"] },
       "classification": { "values": ["internal", "confidential"] },
       "financial": {},
-      "jurisdiction": { "required-columns": { "jurisdiction": "STRING" } }
+      "jurisdiction": { "required-columns": { "jurisdiction": "STRING" } },
+      "country": { "required-columns": { "`Country`": "STRING" } }
     }
   },
   "script": {

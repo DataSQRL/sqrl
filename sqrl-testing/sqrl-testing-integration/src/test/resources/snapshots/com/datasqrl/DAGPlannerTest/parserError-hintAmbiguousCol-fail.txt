@@ -1,0 +1,7 @@
+[FATAL] index hint references column [CNT] which matches columns that differ only in case: write `cnt` or `CNT` to match exactly one
+in script:parserError-hintAmbiguousCol-fail.sqrl [3:4]:
+IMPORT ecommerceTs.orders AS _OrdersStream;
+
+/*+index(btree, CNT) */
+---^
+

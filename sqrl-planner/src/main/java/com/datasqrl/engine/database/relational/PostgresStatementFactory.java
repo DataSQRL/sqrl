@@ -92,7 +92,8 @@ public class PostgresStatementFactory extends AbstractJdbcStatementFactory {
         partitionKey);
 
     String partitionCol = partitionKey.get(0);
-    var colType = createTable.tableAnalysis().getRowType().getField(partitionCol, false, false);
+    // The partition key hint resolved the column, so its name is exact
+    var colType = createTable.tableAnalysis().getRowType().getField(partitionCol, true, false);
 
     // Look up field reldatatype to determine partition type
     return CalciteUtil.isTimestamp(colType.getType()) ? PartitionType.RANGE : PartitionType.HASH;

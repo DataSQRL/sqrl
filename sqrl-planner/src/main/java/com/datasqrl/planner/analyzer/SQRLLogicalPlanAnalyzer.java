@@ -229,7 +229,7 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
     }
 
     var hints = hintsAndDoc.hints();
-    hints.updateColumnNamesHints(analysis::getField);
+    hints.updateColumnNamesHints(analysis.getRowType());
     // See if the primary key is being explicitly set:
     Optional<PrimaryKeyHint> pkHint = hints.getHint(PrimaryKeyHint.class);
     if (pkHint.isPresent()) {

@@ -586,6 +586,8 @@ Multiple hints are comma-separated inside one comment. This example configures t
 SensorTempByHour := SELECT ... ;
 ```
 
+SQL matches column names case-sensitively, but hints do not. A plain column name in a hint matches the column with the same name, ignoring case, so `primary_key(CUSTOMERID)` matches `customerId`. A name in backticks only matches the column with exactly that name. When a table has columns whose names differ only in case, such as `cnt` and `CNT`, a plain name fails the compile with `matches columns that differ only in case`: write the name in backticks, like ``index(BTREE, `CNT`)``, or rename one of the columns. The required columns of a tag in `compiler.tags` match the same way.
+
 For choosing between `query_by_all` (required filter arguments) and `query_by_any` (optional filter arguments) when designing table access, invoke the `/design-api` skill (Table Hints for Table Access).
 
 ### Where a table runs
@@ -737,6 +739,7 @@ The following produce compile time errors:
 * An `ORDER BY` column that does not also appear in the `SELECT` list — in any table definition, including `/*+test*/` tables (`All sort columns must be part of the SELECT clause`. The `/test-sqrl` skill shows how to sort by a column you do not want in the result).
 * Basetable inference failure for relationships.
 * Malformed or invalid hints (wrong delimiter, other text in the hint block that is not a hint, invalid arguments to a known hint such as `ttl`, or more than one `query_by_*` or `no_query` hint on a table).
+* A column name in a hint that matches no column, or that matches several columns whose names differ only in case (see Hints).
 * Tag violations when `compiler.tags` is configured (see Tags in doc-strings above).
 
 An unknown hint name is **not** an error: the compiler prints the warning `Unrecognized hint: [<name>]` and drops the hint, so a misspelled hint has no effect. Check the compile output for this warning after adding a hint.

@@ -48,6 +48,30 @@ class IndexHintTest {
   }
 
   @Test
+  void givenColumnsInBackticks_whenCreate_thenKeepsTheNamesAndDirections() {
+    var parsedHint =
+        SqrlHint.parse(
+                new ParsedObject<>("index(BTREE, `event time` DESC, `ID`)", FileLocation.START))
+            .get(0);
+
+    var hint = (IndexHint) factory.create(parsedHint);
+
+    assertThat(hint.getColumnNames()).containsExactly("`event time`", "`ID`");
+    assertThat(hint.getDirections()).containsExactly(Direction.DESCENDING, Direction.ASCENDING);
+  }
+
+  @Test
+  void givenNameWithMisplacedBacktick_whenCreate_thenKeepsItAsPlainName() {
+    var parsedHint =
+        SqrlHint.parse(new ParsedObject<>("index(BTREE, `col_a DESC)", FileLocation.START)).get(0);
+
+    var hint = (IndexHint) factory.create(parsedHint);
+
+    assertThat(hint.getColumnNames()).containsExactly("`col_a");
+    assertThat(hint.getDirections()).containsExactly(Direction.DESCENDING);
+  }
+
+  @Test
   void givenInvalidIndexColumnDirection_whenCreate_thenThrows() {
     var hint =
         new ParsedObject<>(
