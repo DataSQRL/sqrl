@@ -21,10 +21,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.datasqrl.config.JdbcDialect;
+import com.datasqrl.config.PackageJson.IndexSelectionConfig;
 import com.datasqrl.engine.database.relational.CreateTableJdbcStatement;
+import com.datasqrl.engine.database.relational.IndexSelectorConfigByDialect;
 import com.datasqrl.engine.database.relational.JdbcEngineCreateTable;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.plan.index.IndexSelector.NamedTable;
+import com.datasqrl.plan.table.TableStatistic;
 import com.datasqrl.planner.Sqrl2FlinkSQLTranslator;
 import com.datasqrl.planner.analyzer.TableAnalysis;
 import java.util.EnumSet;
@@ -428,6 +432,69 @@ class IndexSelectorTest {
       when(stmt.getEngineTable())
           .thenReturn(new JdbcEngineCreateTable(name, name, null, null, rowType, analysis));
       tableMap.put(name, stmt);
+    }
+  }
+
+  /** Issue #2622: the distinct count of a {@code row_count} hint decides what is worth indexing. */
+  @Nested
+  class DistinctCounts {
+
+    private static final int EMAIL = 0;
+    private static final int COUNTRY = 1;
+    private static final List<String> COLUMN_NAMES = List.of("email", "country");
+
+    @Test
+    void givenNoDistinctCounts_whenOptimizeIndexes_thenIndexesBothEqualityColumns() {
+      var customers = customersWith(TableStatistic.fromHint(1e6));
+
+      assertThat(indexesForEqualityOn(customers, EMAIL, COUNTRY))
+          .containsExactly("BTREE[email, country]");
+    }
+
+    @Test
+    void givenUniqueColumn_whenOptimizeIndexes_thenIndexesOnlyThatColumn() {
+      var customers =
+          customersWith(
+              TableStatistic.fromHint(1e6).withDistinctCounts(Map.of(Set.of(EMAIL), 1e6)));
+
+      assertThat(indexesForEqualityOn(customers, EMAIL, COUNTRY)).containsExactly("HASH[email]");
+    }
+
+    private List<String> indexesForEqualityOn(NamedTable table, Integer... equalityColumns) {
+      var query = new QueryIndexSummary(table, Set.of(equalityColumns), Set.of(), Set.of(), 1.0);
+      var selector = new IndexSelector(null, postgresDefaults(), Map.of(), ErrorCollector.root());
+
+      return selector.optimizeIndexes(List.of(query)).stream()
+          .map(
+              index ->
+                  index.getType()
+                      + index.getColumns().stream().map(COLUMN_NAMES::get).toList().toString())
+          .toList();
+    }
+
+    private NamedTable customersWith(TableStatistic tableStatistic) {
+      var rowType = mock(RelDataType.class);
+      when(rowType.getFieldNames()).thenReturn(COLUMN_NAMES);
+      var relNode = mock(RelNode.class);
+      when(relNode.getRowType()).thenReturn(rowType);
+      var analysis =
+          TableAnalysis.builder()
+              .objectIdentifier(ObjectIdentifier.of("datasqrl", "public", "Customers"))
+              .collapsedRelnode(relNode)
+              .originalRelnode(relNode)
+              .tableStatistic(tableStatistic)
+              .build();
+      return new NamedTable(
+          "Customers", "Customers", analysis, mock(CreateTableJdbcStatement.class));
+    }
+
+    private IndexSelectorConfig postgresDefaults() {
+      var indexSelection = mock(IndexSelectionConfig.class);
+      when(indexSelection.getMaxIndexes()).thenReturn(8);
+      when(indexSelection.getMaxIndexColumns()).thenReturn(3);
+      when(indexSelection.getMaxFilterPatterns()).thenReturn(50);
+      when(indexSelection.getMinCostReduction()).thenReturn(0.05);
+      return new IndexSelectorConfigByDialect(JdbcDialect.Postgres, indexSelection);
     }
   }
 
