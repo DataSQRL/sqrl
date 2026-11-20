@@ -153,9 +153,10 @@ public class ServerModelManager {
           directory.get());
       return Optional.empty();
     }
-    return Optional.of(
-        McpAppLoader.load(
-            workspacePaths.buildDir().resolve(directory.get()), directory.get(), errors));
+    var path =
+        workspacePaths.resolveConfiguredPath(
+            "script.api.%s.mcp-apps".formatted(apiVersion), directory.get(), errors);
+    return Optional.of(McpAppLoader.load(path, directory.get(), errors));
   }
 
   private Optional<PackageJson.ScriptApiConfig> findApiConfig(String apiVersion) {
@@ -188,9 +189,11 @@ public class ServerModelManager {
     }
 
     var configuredFilename = configuredFilenameOpt.get();
+    var configuredOpenApiPath =
+        workspacePaths.resolveConfiguredPath(
+            "script.api.%s.openapi".formatted(apiVersion), configuredFilename, errors);
     final ChangedOpenApi diff;
     try {
-      var configuredOpenApiPath = workspacePaths.buildDir().resolve(configuredFilenameOpt.get());
       var configuredOpenApiContent = Files.readString(configuredOpenApiPath);
 
       diff = OpenApiCompare.fromContents(configuredOpenApiContent, generatedOpenApi);

@@ -64,6 +64,8 @@ SQRL will check backward compatibility during compile making sure that mutation 
 
 The `config` JSON object is passed to the Mustache templating engine to substitute template variable occurrences (e.g. `{{excludedTenant}}`) before the script is compiled.
 
+All file and folder paths in `script`, including those of an [API version](#api-versioning) and the `package` of an [include](#include-other-sources), are relative to the project root. The same applies to the folders of the [test runner](#test-runner-test-runner). A path may lead out of the project, for example to a sibling project with `../shared/schema.graphqls`, but it must stay inside the workspace: the folder that `sqrl` runs in, which is `/workspace` in the Docker image. Mount the folder that holds all projects that a project uses, and select the project with `--project-root` or by the path of its package file. The compilation fails on an absolute path and on a path that leads out of the workspace, and the error names the key and the value. A file outside the project is read where it is, so the `config` templating does not apply to a main script outside the project. Symbolic links count with their targets: DataSQRL follows links inside the workspace, skips links that lead outside it, and prints a warning for each link it skips.
+
 ```json
 {
   "script": {
@@ -278,6 +280,7 @@ A project whose Flink job would write no table, because standalone includes writ
 ## Test-Runner (`test-runner`)
 
 Configures how the DataSQRL test runner executes tests.
+`snapshot-folder` and `test-folder` are relative to the project root and must stay inside the workspace, see [Source Files](#source-files-script).
 For streaming pipelines, set `delay-sec` to `-1` so the test runner waits until all Flink operators are idle and the `required-checkpoints` have completed before taking snapshots. Otherwise, `delay-sec` is a wall-clock upper bound on how long to wait for the job to finish.
 
 ```json

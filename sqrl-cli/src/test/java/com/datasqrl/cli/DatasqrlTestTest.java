@@ -25,6 +25,7 @@ import com.datasqrl.cli.output.NoOutputFormatter;
 import com.datasqrl.cli.output.TestOutputManager;
 import com.datasqrl.compile.TestPlan;
 import com.datasqrl.config.PackageJson;
+import com.datasqrl.config.ProjectPaths;
 import com.datasqrl.deployment.model.JdbcStatementModel;
 import com.datasqrl.engine.database.relational.GenericJdbcStatement;
 import com.datasqrl.util.SqrlObjectMapper;
@@ -91,7 +92,7 @@ class DatasqrlTestTest {
 
     var underTest =
         new DatasqrlTest(
-            tempDir,
+            new ProjectPaths(tempDir, tempDir),
             planDir,
             sqrlConfig,
             new Configuration(),

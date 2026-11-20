@@ -18,7 +18,7 @@ package com.datasqrl.config;
 import static com.datasqrl.server.ApiSources.DEFAULT_API_VERSION;
 
 import com.datasqrl.engine.server.ServerPhysicalPlan;
-import com.datasqrl.loaders.resolver.ResourceResolver;
+import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.plan.validate.ExecutionGoal;
 import com.datasqrl.server.ApiSource;
 import com.datasqrl.server.ApiSources;
@@ -39,10 +39,11 @@ import org.springframework.stereotype.Component;
 public class GraphqlSourceLoader {
 
   private final ScriptFiles scriptFiles;
-  private final ResourceResolver resolver;
+  private final WorkspacePaths workspacePaths;
   private final GraphqlSchemaHandler graphqlSchemaHandler;
   private final PackageJson config;
   private final ExecutionGoal executionGoal;
+  private final ErrorCollector errors;
 
   public record LoadResult(List<ApiSources> apiVersions, Optional<String> inferredSchema) {}
 
@@ -68,7 +69,11 @@ public class GraphqlSourceLoader {
                 schema ->
                     List.of(
                         createApiSources(
-                            DEFAULT_API_VERSION, schema, scriptFiles.getOperations(), resolver)))
+                            DEFAULT_API_VERSION,
+                            "script.graphql",
+                            schema,
+                            "script.operations",
+                            scriptFiles.getOperations())))
             .orElse(List.of());
 
     if (!shouldUseInferredSchema(apiVersions)) {
@@ -83,7 +88,7 @@ public class GraphqlSourceLoader {
             new ApiSources(
                 inferredSchema,
                 apiVersions.isEmpty()
-                    ? resolveOperations(scriptFiles.getOperations())
+                    ? resolveOperations("script.operations", scriptFiles.getOperations())
                     : apiVersions.stream().flatMap(a -> a.operations().stream()).toList()));
 
     return new LoadResult(apiVersions, Optional.of(inferredSchema));
@@ -103,9 +108,10 @@ public class GraphqlSourceLoader {
                   apiConf ->
                       createApiSources(
                           apiConf.getVersion(),
+                          apiKey(apiConf, "schema"),
                           apiConf.getSchema().orElseThrow(),
-                          apiConf.getOperations(),
-                          resolver))
+                          apiKey(apiConf, "operations"),
+                          apiConf.getOperations()))
               .toList();
 
       apiVersions.forEach(
@@ -130,8 +136,9 @@ public class GraphqlSourceLoader {
 
   private ApiSources createVersionedApiSources(
       PackageJson.ScriptApiConfig apiConfig, String inferredSchema, boolean forceInferredSchema) {
-    var operations = resolveOperations(apiConfig.getOperations());
-    var configuredSchema = apiConfig.getSchema().map(schema -> resolvePath(schema, resolver));
+    var operations = resolveOperations(apiKey(apiConfig, "operations"), apiConfig.getOperations());
+    var configuredSchema =
+        apiConfig.getSchema().map(schema -> resolvePath(apiKey(apiConfig, "schema"), schema));
     if (forceInferredSchema || apiConfig.getSchema().isEmpty()) {
       return new ApiSources(apiConfig.getVersion(), new ApiSource(inferredSchema), operations);
     }
@@ -143,27 +150,35 @@ public class GraphqlSourceLoader {
         || (executionGoal == ExecutionGoal.TEST && config.getTestConfig().useInferredSchema());
   }
 
-  private static ApiSources createApiSources(
-      String version, String schema, List<String> operations, ResourceResolver resolver) {
+  private ApiSources createApiSources(
+      String version,
+      String schemaKey,
+      String schema,
+      String operationsKey,
+      List<String> operations) {
 
-    var schemaSrc = resolvePath(schema, resolver);
-    var opSrc = operations.stream().map(file -> resolvePath(file, resolver)).toList();
+    var schemaSrc = resolvePath(schemaKey, schema);
+    var opSrc = resolveOperations(operationsKey, operations);
 
     return new ApiSources(version, schemaSrc, opSrc);
   }
 
-  private List<ApiSource> resolveOperations(List<String> operations) {
-    return operations.stream().map(file -> resolvePath(file, resolver)).toList();
+  /** Returns the full key of a path of an API version, for error messages. */
+  private static String apiKey(PackageJson.ScriptApiConfig apiConfig, String key) {
+    return "script.api.%s.%s".formatted(apiConfig.getVersion(), key);
+  }
+
+  private List<ApiSource> resolveOperations(String key, List<String> operations) {
+    return operations.stream().map(file -> resolvePath(key, file)).toList();
   }
 
   @SneakyThrows
-  private static ApiSource resolvePath(String file, ResourceResolver resolver) {
-    var relativePath = Path.of(file);
-    var absolutePath =
-        resolver
-            .resolveFile(relativePath)
-            .orElseThrow(() -> new IllegalArgumentException("Failed to find file: " + file));
+  private ApiSource resolvePath(String key, String file) {
+    var path = workspacePaths.resolveConfiguredPath(key, file, errors);
+    if (!Files.exists(path)) {
+      throw new IllegalArgumentException("Failed to find file: " + file);
+    }
 
-    return new ApiSource(relativePath, Files.readString(absolutePath));
+    return new ApiSource(Path.of(file), Files.readString(path));
   }
 }

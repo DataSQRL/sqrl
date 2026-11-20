@@ -46,6 +46,10 @@ import org.springframework.stereotype.Component;
  * Helps to preprocess files which means 1) copying all relevant files into the build directory
  * (preserving relative paths) 2) running all registered preprocessors for more elaborate
  * preprocessing than just copying files.
+ *
+ * <p>Symbolic links are followed as long as they stay inside the workspace, which is considered
+ * safe to read. A link that leads outside is skipped with a warning, so that the build holds no
+ * file from outside the workspace.
  */
 @Component
 public class FilePreprocessingPipeline {
@@ -111,7 +115,7 @@ public class FilePreprocessingPipeline {
 
     @Override
     public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
-      if (dir.startsWith(buildBaseDir)) {
+      if (dir.startsWith(buildBaseDir) || isLinkOutside(dir)) {
         return FileVisitResult.SKIP_SUBTREE;
       }
 
@@ -141,7 +145,7 @@ public class FilePreprocessingPipeline {
 
     @Override
     public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
-      if (Files.isRegularFile(file)) {
+      if (Files.isRegularFile(file) && !isLinkOutside(file)) {
 
         var ctx = ctxDeque.peek();
         if (FILENAME_ANALYZER.analyze(file).isPresent()) {
@@ -152,6 +156,24 @@ public class FilePreprocessingPipeline {
       }
 
       return FileVisitResult.CONTINUE;
+    }
+
+    /**
+     * Returns whether the path is a symbolic link that leads outside the workspace, and warns if
+     * so. Checking the links is enough: the visitor skips a directory link that leads outside, so
+     * every other path below a directory inside the workspace resolves inside it.
+     */
+    private boolean isLinkOutside(Path path) {
+      if (!Files.isSymbolicLink(path) || workspacePaths.projectPaths().isInsideWorkspace(path)) {
+        return false;
+      }
+      errors.warn(
+          "Skipped the symbolic link '%s'%s, because it leads outside the workspace",
+          sourceDir.relativize(path),
+          includeNamespace
+              .map(namespace -> " of the included project '%s'".formatted(namespace))
+              .orElse(""));
+      return true;
     }
   }
 

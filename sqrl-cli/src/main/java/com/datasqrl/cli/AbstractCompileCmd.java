@@ -22,6 +22,7 @@ import com.datasqrl.compile.CompilationProcess;
 import com.datasqrl.compile.TestPlan;
 import com.datasqrl.config.ExecutionEnginesHolder;
 import com.datasqrl.config.PackageJson;
+import com.datasqrl.config.ProjectPaths;
 import com.datasqrl.config.SqrlConstants;
 import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.error.ErrorCollector;
@@ -120,7 +121,10 @@ public abstract class AbstractCompileCmd extends BasePackageConfCmd {
       }
 
       var compilationProcess = springCtx.getBean(CompilationProcess.class);
-      var testDir = sqrlConfig.getTestConfig().getTestDir(getProjectRoot());
+      var testDir =
+          sqrlConfig
+              .getTestConfig()
+              .getTestDir(new ProjectPaths(cli.workspaceDir, getProjectRoot()));
       testDir.ifPresent(this::validateTestPath);
 
       Pair<PhysicalPlan, ? extends TestPlan> plan;

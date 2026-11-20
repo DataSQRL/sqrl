@@ -16,6 +16,7 @@
 package com.datasqrl.cli;
 
 import com.datasqrl.cli.output.TestOutputManager;
+import com.datasqrl.config.ProjectPaths;
 import com.datasqrl.config.SqrlConstants;
 import com.datasqrl.env.GlobalEnvironmentStore;
 import com.datasqrl.error.ErrorCollector;
@@ -62,7 +63,13 @@ public class TestCmd extends AbstractCompileCmd {
 
       var sqrlTest =
           new DatasqrlTest(
-              projectRoot, planDir, sqrlConfig, flinkConfig, env, outputMgr, formatter);
+              new ProjectPaths(cli.workspaceDir, projectRoot),
+              planDir,
+              sqrlConfig,
+              flinkConfig,
+              env,
+              outputMgr,
+              formatter);
       var testExitCode = sqrlTest.run();
       exitCode.set(testExitCode);
 

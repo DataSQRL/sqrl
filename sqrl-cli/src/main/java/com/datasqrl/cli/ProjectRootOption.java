@@ -15,6 +15,7 @@
  */
 package com.datasqrl.cli;
 
+import com.datasqrl.config.ProjectPaths;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
@@ -63,6 +64,11 @@ public class ProjectRootOption {
     if (!Files.isDirectory(fullProjectRoot)) {
       throw new IllegalArgumentException(
           "Project root does not exist or not a directory: " + fullProjectRoot);
+    }
+    // The paths that the project configures must stay inside the workspace, see ProjectPaths
+    if (!new ProjectPaths(workspaceDir, fullProjectRoot).isInsideWorkspace(fullProjectRoot)) {
+      throw new IllegalArgumentException(
+          "Project root must be inside the workspace " + workspaceDir + ", got: " + projectRoot);
     }
 
     return fullProjectRoot;

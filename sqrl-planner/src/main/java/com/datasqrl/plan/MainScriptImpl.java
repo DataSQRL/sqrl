@@ -16,11 +16,12 @@
 package com.datasqrl.plan;
 
 import com.datasqrl.config.PackageJson;
+import com.datasqrl.config.WorkspacePaths;
 import com.datasqrl.deployment.model.MutationDatabaseModel;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.loaders.resolver.ResourceResolver;
 import com.datasqrl.util.ConfigLoaderUtils;
 import com.datasqrl.util.FileUtil;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
@@ -31,7 +32,7 @@ import org.springframework.stereotype.Component;
 public class MainScriptImpl implements MainScript {
 
   private final PackageJson config;
-  private final ResourceResolver resourceResolver;
+  private final WorkspacePaths workspacePaths;
   private final ErrorCollector errors;
 
   @Override
@@ -49,26 +50,24 @@ public class MainScriptImpl implements MainScript {
 
   @Override
   public Optional<Path> getPath() {
-    var mainScriptPath = Path.of(config.getScriptConfig().getMainScript());
+    var mainScriptPath =
+        workspacePaths.resolveConfiguredPath(
+            "script.main", config.getScriptConfig().getMainScript(), errors);
 
-    return resourceResolver.resolveFile(mainScriptPath);
+    return Files.exists(mainScriptPath) ? Optional.of(mainScriptPath) : Optional.empty();
   }
 
   @Override
   public Optional<MutationDatabaseModel> getMutationDatabase() {
-    return config
-        .getScriptConfig()
-        .getDatabase()
-        .map(Path::of)
-        .map(
-            path ->
-                resourceResolver
-                    .resolveFile(path)
-                    .orElseThrow(
-                        () ->
-                            errors.exception(
-                                "Could not find database definition file: %s",
-                                config.getScriptConfig().getDatabase())))
-        .map(absPath -> ConfigLoaderUtils.loadMutationDatabase(absPath, errors));
+    var database = config.getScriptConfig().getDatabase();
+    if (database.isEmpty()) {
+      return Optional.empty();
+    }
+    var path = workspacePaths.resolveConfiguredPath("script.database", database.get(), errors);
+    if (!Files.exists(path)) {
+      throw errors.exception("Could not find database definition file: %s", database.get());
+    }
+
+    return Optional.of(ConfigLoaderUtils.loadMutationDatabase(path, errors));
   }
 }

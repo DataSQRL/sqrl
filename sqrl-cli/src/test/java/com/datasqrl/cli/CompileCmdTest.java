@@ -29,6 +29,7 @@ import com.datasqrl.compile.CompilationProcess;
 import com.datasqrl.compile.TestPlan;
 import com.datasqrl.config.ExecutionEnginesHolder;
 import com.datasqrl.config.PackageJson;
+import com.datasqrl.config.ProjectPaths;
 import com.datasqrl.config.TestRunnerConfiguration;
 import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.error.ErrorCollector;
@@ -75,7 +76,8 @@ class CompileCmdTest {
     var testPlan = new TestPlan();
 
     when(sqrlConfig.getTestConfig()).thenReturn(testConfig);
-    when(testConfig.getTestDir(projectRoot)).thenReturn(Optional.of(testDir));
+    when(testConfig.getTestDir(new ProjectPaths(tempDir, projectRoot)))
+        .thenReturn(Optional.of(testDir));
     when(compilationProcess.executeCompilation(Optional.of(testDir)))
         .thenReturn(Pair.of(physicalPlan, testPlan));
 
@@ -97,8 +99,8 @@ class CompileCmdTest {
 
       compileCmd.compile(ErrorCollector.root());
 
-      verify(testConfig).getTestDir(projectRoot);
-      verify(testConfig, never()).getTestDir(tempDir);
+      verify(testConfig).getTestDir(new ProjectPaths(tempDir, projectRoot));
+      verify(testConfig, never()).getTestDir(new ProjectPaths(tempDir, tempDir));
       verify(compilationProcess).executeCompilation(Optional.of(testDir));
     }
   }
@@ -116,7 +118,8 @@ class CompileCmdTest {
     compileCmd.packageFiles = List.of(Path.of("project", "package.json"));
 
     when(sqrlConfig.getTestConfig()).thenReturn(testConfig);
-    when(testConfig.getTestDir(projectRoot)).thenReturn(Optional.empty());
+    when(testConfig.getTestDir(new ProjectPaths(tempDir, projectRoot)))
+        .thenReturn(Optional.empty());
     when(compilationProcess.executeCompilation(Optional.empty()))
         .thenReturn(Pair.of(PhysicalPlan.builder().build(), new TestPlan()));
 

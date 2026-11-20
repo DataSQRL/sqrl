@@ -24,6 +24,7 @@ import com.datasqrl.cli.output.OutputFormatter;
 import com.datasqrl.cli.output.TestOutputManager;
 import com.datasqrl.compile.TestPlan;
 import com.datasqrl.config.PackageJson;
+import com.datasqrl.config.ProjectPaths;
 import com.datasqrl.engine.database.relational.JdbcStatement;
 import com.datasqrl.util.CmdUtils;
 import com.datasqrl.util.FlinkOperatorStatusChecker;
@@ -81,7 +82,7 @@ public class DatasqrlTest {
   private static final String CHECKPOINT_FAILURE_MANAGER_LOGGER =
       "org.apache.flink.runtime.checkpoint.CheckpointFailureManager";
 
-  private final Path projectRoot;
+  private final ProjectPaths projectPaths;
   private final Path planDir;
   private final PackageJson sqrlConfig;
   private final Configuration flinkConfig;
@@ -101,8 +102,8 @@ public class DatasqrlTest {
 
     var testConfig = sqrlConfig.getTestConfig();
     // Initialize snapshot directory
-    var snapshotDir = testConfig.getSnapshotDir(projectRoot);
-    var testDir = testConfig.getTestDir(projectRoot);
+    var snapshotDir = testConfig.getSnapshotDir(projectPaths);
+    var testDir = testConfig.getTestDir(projectPaths);
     // Check if the directory exists, create it if it doesn’t
     if (!Files.exists(snapshotDir)) {
       Files.createDirectories(snapshotDir);
