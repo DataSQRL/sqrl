@@ -1,0 +1,111 @@
+/*
+ * Copyright © 2021 DataSQRL (contact@datasqrl.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.datasqrl.config;
+
+import com.datasqrl.error.ErrorCollector;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
+
+/**
+ * The rule for the paths that a project configures in its package file, such as {@code script.main}
+ * or {@code script.include.*.package}: a path is relative to the project root and stays inside the
+ * workspace, the directory that the compiler runs in. Everything in the workspace is considered
+ * safe to read, including other projects, so a path may lead out of the project.
+ *
+ * <p>Symbolic links count with their targets: a link inside the workspace that points outside it
+ * leads outside.
+ *
+ * @param workspaceDir the workspace directory, which holds the project
+ * @param projectRoot the root directory of the project
+ */
+public record ProjectPaths(Path workspaceDir, Path projectRoot) {
+
+  /** Explains the rule in error messages. */
+  public static final String RULE =
+      "A path must be relative to the project root and stay inside the workspace.";
+
+  /**
+   * Resolves a configured path against the project root, and fails naming the key and the value if
+   * the path does not follow the rule.
+   *
+   * @param key the configuration key, for the error message
+   * @param path the path as configured
+   * @param errors the collector to fail with
+   * @return the normalized path
+   */
+  public Path resolve(String key, String path, ErrorCollector errors) {
+    var resolved = isRelative(path) ? projectRoot.resolve(path).normalize() : null;
+    errors.checkFatal(
+        resolved != null && isInsideWorkspace(resolved),
+        "Value [%s] for key [%s] is not valid. %s",
+        path,
+        key,
+        RULE);
+
+    return resolved;
+  }
+
+  /**
+   * Returns whether the path is inside the workspace once symbolic links are resolved. For a path
+   * that does not exist, the nearest directory above it that exists is resolved, so a link above a
+   * folder that is created later counts as well.
+   *
+   * @param path a path to check, absolute or relative to the working directory
+   * @return {@code true} if the real path is inside the real workspace directory
+   */
+  public boolean isInsideWorkspace(Path path) {
+    return realPath(path).startsWith(realPath(workspaceDir));
+  }
+
+  /**
+   * Returns whether the path is relative. A path with a root but no drive, such as {@code \dir} on
+   * Windows, is not absolute but not relative either.
+   */
+  static boolean isRelative(String path) {
+    try {
+      var p = Path.of(path);
+      return p.getRoot() == null && !p.isAbsolute();
+    } catch (InvalidPathException e) {
+      return false;
+    }
+  }
+
+  /**
+   * Returns whether the path is relative and, once normalized, does not leave the directory that it
+   * is resolved against, such as {@code api/../schema.graphqls}.
+   */
+  public static boolean staysInside(String path) {
+    return isRelative(path) && !Path.of(path).normalize().startsWith("..");
+  }
+
+  private static Path realPath(Path path) {
+    var absolute = path.toAbsolutePath().normalize();
+    var existing = absolute;
+    while (existing != null && !Files.exists(existing)) {
+      existing = existing.getParent();
+    }
+    if (existing == null) {
+      return absolute;
+    }
+    try {
+      return existing.toRealPath().resolve(existing.relativize(absolute));
+    } catch (IOException e) {
+      return absolute;
+    }
+  }
+}

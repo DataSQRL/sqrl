@@ -26,7 +26,5 @@ public interface ResourceResolver {
 
   Optional<Path> resolveFile(NamePath namePath);
 
-  Optional<Path> resolveFile(Path relativePath);
-
   ResourceResolver getNested(Path subPath);
 }

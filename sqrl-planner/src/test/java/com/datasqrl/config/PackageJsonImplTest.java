@@ -19,7 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
@@ -63,11 +62,12 @@ class PackageJsonImplTest {
 
   @Test
   void givenPackageJson_whenGetTestConfig_thenReturnsTestConfiguration() {
-    config.getSubConfig("test-runner").setProperty("snapshot-folder", "/dummy");
+    config.getSubConfig("test-runner").setProperty("snapshot-folder", "dummy");
 
     var packageJson = new PackageJsonImpl(config);
 
-    assertThat(packageJson.getTestConfig().getSnapshotDir(null)).isEqualTo(Paths.get("/dummy"));
+    assertThat(packageJson.getTestConfig().getSnapshotDir(new ProjectPaths(tempDir, tempDir)))
+        .isEqualTo(tempDir.resolve("dummy"));
   }
 
   @Test

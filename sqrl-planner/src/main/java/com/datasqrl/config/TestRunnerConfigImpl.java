@@ -15,10 +15,8 @@
  */
 package com.datasqrl.config;
 
-import com.datasqrl.util.FileUtil;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -30,18 +28,22 @@ public class TestRunnerConfigImpl implements TestRunnerConfiguration {
   SqrlConfig sqrlConfig;
 
   @Override
-  public Path getSnapshotDir(Path projectRoot) {
-    var snapshotDir = Paths.get(sqrlConfig.asString("snapshot-folder").get());
-
-    return FileUtil.combineWithBaseIfRelative(projectRoot, snapshotDir);
+  public Path getSnapshotDir(ProjectPaths projectPaths) {
+    return resolveFolder(projectPaths, "snapshot-folder");
   }
 
   @Override
-  public Optional<Path> getTestDir(Path projectRoot) {
-    var testDir = Paths.get(sqrlConfig.asString("test-folder").get());
-    testDir = FileUtil.combineWithBaseIfRelative(projectRoot, testDir);
+  public Optional<Path> getTestDir(ProjectPaths projectPaths) {
+    var testDir = resolveFolder(projectPaths, "test-folder");
 
     return Files.isDirectory(testDir) ? Optional.of(testDir) : Optional.empty();
+  }
+
+  /** Resolves a folder, which the test runner uses where it is, not as a copy in the build. */
+  private Path resolveFolder(ProjectPaths projectPaths, String key) {
+    var folder = sqrlConfig.asString(key).get();
+
+    return projectPaths.resolve("test-runner." + key, folder, sqrlConfig.getErrorCollector());
   }
 
   @Override

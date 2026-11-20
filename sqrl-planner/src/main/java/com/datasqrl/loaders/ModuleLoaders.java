@@ -20,6 +20,7 @@ import static com.datasqrl.planner.parser.StatementParserException.checkFatal;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.PackageJson.IncludeConfig;
+import com.datasqrl.config.ProjectPaths;
 import com.datasqrl.config.WorkspacePaths;
 import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
@@ -185,6 +186,14 @@ public final class ModuleLoaders {
 
       return IncludeDeployment.NONE;
     }
+    // The scripts of the include are loaded from its copy in the build directory
+    errors.checkFatal(
+        ProjectPaths.staysInside(mainScript.get()),
+        "Value [%s] for key [script.main] in the package file '%s' of include '%s' is not valid."
+            + " The main script of a standalone include must be inside the included project.",
+        mainScript.get(),
+        include.getPackage(),
+        include.getNamespace());
 
     return IncludeDeployment.analyze(includeLoader.apply(includePath), mainScript.get(), parser);
   }

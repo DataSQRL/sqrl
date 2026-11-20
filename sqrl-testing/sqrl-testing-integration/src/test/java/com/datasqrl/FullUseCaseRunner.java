@@ -21,6 +21,7 @@ import com.datasqrl.cli.AssertStatusHook;
 import com.datasqrl.cli.DatasqrlTest;
 import com.datasqrl.cli.output.DefaultOutputFormatter;
 import com.datasqrl.cli.output.TestOutputManager;
+import com.datasqrl.config.ProjectPaths;
 import com.datasqrl.config.SqrlConstants;
 import com.datasqrl.engines.TestContainersForTestGoal.TestContainerHook;
 import com.datasqrl.env.GlobalEnvironmentStore;
@@ -108,7 +109,8 @@ public final class FullUseCaseRunner {
     var outputMgr = new TestOutputManager(projectRoot);
     var test =
         new DatasqrlTest(
-            projectRoot,
+            // The workspace of the compilation, see SqrlScriptExecutor
+            new ProjectPaths(projectRoot.toAbsolutePath().getParent(), projectRoot),
             planDir,
             packageJson,
             flinkConfig,
