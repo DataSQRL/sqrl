@@ -325,13 +325,13 @@ CREATE TABLE IF NOT EXISTS "Sales" ("region" TEXT NOT NULL, "product" TEXT NOT N
           "name" : "SalesChart",
           "uri" : "ui://apps/SalesChart",
           "mimeType" : "text/html;profile=mcp-app",
-          "content" : "<!doctype html>\n<html>\n  <head>\n    <meta charset=\"utf-8\">\n    <title>Sales Chart</title>\n    <style>body { font-family: sans-serif; }</style>\n  </head>\n  <body>\n    <ul id=\"sales\"></ul>\n    <script>\n      window.addEventListener(\"message\", (event) => {\n        const sales = JSON.parse(event.data?.params?.content?.[0]?.text ?? \"[]\");\n        document.getElementById(\"sales\").innerHTML = sales\n          .map((sale) => `<li>${sale.region}: ${sale.amount}</li>`)\n          .join(\"\");\n      });\n    </script>\n  </body>\n</html>\n"
+          "file" : "vertx-v1-mcp-app-SalesChart.html"
         },
         {
           "name" : "getSalesByRegion",
           "uri" : "ui://apps/getSalesByRegion",
           "mimeType" : "text/html;profile=mcp-app",
-          "content" : "<!doctype html>\n<html>\n  <body>\n    <img alt=\"logo\" src=\"data:image/gif;base64,R0lGODlhAQABAAAAACw=\">\n    <script>document.body.append(\"Sales of one region\")</script>\n  </body>\n</html>\n"
+          "file" : "vertx-v1-mcp-app-getSalesByRegion.html"
         }
       ]
     }

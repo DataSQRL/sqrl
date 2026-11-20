@@ -121,7 +121,8 @@ public class ApiDeploymentModule implements ServerModule<VertxServerModuleContex
               modelVersion,
               model,
               authProviders,
-              graphQLVerticle);
+              graphQLVerticle,
+              context.planDir());
       bridgeDeploymentFutures.add(
           context
               .vertx()

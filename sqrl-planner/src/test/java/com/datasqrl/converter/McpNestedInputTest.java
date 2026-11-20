@@ -43,6 +43,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.file.Path;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -104,7 +105,8 @@ class McpNestedInputTest {
             "v1",
             RootGraphQLModel.builder().operations(operations).build(),
             List.of(),
-            graphQLServerVerticle);
+            graphQLServerVerticle,
+            Path.of(""));
     await(vertx.deployVerticle(mcp));
     var server = await(vertx.createHttpServer().requestHandler(router).listen(0));
     mcpEndpoint =

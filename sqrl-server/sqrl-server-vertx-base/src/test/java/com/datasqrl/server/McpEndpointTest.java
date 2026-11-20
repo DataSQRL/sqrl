@@ -59,6 +59,8 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -71,6 +73,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
@@ -104,6 +107,9 @@ class McpEndpointTest {
       HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1).build();
   private Vertx vertx;
   private String baseUrl;
+
+  /** The plan directory, from which the server reads the files of the MCP apps. */
+  @TempDir Path planDir;
 
   @BeforeEach
   void setUp() {
@@ -399,9 +405,12 @@ class McpEndpointTest {
 
     private static final String SALES_CHART =
         "<!doctype html><html><body><script>render()</script></body></html>";
+    private static final String SALES_CHART_FILE = "vertx-v1-mcp-app-SalesChart.html";
 
     @BeforeEach
+    @SneakyThrows
     void startServer() {
+      Files.writeString(planDir.resolve(SALES_CHART_FILE), SALES_CHART);
       var model = createModel();
       var operations =
           model.getOperations().stream()
@@ -424,7 +433,7 @@ class McpEndpointTest {
           List.of(),
           RootGraphQLModel.builder()
               .operations(operations)
-              .mcpApps(List.of(McpApp.of("SalesChart", SALES_CHART)))
+              .mcpApps(List.of(McpApp.of("SalesChart", SALES_CHART_FILE)))
               .build());
     }
 
@@ -538,6 +547,23 @@ class McpEndpointTest {
   }
 
   @Nested
+  class WithMissingAppFile {
+
+    @Test
+    void givenAppWithoutFileInPlanDir_whenStartingServer_thenFailsDeployment() {
+      var model =
+          RootGraphQLModel.builder()
+              .operations(createModel().getOperations())
+              .mcpApps(List.of(McpApp.of("SalesChart", "vertx-v1-mcp-app-SalesChart.html")))
+              .build();
+
+      assertThatThrownBy(() -> startServer(new ServerConfig(), List.of(), model))
+          .hasStackTraceContaining("Could not read the file")
+          .hasStackTraceContaining("of the MCP app SalesChart");
+    }
+  }
+
+  @Nested
   class WithAppToolWithoutAppsSupport {
 
     @BeforeEach
@@ -631,7 +657,8 @@ class McpEndpointTest {
     var router = Router.router(vertx);
     router.route().handler(BodyHandler.create());
     var verticle =
-        new McpBridgeVerticle(router, config, "v1", model, authProviders, graphQLServerVerticle);
+        new McpBridgeVerticle(
+            router, config, "v1", model, authProviders, graphQLServerVerticle, planDir);
     await(vertx.deployVerticle(verticle));
     HttpServer server = await(vertx.createHttpServer().requestHandler(router).listen(0));
     baseUrl = "http://localhost:" + server.actualPort();

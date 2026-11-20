@@ -178,6 +178,29 @@ public class UseCaseCompileTest {
   /** The topics that a project writes itself, and those that it reads from standalone includes. */
   private record KafkaTopics(Set<String> own, Set<String> included) {}
 
+  @Test
+  void givenMcpApps_whenCompiled_thenPlanHasTheFileThatTheServerModelNamesForEachApp()
+      throws IOException {
+    var useCase = USECASE_DIR.resolve("mcp-apps");
+    var hook = snapshotExtension.execute(useCase, "compile", "package.json");
+    assertThat(hook.isSuccess()).as(hook.getMessages()).isTrue();
+    var planDir = snapshotExtension.getPlanDir();
+    var apps =
+        SqrlObjectMapper.INSTANCE
+            .readTree(planDir.resolve("vertx.json").toFile())
+            .path("models")
+            .path("v1")
+            .path("mcpApps");
+
+    assertThat(apps).hasSize(2);
+    for (var app : apps) {
+      var name = app.path("name").asText();
+      assertThat(app.path("file").asText()).isEqualTo("vertx-v1-mcp-app-" + name + ".html");
+      assertThat(planDir.resolve(app.path("file").asText()))
+          .hasSameTextualContentAs(useCase.resolve("apps").resolve(name + ".html"));
+    }
+  }
+
   private String compileInsertIdentityUseCase() throws IOException {
     var useCase = USECASE_DIR.resolve("insert-table-identity-compile");
     var hook = snapshotExtension.execute(useCase, "compile", "package.json");

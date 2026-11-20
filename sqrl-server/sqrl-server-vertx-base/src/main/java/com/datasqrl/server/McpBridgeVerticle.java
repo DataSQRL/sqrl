@@ -45,6 +45,10 @@ import io.vertx.core.Promise;
 import io.vertx.ext.auth.authentication.AuthenticationProvider;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -58,8 +62,9 @@ import reactor.core.publisher.Mono;
  * call as its GraphQL operation. The protocol is handled by the stateless server of the MCP Java
  * SDK, which {@link VertxMcpTransport} serves on the MCP endpoint.
  *
- * <p>With MCP Apps support, it also serves the MCP apps of the model as resources, and links the
- * tools to them as the MCP Apps extension ({@value McpApp#EXTENSION_ID}) defines.
+ * <p>With MCP Apps support, it also serves the MCP apps of the model as resources, from their files
+ * in the plan directory, and links the tools to them as the MCP Apps extension ({@value
+ * McpApp#EXTENSION_ID}) defines.
  */
 @Slf4j
 public class McpBridgeVerticle extends AbstractBridgeVerticle {
@@ -76,6 +81,9 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
   /** The MCP apps by name, or null if the model has no MCP Apps support. */
   private final Map<String, McpApp> apps;
 
+  /** The plan directory, which has the files of the MCP apps. */
+  private final Path planDir;
+
   private McpStatelessAsyncServer mcpServer;
 
   public McpBridgeVerticle(
@@ -84,8 +92,10 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
       String modelVersion,
       RootGraphQLModel model,
       List<AuthenticationProvider> authProviders,
-      GraphQLServerVerticle graphQLServerVerticle) {
+      GraphQLServerVerticle graphQLServerVerticle,
+      Path planDir) {
     super(router, config, modelVersion, model, authProviders, graphQLServerVerticle);
+    this.planDir = planDir;
     this.tools = model.getOperations().stream().filter(ApiOperation::isMcpEndpoint).toList();
     this.apps =
         model.getMcpApps() == null
@@ -118,8 +128,7 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
             .resources(false, false)
             .extensions(
                 Map.of(McpApp.EXTENSION_ID, Map.of("mimeTypes", List.of(McpApp.MIME_TYPE))));
-        server.resources(
-            apps.values().stream().map(McpBridgeVerticle::resourceSpecification).toList());
+        server.resources(apps.values().stream().map(this::resourceSpecification).toList());
       }
       mcpServer = server.capabilities(capabilities.build()).build();
     } catch (RuntimeException e) {
@@ -204,8 +213,8 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
     return ui.isEmpty() ? null : Map.of("ui", ui);
   }
 
-  /** Serves the app, which was loaded with the model, as a resource. */
-  private static AsyncResourceSpecification resourceSpecification(McpApp app) {
+  /** Serves the app as a resource, with the content of its file, which is read once. */
+  private AsyncResourceSpecification resourceSpecification(McpApp app) {
     var resource =
         McpSchema.Resource.builder()
             .uri(app.uri())
@@ -214,9 +223,19 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
             .build();
     var contents =
         new McpSchema.ReadResourceResult(
-            List.of(new McpSchema.TextResourceContents(app.uri(), app.mimeType(), app.content())));
+            List.of(new McpSchema.TextResourceContents(app.uri(), app.mimeType(), readFile(app))));
     return new AsyncResourceSpecification(
         resource, (transportContext, request) -> Mono.just(contents));
+  }
+
+  private String readFile(McpApp app) {
+    var file = planDir.resolve(app.file());
+    try {
+      return Files.readString(file);
+    } catch (IOException e) {
+      throw new UncheckedIOException(
+          "Could not read the file %s of the MCP app %s".formatted(file, app.name()), e);
+    }
   }
 
   private Mono<CallToolResult> callTool(

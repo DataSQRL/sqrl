@@ -20,18 +20,20 @@ import lombok.NonNull;
 
 /**
  * An MCP app: an interactive HTML UI that MCP hosts with the MCP Apps extension ({@value
- * #EXTENSION_ID}) render for the tools linked to it. It is served as the MCP resource {@code uri}.
+ * #EXTENSION_ID}) render for the tools linked to it. It is served as the MCP resource {@code uri},
+ * with the content of {@code file}.
  *
- * @param name the name of the app, which is its file name without {@code .html}
+ * @param name the name of the app, which is the name of its source file without {@code .html}
  * @param uri the {@code ui://} URI of the resource
  * @param mimeType the MIME type of the resource
- * @param content the self-contained HTML document
+ * @param file the name of the file with the app's self-contained HTML document, in the plan
+ *     directory next to the server model
  */
 public record McpApp(
     @JsonProperty("name") @NonNull String name,
     @JsonProperty("uri") @NonNull String uri,
     @JsonProperty("mimeType") @NonNull String mimeType,
-    @JsonProperty("content") @NonNull String content) {
+    @JsonProperty("file") @NonNull String file) {
 
   /** The identifier of the MCP Apps extension. */
   public static final String EXTENSION_ID = "io.modelcontextprotocol/ui";
@@ -39,8 +41,8 @@ public record McpApp(
   /** The MIME type of MCP app resources. */
   public static final String MIME_TYPE = "text/html;profile=mcp-app";
 
-  /** Returns the app with the given name and content, at its {@code ui://apps/<name>} URI. */
-  public static McpApp of(String name, String content) {
-    return new McpApp(name, "ui://apps/" + name, MIME_TYPE, content);
+  /** Returns the app with the given name and file, at its {@code ui://apps/<name>} URI. */
+  public static McpApp of(String name, String file) {
+    return new McpApp(name, "ui://apps/" + name, MIME_TYPE, file);
   }
 }
