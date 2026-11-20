@@ -18,6 +18,11 @@ package com.datasqrl.plan.rules;
 import com.datasqrl.plan.index.QueryIndexSummary;
 import com.datasqrl.plan.index.QueryIndexSummary.IndexableFunctionCall;
 import com.datasqrl.planner.analyzer.TableAnalysis;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.core.Aggregate;
 import org.apache.calcite.rel.core.Correlate;
@@ -48,6 +53,19 @@ public class SqrlRelMdSelectivity extends RelMdSelectivity
   public static final RelMetadataProvider SOURCE =
       ReflectiveRelMetadataProvider.reflectiveSource(
           BuiltInMethod.SELECTIVITY.method, new SqrlRelMdSelectivity());
+
+  /** The assumed selectivity of an equality on a column without a distinct count. */
+  private static final double DEFAULT_EQUALITY_SELECTIVITY = 0.05;
+
+  /** The assumed selectivity of an inequality on a column. */
+  private static final double DEFAULT_INEQUALITY_SELECTIVITY = 0.5;
+
+  /** Distinct counts of more columns first, and among those the higher distinct counts first. */
+  private static final Comparator<Entry<Set<Integer>, Double>> MOST_COLUMNS_FIRST =
+      Comparator.<Entry<Set<Integer>, Double>>comparingInt(
+              distinctCount -> distinctCount.getKey().size())
+          .thenComparingDouble(Entry::getValue)
+          .reversed();
 
   @Override
   public Double getSelectivity(Join rel, RelMetadataQuery mq, RexNode predicate) {
@@ -156,13 +174,35 @@ public class SqrlRelMdSelectivity extends RelMdSelectivity
    * cost estimation.
    */
   public static Double getSelectivity(TableAnalysis table, QueryIndexSummary constraints) {
-    // TODO: use actual selectivity statistics from table when available
-    var selectivity = 1.0d;
-    selectivity *= Math.pow(0.05, constraints.getEqualityColumns().size());
-    selectivity *= Math.pow(0.5, constraints.getInequalityColumns().size());
+    var selectivity =
+        getEqualitySelectivity(
+            table.getTableStatistic().getDistinctCounts(), constraints.getEqualityColumns());
+    selectivity *=
+        Math.pow(DEFAULT_INEQUALITY_SELECTIVITY, constraints.getInequalityColumns().size());
     for (IndexableFunctionCall fcall : constraints.getFunctionCalls()) {
       selectivity *= fcall.function().estimateSelectivity();
     }
     return selectivity;
+  }
+
+  /**
+   * The selectivity of equalities on all the given columns. A distinct count applies when the
+   * equalities include all of its columns, and those columns then match one row in that many. When
+   * distinct counts share a column, the one with more columns applies. Each column that is left
+   * gets the default selectivity.
+   */
+  private static double getEqualitySelectivity(
+      Map<Set<Integer>, Double> distinctCounts, Set<Integer> equalityColumns) {
+    var columnsWithoutDistinctCount = new HashSet<>(equalityColumns);
+    var selectivity = 1.0d;
+    for (var distinctCount :
+        distinctCounts.entrySet().stream().sorted(MOST_COLUMNS_FIRST).toList()) {
+      if (columnsWithoutDistinctCount.containsAll(distinctCount.getKey())) {
+        // A count below one row would give a selectivity above 1
+        selectivity /= Math.max(1.0d, distinctCount.getValue());
+        columnsWithoutDistinctCount.removeAll(distinctCount.getKey());
+      }
+    }
+    return selectivity * Math.pow(DEFAULT_EQUALITY_SELECTIVITY, columnsWithoutDistinctCount.size());
   }
 }
