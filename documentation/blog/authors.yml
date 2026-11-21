@@ -53,4 +53,7 @@ alp:
   name: Hasan Alp Caferoglu
   title: Software Engineer at DataSQRL
   url: https://github.com/HasanAlpCaferoglu
-  image_url: https://github.com/HasanAlpCaferoglu.png
+  image_url: /img/headshots/alp1.webp
+  socials:
+    linkedin: hasanalpcaferoglu
+    github: HasanAlpCaferoglu
