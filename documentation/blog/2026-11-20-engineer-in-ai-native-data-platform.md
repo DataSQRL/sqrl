@@ -2,15 +2,9 @@
 slug: engineer-in-ai-native-data-platform
 title: "Requirements, Plan, Build: How a Data Engineer Builds an Operational Data Pipeline with Agents"
 authors: [alp]
+image: /img/blog/building_pipeline_with_agent.jpeg
 tags: [technical, DataSQRL]
 ---
-
-<!--
-<head>
-  <meta property="og:image" content="/img/blog/TODO_post2_human_in_the_loop.jpeg" />
-  <meta name="twitter:image" content="/img/blog/TODO_post2_human_in_the_loop.jpeg" />
-</head>
--->
 
 # Requirements, Plan, Build: How a Data Engineer Builds an Operational Data Pipeline with Agents
 
@@ -22,10 +16,7 @@ In an AI-native platform for operational data engineering, agents do most of the
 
 The agents take over much of the work. They do not take over the job. The data engineer knows the business and what the organization needs, and that makes the engineer the operator of those agents: the one who makes the critical decisions.
 
-<!-- 
-TODO
-<img src="/img/blog/TODO_post2_human_in_the_loop.jpeg" alt="A loop of five stages, requirements, plan, implementation, deployment and operation, with a person standing at the gate between each." width="50%"/> 
--->
+<img src="/img/blog/building_pipeline_with_agent.jpeg" alt="Four panels show a data engineer and an agent. They write the requirements, review the plan, build the pipeline and look at the completed pipeline." style={{width: '100%'}}/>
 
 The agents and the engineer work on those decisions together. An agent asks its questions in the chat, and it writes its open questions and its assumptions into files along the way. Many of them are about the decisions that shape the pipeline. How long do the sources keep their data? How stale may the results be before something breaks? How much data arrives at peak, and what may the pipeline cost to run? Who is allowed to see the results? The risk starts when an agent settles such a point without telling anyone. A fast agent with a wrong assumption, and no way to reach the person who decides, ships a wrong pipeline faster.
 
