@@ -1,6 +1,6 @@
 ---
 slug: engineer-in-ai-native-data-platform
-title: "The Engineer in the AI-Native Data Platform: You Decide, the Agents Build, Diagnose and Propose"
+title: "Requirements, Plan, Build: How a Data Engineer Builds an Operational Data Pipeline with Agents"
 authors: [alp]
 tags: [technical, DataSQRL]
 ---
@@ -12,124 +12,168 @@ tags: [technical, DataSQRL]
 </head>
 -->
 
-# The Engineer in the AI-Native Data Platform: You Decide, the Agents Build, Diagnose and Propose
+# Requirements, Plan, Build: How a Data Engineer Builds an Operational Data Pipeline with Agents
 
-*Part 2 of 2: What it takes for a data platform to be AI-native, and who stays in charge.*
+*The three steps from a request to a tested pipeline, and what the data engineer decides in each one.*
 
 ## Introduction
 
-A fast agent with a wrong assumption ships a wrong pipeline faster.
+In an AI-native platform for operational data engineering, agents do most of the building, and the data engineer operates them. Such a platform does not hand the whole job to one agent. It splits the work between agents, each with its own responsibility and its own restrictions. One works with the engineer to write the requirements down. One turns the requirements into a plan, with the technical decisions and the steps to follow, then builds the pipeline from that plan or patches a pipeline that already exists. One sits in the platform, troubleshoots the running pipeline and helps the user find their way around. This post focuses on the stages of building a data pipeline with the [DataSQRL harness](https://docs.datasqrl.com) and the agents built around it, and it shows the role of the data engineer in each stage.
 
-[Part 1](/blog/same-hard-problems-different-names) showed a coding agent building pipelines in different domains with the [DataSQRL harness](https://docs.datasqrl.com). It left one thing out: the engineer who gets paged when one of those pipelines breaks. If the agent writes everything, what does that engineer still decide?
+The agents take over much of the work. They do not take over the job. The data engineer knows the business and what the organization needs, and that makes the engineer the operator of those agents: the one who makes the critical decisions.
 
 <!-- 
 TODO
 <img src="/img/blog/TODO_post2_human_in_the_loop.jpeg" alt="A loop of five stages, requirements, plan, implementation, deployment and operation, with a person standing at the gate between each." width="50%"/> 
 -->
 
-More than before, as it turns out. The risk does not sit in the code the agent writes. It sits in the decisions the agent makes without telling anyone: what "realtime" means, which column is the key, what to do about the table nobody specified.
+The agents and the engineer work on those decisions together. An agent asks its questions in the chat, and it writes its open questions and its assumptions into files along the way. Many of them are about the decisions that shape the pipeline. How long do the sources keep their data? How stale may the results be before something breaks? How much data arrives at peak, and what may the pipeline cost to run? Who is allowed to see the results? The risk starts when an agent settles such a point without telling anyone. A fast agent with a wrong assumption, and no way to reach the person who decides, ships a wrong pipeline faster.
 
-"Human in the loop" is easy to say and usually means a chat window with an approve button. We mean something narrower. Every decision the agent makes becomes a file or a prompt that a person reviews, at a point where the work stops until they do. Different agents do the work between those points. A person owns each one.
+"Human in the loop" is easy to say and usually means a chat window with an approve button. We mean something narrower. Every question the agent has and every decision it makes becomes a file or a prompt that a person answers or reviews, at a point where the work stops until they do. Different agents do the work between those points. A person owns each one.
 
-This post walks through the ways an agent-built pipeline gets away from its owner, and the stop that prevents each.
+A complete, high-quality operational data pipeline is built in three steps: the requirements, the plan and the build. Each step below says what the agent does and what you, the data engineer, decide. A video at the end shows the three steps on a simple example.
 
 <!-- truncate -->
 
-## 1. The requirement nobody wrote down
+## Step 1: The Requirements File Is the Contract
 
-An agent builds what it is told. What it is not told, it guesses or halucinates. Most pipeline requests leave out the parts that decide the architecture: the key, the event time, how late data can be, what happens to a duplicate.
+An agent builds what it is told. What it is not told, it guesses. That is true for any software, and it is why the first step is not building. The first step is a conversation that ends in a document.
 
-*Example:* the request is "ingest transcription events and aggregate them." The version that can actually be built reads: POST to `/webhooks/transcription`, JSON body, about 50 per minute at peak, at-least-once delivery, deduplicate on `meeting_id`, event time is `completed_at` in UTC, up to two minutes late. Every clause in the second version is a decision someone made. In the first version the agent makes all of them.
+*Example:* a team asks for a pipeline in one sentence:
 
-So the first stage is not building. It is a conversation that ends in a document. The agent reads the repository first, then your own systems, such as ticket trackers and schema registries, then public documentation for third-party payloads. It asks you last, in one batch, starting with the questions whose answers would change the design. The result is a requirements file in the repository, and it works from one rule: what the file specifies is what gets built, and what it leaves open becomes a recorded assumption.
+> Ingest transcription events and aggregate them.
 
-## 2. Words that hide a decision
+An agent can start from this sentence, but it has to fill every gap itself. A complete request leaves nothing to guess. It answers each of these questions:
 
-Some requirements sound complete and are not. "Realtime." "Scalable." "Handle errors gracefully." Each one hands a decision to whoever reads it next.
+- **How does the data arrive, and in which format?** POST to `/webhooks/transcription`, JSON body.
+- **How much data arrives?** About 50 events per minute at peak.
+- **Can an event arrive twice, and which field identifies the copy?** At-least-once delivery, deduplicate on `meeting_id`.
+- **Which field says when the event happened?** Event time is `completed_at`, in UTC.
+- **How long does the pipeline wait for a late event?** Up to two minutes.
 
-*Example:* a team asks for a realtime dashboard. The agent asks what would break if the numbers were five minutes old. Nothing would. The pipeline that gets built is simpler and cheaper to run, and nobody had to argue about it later.
+The pipeline needs an answer to every one of these questions. If the request does not give the answers, the agent selects them itself. Nobody reviews those answers, unless the agent asks you about them or writes them down.
 
-The requirements stage pushes back on these words on purpose. Freshness, latency and volume are written as numbers. Every functional requirement gets an acceptance criterion a test can pass or fail. Requirements can also carry hard constraints, such as a Kafka cluster that already exists, a table format the analytics team depends on, or a region the data must not leave. The agent confirms each one with you and writes it into its own section of the file, so that all of them are settled before any planning or implementation starts. And the test data must contain the cases that break pipelines: a late arrival, a duplicate, a null, an out-of-order event, an empty group.
+### Why a file, and not a chat
 
-## 3. An answer that lives only in the chat
+You and your coding agent build the requirements together. The agent is the one you already work with, extended with the [DataSQRL plugin](https://github.com/DataSQRL/datasqrl-plugin). It asks, you answer, and the result is saved as a file in the project. A file gives you three things that a chat cannot:
 
-You answer the agent's question in the conversation. The conversation ends. The next agent, or the next engineer, never sees it.
+- **Nothing gets lost in the chat.** A conversation ends, and an answer that lives only there goes with it. The agent writes every answer you give into the file.
+- **You can review and edit it.** You read all the requirements in one place. When a line is wrong, you change it by hand, or you tell the agent in the chat to change it.
+- **It is permanent.** You commit the file next to the code. A year later it still says why and how the pipeline was built, on what ground and for which needs.
 
-*Example:* you tell the agent that failed sessions must never be invoiced. It is not in the requirements file. The planning agent, which runs separately and reads only the file, decides for itself.
+Over time, the committed files become the design history of the application.
 
-Every question that stays open is written into the requirements with a recommended default and an impact rating, so you can see what the planner will assume if you say nothing. Every answer you give in chat is written into the file before anything else happens. The file is the actual handoff, and the chat is how you work on that file.
+### What a good requirements file contains, and how it guides the agent
 
-## 4. A plan that exists only in the agent's head
+- **Goal and scope.** What the pipeline is for, who consumes it, and what is out of scope.
+- **Functional requirements.** Numbered statements, one behavior each, each with an acceptance criterion that a test can pass or fail.
+- **Sources.** For each one: transport, format, a real sample payload, volume, delivery guarantee, and whether the records are events or updates.
+- **Time semantics, entities and keys.** The event-time field, the lateness, the keys and the duplicate rule.
+- **Results and API surface.** What the pipeline produces, the queries the consumers ask, and the authorization on each.
+- **Test data.** Records that contain the cases that break pipelines: a late arrival, a duplicate, a null, an out-of-order event, an empty group.
+- **Non-functional requirements.** Numbers, not adjectives: freshness, latency, workload, budget, reliability, retention, sensitive fields.
+- **Hard constraints.** The requirements state what must be computed, not how. A technology is named only when it is not negotiable, such as a Kafka cluster that already exists or a region the data must not leave.
+- **Open questions.** Everything that stays open, each with a recommended default and an impact rating.
 
-An agent that goes straight from the requirements to the code has no written plan. It may work out the steps in its thinking, or it may start with whichever part of the pipeline comes to mind first. Either way, the order of the steps, the choices, decisions about the data quality and observability, and the checks it decided to skip exist only in the agent's working memory.
+For an operational data pipeline, the requirements do more than describe features. Some of them are design decisions. One answer changes the architecture that the agent builds and the pattern that it follows.
 
-Some of that thinking does end up in the logs. But a log is a trace of what the agent thought at each moment, in the order it thought it. It is not a plan. What an engineer needs for a review is the structured version: a small number of high-level steps, in order, together with the technical decisions behind them, the data quality checks and observability the pipeline will have, and the assumptions the agent made. All of it can then be read and corrected before any work starts.
+*Example:* a team asks for a dashboard with realtime numbers. Realtime needs a job that runs all the time, and such a job costs more to build and to run. The agent therefore asks one question first: what breaks if the numbers are one hour old? The team answers that nothing breaks. The requirement becomes "the numbers are at most one hour old", and the agent builds a job that runs once each hour. One answer changed the architecture.
 
-*Example:* an agent starts building from the requirements. It decides on its own to skip a data-quality check, because it assumes the source is clean, and it forgets the step that sets up the test runner. Forty minutes in, the machine restarts. Half the files exist. Nobody can say which steps were finished and verified, so the next run starts again from the beginning.
+### How you, the data engineer, and the agent build it
 
-So the plan is a file, and it is written before any code. It is short on purpose: a decomposition of the work that an engineer can review in a few minutes. A plan like this can have five parts.
+The agent gathers before it asks. It reads the repository first: existing scripts, schemas and shared projects, then it reads your own systems, then public documentation for third-party payloads. Then it asks you the questions whose answers change the design or have an important effect on how the pipeline is built. As the data engineer, you are the only source for what the agents you operate cannot find: the business rules, the freshness the consumers expect, the budget, and what "correct" looks like.
 
-- **The requirements it builds on,** by path, so that the plan and the requirements cannot drift apart.
-- **The implementation checklist.** Numbered steps, each with the steps it depends on. A step that only applies in some cases, such as "if the tests fail", carries its condition.
-- **Data quality and observability.** What the pipeline will check and count, what it deliberately will not, and what it reuses from a shared catalog.
-- **Technical decisions.** The choices the requirements left open, such as the engine or the type of window, each with the constraint that decided it.
-- **Assumptions.** Everything the planner had to guess. The next section is about those.
+Then the agent writes the requirements file into the project. It shows you the open questions, with the default that the planner uses for each one if you say nothing. You answer them in the file or in the chat, or you accept the defaults. The next stage, planning, starts only after you approve.
 
-This is where the engineer catches what an unwritten plan would hide. A missing step. Two steps in the wrong order. A check that was skipped for a reason that does not hold. The engineer fixes it, either by telling the agent what to change or by editing the file by hand. Only then is it safe to start the implementation.
+## Step 2: The Plan Is the Blueprint
 
-The same file has a second job. The checklist is the memory of the run. Every step is a checkbox with four states: not started, in progress, done, and skipped. The agent marks a step as in progress before it starts the work, and as done only after the result compiles and its tests pass. If the run stops for any reason, such as a power cut, a restart or a server that runs out of memory, the next run reads the checklist, continues at the step that was in progress, and does not redo a finished step.
+An agent that goes straight from the requirements to the code has no written plan. The order of the steps, the technical choices, the data quality checks it adds and the checks it skips exist only in its working memory. Some of that thinking ends up in the logs. But a log is a trace of what the agent thought at each moment. It is not a plan, and nobody can review it before the work starts.
 
-Next to the plan, the run writes a log into the project: one line per event, each with the time since the run started. It is a plain text file. When a run stops, the log shows what the agent was doing at that moment, and the checklist shows where to continue.
+*Example:* an agent starts to build from the requirements. It skips a data-quality check, because it assumes that the source is clean, and it forgets the step that sets up the test runner. Forty minutes in, the machine restarts. Half the files exist. Nobody can say which steps were finished and verified, so the next run starts again from the beginning.
 
-## 5. Assumptions made in silence
+A written plan solves both problems. It is short: a small number of steps, in order, with the technical decisions behind them, the data quality checks and the assumptions of the agent. You read it and correct it before any code exists.
 
-No requirements document is complete, so the agent will fill gaps. It has to: a question that stays open would stop the work. The risk is not that the agent decides. The risk is that nobody finds out what it decided.
+### Who writes the plan
 
-That is why it helps to have the assumptions as a part of the plan. It is also the part that deserves the closest look from the engineer. For every gap, the planner picks a concrete default and writes it down with the reason and an impact rating. The rating says how much of the work would change if the guess is wrong.
+A different agent takes over here: the DataSQRL agent. Your coding agent starts it in planning mode and gives it the requirements file. The DataSQRL agent is a specialized agent. It carries the knowledge about SQRL, the engines and the pipeline designs, and it runs in a container.
 
-*Example:* we gave the agent a five-line request to complete the [finance data catalog](https://github.com/datasqrl-colab/finance-data-catalog-demo) from Part 1. Before it planned anything, it surveyed the repository. It found a whole line of business that was never wired in, a table named with a reserved word, three datasets nothing referenced, and an ontology without a single data-quality check. Its plan listed twelve assumptions. Three of them:
+Before it plans, the agent surveys the repository. It reads the shared data catalogs first, then the other projects. It learns which tables already exist, what the data catalog or the sibling projects guarantee about them, and which monitoring is already there. When the requirements leave something open, the agent makes an assumption and records it in the plan file, with its reason.
 
-- The table named `Transaction` has to be renamed. Assumed `Account_Transaction`. Impact: high.
-- The card transaction tables reference a debit card that no dataset in the catalog defines. Assumed that no such dataset should be invented, since "inventing a table nobody specified would add a fictitious contract to a governance artefact." The gap goes into the README instead. Impact: high.
+### What the plan contains
 
-The second one is the interesting one. The easy path was to generate the missing table. The plan declines and says why.
+The plan is one file in the project, next to the requirements file. It has five parts:
 
-For the review, this gives the engineer an order to work in. Read the high-impact assumptions first, because those are the ones that are expensive to get wrong. If one of them is wrong, correct it in the plan, through the agent or by hand, before the implementation builds on it.
+- **The requirements it builds on.** The path of the requirements file, so that the plan and the requirements stay connected.
+- **The implementation checklist.** Numbered steps in the order of the work. Each step names the steps it depends on, so a missing step or a wrong order shows in the list. The checklist is also the memory of the agent during the implementation. The agent marks a step as done only after the result compiles and its tests pass. After a stop, the next run continues at the step that was in progress. Without the checklist, nobody can predict or control the steps that the agent follows.
+- **Data quality and observability.** What the pipeline checks and counts, what it does not, and what it reuses from a shared data catalog. The agent decides this for every pipeline, also when the requirements do not ask for it.
+- **Technical decisions.** The choices that the requirements leave open, such as the engines or the type of window. Each one comes with the constraint that decided it.
+- **Assumptions.** Each gap that the agent found, the default that it selected, and the reason. Each assumption has an impact rating: high, medium or low. The rating says how much of the work changes if the assumption is wrong.
 
-## 6. One agent doing everything
+The plan says what each step must achieve and why. It leaves the how, such as the names of tables and columns, to the implementation stage.
 
-A single agent that gathers requirements, plans, writes the code, tests it and judges its own result has no boundary where a mistake gets caught. It also has write access to everything.
+### What to check before you approve
 
-*Example:* asked to fix a failing test in a data product, the agent edits the shared catalog that three other teams depend on. The test passes.
+When the plan is ready, your coding agent gives you a summary and waits. The review has an order:
 
-The work is split. The coding agent you talk to gathers requirements and orchestrates. It never writes SQRL. Planning and implementation run in a separate, specialized agent that carries the SQRL knowledge, the validator and the test loop: implement, compile, test, judge, refine. That agent runs in a container that can write to the project folder and nothing else. A shared data catalog or a project are mounted read-only, which turns "do not modify" from an instruction into a property of the file system.
+1. **Read the high-impact assumptions.** A wrong one is the most expensive mistake in the plan.
+2. **Read the technical decisions.** Check that each constraint is true for your organization.
+3. **Read the checklist.** Look for a missing step, two steps in the wrong order, or a check that the agent skipped for a reason that does not hold.
 
-Not every change needs the full path. A small, clearly scoped change to an existing project, such as a new column or a corrected filter, runs as a patch. A patch has no need planning stage. The request itself is the requirement, and the agent makes the change, updates the tests and the documentation that the change affects, and runs the tests.
+When something is wrong, you correct it in the plan. You tell the agent in the chat what to change, or you edit the file by hand. The next stage, implementation, starts only after you approve the plan.
 
-## 7. Changes that reach production on their own
+## Step 3: The Agent Builds, the Judges Review, You Read and Commit
 
-The build succeeded and the tests pass. That is not the same as a decision to ship.
+An earlier series on this blog showed where a general-purpose coding agent fails at building data pipelines:
 
-*Example:* an agent finishes an implementation, commits, pushes and replaces the running deployment, because the original request said "build and deploy."
+- **[The seams between the systems break.](/blog/p1-broken-at-seams)** A column exists in the stream processor, in the database and in the API. The agent maps it by hand, and one type does not match. The pipeline compiles, and the demo works.
+- **[Some bugs are not in the text of the code.](/blog/p2-validator-relational-introspection)** A missing index, a wrong primary key, a join whose answer depends on when it runs. The SQL reads correctly.
+- **[The test that passed proves little.](/blog/p3-testing-framework)** The agent tests on a fixed set of data, with no late event and no update. The bugs that need data in motion stay hidden.
+- **[Nobody can review hundreds of files.](/blog/p4-human-understanding-one-sql-file)** The logic of a conventional pipeline is spread over many files in two or three languages. Each line is correct, and the meaning is wrong.
 
-The implementation ends with uncommitted changes and a report. The report includes the issues the reviewing step found, and says so when a check did not run. You read the diff and you commit. Deploying is a separate request, and it only deploys a commit you have pushed. A new deployment runs next to the live one and never replaces it. Promoting it is an another request. Before it happens you are shown the deployment that is currently live, and the confirmation has to name both.
+In each of these cases, every check that the agent had was green. The code compiled, the test passed, and the review found nothing. The checks were too weak for a data pipeline.
 
-## 8. A diagnosis that turns into an unreviewed fix
+This is where a deterministic data engineering harness comes in. DataSQRL gives the agent a compiler, a validator and an event-time simulator, so the build, the tests and the review give the same answer on each run. The DataSQRL agent is built for this purpose, on top of these tools. Purpose-built agents of this type are the new frontier in operational data engineering.
 
-The pipeline is running and something goes wrong. An assistant that can read the logs is useful. An assistant that can also change the deployment is a second, unreviewed path into production.
+### How the DataSQRL agent builds a data pipeline under the hood
 
-*Example:* an alert fires for a stalled job. An assistant with write access restarts it with different settings. The symptom goes away and the cause stays.
+After you approve the plan, your coding agent starts the DataSQRL agent again, now in implementation mode. The agent works through the checklist of the plan, and it repeats one loop until the result holds:
 
-In DataSQRL Cloud, the assistant agent reads the logs, the metrics, the compiled pipeline and the deployment history, and looks for the earliest error. Every tool it has on the platform is read-only. It cannot pause, resize, deploy or promote. When the cause is in the pipeline, it drafts a GitHub issue and asks whether to create it. You can accept, reject, or reject with a comment, and the comment goes back into the draft.
+1. **Implement.** The agent writes the scripts, the connectors, the configuration, the API and the tests. For each type of work it first loads the instructions that DataSQRL provides for that type.
+2. **Compile.** The DataSQRL compiler checks the full pipeline, from the sources to the API. An error sends the agent back to the code.
+3. **Test.** The agent runs the tests on the test data from the requirements, with the late event, the duplicate and the null. A failed test sends the agent back to the code.
+4. **Verify.** Two types of judges review the result. Deterministic judges are code, and they give the same answer on each run: they check the structure of the project and the configuration of each environment. LLM judges read the result as a reviewer does. Each one looks at one thing: the code, the compiled pipeline, the configuration or the tests. A pipeline in a domain such as finance gets one more LLM judge with the rules of that domain. Each issue that a judge finds has a severity, from critical to low. The two types together make the build stronger, and the pipeline is complete and ready to use.
+5. **Refine.** The agent gets the issues in the order of their severity. It fixes an issue. Then the loop starts again.
 
-The issue then goes back to the beginning. The engineer hands it to the coding agent, it becomes requirements, a plan or a patch, a diff, a deployment. Every stop above applies again. There is one path into production, and the operational loop joins it at the start.
+The loop ends when the judges accept the result, or when it reaches the limit of refinements.
+
+### What keeps the run under control
+
+- **The agent writes only into your project.** It runs in a container that can read the full repository. A shared data catalog and the projects of other teams are read-only for it. "Do not modify" is then a property of the file system, and no longer an instruction that the agent can ignore.
+- **The checklist records each step.** The agent marks a step as done only after the result compiles and its tests pass. After a stop, the next run continues at the step that was in progress.
+- **You can follow the run.** The run writes a log into the project, with one line for each event. You can ask your coding agent at any time how far the run is, and you can tell it to stop the run.
+
+### What you get, and what you decide
+
+The run ends with two things: the changed files in your project, and a report. The agent commits nothing.
+
+The report says if the last test run passed. It gives the number of refinements, and the issues that the judges found, counted by severity. It also says so when a check did not run. The project has a README with the commands to compile, test and run the pipeline, and a script that runs all the tests.
+
+Then the work is yours again:
+
+1. **Read the report.** An open issue of high severity is a reason to look at that part of the code first.
+2. **Read the diff.** It contains everything that the agent changed, and nothing outside your project.
+3. **Commit.** The commit is your decision that the pipeline is correct. A deployment is a separate request, and it starts from a commit that you made.
+
+Not every change needs all three steps. A small and clear change to a project that already exists, such as a new column or a corrected filter, runs as a patch. The request is the requirement. The agent makes the change, updates the tests and the documentation that the change affects, and runs the tests.
 
 ## Summary
 
-None of this slows the agent down where it is good. It still writes the pipeline, the tests and the documentation, and it does so in minutes. What changes is that its decisions stop being invisible.
+Building a complete operational data pipeline takes three steps. Each step leaves something that you can read, edit and refuse:
 
-Requirements are a file, written with the person and reviewed by them. The plan is a file, with its assumptions listed and ranked. The implementation is a diff nobody committed for you without an approval. A deployment is isolated until someone promotes it. A production problem becomes an issue someone approved. Every one of those is something a person can read, edit and refuse, and each one is still there next month when someone asks why the pipeline works the way it does.
+- **The requirements file is the contract.** You and your coding agent write it together. It says what the pipeline must do, in numbers and not in adjectives.
+- **The plan is the blueprint.** The DataSQRL agent writes it. It shows the steps, the technical decisions and each assumption, before any code exists.
+- **The build is a diff.** The DataSQRL agent implements, compiles, tests and verifies in a loop, and deterministic judges and LLM judges review the result. You read the report and the diff, and you commit.
 
-The engineer's job moves. Less typing, more deciding: what the pipeline must do, whether the plan to build it is sound, and what is allowed into production. Those were always the parts that needed an engineer.
+The job of the data engineer moves. Less typing, more deciding: what the pipeline must do, whether the plan to build it is sound, and whether the result is correct. Those were always the parts that needed an engineer.
 
-The harness is open source, and the examples from both posts are public. If you try it on a pipeline of your own, we would like to hear how it went: [DataSQRL on GitHub](https://github.com/DataSQRL/sqrl).
+The harness is open source, and the finance data catalog example is public. If you try it on a pipeline of your own, we would like to hear how it went: [DataSQRL on GitHub](https://github.com/DataSQRL/sqrl).
