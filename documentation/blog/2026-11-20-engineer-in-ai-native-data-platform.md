@@ -1,6 +1,7 @@
 ---
 slug: engineer-in-ai-native-data-platform
 title: "Requirements, Plan, Build: How a Data Engineer Builds an Operational Data Pipeline with Agents"
+description: "Data engineers build an operational data pipeline with agents in three steps: the requirements, the plan and the build. What the data engineer decides in each step."
 authors: [alp]
 image: /img/blog/building_pipeline_with_agent.jpeg
 tags: [technical, DataSQRL]
