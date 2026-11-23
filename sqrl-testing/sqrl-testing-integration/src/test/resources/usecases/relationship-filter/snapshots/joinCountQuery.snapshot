@@ -1,0 +1,13 @@
+{
+  "data" : {
+    "joinCountQuery" : [ {
+      "id" : "b",
+      "info" : "detail-b",
+      "n" : 0
+    }, {
+      "id" : "c",
+      "info" : "detail-c",
+      "n" : 1
+    } ]
+  }
+}

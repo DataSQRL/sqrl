@@ -92,6 +92,31 @@ CREATE VIEW `CustomerOrderCount` AS
 SELECT c.name, coalesce((SELECT COUNT(*) FROM Orders o WHERE o.customerid = ?          ) -1, 0) AS num_orders
 FROM Customer c WHERE c.customerid = ?          ;
 
+=== CustomerOrderCountByName
+ID:          default_catalog.default_database.CustomerOrderCountByName
+Type:        query
+Stage:       postgres
+--- definition ---
+Inputs:
+ - default_catalog.default_database.Customer
+ - default_catalog.default_database.Orders
+Annotations:
+ - stream-root: Customer
+ - parameters: name
+ - base-table: CustomerOrderCountByName
+Plan:
+LogicalProject(variablesSet=[[$cor3]], customerid=[$0], num_orders=[coalesce(-($SCALAR_QUERY({
+LogicalAggregate(group=[{}], EXPR$0=[COUNT()])
+  LogicalFilter(condition=[=($1, $cor3.customerid)])
+    LogicalTableScan(table=[[default_catalog, default_database, Orders]])
+}), 1), 0:BIGINT)])
+  LogicalFilter(condition=[=($2, ?0)])
+    LogicalTableScan(table=[[default_catalog, default_database, Customer]])
+SQL:
+CREATE VIEW `CustomerOrderCountByName` AS 
+  SELECT c.customerid, coalesce((SELECT COUNT(*) FROM Orders o WHERE o.customerid = c.customerid) -1, 0) AS num_orders
+  FROM Customer c WHERE c.name = ?    ;
+
 === CustomerWithOrders
 ID:          default_catalog.default_database.CustomerWithOrders
 Type:        stream
@@ -742,7 +767,7 @@ END
             ],
             "query" : {
               "type" : "SqlQuery",
-              "sql" : "SELECT *\nFROM \"Customer_1\"\nWHERE ($1 IS NULL OR $1 = 0 OR \"customerid\" = $1) AND ($2 IS FALSE OR NOT EXISTS (SELECT *\n    FROM \"_SpecialOrders_4\"\n    WHERE \"customerid\" = \"Customer_10\".\"customerid\" AND \"isSpecialorder\")) AND $3",
+              "sql" : "SELECT *\nFROM \"Customer_1\" AS \"Customer_10\"\nWHERE ($1 IS NULL OR $1 = 0 OR \"customerid\" = $1) AND ($2 IS FALSE OR NOT EXISTS (SELECT *\n    FROM \"_SpecialOrders_4\"\n    WHERE \"customerid\" = \"Customer_10\".\"customerid\" AND \"isSpecialorder\")) AND $3",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -796,6 +821,41 @@ END
                   "type" : "arg",
                   "path" : "customerid",
                   "sqlType" : "BIGINT"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "CustomerOrderCountByName",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "name"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"customerid\", COALESCE((((SELECT COUNT(*)\n      FROM \"Orders_3\"\n      WHERE \"customerid\" = \"t\".\"customerid\"))) - 1, 0) AS \"num_orders\"\nFROM (SELECT *\n  FROM \"Customer_1\"\n  WHERE \"name\" = $1) AS \"t\"",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "name",
+                  "sqlType" : "VARCHAR"
                 }
               ],
               "pagination" : "LIMIT_AND_OFFSET",
@@ -1113,6 +1173,51 @@ END
         },
         {
           "function" : {
+            "name" : "GetCustomerOrderCountByName",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "name" : {
+                  "type" : "string"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [
+                "name"
+              ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query CustomerOrderCountByName($name: String!, $limit: Int = 10, $offset: Int = 0) {\nCustomerOrderCountByName(name: $name, limit: $limit, offset: $offset) {\ncustomerid\nnum_orders\n}\n\n}",
+            "queryName" : "CustomerOrderCountByName",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/CustomerOrderCountByName{?offset,name,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "customerid" : {
+                  "type" : "integer"
+                },
+                "num_orders" : {
+                  "type" : "integer"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
             "name" : "GetSimilarOrders",
             "parameters" : {
               "type" : "object",
@@ -1186,7 +1291,7 @@ END
       ],
       "schema" : {
         "type" : "string",
-        "schema" : "type Customer {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\ntype CustomerOrderCount {\n  name: String!\n  num_orders: Long!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Orders {\n  id: Long!\n  customerid: Long!\n  time: DateTime!\n  entries: [Orders_entriesOutput]!\n}\n\ntype Orders_entriesOutput {\n  productid: Long!\n  quantity: Long!\n  unit_price: Float!\n  discount: Float\n}\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomerWithOrders(limit: Int = 10, offset: Int = 0): [Customer!]\n  Orders(limit: Int = 10, offset: Int = 0): [Orders!]\n  AdminOrderCustomers(customerId: Long!, hasOrders: Boolean!, limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomerOrderCount(customerid: Long!, limit: Int = 10, offset: Int = 0): [CustomerOrderCount!]\n  SimilarOrders(name: String!, limit: Int = 10, offset: Int = 0): [SimilarOrders!]\n}\n\ntype SimilarOrders {\n  id: Long!\n  customerid: Long!\n  time: DateTime!\n  entries: [SimilarOrders_entriesOutput]!\n  similarity: Long!\n}\n\ntype SimilarOrders_entriesOutput {\n  productid: Long!\n  quantity: Long!\n  unit_price: Float!\n  discount: Float\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n}\n\nenum _McpVisibility {\n  MODEL\n  APP\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String, appName: String, visibility: [_McpVisibility!]) on QUERY | MUTATION | FIELD_DEFINITION\n"
+        "schema" : "type Customer {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\ntype CustomerOrderCount {\n  name: String!\n  num_orders: Long!\n}\n\ntype CustomerOrderCountByName {\n  customerid: Long!\n  num_orders: Long!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Orders {\n  id: Long!\n  customerid: Long!\n  time: DateTime!\n  entries: [Orders_entriesOutput]!\n}\n\ntype Orders_entriesOutput {\n  productid: Long!\n  quantity: Long!\n  unit_price: Float!\n  discount: Float\n}\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomerWithOrders(limit: Int = 10, offset: Int = 0): [Customer!]\n  Orders(limit: Int = 10, offset: Int = 0): [Orders!]\n  AdminOrderCustomers(customerId: Long!, hasOrders: Boolean!, limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomerOrderCount(customerid: Long!, limit: Int = 10, offset: Int = 0): [CustomerOrderCount!]\n  CustomerOrderCountByName(name: String!, limit: Int = 10, offset: Int = 0): [CustomerOrderCountByName!]\n  SimilarOrders(name: String!, limit: Int = 10, offset: Int = 0): [SimilarOrders!]\n}\n\ntype SimilarOrders {\n  id: Long!\n  customerid: Long!\n  time: DateTime!\n  entries: [SimilarOrders_entriesOutput]!\n  similarity: Long!\n}\n\ntype SimilarOrders_entriesOutput {\n  productid: Long!\n  quantity: Long!\n  unit_price: Float!\n  discount: Float\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n}\n\nenum _McpVisibility {\n  MODEL\n  APP\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String, appName: String, visibility: [_McpVisibility!]) on QUERY | MUTATION | FIELD_DEFINITION\n"
       }
     }
   }
