@@ -48,3 +48,12 @@ ferenc:
   title: Apache Flink PMC
   url: https://github.com/ferenc-csaky
   image_url: https://avatars.githubusercontent.com/u/17282839?v=4
+
+alp:
+  name: Hasan Alp Caferoglu
+  title: Software Engineer at DataSQRL
+  url: https://github.com/HasanAlpCaferoglu
+  image_url: /img/headshots/alp1.webp
+  socials:
+    linkedin: hasanalpcaferoglu
+    github: HasanAlpCaferoglu
