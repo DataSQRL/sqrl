@@ -47,17 +47,17 @@ public final class SqlScriptStatementSplitter {
   private static final char NO_QUOTE = '\0';
 
   /**
-   * A line starting a SQRL definition (e.g. {@code Name :=} or {@code Name(arg INT) :=}), possibly
-   * after block comments such as a hint. Outside of parentheses, {@code :=} is not valid SQL, so
-   * such a line starts a new statement. Inside them, it can be a named argument of a function in
-   * the SQL of a database, e.g. {@code p_id := :id}. A line starting with {@code RETURNS (}
-   * continues the header of the definition above it, e.g. {@code Fn(id BIGINT)} followed by {@code
-   * RETURNS (id BIGINT) :=} on the next line.
+   * A line starting a SQRL definition (e.g. {@code Name :=} or {@code Name(arg INT) :=}), matched
+   * against the code of the line without its comments, so a hint or comment before or inside the
+   * header does not matter. Outside of parentheses, {@code :=} is not valid SQL, so such a line
+   * starts a new statement. Inside them, it can be a named argument of a function in the SQL of a
+   * database, e.g. {@code p_id := :id}. A line starting with {@code RETURNS (} continues the header
+   * of the definition above it, e.g. {@code Fn(id BIGINT)} followed by {@code RETURNS (id BIGINT)
+   * :=} on the next line.
    */
   private static final Pattern DEFINITION_START =
       Pattern.compile(
-          "^\\s*(/\\*.*?\\*/\\s*)*"
-              + "(?!RETURNS\\s*\\()[\\w`][\\w.`*-]*\\s*(\\(.*\\))?\\s*(RETURNS\\s*\\(.*\\)\\s*)?:=",
+          "^\\s*(?!RETURNS\\s*\\()[\\w`][\\w.`*-]*\\s*(\\(.*\\))?\\s*(RETURNS\\s*\\(.*\\)\\s*)?:=",
           Pattern.CASE_INSENSITIVE);
 
   /**
@@ -98,48 +98,48 @@ public final class SqlScriptStatementSplitter {
     var formatted = formatEndOfSqlFile(script);
 
     StringBuilder current = null;
-    var statementLineNo = 0;
+    FileLocation statementStart = null;
     var lineNo = 0;
     var openQuote = NO_QUOTE;
     var inPreservedBlockComment = false;
     var statementTerminated = false;
     var statementContainsSql = false;
-    // Where the last line with SQL of the current statement ends
+    // Where the SQL of the current statement ends, in the script and in the statement
     FileLocation sqlEnd = null;
-    // Comments that start on their own line at the end of the current statement (e.g. hints)
-    // belong to the next statement if the current one is split off
-    var trailingCommentStart = -1;
-    var trailingCommentLineNo = 0;
+    var sqlEndIndex = 0;
     // The parentheses that are open in the current statement, outside of quotes and comments
     var parenthesesDepth = 0;
     for (var line : formatted.split(LINE_DELIMITER)) {
       lineNo++;
 
-      var lineStartsOutsideQuoteOrComment = openQuote == NO_QUOTE && !inPreservedBlockComment;
       var parsedLine = parseLine(line, openQuote, inPreservedBlockComment);
       var rawLine = parsedLine.line();
 
       if (current != null
           && statementContainsSql
-          && lineStartsOutsideQuoteOrComment
+          && openQuote == NO_QUOTE
           && parenthesesDepth <= 0
-          && DEFINITION_START.matcher(rawLine).find()) {
-        var splitAt = trailingCommentStart >= 0 ? trailingCommentStart : current.length();
-        var nextStatement = current.substring(splitAt);
-        current.setLength(splitAt);
-        var statementStart = new FileLocation(statementLineNo, 1);
+          && DEFINITION_START.matcher(parsedLine.code()).find()) {
+        // What follows the SQL of the statement, e.g. a hint, belongs to the next statement
+        var afterSql = current.substring(sqlEndIndex);
+        current.setLength(sqlEndIndex);
         statements.add(
             new ParsedObject<>(
-                addStatementDelimiter(CharMatcher.whitespace().trimTrailingFrom(current))
-                    + LINE_DELIMITER,
-                statementStart));
-        missingDelimiters.add(new MissingDelimiter(statementStart, sqlEnd));
+                addStatementDelimiter(current.toString()) + LINE_DELIMITER, statementStart));
+        // Its `;` may be there, followed by a comment that ends on this line
+        if (!statementTerminated) {
+          missingDelimiters.add(new MissingDelimiter(statementStart, sqlEnd));
+        }
 
-        current = nextStatement.isEmpty() ? null : new StringBuilder(nextStatement);
-        statementLineNo = trailingCommentLineNo;
+        var nextStart = CharMatcher.whitespace().negate().indexIn(afterSql);
+        if (nextStart < 0) {
+          current = null;
+        } else {
+          current = new StringBuilder(afterSql.substring(nextStart));
+          statementStart = sqlEnd.add(computeOffset(afterSql, nextStart));
+        }
         statementTerminated = false;
         statementContainsSql = false;
-        trailingCommentStart = -1;
         parenthesesDepth = 0;
       }
 
@@ -156,31 +156,26 @@ public final class SqlScriptStatementSplitter {
       }
 
       if (current == null) {
-        statementLineNo = lineNo;
+        statementStart = new FileLocation(lineNo, 1);
         current = new StringBuilder();
       }
 
       if (parsedLine.containsSql()) {
-        sqlEnd = new FileLocation(lineNo, parsedLine.sqlEndColumn());
-        trailingCommentStart = -1;
-      } else if (lineStartsOutsideQuoteOrComment
-          && trailingCommentStart < 0
-          && statementContainsSql) {
-        trailingCommentStart = current.length();
-        trailingCommentLineNo = lineNo;
+        var sqlEndColumn =
+            CharMatcher.whitespace().trimTrailingFrom(parsedLine.code()).length() + 1;
+        sqlEnd = new FileLocation(lineNo, sqlEndColumn);
+        sqlEndIndex = current.length() + sqlEndColumn - 1;
       }
 
       current.append(rawLine);
       current.append(LINE_DELIMITER);
 
       if (openQuote == NO_QUOTE && !inPreservedBlockComment && statementTerminated) {
-        var fileLoc = new FileLocation(statementLineNo, 1);
-        var parsedObj = new ParsedObject<>(current.toString(), fileLoc);
+        var parsedObj = new ParsedObject<>(current.toString(), statementStart);
         statements.add(parsedObj);
         current = null;
         statementTerminated = false;
         statementContainsSql = false;
-        trailingCommentStart = -1;
         parenthesesDepth = 0;
       }
     }
@@ -190,7 +185,7 @@ public final class SqlScriptStatementSplitter {
       var statement =
           addStatementDelimiter(CharMatcher.whitespace().trimTrailingFrom(current))
               + LINE_DELIMITER;
-      statements.add(new ParsedObject<>(statement, new FileLocation(statementLineNo, 1)));
+      statements.add(new ParsedObject<>(statement, statementStart));
     }
 
     return statements;
@@ -259,15 +254,17 @@ public final class SqlScriptStatementSplitter {
   private static ParsedLine parseLine(
       String line, char openQuote, boolean inPreservedBlockComment) {
     var parsed = new StringBuilder();
+    var code = new StringBuilder();
     var lastSignificantCharacter = '\0';
-    var sqlEndColumn = 0;
     var parenthesesDelta = 0;
 
     for (var i = 0; i < line.length(); i++) {
       if (inPreservedBlockComment) {
         parsed.append(line.charAt(i));
+        code.append(' ');
         if (endsBlockComment(line, i)) {
           parsed.append(line.charAt(i + 1));
+          code.append(' ');
           inPreservedBlockComment = false;
           i++;
         }
@@ -280,10 +277,10 @@ public final class SqlScriptStatementSplitter {
       // need no special handling, since they close and immediately reopen the quoted section.
       if (openQuote != NO_QUOTE) {
         parsed.append(ch);
+        code.append(ch);
         if (ch == openQuote) {
           openQuote = NO_QUOTE;
           lastSignificantCharacter = ch;
-          sqlEndColumn = i + 2;
         }
         continue;
       }
@@ -291,6 +288,7 @@ public final class SqlScriptStatementSplitter {
       if (startsBlockComment(line, i)) {
         inPreservedBlockComment = true;
         parsed.append(ch);
+        code.append(' ');
         continue;
       }
 
@@ -299,6 +297,7 @@ public final class SqlScriptStatementSplitter {
       }
 
       parsed.append(ch);
+      code.append(ch);
       if (ch == SINGLE_QUOTE || ch == BACKTICK || ch == DOUBLE_QUOTE) {
         openQuote = ch;
       } else if (ch == '(') {
@@ -308,17 +307,16 @@ public final class SqlScriptStatementSplitter {
       }
       if (!Character.isWhitespace(ch)) {
         lastSignificantCharacter = ch;
-        sqlEndColumn = i + 2;
       }
     }
 
     return new ParsedLine(
         parsed.toString(),
+        code.toString(),
         openQuote,
         inPreservedBlockComment,
         lastSignificantCharacter == STATEMENT_DELIMITER.charAt(0),
         lastSignificantCharacter != '\0',
-        sqlEndColumn,
         parenthesesDelta);
   }
 
@@ -337,17 +335,17 @@ public final class SqlScriptStatementSplitter {
   /**
    * A line without its line comment, and the state after it.
    *
-   * @param sqlEndColumn the column after the last character of SQL on the line, so a {@code ;} that
-   *     is missing there goes before a comment that follows it
+   * @param code the line with its block comments replaced by spaces, so that the columns stay the
+   *     same
    * @param parenthesesDelta how many more parentheses the line opens than it closes, outside of
    *     quotes and comments
    */
   private record ParsedLine(
       String line,
+      String code,
       char openQuote,
       boolean inPreservedBlockComment,
       boolean endsWithStatementDelimiter,
       boolean containsSql,
-      int sqlEndColumn,
       int parenthesesDelta) {}
 }

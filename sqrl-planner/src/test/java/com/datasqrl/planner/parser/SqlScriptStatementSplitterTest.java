@@ -20,6 +20,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.datasqrl.error.ErrorLocation.FileLocation;
 import java.util.ArrayList;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 class SqlScriptStatementSplitterTest {
 
@@ -596,12 +598,36 @@ class SqlScriptStatementSplitterTest {
     assertThat(missingDelimiters).isEmpty();
   }
 
+  @ParameterizedTest
+  @ValueSource(
+      strings = {
+        "/*+ exec(database) */ B := SELECT * FROM A;",
+        "/* first */ /* second */ B := SELECT * FROM A;",
+        "B /* copy of A */ := SELECT * FROM A;",
+        "B(x INT /* the id */) := SELECT * FROM A WHERE id = :x;"
+      })
+  void givenCommentOnDefinitionLine_whenSplitStatements_thenSplitsAndReportsIt(String definition) {
+    var script = "A := SELECT * FROM T\n" + definition + "\n";
+    var missingDelimiters = new ArrayList<SqlScriptStatementSplitter.MissingDelimiter>();
+
+    var statements = SqlScriptStatementSplitter.splitStatements(script, missingDelimiters);
+
+    assertThat(statements)
+        .extracting(ParsedObject::get)
+        .containsExactly("A := SELECT * FROM T;\n", definition + "\n");
+    assertThat(missingDelimiters)
+        .containsExactly(
+            new SqlScriptStatementSplitter.MissingDelimiter(
+                new FileLocation(1, 1), new FileLocation(1, 21)));
+  }
+
   @Test
-  void givenMissingDelimiterBeforeHintedDefinition_whenSplitStatements_thenSplitsAndReportsIt() {
+  void givenHintEndingOnDefinitionLine_whenSplitStatements_thenNextStatementStartsAtTheHint() {
     var script =
         """
         A := SELECT * FROM T
-        /*+ exec(database) */ B := SELECT * FROM A;
+        /*+ exec(database)
+        */ B := SELECT * FROM A;
         """;
     var missingDelimiters = new ArrayList<SqlScriptStatementSplitter.MissingDelimiter>();
 
@@ -610,7 +636,10 @@ class SqlScriptStatementSplitterTest {
     assertThat(statements)
         .extracting(ParsedObject::get)
         .containsExactly(
-            "A := SELECT * FROM T;\n", "/*+ exec(database) */ B := SELECT * FROM A;\n");
+            "A := SELECT * FROM T;\n", "/*+ exec(database)\n*/ B := SELECT * FROM A;\n");
+    assertThat(statements)
+        .extracting(ParsedObject::getFileLocation)
+        .containsExactly(new FileLocation(1, 1), new FileLocation(2, 1));
     assertThat(missingDelimiters)
         .containsExactly(
             new SqlScriptStatementSplitter.MissingDelimiter(
@@ -618,7 +647,27 @@ class SqlScriptStatementSplitterTest {
   }
 
   @Test
-  void givenMissingDelimiterBeforeBlockCommentEnds_whenSplitStatements_thenSplitsAfterTheComment() {
+  void givenCommentEndingOnDefinitionAfterDelimiter_whenSplitStatements_thenReportsNothing() {
+    var script =
+        """
+        A := SELECT * FROM T; /* note
+        */ B := SELECT * FROM A;
+        """;
+    var missingDelimiters = new ArrayList<SqlScriptStatementSplitter.MissingDelimiter>();
+
+    var statements = SqlScriptStatementSplitter.splitStatements(script, missingDelimiters);
+
+    assertThat(statements)
+        .extracting(ParsedObject::get)
+        .containsExactly("A := SELECT * FROM T;\n", "/* note\n*/ B := SELECT * FROM A;\n");
+    assertThat(statements)
+        .extracting(ParsedObject::getFileLocation)
+        .containsExactly(new FileLocation(1, 1), new FileLocation(1, 23));
+    assertThat(missingDelimiters).isEmpty();
+  }
+
+  @Test
+  void givenCommentAfterMissingDelimiter_whenSplitStatements_thenNextStatementStartsAtIt() {
     var script =
         """
         A := SELECT * FROM T /* TODO: filter
@@ -632,10 +681,10 @@ class SqlScriptStatementSplitterTest {
     assertThat(statements)
         .extracting(ParsedObject::get)
         .containsExactly(
-            "A := SELECT * FROM T /* TODO: filter\n   by date */;\n", "B := SELECT * FROM A;\n");
+            "A := SELECT * FROM T;\n", "/* TODO: filter\n   by date */\nB := SELECT * FROM A;\n");
     assertThat(statements)
         .extracting(ParsedObject::getFileLocation)
-        .containsExactly(new FileLocation(1, 1), new FileLocation(3, 1));
+        .containsExactly(new FileLocation(1, 1), new FileLocation(1, 22));
     assertThat(missingDelimiters)
         .containsExactly(
             new SqlScriptStatementSplitter.MissingDelimiter(
