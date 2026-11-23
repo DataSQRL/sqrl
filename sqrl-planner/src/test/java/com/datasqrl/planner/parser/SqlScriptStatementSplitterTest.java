@@ -595,4 +595,50 @@ class SqlScriptStatementSplitterTest {
     assertThat(statements).hasSize(2);
     assertThat(missingDelimiters).isEmpty();
   }
+
+  @Test
+  void givenMissingDelimiterBeforeHintedDefinition_whenSplitStatements_thenSplitsAndReportsIt() {
+    var script =
+        """
+        A := SELECT * FROM T
+        /*+ exec(database) */ B := SELECT * FROM A;
+        """;
+    var missingDelimiters = new ArrayList<SqlScriptStatementSplitter.MissingDelimiter>();
+
+    var statements = SqlScriptStatementSplitter.splitStatements(script, missingDelimiters);
+
+    assertThat(statements)
+        .extracting(ParsedObject::get)
+        .containsExactly(
+            "A := SELECT * FROM T;\n", "/*+ exec(database) */ B := SELECT * FROM A;\n");
+    assertThat(missingDelimiters)
+        .containsExactly(
+            new SqlScriptStatementSplitter.MissingDelimiter(
+                new FileLocation(1, 1), new FileLocation(1, 21)));
+  }
+
+  @Test
+  void givenMissingDelimiterBeforeBlockCommentEnds_whenSplitStatements_thenSplitsAfterTheComment() {
+    var script =
+        """
+        A := SELECT * FROM T /* TODO: filter
+           by date */
+        B := SELECT * FROM A;
+        """;
+    var missingDelimiters = new ArrayList<SqlScriptStatementSplitter.MissingDelimiter>();
+
+    var statements = SqlScriptStatementSplitter.splitStatements(script, missingDelimiters);
+
+    assertThat(statements)
+        .extracting(ParsedObject::get)
+        .containsExactly(
+            "A := SELECT * FROM T /* TODO: filter\n   by date */;\n", "B := SELECT * FROM A;\n");
+    assertThat(statements)
+        .extracting(ParsedObject::getFileLocation)
+        .containsExactly(new FileLocation(1, 1), new FileLocation(3, 1));
+    assertThat(missingDelimiters)
+        .containsExactly(
+            new SqlScriptStatementSplitter.MissingDelimiter(
+                new FileLocation(1, 1), new FileLocation(1, 21)));
+  }
 }

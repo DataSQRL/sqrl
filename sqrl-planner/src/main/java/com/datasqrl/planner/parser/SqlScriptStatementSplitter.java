@@ -47,15 +47,17 @@ public final class SqlScriptStatementSplitter {
   private static final char NO_QUOTE = '\0';
 
   /**
-   * A line starting a SQRL definition (e.g. {@code Name :=} or {@code Name(arg INT) :=}). Outside
-   * of parentheses, {@code :=} is not valid SQL, so such a line starts a new statement. Inside
-   * them, it can be a named argument of a function in the SQL of a database, e.g. {@code p_id :=
-   * :id}. A line starting with {@code RETURNS (} continues the header of the definition above it,
-   * e.g. {@code Fn(id BIGINT)} followed by {@code RETURNS (id BIGINT) :=} on the next line.
+   * A line starting a SQRL definition (e.g. {@code Name :=} or {@code Name(arg INT) :=}), possibly
+   * after block comments such as a hint. Outside of parentheses, {@code :=} is not valid SQL, so
+   * such a line starts a new statement. Inside them, it can be a named argument of a function in
+   * the SQL of a database, e.g. {@code p_id := :id}. A line starting with {@code RETURNS (}
+   * continues the header of the definition above it, e.g. {@code Fn(id BIGINT)} followed by {@code
+   * RETURNS (id BIGINT) :=} on the next line.
    */
   private static final Pattern DEFINITION_START =
       Pattern.compile(
-          "^\\s*(?!RETURNS\\s*\\()[\\w`][\\w.`*-]*\\s*(\\(.*\\))?\\s*(RETURNS\\s*\\(.*\\)\\s*)?:=",
+          "^\\s*(/\\*.*?\\*/\\s*)*"
+              + "(?!RETURNS\\s*\\()[\\w`][\\w.`*-]*\\s*(\\(.*\\))?\\s*(RETURNS\\s*\\(.*\\)\\s*)?:=",
           Pattern.CASE_INSENSITIVE);
 
   /**
@@ -104,8 +106,8 @@ public final class SqlScriptStatementSplitter {
     var statementContainsSql = false;
     // Where the last line with SQL of the current statement ends
     FileLocation sqlEnd = null;
-    // Comment-only lines at the end of the current statement (e.g. hints) belong to the next
-    // statement if the current one is split off
+    // Comments that start on their own line at the end of the current statement (e.g. hints)
+    // belong to the next statement if the current one is split off
     var trailingCommentStart = -1;
     var trailingCommentLineNo = 0;
     // The parentheses that are open in the current statement, outside of quotes and comments
@@ -159,11 +161,11 @@ public final class SqlScriptStatementSplitter {
       }
 
       if (parsedLine.containsSql()) {
-        sqlEnd =
-            new FileLocation(
-                lineNo, CharMatcher.whitespace().trimTrailingFrom(rawLine).length() + 1);
+        sqlEnd = new FileLocation(lineNo, parsedLine.sqlEndColumn());
         trailingCommentStart = -1;
-      } else if (trailingCommentStart < 0 && statementContainsSql) {
+      } else if (lineStartsOutsideQuoteOrComment
+          && trailingCommentStart < 0
+          && statementContainsSql) {
         trailingCommentStart = current.length();
         trailingCommentLineNo = lineNo;
       }
@@ -258,6 +260,7 @@ public final class SqlScriptStatementSplitter {
       String line, char openQuote, boolean inPreservedBlockComment) {
     var parsed = new StringBuilder();
     var lastSignificantCharacter = '\0';
+    var sqlEndColumn = 0;
     var parenthesesDelta = 0;
 
     for (var i = 0; i < line.length(); i++) {
@@ -280,6 +283,7 @@ public final class SqlScriptStatementSplitter {
         if (ch == openQuote) {
           openQuote = NO_QUOTE;
           lastSignificantCharacter = ch;
+          sqlEndColumn = i + 2;
         }
         continue;
       }
@@ -304,6 +308,7 @@ public final class SqlScriptStatementSplitter {
       }
       if (!Character.isWhitespace(ch)) {
         lastSignificantCharacter = ch;
+        sqlEndColumn = i + 2;
       }
     }
 
@@ -313,6 +318,7 @@ public final class SqlScriptStatementSplitter {
         inPreservedBlockComment,
         lastSignificantCharacter == STATEMENT_DELIMITER.charAt(0),
         lastSignificantCharacter != '\0',
+        sqlEndColumn,
         parenthesesDelta);
   }
 
@@ -331,6 +337,8 @@ public final class SqlScriptStatementSplitter {
   /**
    * A line without its line comment, and the state after it.
    *
+   * @param sqlEndColumn the column after the last character of SQL on the line, so a {@code ;} that
+   *     is missing there goes before a comment that follows it
    * @param parenthesesDelta how many more parentheses the line opens than it closes, outside of
    *     quotes and comments
    */
@@ -340,5 +348,6 @@ public final class SqlScriptStatementSplitter {
       boolean inPreservedBlockComment,
       boolean endsWithStatementDelimiter,
       boolean containsSql,
+      int sqlEndColumn,
       int parenthesesDelta) {}
 }

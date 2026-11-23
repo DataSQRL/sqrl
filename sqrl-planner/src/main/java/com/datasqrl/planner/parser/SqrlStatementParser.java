@@ -177,25 +177,25 @@ public class SqrlStatementParser {
         scriptStatements.add(
             new ParsedStatement(
                 new ParsedObject<>(parsedStmt, statement.getFileLocation()), statement.get()));
-        // The statement is still planned, so only a missing `;` is reported for it
-        var missingDelimiter = missingDelimiterByStatement.get(statement.getFileLocation());
-        if (missingDelimiter != null) {
-          var error =
-              scriptErrors
-                  .atFile(missingDelimiter)
-                  .getCatcher()
-                  .handle(
-                      new StatementParserException(
-                          ErrorLabel.GENERIC,
-                          FileLocation.START,
-                          "Missing ';' at the end of the statement"));
-          if (firstError == null) {
-            firstError = error;
-          }
-        }
       } catch (StatementParserException e) {
         var error = scriptErrors.atFile(statement.getFileLocation()).getCatcher().handle(e);
         scriptStatements.add(new UnparsedStatement(statement));
+        if (firstError == null) {
+          firstError = error;
+        }
+      }
+
+      var missingDelimiter = missingDelimiterByStatement.get(statement.getFileLocation());
+      if (missingDelimiter != null) {
+        var error =
+            scriptErrors
+                .atFile(missingDelimiter)
+                .getCatcher()
+                .handle(
+                    new StatementParserException(
+                        ErrorLabel.GENERIC,
+                        FileLocation.START,
+                        "Missing ';' at the end of the statement"));
         if (firstError == null) {
           firstError = error;
         }

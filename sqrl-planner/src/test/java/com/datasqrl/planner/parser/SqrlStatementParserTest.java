@@ -20,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorLocation.FileLocation;
+import com.datasqrl.error.ErrorMessage;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -142,6 +143,33 @@ class SqrlStatementParserTest {
               assertThat(error.getMessage()).isEqualTo("Missing ';' at the end of the statement");
               assertThat(error.getLocation().getFileLocation()).isEqualTo(new FileLocation(1, 14));
             });
+  }
+
+  @Test
+  void givenDefinitionMissingDelimiterThatFailsToParse_whenParseScript_thenReportsBothErrors() {
+    var script =
+        """
+        A :=
+        B := SELECT 2;
+        """;
+    var errors = ErrorCollector.root().withScript("test.sqrl", script);
+
+    var parsed = parser.parseScript(script, errors);
+
+    assertThat(parsed.statements()).hasSize(2).first().isInstanceOf(UnparsedStatement.class);
+    assertThat(parsed.firstError()).isPresent();
+    assertThat(errors)
+        .extracting(ErrorMessage::getMessage)
+        .containsExactly(
+            "Missing query or expression after ':=' in the definition of A",
+            "Missing ';' at the end of the statement");
+    assertThat(errors)
+        .filteredOn(error -> error.getMessage().startsWith("Missing ';'"))
+        .singleElement()
+        .satisfies(
+            error ->
+                assertThat(error.getLocation().getFileLocation())
+                    .isEqualTo(new FileLocation(1, 5)));
   }
 
   @Test
