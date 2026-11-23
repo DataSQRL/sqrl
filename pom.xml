@@ -146,7 +146,7 @@
     <jjwt.version>0.13.0</jjwt.version>
     <json-schema.version>2.0.8</json-schema.version>
     <junit.jupiter.version>6.1.3</junit.jupiter.version>
-    <kafka.version>3.9.1</kafka.version>
+    <kafka.version>4.2.2</kafka.version>
     <log4j.version>2.26.1</log4j.version>
     <lombok.version>1.18.48</lombok.version>
     <mcp-sdk.version>2.1.0</mcp-sdk.version>
@@ -160,7 +160,6 @@
     <postgres.version>42.7.14</postgres.version>
     <projectreactor.version>3.8.8</projectreactor.version>
     <protobuf.version>4.36.2</protobuf.version>
-    <scala.version>2.12</scala.version>
     <scram.version>2.1</scram.version>
     <slf4j.version>1.7.36</slf4j.version>
     <snowflake-jdbc.version>4.4.1</snowflake-jdbc.version>
@@ -504,45 +503,6 @@
         <groupId>org.apache.kafka</groupId>
         <artifactId>kafka-clients</artifactId>
         <version>${kafka.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.kafka</groupId>
-        <artifactId>kafka-clients</artifactId>
-        <version>${kafka.version}</version>
-        <classifier>test</classifier>
-        <scope>test</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.kafka</groupId>
-        <artifactId>kafka_${scala.version}</artifactId>
-        <version>${kafka.version}</version>
-        <scope>test</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.kafka</groupId>
-        <artifactId>kafka_${scala.version}</artifactId>
-        <version>${kafka.version}</version>
-        <classifier>test</classifier>
-        <scope>test</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.kafka</groupId>
-        <artifactId>kafka-streams</artifactId>
-        <version>${kafka.version}</version>
-        <scope>test</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.kafka</groupId>
-        <artifactId>kafka-streams</artifactId>
-        <version>${kafka.version}</version>
-        <classifier>test</classifier>
-        <scope>test</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.kafka</groupId>
-        <artifactId>kafka-streams-test-utils</artifactId>
-        <version>${kafka.version}</version>
-        <scope>test</scope>
       </dependency>
 
       <!-- formats -->

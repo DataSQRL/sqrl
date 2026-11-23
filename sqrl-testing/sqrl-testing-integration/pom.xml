@@ -105,6 +105,13 @@
     <dependency>
       <groupId>com.theokanning.openai-gpt3-java</groupId>
       <artifactId>service</artifactId>
+      <exclusions>
+        <!-- Use the Scala library of the Flink planner, not the older one of mbknor-jackson-jsonschema -->
+        <exclusion>
+          <groupId>org.scala-lang</groupId>
+          <artifactId>scala-library</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>org.awaitility</groupId>
