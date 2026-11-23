@@ -98,7 +98,7 @@ docker run -e ANTHROPIC_API_KEY -it --rm -e TERM -e COLORTERM -v "$PWD":/workspa
 
 Then tell the agent what you need in plain English:
 
-> Build a pipeline that ingests our order data from Kafka in real time and serves hourly revenue per product through an API.
+> Build a pipeline that ingests order confirmations that have an id, timestamp, customerid, and nested list of items with productid, quantity, and total amount through an API and serves hourly revenue per product as well as a total count per product.
 
 You get SQL scripts with tests that you can read, run, and verify.
 
