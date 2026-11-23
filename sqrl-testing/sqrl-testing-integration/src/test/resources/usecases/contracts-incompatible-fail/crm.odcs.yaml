@@ -4,8 +4,8 @@ id: urn:catalog:crm
 version: 1.0.0
 status: active
 schema:
-  # The column name is missing, and so is the tag pii of the table. The tag gdpr is listed on a
-  # property, which is as good as on the schema object
+  # The column name is missing, and so is the tag pii of the table: the property region lists it
+  # instead, see below. The tag gdpr is on the property of its column
   - name: Customers
     tags: [classification=confidential]
     properties:
@@ -46,7 +46,7 @@ schema:
         logicalType: timestamp
       - name: source_file
         logicalType: string
-      # a tag with another value than the table has
+      # a tag that the column does not declare, with another value than the table has
       - name: region
         logicalType: string
         required: true

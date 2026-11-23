@@ -13,15 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.planner.contract;
+package com.datasqrl.planner.contract.odcs;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorMessage;
+import com.datasqrl.planner.contract.ContractSubject;
 import com.datasqrl.planner.contract.ContractSubject.Column;
 import com.datasqrl.planner.contract.ContractSubject.ColumnKind;
+import com.datasqrl.planner.contract.DataContractFile;
+import com.datasqrl.planner.contract.DataContractLoader;
 import com.datasqrl.planner.hint.DocStringParser;
 import com.datasqrl.planner.tags.TagDefinition;
 import com.datasqrl.planner.tags.TagDefinitions;
@@ -465,9 +468,131 @@ class OdcsCompatibilityCheckerTest {
                     + " raw]",
                 15),
             tuple(
-                "Tag [classification=secret] of table [Customers] is missing from the contract", 7),
-            tuple("Tag [gdpr] of table [Customers] is missing from the contract", 7),
+                "Tag [gdpr] of column [email] of table [Customers] is missing from property"
+                    + " [email]",
+                15),
             tuple("The contract declares tag [pii=masked] but table [Customers] has [pii=raw]", 7));
+  }
+
+  @Test
+  void givenTagOnAnotherPropertyThanItsColumn_whenCheck_thenReportsBothProperties() {
+    var contract =
+        HEADER
+            + """
+                  tags: [pii=raw]
+                  properties:
+                    - name: id
+                      logicalType: integer
+                      required: true
+                      tags: [gdpr]
+                    - name: email
+                      logicalType: string
+                      classification: secret
+              """;
+
+    assertThat(check(contract, taggedCustomers(), DEFINITIONS)).isFalse();
+    assertThat(messages())
+        .extracting(ErrorMessage::getMessage, OdcsCompatibilityCheckerTest::line)
+        .containsExactlyInAnyOrder(
+            tuple(
+                "Property [id] declares tag [gdpr], but column [id] of table [Customers] does not"
+                    + " declare it. Declare it in the comment of the column, or list the tag of"
+                    + " the table on the schema object",
+                12),
+            tuple(
+                "Tag [gdpr] of column [email] of table [Customers] is missing from property"
+                    + " [email]",
+                13));
+  }
+
+  @Test
+  void givenTagOfAColumnOnlyOnTheSchemaObject_whenCheck_thenReportsItsProperty() {
+    var contract =
+        HEADER
+            + """
+                  tags: [pii=raw, gdpr, classification=secret]
+                  properties:
+                    - name: id
+                      logicalType: integer
+                      required: true
+                    - name: email
+                      logicalType: string
+              """;
+
+    assertThat(check(contract, taggedCustomers(), DEFINITIONS)).isFalse();
+    assertThat(messages())
+        .extracting(ErrorMessage::getMessage, OdcsCompatibilityCheckerTest::line)
+        .containsExactly(
+            tuple(
+                "Tag [gdpr] of column [email] of table [Customers] is missing from property"
+                    + " [email]",
+                12));
+  }
+
+  @Test
+  void givenTagOfTheDocStringOnAProperty_whenCheck_thenReportsItOnce() {
+    var contract =
+        HEADER
+            + """
+                  properties:
+                    - name: id
+                      logicalType: integer
+                      required: true
+                    - name: email
+                      logicalType: string
+                      classification: secret
+                      tags: [gdpr, pii=raw]
+              """;
+
+    assertThat(check(contract, taggedCustomers(), DEFINITIONS)).isFalse();
+    assertThat(messages())
+        .extracting(ErrorMessage::getMessage, OdcsCompatibilityCheckerTest::line)
+        .containsExactly(
+            tuple(
+                "Property [email] declares tag [pii=raw], but column [email] of table [Customers]"
+                    + " does not declare it. Declare it in the comment of the column, or list the"
+                    + " tag of the table on the schema object",
+                14));
+  }
+
+  @Test
+  void givenTagsOnNestedProperties_whenCheck_thenTheyCountForTheirColumn() {
+    var contact =
+        TYPES.createFieldTypeFromLogicalType(
+            new RowType(
+                true,
+                List.of(new RowField("email", new VarCharType(true, VarCharType.MAX_LENGTH)))));
+    var subject =
+        subject("Customers")
+            .columns(
+                List.of(
+                    new Column("id", BIGINT_NOT_NULL, ColumnKind.PHYSICAL),
+                    new Column("contact", contact, ColumnKind.PHYSICAL)))
+            .documentation(
+                DocStringParser.parse(
+                    "Customer records\n"
+                        + "# Columns:\n"
+                        + "- contact: How to reach the customer @gdpr @classification=secret"))
+            .tags(DEFINITIONS.parse("@gdpr @classification=secret", invalidTag -> {}))
+            .build();
+    var contract =
+        HEADER
+            + """
+                  properties:
+                    - name: id
+                      logicalType: integer
+                      required: true
+                    - name: contact
+                      logicalType: object
+                      properties:
+                        - name: email
+                          logicalType: string
+                          classification: secret
+                          tags: [gdpr]
+              """;
+
+    assertThat(check(contract, subject, DEFINITIONS)).isTrue();
+    assertThat(messages()).isEmpty();
   }
 
   @Test
@@ -579,36 +704,6 @@ class OdcsCompatibilityCheckerTest {
   }
 
   @Test
-  void givenOlderContractVersion_whenCheck_thenComparesWithTheTypesOfThatVersion() {
-    var subject =
-        subject("Customers")
-            .columns(
-                List.of(
-                    new Column("id", BIGINT_NOT_NULL, ColumnKind.PHYSICAL),
-                    new Column("created", TIMESTAMP_NOT_NULL, ColumnKind.PHYSICAL)))
-            .build();
-    var contract =
-        HEADER.replace("v3.2.0", "v3.0.2")
-            + """
-                  properties:
-                    - name: id
-                      logicalType: integer
-                      required: true
-                    - name: created
-                      logicalType: date
-                      required: true
-              """;
-
-    assertThat(check(contract, subject, DEFINITIONS)).isTrue();
-    assertThat(check(contract.replace("v3.0.2", "v3.1.0"), subject, DEFINITIONS)).isFalse();
-    assertThat(messages())
-        .extracting(ErrorMessage::getMessage)
-        .containsExactly(
-            "Column [created] has logicalType [date] in the contract, but the table has"
-                + " [timestamp]");
-  }
-
-  @Test
   void givenPhysicalWatermarkColumnInContract_whenCheck_thenItIsComparedLikeAnyColumn() {
     var subject =
         subject("Customers")
@@ -639,7 +734,7 @@ class OdcsCompatibilityCheckerTest {
   }
 
   @Test
-  void givenMap_whenCheck_thenTheLogicalTypeDependsOnTheContractVersion() {
+  void givenMap_whenCheck_thenComparesItsKeyAndValue() {
     var subject =
         subject("Customers")
             .columns(
@@ -672,7 +767,6 @@ class OdcsCompatibilityCheckerTest {
                           logicalType: integer
               """;
 
-    assertThat(check(asObject.replace("v3.2.0", "v3.1.0"), subject, DEFINITIONS)).isTrue();
     assertThat(check(asObject, subject, DEFINITIONS)).isFalse();
     assertThat(check(asMap, subject, DEFINITIONS)).isFalse();
     assertThat(messages())
@@ -743,39 +837,28 @@ class OdcsCompatibilityCheckerTest {
    * @return whether the contract matches the table
    */
   private boolean check(String contract, ContractSubject subject, TagDefinitions definitions) {
-    var attached = attach(contract, subject.name());
-    var generated = new OdcsGenerator(definitions).generate(subject, attached.file().getVersion());
-    var differences =
-        new OdcsCompatibilityChecker(definitions)
-            .compare(
-                OdcsYaml.toSchemaObject(attached.schemaObject()),
-                attached.pointer(),
-                generated,
-                subject);
+    var file = load(contract);
+    var entry = file.getEntry(subject.name()).orElseThrow();
+    var differences = file.getFormat().compare(entry, subject, definitions);
 
     var collector = errors.abortOnFatal(false);
     differences.forEach(
         difference ->
-            attached
-                .file()
-                .errorsAt(collector, difference.pointer())
-                .fatal("%s", difference.message()));
+            file.errorsAt(collector, difference.location()).fatal("%s", difference.message()));
     return differences.isEmpty();
   }
 
   private int contracts;
 
   @SneakyThrows
-  private TableContract.AttachedContract attach(String contract, String tableName) {
+  private DataContractFile load(String contract) {
     var name = "crm" + contracts++;
     Files.writeString(folder.resolve(name + ".odcs.yaml"), contract);
     var script = folder.resolve(name + ".sqrl");
     Files.writeString(script, "");
 
     return new DataContractLoader(errors)
-        .forFile(script.toAbsolutePath().normalize())
-        .forTable(tableName)
-        .attached()
+        .forScript(script)
         .orElseThrow(() -> new AssertionError("Invalid contract: " + messages()));
   }
 

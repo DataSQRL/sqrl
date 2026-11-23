@@ -23,6 +23,7 @@ import com.datasqrl.plan.MainScriptImpl;
 import com.datasqrl.planner.SqlScriptPlanner;
 import com.datasqrl.planner.contract.DataContractLoader;
 import com.datasqrl.planner.contract.DataContractStage;
+import com.datasqrl.planner.contract.TableContracts;
 import com.datasqrl.planner.dag.DAGPlanner;
 import com.datasqrl.planner.parser.SqrlStatementParser;
 import com.datasqrl.server.GraphqlSchemaFactory;
@@ -52,6 +53,7 @@ import org.springframework.context.annotation.Import;
   SqlScriptPlanner.class,
   DataContractLoader.class,
   DataContractStage.class,
+  TableContracts.class,
   GraphQLSchemaConverter.class,
   GraphqlSchemaFactory.class,
   GraphqlSchemaHandler.class,

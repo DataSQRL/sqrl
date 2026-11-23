@@ -16,7 +16,8 @@
 package com.datasqrl.planner.contract;
 
 import com.datasqrl.error.ErrorCollector;
-import com.fasterxml.jackson.databind.JsonNode;
+import com.datasqrl.error.ErrorLocation.FileLocation;
+import com.datasqrl.planner.contract.DataContractFormat.Entry;
 import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -24,88 +25,97 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 
 /**
  * A data contract file that sits next to a script, and the tables of the compilation that its
- * schema objects were applied to.
+ * entries were applied to.
  */
-@RequiredArgsConstructor
 public final class DataContractFile {
 
-  /**
-   * @param name the name of the schema object as the file writes it
-   * @param pointer the JSON pointer of the schema object in the file
-   */
-  public record SchemaObject(String name, String pointer, JsonNode node) {}
-
-  /** A table that a schema object was applied to. */
+  /** A table that an entry was applied to. */
   public record AppliedTable(Path definingFile, String tableName) {}
 
   @Getter private final Path path;
   private final String content;
-  private final JsonNode root;
-  @Getter private final OdcsVersion version;
-  private final YamlLocations locations;
+  @Getter private final DataContractFormat format;
 
-  /** The schema objects by their name in lower case, in the order of the file */
-  private final Map<String, SchemaObject> schemaObjects;
+  /** Where the entries of the file start, for errors about the entries as a whole */
+  private final FileLocation entriesLocation;
 
-  /** The table that each schema object was applied to, by the name of the object in lower case */
+  private final boolean declaresTags;
+
+  /** The entries by their name in lower case, in the order of the file */
+  private final Map<String, Entry> entries = new LinkedHashMap<>();
+
+  /** The table that each entry was applied to, by the name of the entry in lower case */
   private final Map<String, AppliedTable> appliedTables = new LinkedHashMap<>();
 
-  public Optional<SchemaObject> getSchemaObject(String tableName) {
-    return Optional.ofNullable(schemaObjects.get(key(tableName)));
+  /**
+   * @param entries the entries of the file, whose names differ in more than their case
+   * @param declaresTags whether an entry declares tags or a classification
+   */
+  public DataContractFile(
+      Path path,
+      String content,
+      DataContractFormat format,
+      FileLocation entriesLocation,
+      List<? extends Entry> entries,
+      boolean declaresTags) {
+    this.path = path;
+    this.content = content;
+    this.format = format;
+    this.entriesLocation = entriesLocation;
+    this.declaresTags = declaresTags;
+    entries.forEach(entry -> this.entries.put(key(entry.name()), entry));
+  }
+
+  /** The entry of the table with the given name, ignoring case. */
+  public Optional<Entry> getEntry(String tableName) {
+    return Optional.ofNullable(entries.get(key(tableName)));
   }
 
   /**
-   * Records that the schema object describes the table, unless it already describes another one.
+   * Records that the entry describes the table, unless it already describes another one.
    *
-   * @return the table that the schema object describes
+   * @return the table that the entry describes
    */
-  AppliedTable markApplied(SchemaObject schemaObject, AppliedTable table) {
-    var applied = appliedTables.putIfAbsent(key(schemaObject.name()), table);
+  AppliedTable markApplied(Entry entry, AppliedTable table) {
+    var applied = appliedTables.putIfAbsent(key(entry.name()), table);
     return applied == null ? table : applied;
   }
 
   /**
-   * The names of the tables that schema objects of this file were applied to, in the order the
-   * tables were planned.
+   * The names of the tables that entries of this file were applied to, in the order the tables were
+   * planned.
    */
   public List<String> getAppliedTableNames() {
     return appliedTables.values().stream().map(AppliedTable::tableName).toList();
   }
 
-  /** The names of the schema objects that were not applied to a table, in file order. */
-  public List<String> getUnappliedObjectNames() {
-    return schemaObjects.entrySet().stream()
+  /** The names of the entries that were not applied to a table, in file order. */
+  public List<String> getUnappliedEntryNames() {
+    return entries.entrySet().stream()
         .filter(entry -> !appliedTables.containsKey(entry.getKey()))
         .map(entry -> entry.getValue().name())
         .toList();
   }
 
-  /** Whether a schema object declares tags or a classification, on itself or on a property. */
+  /** Whether an entry declares tags or a classification, for the table or for a column. */
   public boolean declaresTags() {
-    for (var schemaObject : root.path(OdcsConstants.SCHEMA_FIELD)) {
-      if (!schemaObject.path(OdcsConstants.TAGS_FIELD).isEmpty()) {
-        return true;
-      }
-      for (var property : schemaObject.path(OdcsConstants.PROPERTIES_FIELD)) {
-        if (!property.path(OdcsConstants.TAGS_FIELD).isEmpty()
-            || property.hasNonNull(OdcsConstants.CLASSIFICATION_FIELD)) {
-          return true;
-        }
-      }
-    }
-    return false;
+    return declaresTags;
   }
 
-  /** The error collector that reports at the value with the given JSON pointer in this file. */
-  public ErrorCollector errorsAt(ErrorCollector errors, String pointer) {
-    return errors.withScript(path, content).atFile(locations.locate(pointer));
+  /** The error collector that reports at the given location of this file. */
+  public ErrorCollector errorsAt(ErrorCollector errors, FileLocation location) {
+    return errors.withScript(path, content).atFile(location);
   }
 
-  static String key(String name) {
+  /** The error collector that reports about the entries of this file as a whole. */
+  public ErrorCollector errorsAtEntries(ErrorCollector errors) {
+    return errorsAt(errors, entriesLocation);
+  }
+
+  private static String key(String name) {
     return name.toLowerCase(Locale.ROOT);
   }
 }

@@ -20,13 +20,15 @@ import com.datasqrl.config.WorkspacePaths;
 import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.packager.FilePreprocessingPipeline;
+import com.datasqrl.planner.contract.DataContractFormat;
 import com.datasqrl.planner.contract.DataContractLoader;
-import com.datasqrl.planner.contract.OdcsConstants;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -49,13 +51,20 @@ public class DataContractPreprocessor implements Preprocessor {
   private final WorkspacePaths workspacePaths;
   private final ErrorCollector errors;
 
+  private final List<DataContractFormat> formats = DataContractFormat.all();
+
   // State of the current pipeline run, reset by complete()
-  private final List<Path> contractFiles = new ArrayList<>();
+
+  /** The contract files, each with its name without the extension of its format */
+  private final Map<Path, String> contractFiles = new LinkedHashMap<>();
 
   /** The names, without extension and in lower case, of the files that define tables, by folder */
   private final Map<Path, Set<String>> scriptNames = new HashMap<>();
 
-  private boolean hasReported;
+  /** What the current run reports about a file */
+  private record Report(Path file, String message) {}
+
+  private final List<Report> reports = new ArrayList<>();
 
   @Override
   public void process(Path file, FilePreprocessingPipeline.Context ctx) {
@@ -67,39 +76,58 @@ public class DataContractPreprocessor implements Preprocessor {
                     .computeIfAbsent(file.getParent(), folder -> new HashSet<>())
                     .add(name.toLowerCase(Locale.ROOT)));
 
-    if (fileName.endsWith(OdcsConstants.FILE_SUFFIX)) {
-      if (!isCompilerOutput(file)) {
-        ctx.copyToBuild(file);
-        contractFiles.add(file);
+    for (var format : formats) {
+      var suffix = "." + format.getFileExtension();
+      if (fileName.endsWith(suffix)) {
+        if (!isCompilerOutput(file)) {
+          ctx.copyToBuild(file);
+          contractFiles.put(file, Strings.CS.removeEnd(fileName, suffix));
+        }
+        return;
       }
-      return;
     }
-    OdcsConstants.UNSUPPORTED_FILE_EXTENSIONS.stream()
-        .map(extension -> "." + extension)
-        .filter(suffix -> fileName.toLowerCase(Locale.ROOT).endsWith(suffix))
-        .findFirst()
-        .ifPresent(
-            suffix ->
-                report(
-                    "File [%s] looks like a data contract but is not read. Rename it to [%s]",
-                    shownPath(file),
-                    fileName.substring(0, fileName.length() - suffix.length())
-                        + OdcsConstants.FILE_SUFFIX));
+    for (var format : formats) {
+      format.getUnsupportedExtensions().stream()
+          .map(extension -> "." + extension)
+          .filter(suffix -> fileName.toLowerCase(Locale.ROOT).endsWith(suffix))
+          .findFirst()
+          .ifPresent(
+              suffix ->
+                  report(
+                      file,
+                      "File [%s] looks like a data contract but is not read. Rename it to [%s]",
+                      shownPath(file),
+                      format.fileName(fileName.substring(0, fileName.length() - suffix.length()))));
+    }
   }
 
-  /** All contract files that would not be read are reported, then the compilation fails. */
+  /**
+   * All contract files that would not be read are reported, then the compilation fails. They are
+   * reported in the order of their paths, since the order in which the files of a folder are
+   * visited depends on the file system.
+   */
   @Override
   public void complete() {
     try {
-      contractFiles.stream().filter(file -> !hasScript(file)).forEach(this::reportNoScript);
-      if (hasReported) {
+      contractFiles.forEach(
+          (file, name) -> {
+            if (!hasScript(file, name)) {
+              reportNoScript(file, name);
+            }
+          });
+      if (!reports.isEmpty()) {
+        var collector = errors.abortOnFatal(false);
+        reports.stream()
+            .sorted(Comparator.comparing(report -> shownPath(report.file()).toString()))
+            .forEach(
+                report -> collector.fatal(ErrorCode.INVALID_DATA_CONTRACT, "%s", report.message()));
         errors.abortOnErrors();
       }
     } finally {
       // The same instance serves every pipeline run: included projects first, then the project
       contractFiles.clear();
       scriptNames.clear();
-      hasReported = false;
+      reports.clear();
     }
   }
 
@@ -115,26 +143,24 @@ public class DataContractPreprocessor implements Preprocessor {
   }
 
   /** Whether a file that defines tables with the name of the contract file is in its folder. */
-  private boolean hasScript(Path contractFile) {
-    var name =
-        Strings.CS.removeEnd(contractFile.getFileName().toString(), OdcsConstants.FILE_SUFFIX);
+  private boolean hasScript(Path contractFile, String name) {
     return scriptNames
         .getOrDefault(contractFile.getParent(), Set.of())
         .contains(name.toLowerCase(Locale.ROOT));
   }
 
-  private void reportNoScript(Path contractFile) {
-    var name =
-        Strings.CS.removeEnd(contractFile.getFileName().toString(), OdcsConstants.FILE_SUFFIX);
+  private void reportNoScript(Path contractFile, String name) {
     report(
+        contractFile,
         "Contract file [%s] has no SQRL file next to it. A contract applies to the tables of the"
             + " script with the same name: expected %s.sqrl or %s.table.sql in the same folder",
-        shownPath(contractFile), name, name);
+        shownPath(contractFile),
+        name,
+        name);
   }
 
-  private void report(String message, Object... args) {
-    hasReported = true;
-    errors.abortOnFatal(false).fatal(ErrorCode.INVALID_DATA_CONTRACT, message, args);
+  private void report(Path file, String message, Object... args) {
+    reports.add(new Report(file, message.formatted(args)));
   }
 
   /** The path from the project root, or the path as it is for a file of an included project. */

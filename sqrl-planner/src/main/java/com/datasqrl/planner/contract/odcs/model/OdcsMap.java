@@ -13,17 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.compile;
+package com.datasqrl.planner.contract.odcs.model;
 
-import com.datasqrl.engine.PhysicalPlan;
-import com.datasqrl.planner.contract.DataContracts;
-import javax.annotation.Nullable;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-/**
- * What a compilation produces for the deployment folder.
- *
- * @param testPlan the plan of the tests, only for the test goal
- * @param dataContracts the data contracts of the tables of the pipeline
- */
-public record CompilationResult(
-    PhysicalPlan physicalPlan, @Nullable TestPlan testPlan, DataContracts dataContracts) {}
+/** The key and value of a property with the logical type {@code map}. */
+@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonPropertyOrder({"key", "value"})
+public record OdcsMap(OdcsProperty key, OdcsProperty value) {}

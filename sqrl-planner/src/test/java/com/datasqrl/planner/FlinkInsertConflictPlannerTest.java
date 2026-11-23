@@ -26,11 +26,8 @@ import com.datasqrl.engine.stream.flink.sql.RelToFlinkSql;
 import com.datasqrl.io.tables.TableType;
 import com.datasqrl.plan.util.PrimaryKeyMap;
 import com.datasqrl.planner.analyzer.TableAnalysis;
-import com.datasqrl.planner.contract.TableContract;
 import com.datasqrl.planner.tables.FlinkConnectorConfigWrapper;
 import com.datasqrl.planner.tables.SourceSinkTableAnalysis;
-import com.datasqrl.planner.tables.TableDefinition;
-import com.datasqrl.planner.util.Documented;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.ArrayList;
@@ -273,9 +270,7 @@ class FlinkInsertConflictPlannerTest {
                     new SourceSinkTableAnalysis(
                         new FlinkConnectorConfigWrapper(Map.of(), Optional.empty()),
                         sourceSchema,
-                        null,
-                        new TableDefinition(
-                            "src", TableContract.none("src"), List.of(), Documented.EMPTY, false))))
+                        null)))
             .build();
 
     return TableAnalysis.builder()

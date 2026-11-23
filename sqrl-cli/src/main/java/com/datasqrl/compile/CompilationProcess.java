@@ -23,6 +23,7 @@ import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.WorkspacePaths;
 import com.datasqrl.deployment.model.JdbcStatementModel.Type;
 import com.datasqrl.engine.EnginePhysicalPlan.DeploymentArtifact;
+import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.engine.database.AnalyticDatabaseEngine;
 import com.datasqrl.engine.database.relational.JdbcPhysicalPlan;
 import com.datasqrl.engine.server.ServerPhysicalPlan;
@@ -46,6 +47,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
@@ -66,7 +68,7 @@ public class CompilationProcess {
   private final DataContractStage dataContractStage;
   private final ErrorCollector errors;
 
-  public CompilationResult executeCompilation(Optional<Path> testsPath) {
+  public Pair<PhysicalPlan, TestPlan> executeCompilation(Optional<Path> testsPath) {
     try (var environment =
         new Sqrl2FlinkSQLTranslator(
             workspacePaths,
@@ -78,7 +80,7 @@ public class CompilationProcess {
     }
   }
 
-  private CompilationResult executeCompilationInternal(
+  private Pair<PhysicalPlan, TestPlan> executeCompilationInternal(
       Optional<Path> testsPath, Sqrl2FlinkSQLTranslator environment) {
 
     planner.planMain(mainScript, Optional.empty(), environment);
@@ -91,8 +93,11 @@ public class CompilationProcess {
     var dagBuilder = planner.getDagBuilder();
     var dag = dagPlanner.optimize(dagBuilder.getDag());
     var physicalPlan = dagPlanner.assemble(dag, environment);
-    // The physical plan has the public tables as the engines store them
-    var contracts = dataContractStage.generate(dag, physicalPlan, environment, contractFiles);
+    // The contracts are generated from the plan, which has the public tables as the engines
+    // store them
+    physicalPlan =
+        physicalPlan.withDataContracts(
+            dataContractStage.generate(dag, physicalPlan, environment, contractFiles));
     var mutationDatabase = physicalPlan.getMutationDatabase(environment);
 
     TestPlan testPlan = null;
@@ -166,8 +171,7 @@ public class CompilationProcess {
                     MutationDatabase.isBackwardsCompatible(
                         mutationDatabase, compareDb, environment, errors),
                     "The mutation tables defined by the script are not backwards compatible with the provided database. See warnings above for incompatibilities."));
-
-    return new CompilationResult(physicalPlan, testPlan, contracts);
+    return Pair.of(physicalPlan, testPlan);
   }
 
   /**

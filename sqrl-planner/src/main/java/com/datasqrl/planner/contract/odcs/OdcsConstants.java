@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.planner.contract;
+package com.datasqrl.planner.contract.odcs;
 
 import java.util.List;
 import lombok.AccessLevel;
@@ -38,12 +38,6 @@ public final class OdcsConstants {
 
   /** The tag whose value sets the classification of a property */
   public static final String CLASSIFICATION_TAG = "classification";
-
-  /** The name of the document with the source tables */
-  public static final String SOURCES_NAME = "sources";
-
-  /** The name of the document with the sink tables */
-  public static final String SINKS_NAME = "sinks";
 
   /**
    * The JSON schema of ODCS v3.2.0, which validates all v3 contracts. Copied from {@code

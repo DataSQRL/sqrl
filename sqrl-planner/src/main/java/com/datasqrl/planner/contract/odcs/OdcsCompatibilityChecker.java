@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.planner.contract;
+package com.datasqrl.planner.contract.odcs;
 
+import com.datasqrl.planner.contract.ContractSubject;
 import com.datasqrl.planner.contract.ContractSubject.ColumnKind;
-import com.datasqrl.planner.contract.model.OdcsMap;
-import com.datasqrl.planner.contract.model.OdcsProperty;
-import com.datasqrl.planner.contract.model.OdcsSchemaObject;
+import com.datasqrl.planner.contract.odcs.model.OdcsMap;
+import com.datasqrl.planner.contract.odcs.model.OdcsProperty;
+import com.datasqrl.planner.contract.odcs.model.OdcsSchemaObject;
 import com.datasqrl.planner.tags.TableTags;
 import com.datasqrl.planner.tags.TagDefinition;
 import com.datasqrl.planner.tags.TagDefinitions;
@@ -26,10 +27,13 @@ import com.datasqrl.planner.tags.TagValue;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -51,12 +55,10 @@ import org.apache.commons.lang3.StringUtils;
  *   <li>{@code logicalType} and {@code required} must be equal, also in nested properties, array
  *       items, and map keys and values.
  *   <li>A primary key or partition key that the contract declares must be the key of the table.
- *   <li>The tags that are defined in {@code compiler.tags} must be the tags of the table. Tags
- *       count toward the whole table, so it does not matter whether the contract lists a tag on the
- *       schema object or on a property. The {@code classification} of a property is the tag of that
- *       name.
- *   <li>A {@code classification} that the contract gives for a property must be the one of the
- *       column.
+ *   <li>The tags that are defined in {@code compiler.tags} are compared for each column and for the
+ *       table. A property must list the tags of its column, where its {@code classification} is the
+ *       tag of that name and may be left out. And the tags of the schema object, together with the
+ *       tags of its properties, must be the tags of the table.
  * </ul>
  *
  * Everything else is ignored, e.g. {@code physicalType}, descriptions and {@code
@@ -75,8 +77,7 @@ public class OdcsCompatibilityChecker {
   /**
    * @param provided the schema object of a contract file
    * @param pointer the JSON pointer of the schema object in its file
-   * @param generated the schema object generated for the table, for the ODCS version of the
-   *     contract file
+   * @param generated the schema object generated for the table
    * @param subject the table
    * @return every difference between the provided schema object and the table
    */
@@ -100,7 +101,7 @@ public class OdcsCompatibilityChecker {
         "partitioned",
         subject.partitionKeys());
     if (tagDefinitions.isEnabled()) {
-      comparison.tags(provided.tags(), pointer);
+      comparison.tags.table(provided.tags(), pointer);
     }
     return comparison.differences;
   }
@@ -131,8 +132,7 @@ public class OdcsCompatibilityChecker {
 
     private final List<Difference> differences = new ArrayList<>();
 
-    /** The properties with a classification that does not differ from the one of their column */
-    private final List<Located> classified = new ArrayList<>();
+    private final TagComparison tags = new TagComparison();
 
     Comparison(ContractSubject subject, List<Located> properties) {
       this.subject = subject;
@@ -144,7 +144,9 @@ public class OdcsCompatibilityChecker {
       matching.forEachMatch(
           (column, property) -> {
             element(property.property(), property.pointer(), column, column.name(), true);
-            classification(property, column);
+            if (tagDefinitions.isEnabled()) {
+              tags.column(property, column);
+            }
           });
 
       for (var column : matching.missing) {
@@ -187,6 +189,8 @@ public class OdcsCompatibilityChecker {
             property.name(),
             column.get().kind() == ColumnKind.COMPUTED ? "computed" : "metadata",
             subject.name());
+      } else if (tagDefinitions.isEnabled()) {
+        tags.withoutColumn(property);
       }
     }
 
@@ -330,8 +334,8 @@ public class OdcsCompatibilityChecker {
         keyProperties.sort(Comparator.comparing(property -> position.apply(property.property())));
       }
       var contractKey = keyProperties.stream().map(Located::name).toList();
-      var contractColumns = contractKey.stream().map(DataContractFile::key).toList();
-      var tableColumns = tableKey.stream().map(DataContractFile::key).toList();
+      var contractColumns = contractKey.stream().map(OdcsCompatibilityChecker::key).toList();
+      var tableColumns = tableKey.stream().map(OdcsCompatibilityChecker::key).toList();
 
       var matches =
           hasPositions
@@ -351,76 +355,156 @@ public class OdcsCompatibilityChecker {
       }
     }
 
-    /** A classification that the contract gives for a property must be the one of the column. */
-    private void classification(Located property, OdcsProperty column) {
-      var classification = property.property().classification();
-      if (classification == null
-          || tagDefinitions.get(OdcsConstants.CLASSIFICATION_TAG).isEmpty()) {
-        return;
-      }
-      // A column without a classification is in a table without one, which the tags report
-      if (column.classification() == null
-          || classification.equalsIgnoreCase(column.classification())) {
-        classified.add(property);
-      } else {
-        report(
-            property.pointer() + "/" + OdcsConstants.CLASSIFICATION_FIELD,
-            "classification is [%s] in the contract, but column [%s] of table [%s] has [%s]",
-            classification,
-            column.name(),
-            subject.name(),
-            column.classification());
-      }
-    }
-
     /**
      * Compares the tags of the contract that are defined in {@code compiler.tags} with the tags of
-     * the table. Other tags of the contract are labels of the catalog.
+     * the table: for each column, and for the table as a whole. Other tags of the contract are
+     * labels of the catalog.
      */
-    void tags(List<String> schemaObjectTags, String pointer) {
-      var tagsPointer = pointer + "/" + OdcsConstants.TAGS_FIELD;
-      var declared = new DeclaredTags();
-      declared.addAll(schemaObjectTags, tagsPointer);
-      properties.forEach(
-          property ->
-              declared.addAll(
-                  property.property().tags(), property.pointer() + "/" + OdcsConstants.TAGS_FIELD));
-      classified.forEach(
-          property ->
-              declared.add(
-                  OdcsConstants.CLASSIFICATION_TAG + "=" + property.property().classification(),
-                  property.pointer() + "/" + OdcsConstants.CLASSIFICATION_FIELD));
+    private class TagComparison {
 
-      var contractTags = declared.toTags();
-      for (var tag : subject.tags().values()) {
-        var found = contractTags.get(tag.name());
-        if (found.isEmpty()) {
-          report(
-              tagsPointer,
-              "Tag [%s] of table [%s] is missing from the contract",
-              tag.toContractTag(),
-              subject.name());
-        } else if (!found.get().equals(tag)) {
-          report(
-              declared.pointerOf(found.get()),
-              "The contract declares tag [%s] but table [%s] has [%s]",
-              found.get().toContractTag(),
-              subject.name(),
-              tag.toContractTag());
+      /**
+       * The tags of the columns that the contract has a property for: a tag that the property
+       * lists, or one that is reported as missing from it
+       */
+      private final Set<TagValue> ofColumns = new HashSet<>();
+
+      /**
+       * The tags that the contract declares for the table as a whole: on the schema object, and on
+       * a property whose column has no tags to compare them with
+       */
+      private final DeclaredTags ofTable = new DeclaredTags();
+
+      /**
+       * A property must list the tags of its column. Its classification is the tag of that name,
+       * and it may be left out.
+       *
+       * @param column the property generated for the column, with the tags that the column declares
+       *     and the classification of the column
+       */
+      void column(Located property, OdcsProperty column) {
+        var declared = new DeclaredTags();
+        declared.addProperty(property.property(), property.pointer());
+        var contractTags = declared.toTags();
+        var columnTags = new DeclaredTags();
+        columnTags.addProperty(column, "");
+        var tagsOfColumn = columnTags.toTags();
+
+        for (var tag : contractTags.values()) {
+          var ofColumn = tagsOfColumn.get(tag.name());
+          if (ofColumn.filter(tag::equals).isPresent()) {
+            ofColumns.add(tag);
+          } else if (subject.tags().get(tag.name()).isEmpty()) {
+            // The table does not have the tag at all, which is reported once for the table
+            ofTable.add(tag, declared.pointerOf(tag));
+          } else {
+            // The difference is reported here, and not again for the table
+            subject.tags().get(tag.name()).ifPresent(ofColumns::add);
+            ofColumn.ifPresent(ofColumns::add);
+            reportOtherTag(tag, ofColumn, declared.pointerOf(tag), property, column);
+          }
+        }
+        for (var tag : tagsOfColumn.values()) {
+          if (contractTags.get(tag.name()).isEmpty() && !isClassification(tag)) {
+            ofColumns.add(tag);
+            report(
+                property.pointer() + "/" + OdcsConstants.TAGS_FIELD,
+                "Tag [%s] of column [%s] of table [%s] is missing from property [%s]",
+                OdcsTags.write(tag),
+                column.name(),
+                subject.name(),
+                property.name());
+          }
         }
       }
-      for (var tag : contractTags.values()) {
-        if (subject.tags().get(tag.name()).isEmpty()) {
-          report(
-              declared.pointerOf(tag),
-              "The contract declares tag [%s] that table [%s] does not have",
-              tag.toContractTag(),
-              subject.name());
+
+      /** A property that the table has no physical column for declares its tags for the table. */
+      void withoutColumn(Located property) {
+        ofTable.addProperty(property.property(), property.pointer());
+      }
+
+      /**
+       * The tags of the schema object, together with the tags of its properties, must be the tags
+       * of the table.
+       */
+      void table(List<String> schemaObjectTags, String pointer) {
+        var tagsPointer = pointer + "/" + OdcsConstants.TAGS_FIELD;
+        ofTable.addAll(schemaObjectTags, tagsPointer);
+        var declared = ofTable.toTags();
+
+        for (var tag : declared.values()) {
+          var tableTag = subject.tags().get(tag.name());
+          if (tableTag.isEmpty()) {
+            report(
+                ofTable.pointerOf(tag),
+                "The contract declares tag [%s] that table [%s] does not have",
+                OdcsTags.write(tag),
+                subject.name());
+          } else if (!tableTag.get().equals(tag)) {
+            report(
+                ofTable.pointerOf(tag),
+                "The contract declares tag [%s] but table [%s] has [%s]",
+                OdcsTags.write(tag),
+                subject.name(),
+                OdcsTags.write(tableTag.get()));
+          }
         }
+        for (var tag : subject.tags().values()) {
+          if (declared.get(tag.name()).isEmpty() && !ofColumns.contains(tag)) {
+            report(
+                tagsPointer,
+                "Tag [%s] of table [%s] is missing from the contract",
+                OdcsTags.write(tag),
+                subject.name());
+          }
+        }
+      }
+
+      private void reportOtherTag(
+          TagValue tag,
+          Optional<TagValue> ofColumn,
+          String pointer,
+          Located property,
+          OdcsProperty column) {
+        if (isClassification(tag)) {
+          report(
+              pointer,
+              "classification is [%s] in the contract, but column [%s] of table [%s] has [%s]",
+              tag.value(),
+              column.name(),
+              subject.name(),
+              ofColumn.map(TagValue::value).orElse(null));
+        } else if (ofColumn.isPresent()) {
+          report(
+              pointer,
+              "Property [%s] declares tag [%s], but column [%s] of table [%s] has [%s]",
+              property.name(),
+              OdcsTags.write(tag),
+              column.name(),
+              subject.name(),
+              OdcsTags.write(ofColumn.get()));
+        } else {
+          var tableTag = subject.tags().get(tag.name()).filter(ofTable -> !ofTable.equals(tag));
+          report(
+              pointer,
+              "Property [%s] declares tag [%s], but column [%s] of table [%s] does not declare"
+                  + " it%s. Declare it in the comment of the column, or list the tag of the table"
+                  + " on the schema object",
+              property.name(),
+              OdcsTags.write(tag),
+              column.name(),
+              subject.name(),
+              tableTag
+                  .map(ofTable -> " and the table has [%s]".formatted(OdcsTags.write(ofTable)))
+                  .orElse(""));
+        }
+      }
+
+      private static boolean isClassification(TagValue tag) {
+        return tag.name().equalsIgnoreCase(OdcsConstants.CLASSIFICATION_TAG);
       }
     }
 
-    /** The tags of the contract that are defined in {@code compiler.tags}. */
+    /** Tags of a contract that are defined in {@code compiler.tags}, with where they are listed. */
     private class DeclaredTags {
 
       /** The pointer of the first declaration of each tag value */
@@ -430,22 +514,51 @@ public class OdcsCompatibilityChecker {
         IntStream.range(0, tags.size()).forEach(i -> add(tags.get(i), pointer + "/" + i));
       }
 
+      /** Adds the tags of a property, of the properties nested in it, and its classification. */
+      void addProperty(OdcsProperty property, String pointer) {
+        addAll(property.tags(), pointer + "/" + OdcsConstants.TAGS_FIELD);
+        if (property.classification() != null) {
+          add(
+              new OdcsTags.ContractTag(OdcsConstants.CLASSIFICATION_TAG, property.classification()),
+              pointer + "/" + OdcsConstants.CLASSIFICATION_FIELD);
+        }
+        var nested = property.properties();
+        IntStream.range(0, nested.size())
+            .forEach(
+                i ->
+                    addProperty(
+                        nested.get(i), pointer + "/" + OdcsConstants.PROPERTIES_FIELD + "/" + i));
+        if (property.items() != null) {
+          addProperty(property.items(), pointer + "/items");
+        }
+        if (property.map() != null) {
+          addProperty(property.map().key(), pointer + "/map/key");
+          addProperty(property.map().value(), pointer + "/map/value");
+        }
+      }
+
       /**
        * @param tag a tag as a contract writes it: {@code name} or {@code name=value}
        */
       void add(String tag, String pointer) {
-        var name = StringUtils.substringBefore(tag, "=").trim();
-        var value = tag.contains("=") ? StringUtils.substringAfter(tag, "=").trim() : null;
-        var definition = tagDefinitions.get(name);
+        add(OdcsTags.parse(tag), pointer);
+      }
+
+      void add(OdcsTags.ContractTag tag, String pointer) {
+        var definition = tagDefinitions.get(tag.name());
         if (definition.isEmpty()) {
           return; // a label of the catalog
         }
         definition
             .get()
-            .valueOf(value)
+            .valueOf(tag.value())
             .ifPresentOrElse(
-                tagValue -> pointers.putIfAbsent(tagValue, pointer),
-                () -> reportInvalidValue(tag.trim(), definition.get(), pointer));
+                tagValue -> add(tagValue, pointer),
+                () -> reportInvalidValue(tag.toString(), definition.get(), pointer));
+      }
+
+      void add(TagValue tag, String pointer) {
+        pointers.putIfAbsent(tag, pointer);
       }
 
       private void reportInvalidValue(String tag, TagDefinition definition, String pointer) {
@@ -537,5 +650,10 @@ public class OdcsCompatibilityChecker {
 
   private static String names(List<OdcsProperty> properties) {
     return properties.stream().map(OdcsProperty::name).collect(Collectors.joining(", "));
+  }
+
+  /** Column names are compared ignoring case. */
+  private static String key(String name) {
+    return name.toLowerCase(Locale.ROOT);
   }
 }

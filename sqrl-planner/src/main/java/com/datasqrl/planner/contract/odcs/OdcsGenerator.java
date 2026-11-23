@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.planner.contract;
+package com.datasqrl.planner.contract.odcs;
 
 import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.planner.contract.ContractSubject;
 import com.datasqrl.planner.contract.ContractSubject.Column;
-import com.datasqrl.planner.contract.model.OdcsProperty;
-import com.datasqrl.planner.contract.model.OdcsSchemaObject;
+import com.datasqrl.planner.contract.odcs.model.OdcsProperty;
+import com.datasqrl.planner.contract.odcs.model.OdcsSchemaObject;
 import com.datasqrl.planner.tables.StorageType;
-import com.datasqrl.planner.tags.TableTags;
 import com.datasqrl.planner.tags.TagDefinitions;
 import com.datasqrl.planner.tags.TagValue;
 import java.util.List;
@@ -37,11 +37,8 @@ public class OdcsGenerator {
 
   private final TagDefinitions tagDefinitions;
 
-  /**
-   * @param version the ODCS version to generate for, which decides the logical types
-   */
-  public OdcsSchemaObject generate(ContractSubject subject, OdcsVersion version) {
-    var walker = new OdcsPropertyWalker(version, subject.documentation().getColumnLookup());
+  public OdcsSchemaObject generate(ContractSubject subject) {
+    var walker = new OdcsPropertyWalker(subject.documentation().getColumnLookup());
     var properties =
         subject.physicalColumns().stream()
             .flatMap(
@@ -58,7 +55,7 @@ public class OdcsGenerator {
         .physicalType(subject.storageType().map(StorageType::getDisplayName).orElse(null))
         .logicalType(OdcsSchemaObject.LOGICAL_TYPE)
         .description(subject.documentation().docString())
-        .tags(toContractTags(subject.tags()))
+        .tags(OdcsTags.write(subject.tags()))
         .properties(properties)
         .build();
   }
@@ -85,7 +82,7 @@ public class OdcsGenerator {
                 .map(TagValue::value)
                 .orElse(null))
         // The classification field of the property says what the classification tag says
-        .tags(toContractTags(columnTags.without(Set.of(OdcsConstants.CLASSIFICATION_TAG))))
+        .tags(OdcsTags.write(columnTags.without(Set.of(OdcsConstants.CLASSIFICATION_TAG))))
         .build();
   }
 
@@ -97,10 +94,5 @@ public class OdcsGenerator {
       }
     }
     return Optional.empty();
-  }
-
-  /** The tags as a contract writes them, sorted by name. */
-  private static List<String> toContractTags(TableTags tags) {
-    return tags.values().stream().map(TagValue::toContractTag).toList();
   }
 }

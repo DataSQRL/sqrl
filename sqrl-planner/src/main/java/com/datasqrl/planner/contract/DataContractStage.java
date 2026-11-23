@@ -23,33 +23,35 @@ import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.plan.MainScript;
 import com.datasqrl.planner.Sqrl2FlinkSQLTranslator;
 import com.datasqrl.planner.analyzer.TableAnalysis;
+import com.datasqrl.planner.contract.DataContractFormat.Difference;
+import com.datasqrl.planner.contract.DataContractFormat.GeneratedEntry;
 import com.datasqrl.planner.contract.DataContracts.ContractFileUsage;
 import com.datasqrl.planner.contract.DataContracts.Document;
-import com.datasqrl.planner.contract.OdcsCompatibilityChecker.Difference;
-import com.datasqrl.planner.contract.TableContract.AttachedContract;
-import com.datasqrl.planner.contract.model.OdcsSchemaObject;
+import com.datasqrl.planner.contract.TableContracts.AttachedContract;
+import com.datasqrl.planner.contract.TableContracts.ContractTable;
 import com.datasqrl.planner.dag.PipelineDAG;
 import com.datasqrl.planner.dag.nodes.ExportNode;
 import com.datasqrl.planner.dag.nodes.PipelineNode;
 import com.datasqrl.planner.dag.nodes.TableFunctionNode;
 import com.datasqrl.planner.dag.nodes.TableNode;
+import com.datasqrl.planner.tables.SourceSinkTableAnalysis;
 import com.datasqrl.planner.tables.StorageType;
 import com.datasqrl.planner.tags.TagDefinitions;
-import com.fasterxml.jackson.databind.JsonNode;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.apache.flink.table.catalog.ObjectIdentifier;
+import org.apache.flink.table.catalog.ResolvedCatalogTable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
@@ -59,24 +61,43 @@ import org.springframework.stereotype.Component;
  *
  * <ul>
  *   <li>{@code sources} and {@code sinks} describe the tables that the deployed pipeline reads and
- *       writes. A table has the schema object that a contract file provides for it, and a generated
- *       one otherwise.
- *   <li>The document named after the main script describes the public tables, see {@link
+ *       writes. A table has the entry that a contract file provides for it, and a generated one
+ *       otherwise.
+ *   <li>The contract named after the main script describes the public tables, see {@link
  *       PublicTables}. They are always generated.
  * </ul>
  *
  * A contract file next to a planned script is either applied or reported, so that a contract that
- * the compiler does not pick up is not mistaken for one that passed.
+ * the compiler does not pick up is not mistaken for one that passed. How a contract is read,
+ * compared and written is up to its {@link DataContractFormat}.
  */
 @Component
 @Lazy
 @RequiredArgsConstructor
 public class DataContractStage {
 
+  /** The name of the contract with the tables that the pipeline reads */
+  public static final String SOURCES_NAME = "sources";
+
+  /** The name of the contract with the tables that the pipeline writes */
+  public static final String SINKS_NAME = "sinks";
+
   private final DataContractLoader loader;
+  private final TableContracts tableContracts;
   private final WorkspacePaths workspacePaths;
   private final MainScript mainScript;
   private final ErrorCollector errors;
+
+  /**
+   * A table of a contract of the deployment.
+   *
+   * @param definition what identifies the table. The same statement that is planned more than once
+   *     is one definition, and is described once unless its columns differ, as they can for a sink
+   *     that takes the columns of the exported table
+   * @param provided the entry that a contract file provides for the table
+   */
+  private record Described(
+      Object definition, ContractSubject subject, Optional<AttachedContract> provided) {}
 
   /**
    * Compares the tables that the scripts define with the contracts that the project provides for
@@ -95,7 +116,8 @@ public class DataContractStage {
   }
 
   /**
-   * Assembles the contracts of the tables that the deployed pipeline reads, writes and publishes.
+   * Assembles the contracts of the tables that the deployed pipeline reads, writes and publishes,
+   * in every format.
    *
    * @param dag the optimized DAG, which only has the tables that are deployed or tested
    * @param plan the physical plan, which has the public tables as the engines store them
@@ -106,81 +128,77 @@ public class DataContractStage {
       PhysicalPlan plan,
       Sqrl2FlinkSQLTranslator environment,
       List<ContractFileUsage> files) {
-    var generator = new OdcsGenerator(environment.getTagAnalyzer().getDefinitions());
     var deployed = deployedNodes(dag);
     var deployedTables =
         deployed.stream().filter(TableNode.class::isInstance).map(TableNode.class::cast).toList();
 
-    var sources = new SchemaObjects();
-    deployedTables.stream()
-        .map(TableNode::getTableAnalysis)
-        .filter(TableAnalysis::isSourceOrSink)
-        .forEach(table -> addCreatedTable(sources, table, generator, environment));
-    var sinks = new SchemaObjects();
-    deployed.stream()
-        .filter(ExportNode.class::isInstance)
-        .map(ExportNode.class::cast)
-        .forEach(export -> addExport(sinks, export, dag, generator, environment));
-    var publicTables = new SchemaObjects();
-    PublicTables.of(deployedTables, plan)
-        .forEach(
-            table ->
-                publicTables.add(
-                    table, OdcsYaml.toJson(generator.generate(table, OdcsVersion.LATEST))));
-
-    // The public tables share a document with the source or sink tables if the main script has
-    // the name of that document
-    var schemaObjects = new TreeMap<String, List<JsonNode>>(String.CASE_INSENSITIVE_ORDER);
-    schemaObjects.put(OdcsConstants.SOURCES_NAME, sources.sorted());
-    schemaObjects.put(OdcsConstants.SINKS_NAME, sinks.sorted());
-    schemaObjects
-        .computeIfAbsent(mainScriptName(), name -> new ArrayList<>())
-        .addAll(publicTables.sorted());
-
-    var documents =
-        schemaObjects.entrySet().stream()
-            .filter(entry -> !entry.getValue().isEmpty())
-            .map(entry -> new Document(entry.getKey(), List.copyOf(entry.getValue())))
+    var sources =
+        deployedTables.stream()
+            .map(TableNode::getTableAnalysis)
+            .filter(TableAnalysis::isSourceOrSink)
+            .flatMap(table -> createdTable(table.getObjectIdentifier(), environment).stream())
             .toList();
-    if (!files.isEmpty()) {
-      // Only a project that has contract files gets messages about data contracts
-      documents.forEach(this::warnSameNames);
+    var sinks =
+        deployed.stream()
+            .filter(ExportNode.class::isInstance)
+            .map(ExportNode.class::cast)
+            .flatMap(export -> exportedTable(export, dag, environment).stream())
+            .toList();
+    var publicTables =
+        PublicTables.of(deployedTables, plan).stream()
+            .map(table -> new Described(table, table, Optional.empty()))
+            .toList();
+
+    // The public tables share a contract with the source or sink tables if the main script has
+    // the name of that contract. They are listed after those tables
+    var groups = new TreeMap<String, List<List<Described>>>(String.CASE_INSENSITIVE_ORDER);
+    groups.computeIfAbsent(SOURCES_NAME, name -> new ArrayList<>()).add(sources);
+    groups.computeIfAbsent(SINKS_NAME, name -> new ArrayList<>()).add(sinks);
+    groups.computeIfAbsent(mainScriptName(), name -> new ArrayList<>()).add(publicTables);
+
+    var definitions = environment.getTagAnalyzer().getDefinitions();
+    var documents = new ArrayList<Document>();
+    for (var format : loader.getFormats()) {
+      groups.forEach(
+          (name, tables) -> {
+            var entries =
+                tables.stream()
+                    .flatMap(group -> entries(group, format, definitions).stream())
+                    .toList();
+            if (entries.isEmpty()) {
+              return;
+            }
+            if (!files.isEmpty()) {
+              // Only a project that has contract files gets messages about data contracts
+              warnSameNames(name, entries, format);
+            }
+            documents.add(new Document(format.fileName(name), format.write(name, entries)));
+          });
     }
-    return new DataContracts(documents, files);
+    return new DataContracts(List.copyOf(documents), files);
   }
 
   /**
    * Compares every created table that has a contract with its contract, whether or not the pipeline
    * deploys the table, so that a contract cannot drift unnoticed.
    */
-  private static void checkProvidedContracts(
+  private void checkProvidedContracts(
       Sqrl2FlinkSQLTranslator environment, TagDefinitions definitions, ErrorCollector collector) {
-    var generator = new OdcsGenerator(definitions);
-    var checker = new OdcsCompatibilityChecker(definitions);
     // The same statement can be planned more than once, e.g. imported under two names
-    var checked = new HashSet<CheckedTable>();
-    for (var table : environment.getTableLookup().getSourceTables()) {
-      var contract = table.getSourceSinkTable().orElseThrow().definition().contract();
-      if (contract.attached().isEmpty()) {
+    var checked = new HashSet<Described>();
+    for (var table : tableContracts.getTables()) {
+      if (table.contract().isEmpty()) {
         continue;
       }
-      var attached = contract.attached().get();
-      var subject = ContractSubject.ofCreatedTable(table, environment.getTypeFactory());
-      var generated = generator.generate(subject, attached.file().getVersion());
-      if (checked.add(new CheckedTable(contract, generated))) {
+      var attached = table.contract().get();
+      var subject = subject(table, environment);
+      if (checked.add(new Described(table.definition(), subject, table.contract()))) {
         var differences =
-            checker.compare(
-                OdcsYaml.toSchemaObject(attached.schemaObject()),
-                attached.pointer(),
-                generated,
-                subject);
+            attached.file().getFormat().compare(attached.entry(), subject, definitions);
         report(differences, attached, subject, collector);
       }
     }
   }
-
-  /** A table definition with the schema object generated for it, to check each one once */
-  private record CheckedTable(TableContract contract, OdcsSchemaObject generated) {}
 
   private static void report(
       List<Difference> differences,
@@ -194,12 +212,12 @@ public class DataContractStage {
         difference ->
             contract
                 .file()
-                .errorsAt(collector, difference.pointer())
+                .errorsAt(collector, difference.location())
                 .fatal("%s", difference.message()));
     // The error code, with its description, is given once per table
     contract
         .file()
-        .errorsAt(collector, contract.pointer())
+        .errorsAt(collector, contract.entry().location())
         .fatal(
             ErrorCode.INCOMPATIBLE_DATA_CONTRACT,
             "Table [%s] differs from its data contract in %s",
@@ -216,15 +234,16 @@ public class DataContractStage {
     for (var file : loader.getLoadedFiles()) {
       var name = file.getPath().getFileName();
       if (file.getAppliedTableNames().isEmpty()) {
-        file.errorsAt(collector, "/" + OdcsConstants.SCHEMA_FIELD)
+        file.errorsAtEntries(collector)
             .fatal(
                 ErrorCode.INVALID_DATA_CONTRACT,
-                "Contract file [%s] was not applied: none of its schema objects %s matches a table",
+                "Contract file [%s] was not applied: none of its %ss %s matches a table",
                 name,
-                file.getUnappliedObjectNames());
+                file.getFormat().getEntryLabel(),
+                file.getUnappliedEntryNames());
       }
       if (!definitions.isEnabled() && file.declaresTags()) {
-        file.errorsAt(collector, "/" + OdcsConstants.SCHEMA_FIELD)
+        file.errorsAtEntries(collector)
             .warn(
                 "Contract file [%s] declares tags or a classification, which are not compared with"
                     + " the tables since compiler.tags is not configured",
@@ -232,7 +251,7 @@ public class DataContractStage {
       }
       usages.add(
           new ContractFileUsage(
-              file.getPath(), true, file.getAppliedTableNames(), file.getUnappliedObjectNames()));
+              file.getPath(), true, file.getAppliedTableNames(), file.getUnappliedEntryNames()));
     }
 
     // The other contract files of the project sit next to scripts that this compilation does not
@@ -252,9 +271,11 @@ public class DataContractStage {
     if (!Files.isDirectory(buildDir)) {
       return List.of();
     }
+    var suffixes =
+        loader.getFormats().stream().map(format -> "." + format.getFileExtension()).toList();
     try (var files = Files.walk(buildDir)) {
       return files
-          .filter(file -> file.getFileName().toString().endsWith(OdcsConstants.FILE_SUFFIX))
+          .filter(file -> suffixes.stream().anyMatch(file.getFileName().toString()::endsWith))
           .filter(Files::isRegularFile)
           .toList();
     } catch (IOException e) {
@@ -277,51 +298,32 @@ public class DataContractStage {
     return dag.getAllInputsFromSource(sinks, true);
   }
 
-  private static void addCreatedTable(
-      SchemaObjects schemaObjects,
-      TableAnalysis table,
-      OdcsGenerator generator,
-      Sqrl2FlinkSQLTranslator environment) {
-    var definition = table.getSourceSinkTable().orElseThrow().definition();
-    if (definition.isTest()) {
-      return;
-    }
-    var subject = ContractSubject.ofCreatedTable(table, environment.getTypeFactory());
-    var generated = generator.generate(subject, OdcsVersion.LATEST);
-    // The documents have the latest ODCS version. A schema object of an older contract is taken
-    // as it is if the table has no type that the versions describe differently
-    var schemaObject =
-        definition
-            .contract()
-            .attached()
-            .filter(
-                attached ->
-                    generated.equals(generator.generate(subject, attached.file().getVersion())))
-            .map(AttachedContract::schemaObject)
-            .orElseGet(() -> OdcsYaml.toJson(generated));
-    schemaObjects.add(definition.contract(), schemaObject);
+  /** A table that a {@code CREATE TABLE} statement defines, unless it is a test table. */
+  private Optional<Described> createdTable(
+      ObjectIdentifier tableId, Sqrl2FlinkSQLTranslator environment) {
+    return tableContracts
+        .get(tableId)
+        .filter(table -> !table.isTest())
+        .map(
+            table ->
+                new Described(table.definition(), subject(table, environment), table.contract()));
   }
 
-  private static void addExport(
-      SchemaObjects schemaObjects,
-      ExportNode export,
-      PipelineDAG dag,
-      OdcsGenerator generator,
-      Sqrl2FlinkSQLTranslator environment) {
+  private Optional<Described> exportedTable(
+      ExportNode export, PipelineDAG dag, Sqrl2FlinkSQLTranslator environment) {
     var exported =
         dag.getInputs(export).stream()
             .filter(TableNode.class::isInstance)
             .map(input -> ((TableNode) input).getTableAnalysis())
             .findFirst();
     if (exported.isEmpty() || exported.get().getHints().isTest()) {
-      return;
+      return Optional.empty();
     }
 
     if (export.getCreatedSinkTable().isPresent()) {
-      var sinkTable =
-          environment.getTableLookup().lookupSourceTable(export.getCreatedSinkTable().get());
-      addCreatedTable(schemaObjects, sinkTable, generator, environment);
-    } else if (isLogExport(export)) {
+      return createdTable(export.getCreatedSinkTable().get(), environment);
+    }
+    if (isLogExport(export)) {
       // The log engine creates the topic for the exported table
       var table = exported.get();
       var topic =
@@ -329,9 +331,9 @@ public class DataContractStage {
                   export.getSinkPath().getLast().getDisplay(), table.getRowType(), table)
               .storageType(Optional.of(StorageType.TOPIC))
               .build();
-      schemaObjects.add(
-          export.getSinkPath(), OdcsYaml.toJson(generator.generate(topic, OdcsVersion.LATEST)));
+      return Optional.of(new Described(export.getSinkPath(), topic, Optional.empty()));
     }
+    return Optional.empty();
   }
 
   /** {@code EXPORT … TO log.X}, unlike the print and logger sinks, writes a topic. */
@@ -343,6 +345,29 @@ public class DataContractStage {
             .isPresent();
   }
 
+  private static ContractSubject subject(ContractTable table, Sqrl2FlinkSQLTranslator environment) {
+    return ContractSubject.ofCreatedTable(
+        table, partitionKeys(table, environment), environment.getTypeFactory());
+  }
+
+  /**
+   * The partition columns as the statement declares them. An engine may remove them from the table
+   * and keep them in the mutation, e.g. Kafka uses them as the message key.
+   */
+  private static List<String> partitionKeys(
+      ContractTable table, Sqrl2FlinkSQLTranslator environment) {
+    var mutation =
+        table.table().getSourceSinkTable().map(SourceSinkTableAnalysis::mutationDefinition);
+    if (mutation.isPresent() && !mutation.get().getPartitionKey().isEmpty()) {
+      return mutation.get().getPartitionKey();
+    }
+    return environment
+        .getCatalogManager()
+        .getTable(table.id())
+        .map(resolved -> resolved.<ResolvedCatalogTable>getResolvedTable().getPartitionKeys())
+        .orElse(List.of());
+  }
+
   /** The name of the main script without its extension. */
   private String mainScriptName() {
     return mainScript
@@ -352,52 +377,47 @@ public class DataContractStage {
         .orElse("main");
   }
 
-  private void warnSameNames(Document document) {
+  /**
+   * The entries of a contract in the given format, without the duplicates of the same definition,
+   * and sorted by name, so that the output is deterministic.
+   */
+  private static List<GeneratedEntry> entries(
+      List<Described> tables, DataContractFormat format, TagDefinitions definitions) {
+    record Rendered(Object definition, GeneratedEntry entry) {}
+    var rendered = new LinkedHashSet<Rendered>();
+    for (var table : tables) {
+      var provided =
+          table
+              .provided()
+              .filter(contract -> contract.file().getFormat() == format)
+              .map(AttachedContract::entry);
+      rendered.add(
+          new Rendered(
+              table.definition(), format.describe(table.subject(), provided, definitions)));
+    }
+    return rendered.stream()
+        .map(Rendered::entry)
+        .sorted(
+            Comparator.comparing(GeneratedEntry::name, String.CASE_INSENSITIVE_ORDER)
+                .thenComparing(GeneratedEntry::name)
+                .thenComparing(GeneratedEntry::toString))
+        .toList();
+  }
+
+  private void warnSameNames(String name, List<GeneratedEntry> entries, DataContractFormat format) {
+    var label = format.getEntryLabel();
     var names = new HashSet<String>();
-    document.schema().stream()
-        .map(schemaObject -> schemaObject.path(OdcsConstants.NAME_FIELD).asText(""))
-        .filter(name -> !names.add(DataContractFile.key(name)))
+    entries.stream()
+        .map(GeneratedEntry::name)
+        .filter(entryName -> !names.add(entryName.toLowerCase(Locale.ROOT)))
         .distinct()
         .sorted()
         .forEach(
-            name ->
+            entryName ->
                 errors.warn(
-                    "The data contract [%s] has more than one schema object named [%s], since"
-                        + " more than one table of the pipeline has that name. A consumer that"
-                        + " finds a schema object by its name cannot tell them apart",
-                    document.fileName(), name));
-  }
-
-  /** The schema objects of a document, without the duplicates of the same definition. */
-  private static final class SchemaObjects {
-
-    /**
-     * @param definition what identifies the table. The same statement that is planned more than
-     *     once is one definition, and has one schema object unless its columns differ, as they can
-     *     for a sink that takes the columns of the exported table
-     */
-    private record Entry(Object definition, JsonNode schemaObject) {
-
-      String name() {
-        return schemaObject.path(OdcsConstants.NAME_FIELD).asText("");
-      }
-    }
-
-    private final Collection<Entry> entries = new LinkedHashSet<>();
-
-    void add(Object definition, JsonNode schemaObject) {
-      entries.add(new Entry(definition, schemaObject));
-    }
-
-    /** The schema objects sorted by name, so that the output is deterministic. */
-    List<JsonNode> sorted() {
-      return entries.stream()
-          .sorted(
-              Comparator.comparing(Entry::name, String.CASE_INSENSITIVE_ORDER)
-                  .thenComparing(Entry::name)
-                  .thenComparing(entry -> entry.schemaObject().toString()))
-          .map(Entry::schemaObject)
-          .collect(Collectors.toCollection(ArrayList::new));
-    }
+                    "The data contract [%s] has more than one %s named [%s], since more than"
+                        + " one table of the pipeline has that name. A consumer that finds a %s"
+                        + " by its name cannot tell them apart",
+                    format.fileName(name), label, entryName, label));
   }
 }

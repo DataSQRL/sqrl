@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.planner.contract;
+package com.datasqrl.planner.contract.odcs;
 
-import com.datasqrl.planner.contract.model.OdcsSchemaObject;
+import com.datasqrl.planner.contract.odcs.model.OdcsSchemaObject;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;

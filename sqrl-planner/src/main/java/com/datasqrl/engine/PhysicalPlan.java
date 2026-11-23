@@ -21,6 +21,7 @@ import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.plan.global.PhysicalPlanRewriter;
 import com.datasqrl.planner.Sqrl2FlinkSQLTranslator;
+import com.datasqrl.planner.contract.DataContracts;
 import com.datasqrl.planner.dag.plan.MutationDatabase;
 import com.datasqrl.planner.dag.plan.MutationTable;
 import com.datasqrl.util.StreamUtil;
@@ -40,6 +41,16 @@ public class PhysicalPlan {
 
   @Singular Map<Name, MutationTable> mutationTables;
 
+  /**
+   * The data contracts of the tables that the pipeline reads, writes and publishes. They are
+   * derived from the plan and no engine executes them.
+   */
+  @Builder.Default DataContracts dataContracts = DataContracts.EMPTY;
+
+  public PhysicalPlan withDataContracts(DataContracts dataContracts) {
+    return new PhysicalPlan(stagePlans, mutationTables, dataContracts);
+  }
+
   public <T extends EnginePhysicalPlan> Stream<T> getPlans(Class<T> clazz) {
     return StreamUtil.filterByClass(stagePlans.stream().map(PhysicalStagePlan::plan), clazz);
   }
@@ -55,7 +66,8 @@ public class PhysicalPlan {
     if (rewriters.isEmpty()) {
       return this;
     }
-    var builder = PhysicalPlan.builder().mutationTables(mutationTables);
+    var builder =
+        PhysicalPlan.builder().mutationTables(mutationTables).dataContracts(dataContracts);
     for (PhysicalStagePlan stagePlan : stagePlans) {
       var enginePlan = stagePlan.plan;
       for (PhysicalPlanRewriter rewriter : rewriters) {

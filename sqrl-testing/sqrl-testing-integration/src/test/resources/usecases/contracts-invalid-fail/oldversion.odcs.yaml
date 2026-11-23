@@ -1,4 +1,4 @@
-apiVersion: v2.2.2
+apiVersion: v3.1.0
 kind: DataContract
 id: urn:catalog:letters
 version: 1.0.0

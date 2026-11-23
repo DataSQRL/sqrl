@@ -35,11 +35,6 @@ public record TagValue(TagDefinition definition, int level) {
     return level < other.level;
   }
 
-  /** The tag as a data contract writes it, e.g. {@code pii=raw} or {@code gdpr}. */
-  public String toContractTag() {
-    return definition.isBoolean() ? name() : name() + "=" + value();
-  }
-
   /** The tag as written in a doc string, e.g. {@code @pii=raw} or {@code @gdpr}. */
   @Override
   public String toString() {

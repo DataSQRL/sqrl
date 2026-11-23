@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.planner.contract;
+package com.datasqrl.planner.contract.odcs;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.datasqrl.planner.contract.model.OdcsContract;
-import com.datasqrl.planner.contract.model.OdcsMap;
-import com.datasqrl.planner.contract.model.OdcsProperty;
-import com.datasqrl.planner.contract.model.OdcsSchemaObject;
+import com.datasqrl.planner.contract.odcs.model.OdcsContract;
+import com.datasqrl.planner.contract.odcs.model.OdcsMap;
+import com.datasqrl.planner.contract.odcs.model.OdcsProperty;
+import com.datasqrl.planner.contract.odcs.model.OdcsSchemaObject;
 import java.util.LinkedHashMap;
 import java.util.List;
 import lombok.SneakyThrows;

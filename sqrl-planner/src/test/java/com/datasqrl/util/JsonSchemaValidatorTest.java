@@ -17,7 +17,7 @@ package com.datasqrl.util;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.datasqrl.planner.contract.OdcsConstants;
+import com.datasqrl.planner.contract.odcs.OdcsConstants;
 import com.datasqrl.util.JsonSchemaValidator.Violation;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;

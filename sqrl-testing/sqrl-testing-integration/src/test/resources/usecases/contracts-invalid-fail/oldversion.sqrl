@@ -1,4 +1,4 @@
--- The contract of this script has an ODCS version before v3
+-- The contract of this script has an ODCS version before v3.2
 CREATE TABLE Letters (
   id BIGINT NOT NULL,
   note STRING

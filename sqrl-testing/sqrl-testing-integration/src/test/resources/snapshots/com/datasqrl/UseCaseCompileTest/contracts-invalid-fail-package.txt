@@ -16,7 +16,7 @@ in script:syntax.odcs.yaml [10:30]:
 [FATAL] Contract file [syntax.odcs.yaml] is not a valid data contract and is not applied
 Invalid data contract file.
 
-A data contract is an ODCS v3 file next to the script that defines its tables:
+A data contract is an ODCS v3.2 file next to the script that defines its tables:
 `mytables.odcs.yaml` belongs to `mytables.sqrl` in the same folder. A schema object describes the
 `CREATE TABLE` of the same name, ignoring case.
 
@@ -56,19 +56,19 @@ apiVersion: v3.2.0
 [FATAL] Contract file [violations.odcs.yaml] is not a valid data contract and is not applied
 Invalid data contract file.
 
-A data contract is an ODCS v3 file next to the script that defines its tables:
+A data contract is an ODCS v3.2 file next to the script that defines its tables:
 `mytables.odcs.yaml` belongs to `mytables.sqrl` in the same folder. A schema object describes the
 `CREATE TABLE` of the same name, ignoring case.
 
-[FATAL] apiVersion [v2.2.2] is not supported: convert the contract to ODCS v3
+[FATAL] apiVersion [v3.1.0] is not supported: convert the contract to ODCS v3.2.0
 in script:oldversion.odcs.yaml [1:13]:
-apiVersion: v2.2.2
+apiVersion: v3.1.0
 ------------^
 
 [FATAL] Contract file [oldversion.odcs.yaml] is not a valid data contract and is not applied
 Invalid data contract file.
 
-A data contract is an ODCS v3 file next to the script that defines its tables:
+A data contract is an ODCS v3.2 file next to the script that defines its tables:
 `mytables.odcs.yaml` belongs to `mytables.sqrl` in the same folder. A schema object describes the
 `CREATE TABLE` of the same name, ignoring case.
 
@@ -82,18 +82,18 @@ in script:duplicates.odcs.yaml [14:5]:
 [FATAL] Contract file [duplicates.odcs.yaml] is not a valid data contract and is not applied
 Invalid data contract file.
 
-A data contract is an ODCS v3 file next to the script that defines its tables:
+A data contract is an ODCS v3.2 file next to the script that defines its tables:
 `mytables.odcs.yaml` belongs to `mytables.sqrl` in the same folder. A schema object describes the
 `CREATE TABLE` of the same name, ignoring case.
 
 [FATAL] Contract file [Crm.odcs.yaml] differs from the name of [crm.sqrl] only in case and is not read. Rename it to [crm.odcs.yaml]
 Invalid data contract file.
 
-A data contract is an ODCS v3 file next to the script that defines its tables:
+A data contract is an ODCS v3.2 file next to the script that defines its tables:
 `mytables.odcs.yaml` belongs to `mytables.sqrl` in the same folder. A schema object describes the
 `CREATE TABLE` of the same name, ignoring case.
 
-[FATAL] Table [Parts] has a schema object in two contract files: here, next to its script, and in [base.odcs.yaml] next to the script of the schema table it extends. Keep one of them
+[FATAL] Table [Parts] has a schema object in two contract files: here, next to its script, and in [base.odcs.yaml] next to the script of a table it extends. Keep one of them
 in script:base-env.odcs.yaml [7:5]:
 status: active
 schema:
@@ -101,7 +101,7 @@ schema:
 ----^
 Invalid data contract file.
 
-A data contract is an ODCS v3 file next to the script that defines its tables:
+A data contract is an ODCS v3.2 file next to the script that defines its tables:
 `mytables.odcs.yaml` belongs to `mytables.sqrl` in the same folder. A schema object describes the
 `CREATE TABLE` of the same name, ignoring case.
 
@@ -110,7 +110,7 @@ in script:multi.odcs.yaml
 [FATAL] Contract file [multi.odcs.yaml] is not a valid data contract and is not applied
 Invalid data contract file.
 
-A data contract is an ODCS v3 file next to the script that defines its tables:
+A data contract is an ODCS v3.2 file next to the script that defines its tables:
 `mytables.odcs.yaml` belongs to `mytables.sqrl` in the same folder. A schema object describes the
 `CREATE TABLE` of the same name, ignoring case.
 
@@ -122,7 +122,7 @@ schema:
 --^
 Invalid data contract file.
 
-A data contract is an ODCS v3 file next to the script that defines its tables:
+A data contract is an ODCS v3.2 file next to the script that defines its tables:
 `mytables.odcs.yaml` belongs to `mytables.sqrl` in the same folder. A schema object describes the
 `CREATE TABLE` of the same name, ignoring case.
 

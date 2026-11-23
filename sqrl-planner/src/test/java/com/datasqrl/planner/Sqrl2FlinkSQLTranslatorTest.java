@@ -26,7 +26,6 @@ import com.datasqrl.engine.stream.flink.FlinkStreamEngine;
 import com.datasqrl.engine.stream.flink.sql.RelToFlinkSql;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.loaders.schema.SchemaLoader;
-import com.datasqrl.planner.contract.ContractSource;
 import com.datasqrl.planner.hint.HintsAndDoc;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -65,7 +64,6 @@ class Sqrl2FlinkSQLTranslatorTest {
           Optional.empty(),
           mock(SchemaLoader.class),
           HintsAndDoc.EMPTY,
-          ContractSource.NONE,
           ErrorCollector.root());
       var view =
           translator.addView(

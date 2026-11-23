@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.planner.contract;
+package com.datasqrl.planner.contract.odcs;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
@@ -23,7 +23,7 @@ import com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType;
 import com.datasqrl.flinkrunner.stdlib.json.FlinkJsonTypeSerializer;
 import com.datasqrl.flinkrunner.stdlib.vector.FlinkVectorType;
 import com.datasqrl.flinkrunner.stdlib.vector.FlinkVectorTypeSerializer;
-import com.datasqrl.planner.contract.model.OdcsProperty;
+import com.datasqrl.planner.contract.odcs.model.OdcsProperty;
 import com.datasqrl.planner.util.Documented;
 import com.datasqrl.planner.util.Documented.Documentation;
 import java.util.Map;
@@ -94,7 +94,7 @@ class OdcsPropertyWalkerTest {
   @MethodSource("scalarTypes")
   void givenScalarType_whenWalk_thenMapsToLogicalTypeWithOptions(
       RelDataType type, String logicalType, Map<String, Object> options, String physicalType) {
-    var property = walk(type, OdcsVersion.V3_2);
+    var property = walk(type);
 
     assertThat(property.logicalType()).isEqualTo(logicalType);
     assertThat(property.logicalTypeOptions()).isEqualTo(options);
@@ -104,33 +104,28 @@ class OdcsPropertyWalkerTest {
   }
 
   @Test
-  void givenTimeTypes_whenWalk_thenLogicalTypeDependsOnTheVersion() {
+  void givenTimeTypes_whenWalk_thenTimestampAndTimeWithTheirTimezone() {
     var timestamp = nullable(TYPES.createSqlType(SqlTypeName.TIMESTAMP, 3));
     var timestampLtz = nullable(TYPES.createSqlType(SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE, 3));
-    var time = type(SqlTypeName.TIME);
 
-    assertThat(walk(timestamp, OdcsVersion.V3_2))
+    assertThat(walk(timestamp))
         .extracting(OdcsProperty::logicalType, OdcsProperty::logicalTypeOptions)
         .containsExactly("timestamp", Map.of("timezone", false));
-    assertThat(walk(timestampLtz, OdcsVersion.V3_1))
+    assertThat(walk(timestampLtz))
         .extracting(
             OdcsProperty::logicalType, OdcsProperty::logicalTypeOptions, OdcsProperty::physicalType)
         .containsExactly("timestamp", Map.of("timezone", true), "TIMESTAMP_LTZ(3)");
-    assertThat(walk(timestampLtz, OdcsVersion.V3_0))
-        .extracting(OdcsProperty::logicalType, OdcsProperty::logicalTypeOptions)
-        .containsExactly("date", null);
-    assertThat(walk(time, OdcsVersion.V3_1).logicalType()).isEqualTo("time");
-    assertThat(walk(time, OdcsVersion.V3_0).logicalType()).isEqualTo("string");
+    assertThat(walk(type(SqlTypeName.TIME)).logicalType()).isEqualTo("time");
   }
 
   @Test
-  void givenMap_whenWalk_thenOnlyTheLatestVersionHasTheMapType() {
+  void givenMap_whenWalk_thenMapWithKeyAndValue() {
     var map =
         nullable(
             TYPES.createMapType(
                 TYPES.createTypeWithNullability(string(), false), type(SqlTypeName.INTEGER)));
 
-    var property = walk(map, OdcsVersion.V3_2);
+    var property = walk(map);
 
     assertThat(property.logicalType()).isEqualTo("map");
     assertThat(property.physicalType()).isEqualTo("MAP");
@@ -140,9 +135,6 @@ class OdcsPropertyWalkerTest {
     assertThat(property.map().value())
         .extracting(OdcsProperty::logicalType, OdcsProperty::required)
         .containsExactly("integer", null);
-    assertThat(walk(map, OdcsVersion.V3_1))
-        .extracting(OdcsProperty::logicalType, OdcsProperty::map)
-        .containsExactly("object", null);
   }
 
   @Test
@@ -154,7 +146,7 @@ class OdcsPropertyWalkerTest {
         TYPES.createFieldTypeFromLogicalType(
             new RawType<>(String.class, StringSerializer.INSTANCE));
 
-    var vectorProperty = walk(vector, OdcsVersion.V3_2);
+    var vectorProperty = walk(vector);
 
     assertThat(vectorProperty)
         .extracting(OdcsProperty::logicalType, OdcsProperty::physicalType)
@@ -162,8 +154,8 @@ class OdcsPropertyWalkerTest {
     assertThat(vectorProperty.items())
         .extracting(OdcsProperty::logicalType, OdcsProperty::logicalTypeOptions)
         .containsExactly("number", Map.of("format", "f64"));
-    assertThat(walk(raw, OdcsVersion.V3_2).logicalType()).isNull();
-    assertThat(walk(raw, OdcsVersion.V3_2).physicalType()).startsWith("RAW(");
+    assertThat(walk(raw).logicalType()).isNull();
+    assertThat(walk(raw).physicalType()).startsWith("RAW(");
   }
 
   @Test
@@ -195,7 +187,7 @@ class OdcsPropertyWalkerTest {
             .getColumnLookup();
 
     var property =
-        new OdcsPropertyWalker(OdcsVersion.V3_2, docs)
+        new OdcsPropertyWalker(docs)
             .walk(TYPES.createTypeWithNullability(row, false), PATH)
             .orElseThrow();
 
@@ -231,8 +223,8 @@ class OdcsPropertyWalkerTest {
         .containsExactly("city", "zip");
   }
 
-  private static OdcsProperty walk(RelDataType type, OdcsVersion version) {
-    return new OdcsPropertyWalker(version, Documented.NO_LOOKUP).walk(type, PATH).orElseThrow();
+  private static OdcsProperty walk(RelDataType type) {
+    return new OdcsPropertyWalker(Documented.NO_LOOKUP).walk(type, PATH).orElseThrow();
   }
 
   /** The type factory creates NOT NULL types by default. */

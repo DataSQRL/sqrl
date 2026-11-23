@@ -20,7 +20,7 @@ import static com.datasqrl.SnapshotTestSupport.getResourcesDirectory;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datasqrl.SnapshotTestSupport.TestNameModifier;
-import com.datasqrl.planner.contract.OdcsConstants;
+import com.datasqrl.planner.contract.odcs.OdcsConstants;
 import com.datasqrl.util.ArgumentsProviders;
 import com.datasqrl.util.SnapshotTest.Snapshot;
 import java.nio.file.Path;

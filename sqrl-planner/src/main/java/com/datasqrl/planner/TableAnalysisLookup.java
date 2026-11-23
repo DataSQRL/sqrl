@@ -18,10 +18,7 @@ package com.datasqrl.planner;
 import com.datasqrl.planner.analyzer.TableAnalysis;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -70,14 +67,9 @@ import org.apache.flink.table.types.inference.SystemTypeInference;
 @Value
 public class TableAnalysisLookup {
 
-  Map<ObjectIdentifier, TableAnalysis> id2SourceTable = new LinkedHashMap<>();
+  Map<ObjectIdentifier, TableAnalysis> id2SourceTable = new HashMap<>();
   Map<ObjectIdentifier, TableAnalysis> id2View = new HashMap<>();
   ListMultimap<Integer, TableAnalysis> viewMap = ArrayListMultimap.create();
-
-  /** The tables that {@code CREATE TABLE} statements define, in the order they were planned. */
-  public Collection<TableAnalysis> getSourceTables() {
-    return Collections.unmodifiableCollection(id2SourceTable.values());
-  }
 
   public TableAnalysis lookupSourceTable(@Nullable ObjectIdentifier objectId) {
     return id2SourceTable.get(objectId);

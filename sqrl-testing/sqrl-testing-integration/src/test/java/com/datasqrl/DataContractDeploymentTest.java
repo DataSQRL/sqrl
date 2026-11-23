@@ -20,8 +20,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 
 import com.datasqrl.cli.AssertStatusHook;
-import com.datasqrl.planner.contract.OdcsConstants;
-import com.datasqrl.planner.contract.OdcsYaml;
+import com.datasqrl.planner.contract.odcs.OdcsConstants;
+import com.datasqrl.planner.contract.odcs.OdcsYaml;
 import com.datasqrl.util.JsonSchemaValidator;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;

@@ -2287,36 +2287,22 @@ schema:
     partitionKeyPosition: 1
     classification: confidential
 - name: Events
-  physicalName: file:///tmp/contracts-compile/events
-  physicalType: file
-  logicalType: object
-  description: Events of the legacy system
   properties:
   - name: id
     logicalType: integer
-    logicalTypeOptions:
-      format: i64
-    physicalType: BIGINT
     required: true
   - name: kind
     logicalType: string
-    physicalType: STRING
     required: true
   - name: payload
     logicalType: map
-    physicalType: MAP
     map:
       key:
         logicalType: string
-        physicalType: STRING
       value:
         logicalType: string
-        physicalType: STRING
   - name: created_at
     logicalType: timestamp
-    logicalTypeOptions:
-      timezone: true
-    physicalType: TIMESTAMP_LTZ(3)
     required: true
 - name: Feedback
   tags:

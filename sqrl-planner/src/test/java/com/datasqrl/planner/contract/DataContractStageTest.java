@@ -22,14 +22,19 @@ import com.datasqrl.config.WorkspacePaths;
 import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorMessage;
+import com.datasqrl.planner.Sqrl2FlinkSQLTranslator.AddTableResult;
 import com.datasqrl.planner.contract.DataContracts.ContractFileUsage;
+import com.datasqrl.planner.hint.HintsAndDoc;
 import com.datasqrl.planner.tags.TagDefinition;
 import com.datasqrl.planner.tags.TagDefinitions;
+import com.datasqrl.planner.util.Documented;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import lombok.SneakyThrows;
+import org.apache.flink.table.catalog.ObjectIdentifier;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -61,15 +66,19 @@ class DataContractStageTest {
   private final ErrorCollector errors = ErrorCollector.root();
   private Path buildDir;
   private DataContractLoader loader;
+  private TableContracts tableContracts;
   private DataContractStage stage;
+  private int tables;
 
   @BeforeEach
   void setUp() throws Exception {
     buildDir = Files.createDirectories(workspace.resolve("build")).toRealPath();
     loader = new DataContractLoader(errors);
+    tableContracts = new TableContracts(loader, errors);
     stage =
         new DataContractStage(
             loader,
+            tableContracts,
             new WorkspacePaths(workspace, buildDir, buildDir.resolve("deploy"), workspace),
             null,
             errors);
@@ -78,7 +87,7 @@ class DataContractStageTest {
   @Test
   void givenAppliedAndUnusedContractFiles_whenCheck_thenListsHowEachWasUsed() {
     file("connectors/crm.odcs.yaml", CONTRACT);
-    loader.forFile(file("connectors/crm.sqrl", "")).forTable("Customers");
+    register("Customers", file("connectors/crm.sqrl", ""));
     // The script next to this contract file is not part of the compilation
     file("sinks/archive-prod.odcs.yaml", CONTRACT);
     file("sinks/archive-prod.sqrl", "");
@@ -96,12 +105,12 @@ class DataContractStageTest {
   @Test
   void givenLoadedContractFileWithoutAppliedObject_whenCheck_thenReportsIt() {
     file("crm.odcs.yaml", CONTRACT);
-    loader.forFile(file("crm.sqrl", "")).forTable("Custmers");
+    register("Custmers", file("crm.sqrl", ""));
 
     var usages = stage.checkContractFiles(DEFINITIONS, errors.abortOnFatal(false));
 
     assertThat(usages)
-        .extracting(ContractFileUsage::used, ContractFileUsage::unappliedObjects)
+        .extracting(ContractFileUsage::used, ContractFileUsage::unappliedEntries)
         .containsExactly(tuple(true, List.of("Customers", "Invoices")));
     assertThat(messages())
         .extracting(
@@ -119,9 +128,9 @@ class DataContractStageTest {
   @Test
   void givenTagsInContractWithoutTagDefinitions_whenCheck_thenWarnsOncePerFile() {
     file("crm.odcs.yaml", CONTRACT);
-    loader.forFile(file("crm.sqrl", "")).forTable("Customers");
+    register("Customers", file("crm.sqrl", ""));
     file("plain.odcs.yaml", CONTRACT.replace("    tags: [pii=raw]\n", ""));
-    loader.forFile(file("plain.sqrl", "")).forTable("Customers");
+    register("Customers", file("plain.sqrl", ""));
 
     stage.checkContractFiles(TagDefinitions.DISABLED, errors.abortOnFatal(false));
 
@@ -137,13 +146,31 @@ class DataContractStageTest {
   @Test
   void givenInvalidContractFile_whenCheck_thenItIsNotListedAndNotReportedAgain() {
     file("crm.odcs.yaml", "apiVersion: [v3.2.0");
-    loader.forFile(file("crm.sqrl", "")).forTable("Customers");
+    register("Customers", file("crm.sqrl", ""));
     var reported = messages().size();
 
     var usages = stage.checkContractFiles(DEFINITIONS, errors.abortOnFatal(false));
 
     assertThat(usages).isEmpty();
     assertThat(messages()).hasSize(reported);
+  }
+
+  /** Registers a table that a statement of the script creates. */
+  private void register(String name, Path script) {
+    tableContracts.register(
+        new AddTableResult(
+            name,
+            name,
+            ObjectIdentifier.of("catalog", "database", name + "_" + tables++),
+            true,
+            null,
+            null,
+            "",
+            HintsAndDoc.EMPTY,
+            Documented.EMPTY,
+            Optional.empty()),
+        Optional.of(script),
+        Optional.empty());
   }
 
   @SneakyThrows

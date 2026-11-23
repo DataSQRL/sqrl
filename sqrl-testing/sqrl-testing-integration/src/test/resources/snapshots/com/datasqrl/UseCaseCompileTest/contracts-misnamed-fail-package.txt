@@ -1,21 +1,21 @@
-[FATAL] File [legacy.odcs.yml] looks like a data contract but is not read. Rename it to [legacy.odcs.yaml]
-Invalid data contract file.
-
-A data contract is an ODCS v3 file next to the script that defines its tables:
-`mytables.odcs.yaml` belongs to `mytables.sqrl` in the same folder. A schema object describes the
-`CREATE TABLE` of the same name, ignoring case.
-
 [FATAL] File [exported.odcs.json] looks like a data contract but is not read. Rename it to [exported.odcs.yaml]
 Invalid data contract file.
 
-A data contract is an ODCS v3 file next to the script that defines its tables:
+A data contract is an ODCS v3.2 file next to the script that defines its tables:
+`mytables.odcs.yaml` belongs to `mytables.sqrl` in the same folder. A schema object describes the
+`CREATE TABLE` of the same name, ignoring case.
+
+[FATAL] File [legacy.odcs.yml] looks like a data contract but is not read. Rename it to [legacy.odcs.yaml]
+Invalid data contract file.
+
+A data contract is an ODCS v3.2 file next to the script that defines its tables:
 `mytables.odcs.yaml` belongs to `mytables.sqrl` in the same folder. A schema object describes the
 `CREATE TABLE` of the same name, ignoring case.
 
 [FATAL] Contract file [orphan.odcs.yaml] has no SQRL file next to it. A contract applies to the tables of the script with the same name: expected orphan.sqrl or orphan.table.sql in the same folder
 Invalid data contract file.
 
-A data contract is an ODCS v3 file next to the script that defines its tables:
+A data contract is an ODCS v3.2 file next to the script that defines its tables:
 `mytables.odcs.yaml` belongs to `mytables.sqrl` in the same folder. A schema object describes the
 `CREATE TABLE` of the same name, ignoring case.
 

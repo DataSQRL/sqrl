@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.planner.contract;
+package com.datasqrl.planner.contract.odcs;
 
 import com.datasqrl.calcite.type.RelDataTypeWalker;
 import com.datasqrl.calcite.type.TypeKind;
 import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.planner.contract.model.OdcsMap;
-import com.datasqrl.planner.contract.model.OdcsProperty;
+import com.datasqrl.planner.contract.odcs.model.OdcsMap;
+import com.datasqrl.planner.contract.odcs.model.OdcsProperty;
 import com.datasqrl.planner.util.Documented.Lookup;
 import java.util.List;
 import java.util.Map;
@@ -34,8 +34,8 @@ import org.apache.flink.table.types.logical.TimestampType;
  * Maps a type to a property of a data contract. The property has no name: the caller names the
  * property of a column, and the walker names the fields of a row.
  *
- * <p>The logical types depend on the ODCS version: v3.0 has no {@code timestamp} and {@code time}
- * types, and only v3.2 has the {@code map} type.
+ * <p>The logical types are those of ODCS v3.2, which has the {@code timestamp}, {@code time} and
+ * {@code map} types that older versions lack.
  */
 @RequiredArgsConstructor
 public class OdcsPropertyWalker extends RelDataTypeWalker<OdcsProperty> {
@@ -50,8 +50,6 @@ public class OdcsPropertyWalker extends RelDataTypeWalker<OdcsProperty> {
   static final String OBJECT = "object";
   static final String ARRAY = "array";
   static final String MAP = "map";
-
-  private final OdcsVersion version;
 
   /** The docs of the columns of the table, in which the docs of nested fields are looked up */
   private final Lookup columnDocs;
@@ -74,10 +72,10 @@ public class OdcsPropertyWalker extends RelDataTypeWalker<OdcsProperty> {
       case BINARY -> property.logicalType(STRING).logicalTypeOptions(format("binary"));
       case INTERVAL -> property.logicalType(STRING);
       case DATE -> property.logicalType(DATE);
-      case TIME -> property.logicalType(version.hasTimestamp() ? TIME : STRING);
-      case TIME_LTZ -> withTimezone(property, version.hasTimestamp() ? TIME : STRING, true);
-      case TIMESTAMP -> withTimezone(property, version.hasTimestamp() ? TIMESTAMP : DATE, false);
-      case TIMESTAMP_LTZ -> withTimezone(property, version.hasTimestamp() ? TIMESTAMP : DATE, true);
+      case TIME -> property.logicalType(TIME);
+      case TIME_LTZ -> withTimezone(property, TIME, true);
+      case TIMESTAMP -> withTimezone(property, TIMESTAMP, false);
+      case TIMESTAMP_LTZ -> withTimezone(property, TIMESTAMP, true);
       // JSON has no fixed fields
       case JSON -> property.logicalType(OBJECT);
       // The vector type of ODCS requires the dimensions, which the type doesn't have
@@ -144,7 +142,7 @@ public class OdcsPropertyWalker extends RelDataTypeWalker<OdcsProperty> {
     var key = walk(type.getKeyType(), path);
     var value = walk(type.getValueType(), path);
 
-    if (version.hasMap() && key.isPresent() && value.isPresent()) {
+    if (key.isPresent() && value.isPresent()) {
       return Optional.of(
           property.logicalType(MAP).map(new OdcsMap(key.get(), value.get())).build());
     }
@@ -165,13 +163,9 @@ public class OdcsPropertyWalker extends RelDataTypeWalker<OdcsProperty> {
     return length > 0 && length < Integer.MAX_VALUE ? Map.of("maxLength", length) : null;
   }
 
-  private OdcsProperty.OdcsPropertyBuilder withTimezone(
+  private static OdcsProperty.OdcsPropertyBuilder withTimezone(
       OdcsProperty.OdcsPropertyBuilder property, String logicalType, boolean timezone) {
-    property.logicalType(logicalType);
-    // v3.0 has neither the timestamp type nor its timezone option
-    return version.hasTimestamp()
-        ? property.logicalTypeOptions(Map.of("timezone", timezone))
-        : property;
+    return property.logicalType(logicalType).logicalTypeOptions(Map.of("timezone", timezone));
   }
 
   /**

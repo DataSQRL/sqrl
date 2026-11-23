@@ -19,11 +19,12 @@ import static com.datasqrl.config.SqrlConstants.PACKAGE_JSON;
 
 import com.datasqrl.cli.output.OutputFormatter;
 import com.datasqrl.compile.CompilationProcess;
-import com.datasqrl.compile.CompilationResult;
+import com.datasqrl.compile.TestPlan;
 import com.datasqrl.config.ExecutionEnginesHolder;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.ProjectPaths;
 import com.datasqrl.config.SqrlConstants;
+import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrefix;
 import com.datasqrl.packager.Packager;
@@ -39,6 +40,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
 @Slf4j
@@ -153,9 +155,9 @@ public abstract class AbstractCompileCmd extends BasePackageConfCmd {
               .getTestDir(new ProjectPaths(cli.workspaceDir, getProjectRoot()));
       testDir.ifPresent(this::validateTestPath);
 
-      CompilationResult result;
+      Pair<PhysicalPlan, ? extends TestPlan> plan;
       try {
-        result = compilationProcess.executeCompilation(testDir);
+        plan = compilationProcess.executeCompilation(testDir);
 
       } catch (FlinkCompileException e) {
         packager.postprocessFlinkCompileError(e);
@@ -170,7 +172,7 @@ public abstract class AbstractCompileCmd extends BasePackageConfCmd {
         formatter.phaseStart("Generating deployment artifacts");
       }
 
-      packager.postprocess(getTargetDir(), result);
+      packager.postprocess(getTargetDir(), plan.getLeft(), plan.getRight());
     }
   }
 

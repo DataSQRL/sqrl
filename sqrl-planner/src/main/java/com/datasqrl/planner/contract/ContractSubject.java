@@ -16,6 +16,7 @@
 package com.datasqrl.planner.contract;
 
 import com.datasqrl.planner.analyzer.TableAnalysis;
+import com.datasqrl.planner.contract.TableContracts.ContractTable;
 import com.datasqrl.planner.tables.StorageType;
 import com.datasqrl.planner.tags.TableTags;
 import com.datasqrl.planner.util.Documented;
@@ -77,13 +78,15 @@ public record ContractSubject(
   }
 
   /**
-   * @param table a table that a {@code CREATE TABLE} statement defines
+   * @param created a table that a {@code CREATE TABLE} statement defines
+   * @param partitionKeys the partition columns that the statement declares
    * @param typeFactory converts the column types of the table
    */
-  public static ContractSubject ofCreatedTable(TableAnalysis table, FlinkTypeFactory typeFactory) {
+  public static ContractSubject ofCreatedTable(
+      ContractTable created, List<String> partitionKeys, FlinkTypeFactory typeFactory) {
+    var table = created.table();
     var sourceSink = table.getSourceSinkTable().orElseThrow();
     var schema = sourceSink.schema();
-    var definition = sourceSink.definition();
 
     // The columns are read from the schema and not through the row type of the table, which
     // requires that computed columns come last
@@ -99,7 +102,7 @@ public record ContractSubject(
             .toList();
 
     return ContractSubject.builder()
-        .name(definition.name())
+        .name(created.name())
         .columns(columns)
         .watermarkColumn(
             schema.getWatermarkSpecs().stream()
@@ -107,8 +110,8 @@ public record ContractSubject(
                 .filter(column -> !column.contains("."))
                 .findFirst())
         .primaryKey(schema.getPrimaryKey().map(UniqueConstraint::getColumns).orElse(List.of()))
-        .partitionKeys(definition.partitionKeys())
-        .documentation(definition.documentation())
+        .partitionKeys(partitionKeys)
+        .documentation(created.documentation())
         .tags(table.getTags())
         .storageType(sourceSink.connectorConfig().getStorageType())
         .storageName(sourceSink.connectorConfig().getStorageName())

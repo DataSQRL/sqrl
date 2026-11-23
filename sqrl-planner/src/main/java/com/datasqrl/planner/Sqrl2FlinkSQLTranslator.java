@@ -42,7 +42,6 @@ import com.datasqrl.planner.analyzer.SQRLLogicalPlanAnalyzer;
 import com.datasqrl.planner.analyzer.SQRLLogicalPlanAnalyzer.ViewAnalysis;
 import com.datasqrl.planner.analyzer.TableAnalysis;
 import com.datasqrl.planner.analyzer.TableOrFunctionAnalysis;
-import com.datasqrl.planner.contract.ContractSource;
 import com.datasqrl.planner.dag.plan.MutationTable.MutationTableBuilder;
 import com.datasqrl.planner.hint.HintsAndDoc;
 import com.datasqrl.planner.parser.NoLocationStatementParserException;
@@ -54,7 +53,6 @@ import com.datasqrl.planner.tables.FlinkTableBuilder;
 import com.datasqrl.planner.tables.SourceSinkTableAnalysis;
 import com.datasqrl.planner.tables.SqrlFunctionParameter;
 import com.datasqrl.planner.tables.SqrlTableFunction;
-import com.datasqrl.planner.tables.TableDefinition;
 import com.datasqrl.planner.tags.TableTags;
 import com.datasqrl.planner.tags.TagAnalyzer;
 import com.datasqrl.planner.tags.TagDefinitions;
@@ -176,10 +174,6 @@ import org.apache.flink.table.types.DataType;
 public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
 
   private static final String SCHEMA_SUFFIX = "__schema";
-
-  /** The suffix of the name of a table that only declares columns for other tables */
-  private static final String SCHEMA_TABLE_SUFFIX = "_schema";
-
   private static final String TEMP_VIEW_SUFFIX = "__view";
 
   private final RuntimeExecutionMode executionMode;
@@ -648,10 +642,9 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
 
   /**
    * Validates that a created table declares the tags of the data that {@code INSERT INTO} or {@code
-   * EXPORT} writes into it, see {@link TagAnalyzer#checkWrite}. Only tables that other tables read,
-   * that the pipeline manages, i.e. mutation tables, or that have a data contract are checked: the
-   * data written into an external table that nothing reads leaves the pipeline. A data contract
-   * lists the tags of its table, so the table must declare the tags of the data it receives.
+   * EXPORT} writes into it, see {@link TagAnalyzer#checkWrite}. Only tables that other tables read
+   * or that the pipeline manages, i.e. mutation tables, are checked: the data written into an
+   * external table that nothing reads leaves the pipeline.
    *
    * @param tableId the created table that is written into
    * @param inputs the tables the written data is computed from
@@ -663,20 +656,9 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
 
     var table = tableLookup.lookupSourceTable(tableId);
     var mutation = table.getSourceSinkTable().map(SourceSinkTableAnalysis::mutationDefinition);
-    var contractTable =
-        table
-            .getSourceSinkTable()
-            .map(SourceSinkTableAnalysis::definition)
-            .filter(definition -> definition.contract().attached().isPresent());
-    if (mutation.isPresent()
-        || tableLookup.lookupView(tableId) != null
-        || contractTable.isPresent()) {
-      // The name of the table in its statement, without an export suffix
-      var name =
-          mutation
-              .map(m -> m.getName().getDisplay())
-              .or(() -> contractTable.map(TableDefinition::name))
-              .orElse(table.getName());
+    if (mutation.isPresent() || tableLookup.lookupView(tableId) != null) {
+      // The name of a mutation table is the name in its statement, without an export suffix
+      var name = mutation.map(m -> m.getName().getDisplay()).orElse(table.getName());
       tagAnalyzer.checkWrite(name, table.getTags(), inputs, errors);
     }
   }
@@ -900,24 +882,17 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
         String origTableName, FlinkTableBuilder tableBuilder, RelDataType dataType);
   }
 
-  public TableAnalysis createTableWithSchema(
+  public AddTableResult createTableWithSchema(
       Function<String, String> tableNameModifier,
       String tableDefinition,
       SchemaLoader schemaLoader,
       Optional<MutationBuilder> mutationBuilder,
       HintsAndDoc hintsAndDoc,
-      ContractSource contracts,
       ErrorCollector errors) {
-    return addSourceTable(
+    var result =
         addTable(
-            tableNameModifier,
-            tableDefinition,
-            schemaLoader,
-            mutationBuilder,
-            hintsAndDoc,
-            contracts,
-            errors),
-        errors);
+            tableNameModifier, tableDefinition, schemaLoader, mutationBuilder, hintsAndDoc, errors);
+    return result.withSourceView(addSourceTable(result, errors));
   }
 
   public AddTableResult addExternalExport(
@@ -926,29 +901,21 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
       SchemaLoader schemaLoader,
       Optional<MutationBuilder> mutationBuilder,
       HintsAndDoc hintsAndDoc,
-      ContractSource contracts,
       ErrorCollector errors) {
 
     var result =
         addTable(
-            tableNameModifier,
-            tableDefinition,
-            schemaLoader,
-            mutationBuilder,
-            hintsAndDoc,
-            contracts,
-            errors);
+            tableNameModifier, tableDefinition, schemaLoader, mutationBuilder, hintsAndDoc, errors);
     checkRequiredColumns(result, errors);
 
     return result;
   }
 
-  public Optional<TableAnalysis> createTable(
+  public AddTableResult createTable(
       String tableDefinition,
       Optional<MutationBuilder> mutationBuilder,
       SchemaLoader schemaLoader,
       HintsAndDoc hintsAndDoc,
-      ContractSource contracts,
       ErrorCollector errors) {
     var result =
         addTable(
@@ -957,13 +924,12 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
             schemaLoader,
             mutationBuilder,
             hintsAndDoc,
-            contracts,
             errors);
     if (result.isSourceTable()) {
-      return Optional.of(addSourceTable(result, errors));
+      return result.withSourceView(addSourceTable(result, errors));
     }
     checkRequiredColumns(result, errors);
-    return Optional.empty();
+    return result;
   }
 
   /**
@@ -1058,6 +1024,8 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
    *     that its LIKE clause copies if it has none
    * @param documentation the documentation of the table: its doc string, with the comments of the
    *     columns that the doc string doesn't document
+   * @param sourceView the view that covers the table for the queries that read it, see {@link
+   *     #addSourceTable}; empty for a table that is only written
    */
   public record AddTableResult(
       String tableName,
@@ -1068,7 +1036,23 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
       SqlCreateTable createdTable,
       String completeCreateTableSql,
       HintsAndDoc hintsAndDoc,
-      Documentation documentation) {}
+      Documentation documentation,
+      Optional<TableAnalysis> sourceView) {
+
+    private AddTableResult withSourceView(TableAnalysis sourceView) {
+      return new AddTableResult(
+          tableName,
+          statementName,
+          baseTableIdentifier,
+          isSourceTable,
+          tableAnalysis,
+          createdTable,
+          completeCreateTableSql,
+          hintsAndDoc,
+          documentation,
+          Optional.of(sourceView));
+    }
+  }
 
   /**
    * Adds a table to Flink and analyzes the table for schema and primary key definition. If the
@@ -1088,7 +1072,6 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
       SchemaLoader schemaLoader,
       Optional<MutationBuilder> mutationBuilder,
       HintsAndDoc hintsAndDoc,
-      ContractSource contracts,
       ErrorCollector errors) {
 
     var tableSqlNode = parseSQL(createTableSql);
@@ -1211,25 +1194,11 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
         new FlinkConnectorConfigWrapper(
             tableOp.getCatalogTable().getOptions(),
             catalogManager.getCatalog(tableId.getCatalogName()));
-    var mutation = mutationBld != null ? mutationBld.build() : null;
-    var extendedContract =
-        getLikeTable(fullTable)
-            .flatMap(TableAnalysis::getSourceSinkTable)
-            .map(likeTable -> likeTable.definition().contract());
-    var definition =
-        new TableDefinition(
-            origTableName,
-            contracts.forTable(
-                origTableName, isSchemaTable(tableOp, mutationBuilder), extendedContract),
-            mutation != null && !mutation.getPartitionKey().isEmpty()
-                ? mutation.getPartitionKey()
-                : tableOp.getCatalogTable().getPartitionKeys(),
-            documentation,
-            tableHintsAndDoc.hints().isTest());
     var tableAnalysis =
         TableAnalysis.makeRootSourceTable(
             tableId,
-            new SourceSinkTableAnalysis(connector, flinkSchema, mutation, definition),
+            new SourceSinkTableAnalysis(
+                connector, flinkSchema, mutationBld != null ? mutationBld.build() : null),
             connector.getTableType(),
             pk,
             tags);
@@ -1244,7 +1213,8 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
         fullTable,
         completeCreateTableSql,
         tableHintsAndDoc,
-        documentation);
+        documentation,
+        Optional.empty());
   }
 
   /**
@@ -1485,35 +1455,13 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
     return urls;
   }
 
-  /**
-   * A schema table has no connector and is not managed by an engine. It only declares columns that
-   * other tables take over with a LIKE clause, and its name ends in {@code _schema}.
-   */
-  private static boolean isSchemaTable(
-      CreateTableOperation tableOp, Optional<MutationBuilder> mutationBuilder) {
-    return tableOp.getTableIdentifier().getObjectName().endsWith(SCHEMA_TABLE_SUFFIX)
-        && tableOp.getCatalogTable().getOptions().isEmpty()
-        && mutationBuilder.isEmpty();
-  }
-
-  /** The created table that the LIKE clause of a statement copies, if it has one. */
-  private Optional<TableAnalysis> getLikeTable(SqlCreateTable createdTable) {
-    if (createdTable instanceof SqlCreateTableLike createTableLike) {
-      var likeTableId = qualifyIdentifier(createTableLike.getTableLike().getSourceTable());
-      return Optional.ofNullable(tableLookup.lookupSourceTable(likeTableId));
-    }
-    return Optional.empty();
-  }
-
   private static void validateMutationHints(
       CreateTableOperation tableOp, Optional<MutationBuilder> mutationBuilder) {
     var tableName = tableOp.getTableIdentifier().getObjectName();
     var options = tableOp.getCatalogTable().getOptions();
 
     // TODO: Collect supported engines dynamically in a sane way
-    if (!tableName.endsWith(SCHEMA_TABLE_SUFFIX)
-        && options.isEmpty()
-        && mutationBuilder.isEmpty()) {
+    if (!tableName.endsWith("_schema") && options.isEmpty() && mutationBuilder.isEmpty()) {
       throw new NoLocationStatementParserException(
           "Mutation engine hint \"/*+ engine(...) */\" is required for internal CREATE TABLE statements."
               + " Supported engines: \"kafka\", \"iceberg\".");

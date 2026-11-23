@@ -15,8 +15,6 @@
  */
 package com.datasqrl.planner.contract;
 
-import com.datasqrl.planner.contract.model.OdcsContract;
-import com.fasterxml.jackson.databind.JsonNode;
 import java.nio.file.Path;
 import java.util.List;
 
@@ -24,7 +22,7 @@ import java.util.List;
  * The data contracts of a compilation: the documents that are written to the deployment, and how
  * the contract files of the project were used.
  *
- * @param documents the documents, each with at least one schema object
+ * @param documents the documents, each of which describes at least one table
  * @param files the contract files of the project, sorted by path
  */
 public record DataContracts(List<Document> documents, List<ContractFileUsage> files) {
@@ -34,37 +32,21 @@ public record DataContracts(List<Document> documents, List<ContractFileUsage> fi
   /**
    * A data contract that is written to the deployment.
    *
-   * @param name the name of the document, which is its id and its file name without the extension
-   * @param schema the schema objects: the ones that contract files provide, with all their fields,
-   *     and generated ones
+   * @param fileName the name of the file of the contract
+   * @param content the content of the file, in the format of the contract
    */
-  public record Document(String name, List<JsonNode> schema) {
-
-    public String fileName() {
-      return OdcsConstants.fileName(name);
-    }
-
-    public OdcsContract toContract() {
-      return new OdcsContract(
-          OdcsVersion.LATEST.getApiVersion(),
-          OdcsConstants.KIND,
-          name,
-          name,
-          OdcsConstants.GENERATED_VERSION,
-          schema);
-    }
-  }
+  public record Document(String fileName, String content) {}
 
   /**
    * How a contract file of the project was used.
    *
    * @param file the contract file in the build folder
    * @param used false if the script next to the file is not part of the compilation
-   * @param appliedTables the tables that schema objects of the file were applied to
-   * @param unappliedObjects the schema objects of the file that match no table
+   * @param appliedTables the tables that entries of the file were applied to
+   * @param unappliedEntries the entries of the file that match no table
    */
   public record ContractFileUsage(
-      Path file, boolean used, List<String> appliedTables, List<String> unappliedObjects) {
+      Path file, boolean used, List<String> appliedTables, List<String> unappliedEntries) {
 
     /**
      * @param shownFile the path of the file as the user knows it
@@ -78,9 +60,9 @@ public record DataContracts(List<Document> documents, List<ContractFileUsage> fi
           shownFile
               + ": "
               + (appliedTables.isEmpty() ? "no table" : String.join(", ", appliedTables));
-      return unappliedObjects.isEmpty()
+      return unappliedEntries.isEmpty()
           ? line
-          : line + " (not applied: " + String.join(", ", unappliedObjects) + ")";
+          : line + " (not applied: " + String.join(", ", unappliedEntries) + ")";
     }
   }
 }

@@ -106,11 +106,34 @@ class DataContractPreprocessorTest {
         .containsExactly(
             "File [connectors/legacy.odcs.yml] looks like a data contract but is not read. Rename"
                 + " it to [legacy.odcs.yaml]",
-            "File [sinks/legacy.odcs.yml] looks like a data contract but is not read. Rename it to"
-                + " [legacy.odcs.yaml]",
             "File [exported.ODCS.json] looks like a data contract but is not read. Rename it to"
-                + " [exported.odcs.yaml]");
+                + " [exported.odcs.yaml]",
+            "File [sinks/legacy.odcs.yml] looks like a data contract but is not read. Rename it to"
+                + " [legacy.odcs.yaml]");
     assertThat(buildDir).doesNotExist();
+  }
+
+  @Test
+  void givenFilesVisitedInAnotherOrder_whenComplete_thenReportsThemInTheSameOrder() {
+    // The order in which a folder is listed depends on the file system
+    var names = List.of("orphan.odcs.yaml", "legacy.odcs.yml", "exported.odcs.json");
+
+    names.forEach(name -> process(file(name)));
+    assertThatThrownBy(underTest::complete).isInstanceOf(CollectedException.class);
+    var firstRun = messages().stream().map(ErrorMessage::getMessage).toList();
+
+    names.stream().sorted().forEach(name -> process(file(name)));
+    assertThatThrownBy(underTest::complete).isInstanceOf(CollectedException.class);
+    var secondRun =
+        messages().stream().skip(firstRun.size()).map(ErrorMessage::getMessage).toList();
+
+    assertThat(firstRun)
+        .extracting(message -> message.substring(0, message.indexOf(']') + 1))
+        .containsExactly(
+            "File [exported.odcs.json]",
+            "File [legacy.odcs.yml]",
+            "Contract file [orphan.odcs.yaml]");
+    assertThat(secondRun).isEqualTo(firstRun);
   }
 
   @Test

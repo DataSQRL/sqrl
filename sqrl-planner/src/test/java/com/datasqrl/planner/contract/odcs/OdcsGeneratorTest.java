@@ -13,18 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.planner.contract;
+package com.datasqrl.planner.contract.odcs;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 
 import com.datasqrl.io.tables.TableType;
 import com.datasqrl.planner.analyzer.TableAnalysis;
+import com.datasqrl.planner.contract.ContractSubject;
 import com.datasqrl.planner.contract.ContractSubject.Column;
 import com.datasqrl.planner.contract.ContractSubject.ColumnKind;
-import com.datasqrl.planner.contract.model.OdcsContract;
-import com.datasqrl.planner.contract.model.OdcsProperty;
-import com.datasqrl.planner.contract.model.OdcsSchemaObject;
+import com.datasqrl.planner.contract.odcs.model.OdcsContract;
+import com.datasqrl.planner.contract.odcs.model.OdcsProperty;
+import com.datasqrl.planner.contract.odcs.model.OdcsSchemaObject;
 import com.datasqrl.planner.hint.DocStringParser;
 import com.datasqrl.planner.tables.StorageType;
 import com.datasqrl.planner.tags.TableTags;
@@ -77,12 +78,12 @@ class OdcsGeneratorTest {
             .watermarkColumn(Optional.of("event_time"))
             .build();
 
-    var schemaObject = generator.generate(subject, OdcsVersion.V3_2);
+    var schemaObject = generator.generate(subject);
 
     assertThat(schemaObject.properties())
         .extracting(OdcsProperty::name, OdcsProperty::logicalType, OdcsProperty::required)
         .containsExactly(tuple("id", "integer", true), tuple("email", "string", null));
-    assertValidOdcs(schemaObject, OdcsVersion.V3_2);
+    assertValidOdcs(schemaObject);
   }
 
   @Test
@@ -96,7 +97,7 @@ class OdcsGeneratorTest {
             .watermarkColumn(Optional.of("received_at"))
             .build();
 
-    var schemaObject = generator.generate(subject, OdcsVersion.V3_2);
+    var schemaObject = generator.generate(subject);
 
     assertThat(schemaObject.properties())
         .extracting(OdcsProperty::name)
@@ -116,7 +117,7 @@ class OdcsGeneratorTest {
             .partitionKeys(List.of("REGION"))
             .build();
 
-    var schemaObject = generator.generate(subject, OdcsVersion.V3_2);
+    var schemaObject = generator.generate(subject);
 
     assertThat(schemaObject.properties())
         .extracting(
@@ -129,7 +130,7 @@ class OdcsGeneratorTest {
             tuple("region", true, 2, true, 1),
             tuple("id", true, 1, null, null),
             tuple("amount", null, null, null, null));
-    assertValidOdcs(schemaObject, OdcsVersion.V3_2);
+    assertValidOdcs(schemaObject);
   }
 
   @Test
@@ -151,7 +152,7 @@ class OdcsGeneratorTest {
             .storageName(Optional.of("customers-v1"))
             .build();
 
-    var schemaObject = generator.generate(subject, OdcsVersion.V3_2);
+    var schemaObject = generator.generate(subject);
 
     assertThat(schemaObject)
         .extracting(
@@ -181,7 +182,7 @@ class OdcsGeneratorTest {
                 "The contact email @gdpr @classification=secret",
                 List.of("gdpr"),
                 "secret"));
-    assertValidOdcs(schemaObject, OdcsVersion.V3_2);
+    assertValidOdcs(schemaObject);
   }
 
   @Test
@@ -192,8 +193,7 @@ class OdcsGeneratorTest {
             .documentation(DocStringParser.parse("Customers @pii=raw"))
             .build();
 
-    var schemaObject =
-        new OdcsGenerator(TagDefinitions.DISABLED).generate(subject, OdcsVersion.V3_2);
+    var schemaObject = new OdcsGenerator(TagDefinitions.DISABLED).generate(subject);
 
     assertThat(schemaObject.tags()).isEmpty();
     assertThat(schemaObject.properties().get(0).tags()).isEmpty();
@@ -222,7 +222,7 @@ class OdcsGeneratorTest {
             .storageName(Optional.of("OrderCounts_1"))
             .build();
 
-    var schemaObject = generator.generate(subject, OdcsVersion.V3_2);
+    var schemaObject = generator.generate(subject);
 
     assertThat(schemaObject.properties())
         .extracting(OdcsProperty::name, OdcsProperty::primaryKeyPosition)
@@ -231,26 +231,7 @@ class OdcsGeneratorTest {
     assertThat(schemaObject.description()).isEqualTo("Orders per customer");
     assertThat(schemaObject.physicalName()).isEqualTo("OrderCounts_1");
     assertThat(schemaObject.physicalType()).isEqualTo("table");
-    assertValidOdcs(schemaObject, OdcsVersion.V3_2);
-  }
-
-  @Test
-  void givenOlderVersion_whenGenerate_thenTheContractIsValidForThatVersion() {
-    var subject =
-        subject("Events")
-            .columns(
-                List.of(
-                    new Column("at", TIMESTAMP_NOT_NULL, ColumnKind.PHYSICAL),
-                    new Column(
-                        "attributes", TYPES.createMapType(STRING, STRING), ColumnKind.PHYSICAL)))
-            .build();
-
-    var schemaObject = generator.generate(subject, OdcsVersion.V3_0);
-
-    assertThat(schemaObject.properties())
-        .extracting(OdcsProperty::name, OdcsProperty::logicalType)
-        .containsExactly(tuple("at", "date"), tuple("attributes", "object"));
-    assertValidOdcs(schemaObject, OdcsVersion.V3_0);
+    assertValidOdcs(schemaObject);
   }
 
   private static ContractSubject.ContractSubjectBuilder subject(String name) {
@@ -263,10 +244,10 @@ class OdcsGeneratorTest {
 
   /** Asserts that a contract with the schema object is valid ODCS. */
   @SneakyThrows
-  static void assertValidOdcs(OdcsSchemaObject schemaObject, OdcsVersion version) {
+  static void assertValidOdcs(OdcsSchemaObject schemaObject) {
     var contract =
         new OdcsContract(
-            version.getApiVersion(),
+            OdcsVersion.API_VERSION,
             OdcsConstants.KIND,
             "test",
             "test",
