@@ -56,6 +56,10 @@ public abstract class AbstractCompileCmd extends BasePackageConfCmd {
     if (!errors.hasErrors()) {
       execute(errors);
     }
+    // Print the results after execute, because a check in execute can still fail the compile.
+    if (!errors.hasErrors() && getGoal() == ExecutionGoal.COMPILE) {
+      printCompilationResults(getOutputFormatter());
+    }
   }
 
   @Override
@@ -141,10 +145,6 @@ public abstract class AbstractCompileCmd extends BasePackageConfCmd {
       }
 
       packager.postprocess(getTargetDir(), plan.getLeft(), plan.getRight());
-
-      if (getGoal() == ExecutionGoal.COMPILE) {
-        printCompilationResults(formatter);
-      }
     }
   }
 

@@ -65,7 +65,7 @@ class FlinkStateUpgradeCheckTest {
     assertThat(result.breaks())
         .containsExactly(new RemovedOperator("2", "GroupAggregate(groupBy=[customerid])"));
     assertThat(result.breaks().get(0).toMessage())
-        .isEqualTo("operator 2 removed: GroupAggregate(groupBy=[customerid])");
+        .isEqualTo("operator id=2 removed: GroupAggregate(groupBy=[customerid])");
   }
 
   @Test
@@ -81,7 +81,7 @@ class FlinkStateUpgradeCheckTest {
                 "3", "stream-exec-sink_1", "stream-exec-sink_2", "Sink(table=[CustomerCount])"));
     assertThat(result.breaks().get(0).toMessage())
         .isEqualTo(
-            "operator 3 changed: field 'type' differs:"
+            "operator id=3 changed: field 'type' differs:"
                 + " stream-exec-sink_1 -> stream-exec-sink_2 (Sink(table=[CustomerCount]))");
   }
 
@@ -112,7 +112,7 @@ class FlinkStateUpgradeCheckTest {
     assertThat(result.breaks()).hasSize(1);
     assertThat(result.breaks().get(0).toMessage())
         .isEqualTo(
-            "operator 2 changed: field 'state' differs"
+            "operator id=2 changed: field 'state' differs"
                 + " (old: GroupAggregate(groupBy=[customerid]),"
                 + " new: GroupAggregate(groupBy=[customerid, region]))");
   }
@@ -142,6 +142,20 @@ class FlinkStateUpgradeCheckTest {
   @Test
   void givenMissingFieldAndJsonNull_whenCheck_thenNoBreaks() {
     var result = check(plan("2.3", joinOperator()), plan("2.3", joinOperator().putNull("state")));
+
+    assertThat(result.breaks()).isEmpty();
+  }
+
+  @Test
+  void givenOnlyConnectorOptionsAndConfigurationChanged_whenCheck_thenNoBreaks() {
+    var oldSinkOperator = sinkOperator();
+    oldSinkOperator.putObject("configuration").put("table.exec.sink.not-null-enforcer", "ERROR");
+    sinkTableOptions(oldSinkOperator).put("sink.buffer-flush.max-rows", "100");
+    var newSinkOperator = sinkOperator();
+    newSinkOperator.putObject("configuration").put("table.exec.sink.not-null-enforcer", "DROP");
+    sinkTableOptions(newSinkOperator).put("sink.buffer-flush.max-rows", "500");
+
+    var result = check(plan("2.3", oldSinkOperator), plan("2.3", newSinkOperator));
 
     assertThat(result.breaks()).isEmpty();
   }
@@ -178,8 +192,13 @@ class FlinkStateUpgradeCheckTest {
   }
 
   @Test
-  void givenPlanWithoutFlinkVersion_whenCheck_thenNoFlinkVersionChange() {
+  void givenNewPlanWithoutFlinkVersion_whenCheck_thenNoFlinkVersionChange() {
     assertThat(check(plan("2.3"), OBJECT_MAPPER.createObjectNode()).flinkVersionChange()).isEmpty();
+  }
+
+  @Test
+  void givenOldPlanWithoutFlinkVersion_whenCheck_thenNoFlinkVersionChange() {
+    assertThat(check(OBJECT_MAPPER.createObjectNode(), plan("2.3")).flinkVersionChange()).isEmpty();
   }
 
   @Test
@@ -252,6 +271,16 @@ class FlinkStateUpgradeCheckTest {
   private static ObjectNode sinkOperator() {
     return operator(3, "stream-exec-sink_1", "Sink(table=[CustomerCount])")
         .put("inputChangelogMode", "INSERT, UPDATE_AFTER");
+  }
+
+  /** Returns the table options of a sink operator, in the place where Flink writes them. */
+  private static ObjectNode sinkTableOptions(ObjectNode sinkOperator) {
+    return sinkOperator
+        .putObject("dynamicTableSink")
+        .putObject("table")
+        .putObject("resolvedTable")
+        .putObject("options")
+        .put("connector", "jdbc");
   }
 
   private static ObjectNode joinOperator() {
