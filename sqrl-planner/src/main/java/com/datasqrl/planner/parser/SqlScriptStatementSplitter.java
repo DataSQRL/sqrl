@@ -40,10 +40,19 @@ public final class SqlScriptStatementSplitter {
 
   private static final String STATEMENT_DELIMITER = ";"; // a statement should end with `;`
   private static final String LINE_DELIMITER = "\n";
+  private static final String RETURNS = "RETURNS";
   private static final char SINGLE_QUOTE = '\'';
   private static final char BACKTICK = '`';
   private static final char DOUBLE_QUOTE = '"';
   private static final char NO_QUOTE = '\0';
+
+  /**
+   * A statement that is missing its terminating {@code ;}.
+   *
+   * @param statementStart the location of the statement in the script
+   * @param delimiterLocation the location where the {@code ;} is missing
+   */
+  public record MissingDelimiter(FileLocation statementStart, FileLocation delimiterLocation) {}
 
   /**
    * Parses SQL statements from a script.
@@ -52,6 +61,21 @@ public final class SqlScriptStatementSplitter {
    * @return A list of individual SQL statements.
    */
   public static List<ParsedObject<String>> splitStatements(String script) {
+    return splitStatements(script, new ArrayList<>());
+  }
+
+  /**
+   * Parses SQL statements from a script. A SQRL definition that follows SQL of the current
+   * statement starts a new statement, so that a single missing {@code ;} does not merge two
+   * statements; the statement before it is reported in {@code missingDelimiters}. Comments and line
+   * breaks inside or around the definition's header do not matter.
+   *
+   * @param script The SQL script content.
+   * @param missingDelimiters Collects the statements that are missing their {@code ;}.
+   * @return A list of individual SQL statements.
+   */
+  public static List<ParsedObject<String>> splitStatements(
+      String script, List<MissingDelimiter> missingDelimiters) {
     if (script.isBlank()) {
       throw new StatementParserException("Script is empty");
     }
@@ -61,7 +85,10 @@ public final class SqlScriptStatementSplitter {
     var formatted = formatEndOfSqlFile(script);
 
     StringBuilder current = null;
-    var statementLineNo = 0;
+    // The current statement with its comments and quoted text blanked out
+    StringBuilder code = null;
+    DefinitionScanner definitions = null;
+    FileLocation statementStart = null;
     var lineNo = 0;
     var openQuote = NO_QUOTE;
     var inPreservedBlockComment = false;
@@ -72,30 +99,64 @@ public final class SqlScriptStatementSplitter {
 
       var parsedLine = parseLine(line, openQuote, inPreservedBlockComment);
       var rawLine = parsedLine.line();
+      // The statement ended with `;` on a line that ended inside a comment, so the SQL of this line
+      // starts the next statement
+      var startsNextStatement = statementTerminated && parsedLine.containsSql();
       openQuote = parsedLine.openQuote();
       inPreservedBlockComment = parsedLine.inPreservedBlockComment();
-      statementTerminated |= parsedLine.endsWithStatementDelimiter();
-      statementContainsSql |= parsedLine.containsSql();
       if (rawLine.isBlank()) {
         if (current != null) {
           current.append(LINE_DELIMITER);
+          code.append(LINE_DELIMITER);
         }
         continue;
       }
 
       if (current == null) {
-        statementLineNo = lineNo;
+        statementStart = new FileLocation(lineNo, 1);
         current = new StringBuilder();
+        code = new StringBuilder();
+        definitions = new DefinitionScanner();
+      }
+      var lineStart = current.length();
+      current.append(rawLine).append(LINE_DELIMITER);
+      code.append(parsedLine.code()).append(LINE_DELIMITER);
+      statementTerminated |= parsedLine.endsWithStatementDelimiter();
+      statementContainsSql |= parsedLine.containsSql();
+
+      var nextStatement =
+          startsNextStatement
+              ? lineStart + CharMatcher.whitespace().negate().indexIn(parsedLine.code())
+              : definitions.nextDefinition(code);
+      while (nextStatement >= 0) {
+        // The statement ends with its last SQL; what follows, e.g. a hint, belongs to the next one
+        var sqlEnd =
+            CharMatcher.whitespace().negate().lastIndexIn(code.subSequence(0, nextStatement)) + 1;
+        statements.add(
+            new ParsedObject<>(
+                addStatementDelimiter(current.substring(0, sqlEnd)) + LINE_DELIMITER,
+                statementStart));
+        if (code.charAt(sqlEnd - 1) != STATEMENT_DELIMITER.charAt(0)) {
+          missingDelimiters.add(
+              new MissingDelimiter(
+                  statementStart, statementStart.add(computeOffset(current.toString(), sqlEnd))));
+        }
+
+        var nextStart = CharMatcher.whitespace().negate().indexIn(current, sqlEnd);
+        statementStart = statementStart.add(computeOffset(current.toString(), nextStart));
+        current = new StringBuilder(current.substring(nextStart));
+        code = new StringBuilder(code.substring(nextStart));
+        definitions = new DefinitionScanner();
+        statementTerminated = parsedLine.endsWithStatementDelimiter();
+        nextStatement = definitions.nextDefinition(code);
       }
 
-      current.append(rawLine);
-      current.append(LINE_DELIMITER);
-
       if (openQuote == NO_QUOTE && !inPreservedBlockComment && statementTerminated) {
-        var fileLoc = new FileLocation(statementLineNo, 1);
-        var parsedObj = new ParsedObject<>(current.toString(), fileLoc);
+        var parsedObj = new ParsedObject<>(current.toString(), statementStart);
         statements.add(parsedObj);
         current = null;
+        code = null;
+        definitions = null;
         statementTerminated = false;
         statementContainsSql = false;
       }
@@ -106,7 +167,7 @@ public final class SqlScriptStatementSplitter {
       var statement =
           addStatementDelimiter(CharMatcher.whitespace().trimTrailingFrom(current))
               + LINE_DELIMITER;
-      statements.add(new ParsedObject<>(statement, new FileLocation(statementLineNo, 1)));
+      statements.add(new ParsedObject<>(statement, statementStart));
     }
 
     return statements;
@@ -175,13 +236,16 @@ public final class SqlScriptStatementSplitter {
   private static ParsedLine parseLine(
       String line, char openQuote, boolean inPreservedBlockComment) {
     var parsed = new StringBuilder();
+    var code = new StringBuilder();
     var lastSignificantCharacter = '\0';
 
     for (var i = 0; i < line.length(); i++) {
       if (inPreservedBlockComment) {
         parsed.append(line.charAt(i));
+        code.append(' ');
         if (endsBlockComment(line, i)) {
           parsed.append(line.charAt(i + 1));
+          code.append(' ');
           inPreservedBlockComment = false;
           i++;
         }
@@ -195,8 +259,12 @@ public final class SqlScriptStatementSplitter {
       if (openQuote != NO_QUOTE) {
         parsed.append(ch);
         if (ch == openQuote) {
+          code.append(ch);
           openQuote = NO_QUOTE;
           lastSignificantCharacter = ch;
+        } else {
+          // Quoted text is not code, but a name in backticks stays a name
+          code.append(openQuote == BACKTICK ? '_' : ' ');
         }
         continue;
       }
@@ -204,6 +272,7 @@ public final class SqlScriptStatementSplitter {
       if (startsBlockComment(line, i)) {
         inPreservedBlockComment = true;
         parsed.append(ch);
+        code.append(' ');
         continue;
       }
 
@@ -212,6 +281,7 @@ public final class SqlScriptStatementSplitter {
       }
 
       parsed.append(ch);
+      code.append(ch);
       if (ch == SINGLE_QUOTE || ch == BACKTICK || ch == DOUBLE_QUOTE) {
         openQuote = ch;
       }
@@ -222,10 +292,102 @@ public final class SqlScriptStatementSplitter {
 
     return new ParsedLine(
         parsed.toString(),
+        code.toString(),
         openQuote,
         inPreservedBlockComment,
         lastSignificantCharacter == STATEMENT_DELIMITER.charAt(0),
         lastSignificantCharacter != '\0');
+  }
+
+  /**
+   * Finds the start of the header of the definition whose {@code :=} is at {@code operator}. The
+   * header is {@code name [(arguments)] [RETURNS (columns)]}, as {@code SqrlStatementParser} reads
+   * it, so it is read here backwards from the {@code :=}, one name or group at a time.
+   *
+   * @return where the header starts, or -1 if there is no header before the {@code :=}
+   */
+  private static int headerStart(CharSequence code, int operator) {
+    var last = tokenBefore(code, operator);
+    if (last == null || !last.group()) {
+      // name :=
+      return last == null ? -1 : last.start();
+    }
+
+    var name = tokenBefore(code, last.start());
+    if (name == null || name.group()) {
+      return -1;
+    }
+
+    if (RETURNS.equalsIgnoreCase(name.text(code))) {
+      // name [(arguments)] RETURNS (columns) :=, unless no name comes before RETURNS, or RETURNS
+      // starts a line that the name before it does not, e.g. `FROM T` and then `Returns(x INT) :=`
+      var function = nameBefore(code, name.start());
+      if (function != null
+          && (startsLine(code, function.start()) || !startsLine(code, name.start()))) {
+        return function.start();
+      }
+    }
+
+    // name (arguments) :=
+    return name.start();
+  }
+
+  /** The name that ends before {@code end}, optionally followed by its arguments, or null. */
+  private static Token nameBefore(CharSequence code, int end) {
+    var token = tokenBefore(code, end);
+    if (token != null && token.group()) {
+      token = tokenBefore(code, token.start());
+    }
+
+    return token == null || token.group() ? null : token;
+  }
+
+  /**
+   * The name, or the group in parentheses, that ends before {@code end} after whitespace, or null
+   * if there is neither.
+   */
+  private static Token tokenBefore(CharSequence code, int end) {
+    var last = end - 1;
+    while (last >= 0 && Character.isWhitespace(code.charAt(last))) {
+      last--;
+    }
+
+    if (last < 0) {
+      return null;
+    }
+
+    if (code.charAt(last) == ')') {
+      var depth = 0;
+      for (var i = last; i >= 0; i--) {
+        if (code.charAt(i) == ')') {
+          depth++;
+        } else if (code.charAt(i) == '(' && --depth == 0) {
+          return new Token(i, last + 1, true);
+        }
+      }
+      return null;
+    }
+
+    var start = last + 1;
+    while (start > 0 && isNameCharacter(code.charAt(start - 1))) {
+      start--;
+    }
+
+    return start <= last ? new Token(start, last + 1, false) : null;
+  }
+
+  private static boolean isNameCharacter(char ch) {
+    return Character.isLetterOrDigit(ch) || "_.*-`".indexOf(ch) >= 0;
+  }
+
+  /** Whether only whitespace comes before {@code index} on its line. */
+  private static boolean startsLine(CharSequence code, int index) {
+    for (var i = index - 1; i >= 0 && code.charAt(i) != '\n'; i--) {
+      if (!Character.isWhitespace(code.charAt(i))) {
+        return false;
+      }
+    }
+    return true;
   }
 
   private static boolean startsLineComment(String line, int pos) {
@@ -240,10 +402,69 @@ public final class SqlScriptStatementSplitter {
     return line.charAt(pos) == '*' && pos + 1 < line.length() && line.charAt(pos + 1) == '/';
   }
 
+  /**
+   * Scans the code of a statement for SQRL definitions while its lines are added, continuing where
+   * the last scan stopped, so that each character is scanned once.
+   */
+  private static final class DefinitionScanner {
+
+    private int position = 0;
+    // The parentheses that are open at the position
+    private int depth = 0;
+
+    /**
+     * Finds a SQRL definition that does not start the statement: a {@code :=} outside of
+     * parentheses, where it is not valid SQL, with SQL before its header. Inside parentheses,
+     * {@code :=} can be a named argument of a function in the SQL of a database, e.g. {@code p_id
+     * := :id}.
+     *
+     * @param code the statement without its comments and quoted text
+     * @return where the header of the definition starts, or -1 if there is no such definition
+     */
+    int nextDefinition(CharSequence code) {
+      for (; position + 1 < code.length(); position++) {
+        var ch = code.charAt(position);
+        if (ch == '(') {
+          depth++;
+        } else if (ch == ')') {
+          depth--;
+        } else if (ch == ':' && code.charAt(position + 1) == '=' && depth <= 0) {
+          var header = headerStart(code, position);
+          if (header > 0 && !CharMatcher.whitespace().matchesAllOf(code.subSequence(0, header))) {
+            return header;
+          }
+        }
+      }
+      return -1;
+    }
+  }
+
+  /**
+   * A line without its line comment, and the state after it.
+   *
+   * @param code the line with its block comments and quoted text replaced by spaces, so that the
+   *     columns stay the same; the quote characters are kept, and the text of a name in backticks
+   *     is replaced by {@code _}
+   */
   private record ParsedLine(
       String line,
+      String code,
       char openQuote,
       boolean inPreservedBlockComment,
       boolean endsWithStatementDelimiter,
       boolean containsSql) {}
+
+  /**
+   * A name, or a group in parentheses, in the code of a statement.
+   *
+   * @param start where it starts
+   * @param end where it ends, exclusive
+   * @param group whether it is a group in parentheses
+   */
+  private record Token(int start, int end, boolean group) {
+
+    String text(CharSequence code) {
+      return code.subSequence(start, end).toString();
+    }
+  }
 }

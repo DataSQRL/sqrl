@@ -20,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorLocation.FileLocation;
+import com.datasqrl.error.ErrorMessage;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -89,6 +90,86 @@ class SqrlStatementParserTest {
     var parsed = parser.parseStatement("EXPORT\n  Datapoints TO mypkg.sink;");
 
     assertThat(parsed).isInstanceOf(SqrlExportStatement.class);
+  }
+
+  @Test
+  void givenDefinitionsMissingDelimiter_whenParseCreateTables_thenTablesAreParsed() {
+    var script =
+        """
+        CREATE TABLE Orders (id INT) WITH ('connector' = 'datagen');
+        A := SELECT 1
+        B := SELECT 2;
+        """;
+    var errors = ErrorCollector.root();
+
+    var tables = parser.parseCreateTables(script, errors);
+
+    assertThat(tables)
+        .singleElement()
+        .satisfies(
+            table ->
+                assertThat(table.statement().get()).isInstanceOf(SqrlCreateTableStatement.class));
+    assertThat(errors.hasErrors()).isFalse();
+  }
+
+  @Test
+  void givenDefinitionMissingDelimiter_whenParseScript_thenReportsItAtTheEndOfTheStatement() {
+    var script =
+        """
+        A := SELECT 1
+        B := SELECT 2;
+        """;
+    var errors = ErrorCollector.root().withScript("test.sqrl", script);
+
+    var parsed = parser.parseScript(script, errors);
+
+    assertThat(parsed.statements())
+        .allSatisfy(statement -> assertThat(statement).isInstanceOf(ParsedStatement.class))
+        .map(statement -> ((ParsedStatement) statement).statement())
+        .satisfiesExactly(
+            a -> {
+              assertThat(a.get()).isInstanceOf(SqrlTableDefinition.class);
+              assertThat(a.getFileLocation()).isEqualTo(new FileLocation(1, 1));
+            },
+            b -> {
+              assertThat(b.get()).isInstanceOf(SqrlTableDefinition.class);
+              assertThat(b.getFileLocation()).isEqualTo(new FileLocation(2, 1));
+            });
+    assertThat(parsed.firstError()).isPresent();
+    assertThat(errors)
+        .singleElement()
+        .satisfies(
+            error -> {
+              assertThat(error.getMessage()).isEqualTo("Missing ';' at the end of the statement");
+              assertThat(error.getLocation().getFileLocation()).isEqualTo(new FileLocation(1, 14));
+            });
+  }
+
+  @Test
+  void givenDefinitionMissingDelimiterThatFailsToParse_whenParseScript_thenReportsBothErrors() {
+    var script =
+        """
+        A :=
+        B := SELECT 2;
+        """;
+    var errors = ErrorCollector.root().withScript("test.sqrl", script);
+
+    var parsed = parser.parseScript(script, errors);
+
+    assertThat(parsed.statements()).hasSize(2).first().isInstanceOf(UnparsedStatement.class);
+    assertThat(parsed.firstError()).isPresent();
+    assertThat(errors)
+        .extracting(ErrorMessage::getMessage)
+        .containsExactly(
+            "Missing query or expression after ':=' in the definition of A",
+            "Missing ';' at the end of the statement");
+    assertThat(errors)
+        .filteredOn(error -> error.getMessage().startsWith("Missing ';'"))
+        .singleElement()
+        .satisfies(
+            error ->
+                assertThat(error.getLocation().getFileLocation())
+                    .isEqualTo(new FileLocation(1, 5)));
   }
 
   @Test
