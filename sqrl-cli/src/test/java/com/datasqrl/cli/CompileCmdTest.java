@@ -26,6 +26,8 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.datasqrl.cli.output.DefaultOutputFormatter;
+import com.datasqrl.cli.output.OutputFormatter;
 import com.datasqrl.compile.CompilationProcess;
 import com.datasqrl.compile.TestPlan;
 import com.datasqrl.config.ExecutionEnginesHolder;
@@ -38,7 +40,9 @@ import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorMessage;
 import com.datasqrl.packager.Packager;
 import com.datasqrl.util.ConfigLoaderUtils;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -80,6 +84,9 @@ class CompileCmdTest {
   @Mock private CompilationProcess compilationProcess;
 
   @TempDir private Path tempDir;
+
+  /** The text that the commands of {@link #compileCmdWithOldBuild} print. */
+  private final ByteArrayOutputStream compileOutput = new ByteArrayOutputStream();
 
   @Test
   void compile_whenProjectRootIsSet_resolvesTestDirFromProjectRoot() throws Exception {
@@ -335,7 +342,8 @@ class CompileCmdTest {
 
     assertThatThrownBy(() -> compileCmd.runInternal(ErrorCollector.root()))
         .isInstanceOf(CollectedException.class)
-        .hasMessageContaining("is inside the build folder");
+        .hasMessageContaining("is inside the build folder")
+        .hasMessageContaining("Give this compile a -b value");
     assertThat(oldPlanFile).exists();
   }
 
@@ -374,7 +382,26 @@ class CompileCmdTest {
 
     assertThatThrownBy(() -> compileCmd.runInternal(ErrorCollector.root()))
         .isInstanceOf(CollectedException.class)
-        .hasMessageContaining("is inside the target folder");
+        .hasMessageContaining("is inside the target folder")
+        .hasMessageContaining("Give this compile a -t value")
+        .hasMessageNotContaining("-b value");
+    assertThat(oldPlanFile).exists();
+  }
+
+  @Test
+  void givenOptionOnCommandLine_whenExecuteCompile_thenParsesOptionAndFailsBeforeCompile()
+      throws IOException {
+    var oldPlanFile = createOldBuild("build/shop");
+    Files.writeString(tempDir.resolve("package.json"), "{}");
+    var statusHook = new StatusHook.Impl();
+
+    var exitCode =
+        new DatasqrlCli(tempDir, statusHook, true)
+            .getCmd()
+            .execute("compile", "-b", "shop", "--check-state-upgrade-from", "build/shop");
+
+    assertThat(exitCode).isOne();
+    assertThat(statusHook.isFailed()).isTrue();
     assertThat(oldPlanFile).exists();
   }
 
@@ -389,6 +416,7 @@ class CompileCmdTest {
 
     assertThat(errors.hasErrors()).isFalse();
     assertThat(notices(errors)).anyMatch(notice -> notice.contains("can restore the state"));
+    assertThat(compileOutput.toString()).contains("BUILD SUCCESS");
   }
 
   @Test
@@ -418,7 +446,10 @@ class CompileCmdTest {
 
     assertThatThrownBy(() -> runCompile(compileCmd, ErrorCollector.root()))
         .isInstanceOf(CollectedException.class)
-        .hasMessageContaining("operator 2 removed: Sink(CustomerCount)");
+        .hasMessageContaining("operator id=2 removed: Sink(CustomerCount)");
+    assertThat(compileOutput.toString())
+        .contains("Generating deployment artifacts")
+        .doesNotContain("BUILD SUCCESS");
   }
 
   @Test
@@ -454,7 +485,7 @@ class CompileCmdTest {
 
   /**
    * Returns {@code compile -b shop --check-state-upgrade-from <oldBuildFolder> <packageFiles>}, and
-   * writes each package file into the project root.
+   * writes each package file into the project root. The command prints into {@link #compileOutput}.
    */
   private CompileCmd compileCmdWithOldBuild(String oldBuildFolder, String... packageFileNames)
       throws IOException {
@@ -462,7 +493,15 @@ class CompileCmdTest {
       Files.writeString(tempDir.resolve(packageFileName), "{}");
     }
 
-    var compileCmd = new CompileCmd();
+    var compileOutputStream = new PrintStream(compileOutput, true);
+    var compileCmd =
+        new CompileCmd() {
+          @Override
+          protected OutputFormatter getOutputFormatter() {
+            return new DefaultOutputFormatter(
+                tempDir, true, compileOutputStream, compileOutputStream);
+          }
+        };
     compileCmd.cli = new DatasqrlCli(tempDir, StatusHook.NONE, true);
     compileCmd.packageFiles = Stream.of(packageFileNames).map(Path::of).toList();
     compileCmd.buildFolder = Optional.of(Path.of("shop"));

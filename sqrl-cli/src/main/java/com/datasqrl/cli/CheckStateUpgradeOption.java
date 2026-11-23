@@ -63,8 +63,8 @@ public class CheckStateUpgradeOption {
                   .formatted(oldBuildFolderPath));
 
           var oldPlanDir = findPlanDir(oldBuildFolderPath, errors);
-          checkPlanDirOutside(oldPlanDir, "build folder", buildDir, errors);
-          checkPlanDirOutside(oldPlanDir, "target folder", targetDir, errors);
+          checkPlanDirOutside(oldPlanDir, "build folder", "-b", buildDir, errors);
+          checkPlanDirOutside(oldPlanDir, "target folder", "-t", targetDir, errors);
         });
   }
 
@@ -142,19 +142,23 @@ public class CheckStateUpgradeOption {
 
   /**
    * Fails when the old plan folder is inside a folder that the compile empties. It compares the
-   * real paths, so that a symbolic link cannot hide this.
+   * real paths, so that a symbolic link cannot hide this. The message names the option that sets
+   * the compile folder, so that the user knows which option to change.
    */
   private static void checkPlanDirOutside(
-      Path oldPlanDir, String compileFolderName, Path compileFolder, ErrorCollector errors) {
+      Path oldPlanDir,
+      String compileFolderName,
+      String compileFolderOption,
+      Path compileFolder,
+      ErrorCollector errors) {
     var absoluteCompileFolder = compileFolder.toAbsolutePath().normalize();
     errors.checkFatal(
         !realPath(oldPlanDir).startsWith(realPath(absoluteCompileFolder)),
         "%s",
         ("The old plan folder %s of --check-state-upgrade-from is inside the %s %s of this compile."
                 + " The compile empties its build folder and its target folder, so it would delete"
-                + " the old build. Give this compile a -b value that is different from the old"
-                + " build.")
-            .formatted(oldPlanDir, compileFolderName, absoluteCompileFolder));
+                + " the old build. Give this compile a %s value that is outside the old build.")
+            .formatted(oldPlanDir, compileFolderName, absoluteCompileFolder, compileFolderOption));
   }
 
   /**

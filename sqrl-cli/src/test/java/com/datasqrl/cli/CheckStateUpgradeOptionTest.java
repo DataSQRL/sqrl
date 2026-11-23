@@ -281,7 +281,7 @@ class CheckStateUpgradeOptionTest {
                       oldBuildPlan, newBuildPlan, ErrorCollector.root()))
           .isInstanceOf(CollectedException.class)
           .hasMessageContaining("cannot restore the state")
-          .hasMessageContaining("operator 2 removed: Sink(CustomerCount)")
+          .hasMessageContaining("operator id=2 removed: Sink(CustomerCount)")
           .hasMessageContaining("execution.state-recovery.ignore-unclaimed-state");
     }
 

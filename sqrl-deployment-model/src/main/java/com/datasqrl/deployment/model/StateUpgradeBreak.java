@@ -33,7 +33,7 @@ public sealed interface StateUpgradeBreak
 
     @Override
     public String toMessage() {
-      return "operator %s removed: %s".formatted(operatorId, description);
+      return "operator id=%s removed: %s".formatted(operatorId, description);
     }
   }
 
@@ -46,7 +46,7 @@ public sealed interface StateUpgradeBreak
 
     @Override
     public String toMessage() {
-      return "operator %s changed: field 'type' differs: %s -> %s (%s)"
+      return "operator id=%s changed: field 'type' differs: %s -> %s (%s)"
           .formatted(operatorId, oldType, newType, description);
     }
   }
@@ -61,7 +61,7 @@ public sealed interface StateUpgradeBreak
 
     @Override
     public String toMessage() {
-      return "operator %s changed: field '%s' differs (old: %s, new: %s)"
+      return "operator id=%s changed: field '%s' differs (old: %s, new: %s)"
           .formatted(operatorId, fieldName, oldDescription, newDescription);
     }
   }

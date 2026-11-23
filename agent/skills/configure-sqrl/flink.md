@@ -96,7 +96,8 @@ Before an upgrade, check that the new plan can restore the state of the running 
 - Use the build folder of the running version as the old build. A new compile of an older script can give a different plan than the plan that runs. You can also compile the package files of the running version with their own `-b` folder first. Do this only when the running version has the same script and DataSQRL version.
 - Give each compile its own `-b` folder. Each compile empties its build folder, and the default build folder `build` holds every other build folder.
 - Run the check again after each change to the script or to the package files.
-- The compile fails with one line for each break, for example `operator 7 changed: field 'state' differs (old: ..., new: ...)`. Find the change in the script or the package files that causes the break. Fix the change, or accept the break as described below.
+- The compile fails with one line for each break, for example `operator id=7 changed: field 'state' differs (old: ..., new: ...)`. Find the change in the script or the package files that causes the break. Fix the change, or accept the break as described below.
+- The operator ids follow the plan order. A new or removed operator moves the ids of each operator after it, so one change can give many lines. Start at the first id with a break, because the cause is usually there. When the lines show the same operator types at nearby ids, the operators possibly only moved by some positions. Consider this before you look for a cause for each line.
 - When only one build sets `pipeline.max-parallelism`, the compile gives a warning. Set the same value in both builds.
 
 To accept removed stateful operators, restore once with `execution.state-recovery.ignore-unclaimed-state: true`. With the Flink Kubernetes Operator, use `job.allowNonRestoredState: true`. Then remove the option, so that it cannot hide an unexpected state mismatch later.
