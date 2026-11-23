@@ -319,9 +319,11 @@ public final class SqlScriptStatementSplitter {
     }
 
     if (RETURNS.equalsIgnoreCase(name.text(code))) {
-      // name [(arguments)] RETURNS (columns) :=, unless no name comes before RETURNS
+      // name [(arguments)] RETURNS (columns) :=, unless no name comes before RETURNS, or RETURNS
+      // starts a line that the name before it does not, e.g. `FROM T` and then `Returns(x INT) :=`
       var function = nameBefore(code, name.start());
-      if (function != null) {
+      if (function != null
+          && (startsLine(code, function.start()) || !startsLine(code, name.start()))) {
         return function.start();
       }
     }
@@ -376,6 +378,16 @@ public final class SqlScriptStatementSplitter {
 
   private static boolean isNameCharacter(char ch) {
     return Character.isLetterOrDigit(ch) || "_.*-`".indexOf(ch) >= 0;
+  }
+
+  /** Whether only whitespace comes before {@code index} on its line. */
+  private static boolean startsLine(CharSequence code, int index) {
+    for (var i = index - 1; i >= 0 && code.charAt(i) != '\n'; i--) {
+      if (!Character.isWhitespace(code.charAt(i))) {
+        return false;
+      }
+    }
+    return true;
   }
 
   private static boolean startsLineComment(String line, int pos) {

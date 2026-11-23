@@ -700,7 +700,9 @@ class SqlScriptStatementSplitterTest {
         "B\n  := SELECT * FROM A;",
         "`My Table` := SELECT * FROM A;",
         "Customer.orders(x INT) := SELECT * FROM A WHERE id = :x;",
-        "B(x STRING, y AS LEFT(UPPER(x), 5)) := SELECT * FROM A WHERE name = :y;"
+        "B(x STRING, y AS LEFT(UPPER(x), 5)) := SELECT * FROM A WHERE name = :y;",
+        "Fn\nRETURNS (id BIGINT) := SELECT id FROM A;",
+        "Returns(x INT) := SELECT * FROM A WHERE id = :x;"
       })
   void givenDefinitionHeader_whenSplitStatements_thenKeepsOneStatement(String definition) {
     var missingDelimiters = new ArrayList<SqlScriptStatementSplitter.MissingDelimiter>();
@@ -720,7 +722,9 @@ class SqlScriptStatementSplitterTest {
         "B\n  := SELECT * FROM A;",
         "`My Table` := SELECT * FROM A;",
         "Customer.orders(x INT) := SELECT * FROM A WHERE id = :x;",
-        "B(x STRING, y AS LEFT(UPPER(x), 5)) := SELECT * FROM A WHERE name = :y;"
+        "B(x STRING, y AS LEFT(UPPER(x), 5)) := SELECT * FROM A WHERE name = :y;",
+        "Fn\nRETURNS (id BIGINT) := SELECT id FROM A;",
+        "Returns(x INT) := SELECT * FROM A WHERE id = :x;"
       })
   void givenDefinitionHeaderAfterMissingDelimiter_whenSplitStatements_thenSplitsBeforeIt(
       String definition) {
