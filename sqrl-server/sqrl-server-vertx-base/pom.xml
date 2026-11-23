@@ -52,15 +52,7 @@
     </dependency>
     <dependency>
       <groupId>io.vertx</groupId>
-      <artifactId>vertx-config</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.vertx</groupId>
       <artifactId>vertx-auth-jwt</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-auth-properties</artifactId>
     </dependency>
     <dependency>
       <groupId>io.vertx</groupId>
@@ -229,10 +221,6 @@
       <artifactId>reactor-core</artifactId>
     </dependency>
 
-    <dependency>
-      <groupId>io.netty</groupId>
-      <artifactId>netty-codec</artifactId>
-    </dependency>
     <dependency>
       <groupId>org.duckdb</groupId>
       <artifactId>duckdb_jdbc</artifactId>

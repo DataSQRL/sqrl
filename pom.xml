@@ -110,7 +110,6 @@
 
     <!-- Dependency versions -->
     <agroal.version>3.2.1</agroal.version>
-    <antlr.version>4.13.2</antlr.version>
     <assertj.version>3.27.7</assertj.version>
     <autoservice.version>1.1.1</autoservice.version>
     <avro.version>1.12.2</avro.version>
@@ -119,19 +118,15 @@
     <awssdk.version>2.44.4</awssdk.version>
     <aws-msk-iam-auth.version>2.3.9</aws-msk-iam-auth.version>
     <commons-collections4.version>4.6.0</commons-collections4.version>
-    <commons-csv.version>1.14.1</commons-csv.version>
     <commons-exec.version>1.6.0</commons-exec.version>
     <commons-io.version>2.22.0</commons-io.version>
     <commons-lang3.version>3.22.0</commons-lang3.version>
     <duckdb.version>2.0.0.1</duckdb.version>
     <feign.version>13.17</feign.version>
-    <freemarker.version>2.3.35</freemarker.version>
-    <glassfish.version>3.0.0</glassfish.version>
     <graphql-java-extended-scalars.version>24.0</graphql-java-extended-scalars.version>
     <graphql-java.version>26.1</graphql-java.version>
     <graphql-micrometer.version>1.0.1</graphql-micrometer.version>
     <guava.version>33.8.0-jre</guava.version>
-    <h2.version>2.5.252</h2.version>
     <spring-framework.version>7.0.10</spring-framework.version>
     <!-- Do not touch Hadoop version unless it has been updated on the Flink side.
          Otherwise, it might break the Flink filesystem integration. -->
@@ -142,7 +137,6 @@
     <jacoco.version>0.8.16</jacoco.version>
     <jakarta.annotation.version>3.0.0</jakarta.annotation.version>
     <jakarta.inject.version>2.0.1</jakarta.inject.version>
-    <javax.validation.version>2.0.1.Final</javax.validation.version>
     <jjwt.version>0.13.0</jjwt.version>
     <json-schema.version>2.0.8</json-schema.version>
     <junit.jupiter.version>6.1.3</junit.jupiter.version>
@@ -153,14 +147,11 @@
     <micrometer.version>1.17.2</micrometer.version>
     <mockito.version>4.8.0</mockito.version>
     <mustache.version>0.9.14</mustache.version>
-    <openai-gpt3-java.version>0.18.2</openai-gpt3-java.version>
     <openapi-diff.version>2.1.7</openapi-diff.version>
-    <opencsv.version>5.12.0</opencsv.version>
     <picocli.version>4.7.7</picocli.version>
     <postgres.version>42.7.14</postgres.version>
     <projectreactor.version>3.8.8</projectreactor.version>
     <protobuf.version>4.36.2</protobuf.version>
-    <scram.version>2.1</scram.version>
     <slf4j.version>1.7.36</slf4j.version>
     <snowflake-jdbc.version>4.4.1</snowflake-jdbc.version>
     <snakeyaml.version>2.7</snakeyaml.version>
@@ -246,12 +237,6 @@
         <artifactId>sqrl-planner</artifactId>
         <version>${project.version}</version>
       </dependency>
-      <!-- tests -->
-      <dependency>
-        <groupId>com.datasqrl</groupId>
-        <artifactId>sqrl-testing-integration</artifactId>
-        <version>${project.version}</version>
-      </dependency>
       <!-- tools -->
       <dependency>
         <groupId>com.datasqrl</groupId>
@@ -280,14 +265,6 @@
         <scope>test</scope>
       </dependency>
 
-      <!-- Test utils -->
-      <dependency>
-        <groupId>com.theokanning.openai-gpt3-java</groupId>
-        <artifactId>service</artifactId>
-        <version>0.18.2</version>
-        <scope>test</scope>
-      </dependency>
-
       <!-- General utils -->
       <dependency>
         <groupId>org.yaml</groupId>
@@ -303,11 +280,6 @@
         <groupId>com.google.guava</groupId>
         <artifactId>guava</artifactId>
         <version>${guava.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.antlr</groupId>
-        <artifactId>antlr4-runtime</artifactId>
-        <version>${antlr.version}</version>
       </dependency>
       <dependency>
         <groupId>org.projectlombok</groupId>
@@ -327,11 +299,6 @@
       </dependency>
       <dependency>
         <groupId>org.apache.commons</groupId>
-        <artifactId>commons-csv</artifactId>
-        <version>${commons-csv.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.commons</groupId>
         <artifactId>commons-exec</artifactId>
         <version>${commons-exec.version}</version>
       </dependency>
@@ -347,18 +314,13 @@
       </dependency>
       <dependency>
         <groupId>org.apache.httpcomponents</groupId>
-        <artifactId>httpmime</artifactId>
+        <artifactId>httpclient</artifactId>
         <version>${httpcomponents.version}</version>
       </dependency>
       <dependency>
         <groupId>info.picocli</groupId>
         <artifactId>picocli</artifactId>
         <version>${picocli.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.esotericsoftware.kryo</groupId>
-        <artifactId>kryo</artifactId>
-        <version>2.24.0</version>
       </dependency>
 
       <dependency>
@@ -390,19 +352,6 @@
         <groupId>io.agroal</groupId>
         <artifactId>agroal-pool</artifactId>
         <version>${agroal.version}</version>
-      </dependency>
-
-      <!-- validation -->
-      <dependency>
-        <groupId>javax.validation</groupId>
-        <artifactId>validation-api</artifactId>
-        <version>${javax.validation.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.glassfish</groupId>
-        <artifactId>javax.el</artifactId>
-        <version>${glassfish.version}</version>
       </dependency>
 
       <!-- Flink -->
@@ -491,13 +440,6 @@
         <scope>compile</scope>
       </dependency>
 
-      <!-- stream: csv -->
-      <dependency>
-        <groupId>com.opencsv</groupId>
-        <artifactId>opencsv</artifactId>
-        <version>${opencsv.version}</version>
-      </dependency>
-
       <!-- stream: sources -->
       <dependency>
         <groupId>org.apache.kafka</groupId>
@@ -523,36 +465,12 @@
         <artifactId>postgresql</artifactId>
         <version>${postgres.version}</version>
       </dependency>
-      <!-- postgres required libs -->
-      <dependency>
-        <groupId>com.ongres.scram</groupId>
-        <artifactId>common</artifactId>
-        <version>${scram.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.ongres.scram</groupId>
-        <artifactId>client</artifactId>
-        <version>${scram.version}</version>
-      </dependency>
-
-      <!-- database: h2 -->
-      <dependency>
-        <groupId>com.h2database</groupId>
-        <artifactId>h2</artifactId>
-        <version>${h2.version}</version>
-      </dependency>
 
       <!-- JSON Schema -->
       <dependency>
         <groupId>com.networknt</groupId>
         <artifactId>json-schema-validator</artifactId>
         <version>${json-schema.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.freemarker</groupId>
-        <artifactId>freemarker</artifactId>
-        <version>${freemarker.version}</version>
       </dependency>
 
       <dependency>
@@ -655,13 +573,6 @@
         <groupId>org.apache.logging.log4j</groupId>
         <artifactId>log4j-slf4j-impl</artifactId>
         <version>${log4j.version}</version>
-      </dependency>
-
-      <!-- build -->
-      <dependency>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.16.0</version>
       </dependency>
 
       <dependency>
