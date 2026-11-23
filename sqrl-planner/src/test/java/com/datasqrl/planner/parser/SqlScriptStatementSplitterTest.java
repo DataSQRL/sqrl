@@ -690,4 +690,74 @@ class SqlScriptStatementSplitterTest {
             new SqlScriptStatementSplitter.MissingDelimiter(
                 new FileLocation(1, 1), new FileLocation(1, 21)));
   }
+
+  @ParameterizedTest
+  @ValueSource(
+      strings = {
+        "B(\n  id INT\n) := SELECT * FROM A WHERE id = :id;",
+        "Fn(id BIGINT)\nRETURNS (id BIGINT) := SELECT * FROM A WHERE id = :id;",
+        "Fn RETURNS (id BIGINT) := SELECT id FROM A;",
+        "B\n  := SELECT * FROM A;",
+        "`My Table` := SELECT * FROM A;",
+        "Customer.orders(x INT) := SELECT * FROM A WHERE id = :x;",
+        "B(x STRING, y AS LEFT(UPPER(x), 5)) := SELECT * FROM A WHERE name = :y;"
+      })
+  void givenDefinitionHeader_whenSplitStatements_thenKeepsOneStatement(String definition) {
+    var missingDelimiters = new ArrayList<SqlScriptStatementSplitter.MissingDelimiter>();
+
+    var statements = SqlScriptStatementSplitter.splitStatements(definition, missingDelimiters);
+
+    assertThat(statements).extracting(ParsedObject::get).containsExactly(definition + "\n");
+    assertThat(missingDelimiters).isEmpty();
+  }
+
+  @ParameterizedTest
+  @ValueSource(
+      strings = {
+        "B(\n  id INT\n) := SELECT * FROM A WHERE id = :id;",
+        "Fn(id BIGINT)\nRETURNS (id BIGINT) := SELECT * FROM A WHERE id = :id;",
+        "Fn RETURNS (id BIGINT) := SELECT id FROM A;",
+        "B\n  := SELECT * FROM A;",
+        "`My Table` := SELECT * FROM A;",
+        "Customer.orders(x INT) := SELECT * FROM A WHERE id = :x;",
+        "B(x STRING, y AS LEFT(UPPER(x), 5)) := SELECT * FROM A WHERE name = :y;"
+      })
+  void givenDefinitionHeaderAfterMissingDelimiter_whenSplitStatements_thenSplitsBeforeIt(
+      String definition) {
+    var script = "A := SELECT * FROM T\n" + definition + "\n";
+    var missingDelimiters = new ArrayList<SqlScriptStatementSplitter.MissingDelimiter>();
+
+    var statements = SqlScriptStatementSplitter.splitStatements(script, missingDelimiters);
+
+    assertThat(statements)
+        .extracting(ParsedObject::get)
+        .containsExactly("A := SELECT * FROM T;\n", definition + "\n");
+    assertThat(statements)
+        .extracting(ParsedObject::getFileLocation)
+        .containsExactly(new FileLocation(1, 1), new FileLocation(2, 1));
+    assertThat(missingDelimiters)
+        .containsExactly(
+            new SqlScriptStatementSplitter.MissingDelimiter(
+                new FileLocation(1, 1), new FileLocation(1, 21)));
+  }
+
+  @Test
+  void givenSqlAfterDelimiterAndCommentEnd_whenSplitStatements_thenSplitsWithoutReportingIt() {
+    var script =
+        """
+        IMPORT a.b; /* note
+        */ IMPORT a.c;
+        """;
+    var missingDelimiters = new ArrayList<SqlScriptStatementSplitter.MissingDelimiter>();
+
+    var statements = SqlScriptStatementSplitter.splitStatements(script, missingDelimiters);
+
+    assertThat(statements)
+        .extracting(ParsedObject::get)
+        .containsExactly("IMPORT a.b;\n", "/* note\n*/ IMPORT a.c;\n");
+    assertThat(statements)
+        .extracting(ParsedObject::getFileLocation)
+        .containsExactly(new FileLocation(1, 1), new FileLocation(1, 13));
+    assertThat(missingDelimiters).isEmpty();
+  }
 }
