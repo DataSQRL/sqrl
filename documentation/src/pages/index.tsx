@@ -484,8 +484,9 @@ ls build/deploy/plan`}
                     it is running, tell it what you need in plain English:
                   </p>
                   <blockquote>
-                    Build a pipeline that ingests our order data from Kafka in real time and serves
-                    hourly revenue per product through an API.
+                    Build a pipeline that ingests order confirmations that have an id, timestamp, customerid,
+                    and nested list of items with productid, quantity, and total amount through an API and
+                    serves hourly revenue per product as well as a total count per product.
                   </blockquote>
                   <p>
                     You get SQL scripts with tests that you can read, run, and verify.
