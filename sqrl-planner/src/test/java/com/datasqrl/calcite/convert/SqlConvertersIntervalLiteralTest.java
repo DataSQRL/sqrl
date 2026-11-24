@@ -21,6 +21,7 @@ import com.datasqrl.calcite.Dialect;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiFunction;
 import org.apache.calcite.avatica.util.TimeUnit;
 import org.apache.calcite.jdbc.JavaTypeFactoryImpl;
 import org.apache.calcite.linq4j.tree.Expression;
@@ -31,10 +32,12 @@ import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.logical.LogicalProject;
 import org.apache.calcite.rel.logical.LogicalTableScan;
 import org.apache.calcite.rex.RexBuilder;
+import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.sql.SqlIntervalQualifier;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.SqlTypeName;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
@@ -85,27 +88,58 @@ class SqlConvertersIntervalLiteralTest {
     }
   }
 
-  /**
-   * Builds {@code SELECT ts + INTERVAL '<count>' <unit> FROM Records} with the literal that Flink
-   * plans for it: the value in milliseconds or months, the qualifier as written.
-   */
+  @Test
+  void givenIntervalsInCaseBranches_whenConvertToSql_thenPrintsUnitOfValue() {
+    for (var dialect : DIALECTS) {
+      assertThat(convert(dialect, caseOfWeeks()))
+          .as(dialect.name())
+          .contains("THEN INTERVAL '14' DAY ELSE INTERVAL '21' DAY END");
+    }
+  }
+
+  /** Builds {@code SELECT ts + INTERVAL '<count>' <unit> FROM Records}. */
   private static RelNode addInterval(TimeUnit unit, int count) {
+    return selectFromRecords(
+        (rexBuilder, ts) ->
+            rexBuilder.makeCall(
+                SqlStdOperatorTable.DATETIME_PLUS, ts, interval(rexBuilder, unit, count)));
+  }
+
+  /**
+   * Builds {@code SELECT CASE WHEN ts IS NULL THEN INTERVAL '2' WEEK ELSE INTERVAL '3' WEEK END
+   * FROM Records}, which puts one literal in the THEN list and one directly under the CASE.
+   */
+  private static RelNode caseOfWeeks() {
+    return selectFromRecords(
+        (rexBuilder, ts) ->
+            rexBuilder.makeCall(
+                SqlStdOperatorTable.CASE,
+                rexBuilder.makeCall(SqlStdOperatorTable.IS_NULL, ts),
+                interval(rexBuilder, TimeUnit.WEEK, 2),
+                interval(rexBuilder, TimeUnit.WEEK, 3)));
+  }
+
+  /**
+   * Builds the literal that Flink plans for {@code INTERVAL '<count>' <unit>}: the value in
+   * milliseconds or months, the qualifier as written.
+   */
+  private static RexNode interval(RexBuilder rexBuilder, TimeUnit unit, int count) {
+    return rexBuilder.makeIntervalLiteral(
+        unit.multiplier.multiply(BigDecimal.valueOf(count)),
+        new SqlIntervalQualifier(unit, null, SqlParserPos.ZERO));
+  }
+
+  private static RelNode selectFromRecords(BiFunction<RexBuilder, RexNode, RexNode> expression) {
     var typeFactory = new JavaTypeFactoryImpl();
     var rexBuilder = new RexBuilder(typeFactory);
     var cluster = RelOptCluster.create(new VolcanoPlanner(), rexBuilder);
     var rowType = typeFactory.builder().add("ts", SqlTypeName.TIMESTAMP).build();
     var table = RelOptTableImpl.create(null, rowType, List.of("Records"), (Expression) null);
     var scan = LogicalTableScan.create(cluster, table, List.of());
-    var interval =
-        rexBuilder.makeIntervalLiteral(
-            unit.multiplier.multiply(BigDecimal.valueOf(count)),
-            new SqlIntervalQualifier(unit, null, SqlParserPos.ZERO));
     return LogicalProject.create(
         scan,
         List.of(),
-        List.of(
-            rexBuilder.makeCall(
-                SqlStdOperatorTable.DATETIME_PLUS, rexBuilder.makeInputRef(scan, 0), interval)),
+        List.of(expression.apply(rexBuilder, rexBuilder.makeInputRef(scan, 0))),
         List.of("shifted"));
   }
 

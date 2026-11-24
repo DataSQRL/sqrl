@@ -19,7 +19,6 @@ import static org.apache.calcite.sql.SqlKind.COLLECTION_TABLE;
 
 import com.datasqrl.calcite.Dialect;
 import org.apache.calcite.sql.SqlCall;
-import org.apache.calcite.sql.SqlIntervalLiteral;
 import org.apache.calcite.sql.SqlWriter;
 import org.apache.calcite.sql.dialect.PostgresqlSqlDialect;
 
@@ -52,12 +51,5 @@ abstract class BasePostgresSqlDialect extends PostgresqlSqlDialect {
               + call.getOperandList().toString(),
           e);
     }
-  }
-
-  @Override
-  public void unparseSqlIntervalLiteral(
-      SqlWriter writer, SqlIntervalLiteral literal, int leftPrec, int rightPrec) {
-    super.unparseSqlIntervalLiteral(
-        writer, IntervalLiterals.withValueUnit(literal), leftPrec, rightPrec);
   }
 }

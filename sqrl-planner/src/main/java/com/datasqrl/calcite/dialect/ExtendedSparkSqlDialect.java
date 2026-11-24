@@ -20,9 +20,7 @@ import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.sql.SqlAlienSystemTypeNameSpec;
 import org.apache.calcite.sql.SqlDataTypeSpec;
 import org.apache.calcite.sql.SqlDialect;
-import org.apache.calcite.sql.SqlIntervalLiteral;
 import org.apache.calcite.sql.SqlNode;
-import org.apache.calcite.sql.SqlWriter;
 import org.apache.calcite.sql.dialect.SparkSqlDialect;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.validate.SqlConformance;
@@ -53,13 +51,6 @@ public class ExtendedSparkSqlDialect extends SparkSqlDialect {
     return new SqlDataTypeSpec(
         new SqlAlienSystemTypeNameSpec(castSpec, type.getSqlTypeName(), SqlParserPos.ZERO),
         SqlParserPos.ZERO);
-  }
-
-  @Override
-  public void unparseSqlIntervalLiteral(
-      SqlWriter writer, SqlIntervalLiteral literal, int leftPrec, int rightPrec) {
-    super.unparseSqlIntervalLiteral(
-        writer, IntervalLiterals.withValueUnit(literal), leftPrec, rightPrec);
   }
 
   private String getSparkType(RelDataType type) {

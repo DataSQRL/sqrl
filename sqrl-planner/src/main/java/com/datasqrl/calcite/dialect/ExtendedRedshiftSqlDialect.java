@@ -16,8 +16,6 @@
 package com.datasqrl.calcite.dialect;
 
 import org.apache.calcite.sql.SqlDialect;
-import org.apache.calcite.sql.SqlIntervalLiteral;
-import org.apache.calcite.sql.SqlWriter;
 import org.apache.calcite.sql.dialect.RedshiftSqlDialect;
 import org.apache.calcite.sql.validate.SqlConformance;
 
@@ -33,12 +31,5 @@ public class ExtendedRedshiftSqlDialect extends RedshiftSqlDialect {
   @Override
   public SqlConformance getConformance() {
     return new SortByAliasConformance(super.getConformance());
-  }
-
-  @Override
-  public void unparseSqlIntervalLiteral(
-      SqlWriter writer, SqlIntervalLiteral literal, int leftPrec, int rightPrec) {
-    super.unparseSqlIntervalLiteral(
-        writer, IntervalLiterals.withValueUnit(literal), leftPrec, rightPrec);
   }
 }
