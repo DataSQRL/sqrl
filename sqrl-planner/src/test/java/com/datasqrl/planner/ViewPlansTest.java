@@ -240,7 +240,7 @@ class ViewPlansTest {
   }
 
   @Test
-  void givenReusedPlan_whenViewsAreRestored_thenQueriesExpandTheViewsForGood() {
+  void givenReusedPlan_whenViewsAreRestored_thenQueriesExpandTheViews() {
     try (var translator = createTranslator()) {
       var plans = new ViewPlans(translator.getCatalogManager());
       translator.executeSQL("CREATE VIEW BigOrders AS " + LARGE);
@@ -249,7 +249,6 @@ class ViewPlansTest {
       assertThat(isTemporary(translator, "BigOrders")).isTrue();
 
       plans.restoreViews();
-      plans.reuse(identifier("BigOrders"), plan);
 
       assertThat(isTemporary(translator, "BigOrders")).isFalse();
     }

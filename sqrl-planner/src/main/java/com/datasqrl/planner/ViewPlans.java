@@ -17,6 +17,8 @@ package com.datasqrl.planner;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
 import org.apache.calcite.rel.RelNode;
 import org.apache.flink.table.catalog.CatalogManager;
 import org.apache.flink.table.catalog.ObjectIdentifier;
@@ -37,18 +39,13 @@ import org.apache.flink.table.planner.operations.PlannerQueryOperation;
  * optimizer expects each use of a view to be a tree of its own, e.g. with its own correlation
  * variables and time attributes.
  */
+@RequiredArgsConstructor(access = AccessLevel.PACKAGE)
 final class ViewPlans {
 
   private final CatalogManager catalogManager;
 
   /** The views that are shadowed by their plans */
   private final Set<ObjectIdentifier> shadowed = new LinkedHashSet<>();
-
-  private boolean restored = false;
-
-  ViewPlans(CatalogManager catalogManager) {
-    this.catalogManager = catalogManager;
-  }
 
   /**
    * Lets queries use the plan of a view that was created or altered. A temporary view is not
@@ -59,9 +56,6 @@ final class ViewPlans {
    *     the cast to the schema of the view either way
    */
   void reuse(ObjectIdentifier view, RelNode plan) {
-    if (restored) {
-      return;
-    }
     forget(view);
     var table = catalogManager.getTableOrError(view);
     if (table.isTemporary()
@@ -88,9 +82,8 @@ final class ViewPlans {
     }
   }
 
-  /** Makes queries expand all views again, for good, before Flink compiles the pipeline. */
+  /** Makes queries expand all views again before Flink compiles the pipeline. */
   void restoreViews() {
     Set.copyOf(shadowed).forEach(this::forget);
-    restored = true;
   }
 }
