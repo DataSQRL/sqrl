@@ -40,6 +40,14 @@ public interface IndexSelectorConfig {
    */
   int getSmallTableRowLimit();
 
+  /**
+   * A filtered column with fewer distinct values than this gets no place in an index. One of its
+   * values matches so many rows that the database reads them faster without the index. The distinct
+   * values come from a {@code row_count} hint on the column, so a column without that hint always
+   * keeps its place.
+   */
+  int getMinDistinctCount();
+
   /** The maximum number of indexes to create per table */
   int maxIndexes();
 

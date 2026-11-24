@@ -56,6 +56,11 @@ public class IndexSelectorConfigByDialect implements IndexSelectorConfig {
   }
 
   @Override
+  public int getMinDistinctCount() {
+    return indexSelection.getMinDistinctCount();
+  }
+
+  @Override
   public boolean hasPrimaryKeyIndex() {
     return switch (dialect) {
       case Postgres, MySQL, Oracle, H2, SQLite -> true;

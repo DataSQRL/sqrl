@@ -234,6 +234,11 @@ public interface PackageJson {
 
     /** A table that holds at most this many rows gets no automatic index. */
     int getSmallTableRowLimit();
+
+    /**
+     * A filtered column with fewer distinct values than this gets no place in an automatic index.
+     */
+    int getMinDistinctCount();
   }
 
   @AllArgsConstructor

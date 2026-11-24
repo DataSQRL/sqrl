@@ -37,6 +37,7 @@ class IndexSelectorConfigByDialectTest {
     when(indexSelection.getMaxFilterPatterns()).thenReturn(20);
     when(indexSelection.getMinCostReduction()).thenReturn(0.2);
     when(indexSelection.getSmallTableRowLimit()).thenReturn(0);
+    when(indexSelection.getMinDistinctCount()).thenReturn(5);
   }
 
   @Test
@@ -48,6 +49,7 @@ class IndexSelectorConfigByDialectTest {
     assertThat(config.maxIndexColumnSets()).isEqualTo(20);
     assertThat(config.getCostImprovementThreshold()).isEqualTo(0.8);
     assertThat(config.getSmallTableRowLimit()).isZero();
+    assertThat(config.getMinDistinctCount()).isEqualTo(5);
   }
 
   @Test
