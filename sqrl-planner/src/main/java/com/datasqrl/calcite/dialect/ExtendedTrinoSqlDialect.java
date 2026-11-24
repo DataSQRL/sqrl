@@ -18,6 +18,7 @@ package com.datasqrl.calcite.dialect;
 import org.apache.calcite.avatica.util.Casing;
 import org.apache.calcite.config.NullCollation;
 import org.apache.calcite.sql.SqlCall;
+import org.apache.calcite.sql.SqlIntervalLiteral;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlWriter;
 import org.apache.calcite.sql.dialect.PrestoSqlDialect;
@@ -66,5 +67,12 @@ public class ExtendedTrinoSqlDialect extends PrestoSqlDialect {
     } else {
       super.unparseCall(writer, call, leftPrec, rightPrec);
     }
+  }
+
+  @Override
+  public void unparseSqlIntervalLiteral(
+      SqlWriter writer, SqlIntervalLiteral literal, int leftPrec, int rightPrec) {
+    super.unparseSqlIntervalLiteral(
+        writer, IntervalLiterals.withValueUnit(literal), leftPrec, rightPrec);
   }
 }

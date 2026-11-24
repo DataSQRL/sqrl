@@ -18,6 +18,7 @@ package com.datasqrl.calcite.dialect;
 import com.datasqrl.calcite.Dialect;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlDialect;
+import org.apache.calcite.sql.SqlIntervalLiteral;
 import org.apache.calcite.sql.SqlWriter;
 import org.apache.calcite.sql.dialect.SnowflakeSqlDialect;
 import org.apache.calcite.sql.validate.SqlConformance;
@@ -48,5 +49,12 @@ public class ExtendedSnowflakeSqlDialect extends SnowflakeSqlDialect {
     }
 
     super.unparseCall(writer, call, leftPrec, rightPrec);
+  }
+
+  @Override
+  public void unparseSqlIntervalLiteral(
+      SqlWriter writer, SqlIntervalLiteral literal, int leftPrec, int rightPrec) {
+    super.unparseSqlIntervalLiteral(
+        writer, IntervalLiterals.withValueUnit(literal), leftPrec, rightPrec);
   }
 }

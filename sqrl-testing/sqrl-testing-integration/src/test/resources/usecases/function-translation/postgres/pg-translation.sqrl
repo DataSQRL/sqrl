@@ -73,7 +73,11 @@ FunctionCalls := SELECT
 --     CEIL(TIMESTAMP '2024-01-02 03:04:05' TO MINUTE)  AS ceil_minute_example,
 
 --     DATE_FORMAT(TIMESTAMP '2024-01-02 03:04:05', 'yyyy-MM-dd') AS date_format_example,
---     TIMESTAMPADD(DAY, 1, TIMESTAMP '2024-01-02 03:04:05') AS timestampadd_example,
+    TIMESTAMPADD(DAY, 1, TIMESTAMP '2024-01-02 03:04:05')     AS timestampadd_example,
+    TIMESTAMPADD(WEEK, 2, TIMESTAMP '2024-01-02 03:04:05')    AS timestampadd_week_example,
+    TIMESTAMPADD(QUARTER, 2, TIMESTAMP '2024-01-02 03:04:05') AS timestampadd_quarter_example,
+    TIMESTAMP '2024-01-02 03:04:05' + INTERVAL '2' WEEK       AS interval_week_example,
+    TIMESTAMP '2024-01-02 03:04:05' - INTERVAL '1' QUARTER    AS interval_quarter_example,
 --     --TODO: figure out why this causes unparsing errors in Postgres dialect of calcite
 -- --     TIMESTAMPDIFF(
 -- --         DAY,
