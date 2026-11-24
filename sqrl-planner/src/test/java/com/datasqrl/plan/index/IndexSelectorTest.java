@@ -441,7 +441,8 @@ class IndexSelectorTest {
 
     private static final int EMAIL = 0;
     private static final int COUNTRY = 1;
-    private static final List<String> COLUMN_NAMES = List.of("email", "country");
+    private static final int CITY = 2;
+    private static final List<String> COLUMN_NAMES = List.of("email", "country", "city");
 
     @Test
     void givenNoDistinctCounts_whenOptimizeIndexes_thenIndexesBothEqualityColumns() {
@@ -458,6 +459,16 @@ class IndexSelectorTest {
               TableStatistic.fromHint(1e6).withDistinctCounts(Map.of(Set.of(EMAIL), 1e6)));
 
       assertThat(indexesForEqualityOn(customers, EMAIL, COUNTRY)).containsExactly("HASH[email]");
+    }
+
+    @Test
+    void givenUniqueColumnCombination_whenOptimizeIndexes_thenIndexesOnlyItsColumns() {
+      var customers =
+          customersWith(
+              TableStatistic.fromHint(1e6).withDistinctCounts(Map.of(Set.of(COUNTRY, CITY), 1e6)));
+
+      assertThat(indexesForEqualityOn(customers, EMAIL, COUNTRY, CITY))
+          .containsExactly("BTREE[country, city]");
     }
 
     @Test

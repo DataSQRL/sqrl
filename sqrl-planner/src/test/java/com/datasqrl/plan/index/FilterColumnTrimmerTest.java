@@ -35,7 +35,11 @@ class FilterColumnTrimmerTest {
   private static final int EMAIL = 0;
   private static final int GENDER = 1;
   private static final int STATUS = 2;
+  private static final int COUNTRY = 3;
+  private static final int CITY = 4;
+  private static final int SIGNUP_TIME = 5;
   private static final int MIN_DISTINCT_COUNT = 20;
+  private static final double ROW_COUNT = 1e6;
 
   private final FilterColumnTrimmer filterColumnTrimmer =
       new FilterColumnTrimmer(MIN_DISTINCT_COUNT);
@@ -118,18 +122,105 @@ class FilterColumnTrimmerTest {
     assertThat(new FilterColumnTrimmer(0).trim(gender)).containsSame(gender);
   }
 
+  @Test
+  void givenUniqueEqualityColumn_whenTrim_thenRemovesEveryOtherColumn() {
+    var customers = customersWith(Map.of(Set.of(EMAIL), ROW_COUNT));
+    var emailCountryAndSignupTime =
+        new QueryIndexSummary(
+            customers, Set.of(EMAIL, COUNTRY), Set.of(SIGNUP_TIME), Set.of(), 1.0);
+
+    assertThat(filterColumnTrimmer.trim(emailCountryAndSignupTime))
+        .hasValueSatisfying(
+            trimmed -> {
+              assertThat(trimmed.getEqualityColumns()).containsExactly(EMAIL);
+              assertThat(trimmed.getInequalityColumns()).isEmpty();
+            });
+  }
+
+  @Test
+  void givenUniqueColumnCombination_whenTrim_thenKeepsOnlyItsColumns() {
+    var customers = customersWith(Map.of(Set.of(COUNTRY, CITY), ROW_COUNT));
+    var countryCityAndStatus = equalityOn(customers, COUNTRY, CITY, STATUS);
+
+    assertThat(filterColumnTrimmer.trim(countryCityAndStatus))
+        .hasValueSatisfying(
+            trimmed ->
+                assertThat(trimmed.getEqualityColumns()).containsExactlyInAnyOrder(COUNTRY, CITY));
+  }
+
+  @Test
+  void givenUniqueColumnCombinationFilteredInPart_whenTrim_thenKeepsEveryColumn() {
+    var customers = customersWith(Map.of(Set.of(COUNTRY, CITY), ROW_COUNT));
+    var countryAndStatus = equalityOn(customers, COUNTRY, STATUS);
+
+    assertThat(filterColumnTrimmer.trim(countryAndStatus)).containsSame(countryAndStatus);
+  }
+
+  @Test
+  void givenAlmostUniqueColumn_whenTrim_thenKeepsEveryColumn() {
+    var customers = customersWith(Map.of(Set.of(EMAIL), ROW_COUNT - 1));
+    var emailAndCountry = equalityOn(customers, EMAIL, COUNTRY);
+
+    assertThat(filterColumnTrimmer.trim(emailAndCountry)).containsSame(emailAndCountry);
+  }
+
+  @Test
+  void givenSeveralUniqueColumnSets_whenTrim_thenKeepsTheOneWithFewestColumns() {
+    var customers =
+        customersWith(Map.of(Set.of(COUNTRY, CITY), ROW_COUNT, Set.of(EMAIL), ROW_COUNT));
+    var emailCountryAndCity = equalityOn(customers, EMAIL, COUNTRY, CITY);
+
+    assertThat(filterColumnTrimmer.trim(emailCountryAndCity))
+        .hasValueSatisfying(
+            trimmed -> assertThat(trimmed.getEqualityColumns()).containsExactly(EMAIL));
+  }
+
+  @Test
+  void givenUniqueColumnOnlyByEstimatedRowCount_whenTrim_thenKeepsEveryColumn() {
+    var estimatedStatistic =
+        TableStatistic.fromEstimate(ROW_COUNT).withDistinctCounts(Map.of(Set.of(EMAIL), ROW_COUNT));
+    var customers = customersWith(estimatedStatistic);
+    var emailAndCountry = equalityOn(customers, EMAIL, COUNTRY);
+
+    assertThat(filterColumnTrimmer.trim(emailAndCountry)).containsSame(emailAndCountry);
+  }
+
+  @Test
+  void givenUniqueColumnAndUnknownRowCount_whenTrim_thenKeepsEveryColumn() {
+    var unknownStatistic =
+        TableStatistic.UNKNOWN.withDistinctCounts(Map.of(Set.of(EMAIL), ROW_COUNT));
+    var customers = customersWith(unknownStatistic);
+    var emailAndCountry = equalityOn(customers, EMAIL, COUNTRY);
+
+    assertThat(filterColumnTrimmer.trim(emailAndCountry)).containsSame(emailAndCountry);
+  }
+
+  @Test
+  void givenUniqueColumnCombinationWithColumnOfFewDistinctValues_whenTrim_thenRemovesThatColumn() {
+    var customers = customersWith(Map.of(Set.of(EMAIL, GENDER), ROW_COUNT, Set.of(GENDER), 2.0));
+    var emailGenderAndCountry = equalityOn(customers, EMAIL, GENDER, COUNTRY);
+
+    assertThat(filterColumnTrimmer.trim(emailGenderAndCountry))
+        .hasValueSatisfying(
+            trimmed -> assertThat(trimmed.getEqualityColumns()).containsExactly(EMAIL));
+  }
+
   private static QueryIndexSummary equalityOn(NamedTable table, Integer... equalityColumns) {
     return new QueryIndexSummary(table, Set.of(equalityColumns), Set.of(), Set.of(), 1.0);
   }
 
   private static NamedTable customersWith(Map<Set<Integer>, Double> distinctCounts) {
+    return customersWith(TableStatistic.fromHint(ROW_COUNT).withDistinctCounts(distinctCounts));
+  }
+
+  private static NamedTable customersWith(TableStatistic tableStatistic) {
     var relNode = mock(RelNode.class);
     var analysis =
         TableAnalysis.builder()
             .objectIdentifier(ObjectIdentifier.of("datasqrl", "public", "Customers"))
             .collapsedRelnode(relNode)
             .originalRelnode(relNode)
-            .tableStatistic(TableStatistic.fromHint(1e6).withDistinctCounts(distinctCounts))
+            .tableStatistic(tableStatistic)
             .build();
     return new NamedTable("Customers", "Customers", analysis, null);
   }
