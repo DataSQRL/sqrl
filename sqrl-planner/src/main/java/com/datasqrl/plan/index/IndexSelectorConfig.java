@@ -78,6 +78,13 @@ public interface IndexSelectorConfig {
     throw new IllegalStateException("Does not support any preferred generic indexes");
   }
 
+  /** The index type for a column that the queries only compare for equality. */
+  default IndexType getPreferredEqualityIndexType() {
+    return supportedIndexTypes().contains(IndexType.HASH)
+        ? IndexType.HASH
+        : getPreferredGenericIndexType();
+  }
+
   default Optional<IndexType> getPreferredSpecialIndexType(Set<IndexType> options) {
     return options.stream().filter(supportedIndexTypes()::contains).findFirst();
   }

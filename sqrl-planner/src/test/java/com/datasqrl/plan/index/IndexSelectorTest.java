@@ -439,11 +439,6 @@ class IndexSelectorTest {
   @Nested
   class DistinctCounts {
 
-    private static final int EMAIL = 0;
-    private static final int COUNTRY = 1;
-    private static final int CITY = 2;
-    private static final List<String> COLUMN_NAMES = List.of("email", "country", "city");
-
     @Test
     void givenNoDistinctCounts_whenOptimizeIndexes_thenIndexesBothEqualityColumns() {
       var customers = customersWith(TableStatistic.fromHint(1e6));
@@ -501,41 +496,83 @@ class IndexSelectorTest {
 
     private List<String> indexesForEqualityOn(NamedTable table, Integer... equalityColumns) {
       var query = new QueryIndexSummary(table, Set.of(equalityColumns), Set.of(), Set.of(), 1.0);
-      var selector = new IndexSelector(null, postgresDefaults(), Map.of(), ErrorCollector.root());
 
-      return selector.optimizeIndexes(List.of(query)).stream()
-          .map(
-              index ->
-                  index.getType()
-                      + index.getColumns().stream().map(COLUMN_NAMES::get).toList().toString())
-          .toList();
+      return selectIndexes(postgresWithMaxFilterPatterns(50), List.of(query));
+    }
+  }
+
+  /** A table with more filter patterns than {@code max-filter-patterns}. */
+  @Nested
+  class SingleColumnIndexes {
+
+    private static final int MAX_FILTER_PATTERNS = 2;
+
+    private final NamedTable customers = customersWith(TableStatistic.fromHint(1e6));
+
+    @Test
+    void givenColumnWithOnlyEqualityFilters_whenTooManyFilterPatterns_thenGetsHashIndex() {
+      var queries = List.of(equalityOn(EMAIL), equalityOn(COUNTRY), equalityOn(EMAIL, COUNTRY));
+
+      assertThat(selectIndexes(postgresWithMaxFilterPatterns(MAX_FILTER_PATTERNS), queries))
+          .containsExactly("HASH[email]", "HASH[country]");
     }
 
-    private NamedTable customersWith(TableStatistic tableStatistic) {
-      var rowType = mock(RelDataType.class);
-      when(rowType.getFieldNames()).thenReturn(COLUMN_NAMES);
-      var relNode = mock(RelNode.class);
-      when(relNode.getRowType()).thenReturn(rowType);
-      var analysis =
-          TableAnalysis.builder()
-              .objectIdentifier(ObjectIdentifier.of("datasqrl", "public", "Customers"))
-              .collapsedRelnode(relNode)
-              .originalRelnode(relNode)
-              .tableStatistic(tableStatistic)
-              .build();
-      return new NamedTable(
-          "Customers", "Customers", analysis, mock(CreateTableJdbcStatement.class));
+    @Test
+    void givenColumnWithInequalityFilter_whenTooManyFilterPatterns_thenGetsBtreeIndex() {
+      var countryAndCityRange =
+          new QueryIndexSummary(customers, Set.of(COUNTRY), Set.of(CITY), Set.of(), 1.0);
+      var queries = List.of(equalityOn(EMAIL), equalityOn(CITY), countryAndCityRange);
+
+      assertThat(selectIndexes(postgresWithMaxFilterPatterns(MAX_FILTER_PATTERNS), queries))
+          .containsExactly("HASH[email]", "BTREE[city]", "HASH[country]");
     }
 
-    private IndexSelectorConfig postgresDefaults() {
-      var indexSelection = mock(IndexSelectionConfig.class);
-      when(indexSelection.getMaxIndexes()).thenReturn(8);
-      when(indexSelection.getMaxIndexColumns()).thenReturn(3);
-      when(indexSelection.getMaxFilterPatterns()).thenReturn(50);
-      when(indexSelection.getMinCostReduction()).thenReturn(0.05);
-      when(indexSelection.getMinDistinctCount()).thenReturn(20);
-      return new IndexSelectorConfigByDialect(JdbcDialect.Postgres, indexSelection);
+    private QueryIndexSummary equalityOn(Integer... equalityColumns) {
+      return new QueryIndexSummary(customers, Set.of(equalityColumns), Set.of(), Set.of(), 1.0);
     }
+  }
+
+  private static final int EMAIL = 0;
+  private static final int COUNTRY = 1;
+  private static final int CITY = 2;
+  private static final List<String> COLUMN_NAMES = List.of("email", "country", "city");
+
+  private static List<String> selectIndexes(
+      IndexSelectorConfig config, List<QueryIndexSummary> queries) {
+    var selector = new IndexSelector(null, config, Map.of(), ErrorCollector.root());
+
+    return selector.optimizeIndexes(queries).stream()
+        .map(
+            index ->
+                index.getType()
+                    + index.getColumns().stream().map(COLUMN_NAMES::get).toList().toString())
+        .toList();
+  }
+
+  private static NamedTable customersWith(TableStatistic tableStatistic) {
+    var rowType = mock(RelDataType.class);
+    when(rowType.getFieldNames()).thenReturn(COLUMN_NAMES);
+    var relNode = mock(RelNode.class);
+    when(relNode.getRowType()).thenReturn(rowType);
+    var analysis =
+        TableAnalysis.builder()
+            .objectIdentifier(ObjectIdentifier.of("datasqrl", "public", "Customers"))
+            .collapsedRelnode(relNode)
+            .originalRelnode(relNode)
+            .tableStatistic(tableStatistic)
+            .build();
+    return new NamedTable("Customers", "Customers", analysis, mock(CreateTableJdbcStatement.class));
+  }
+
+  /** The defaults of the {@code index-selection} settings, except for the given one. */
+  private static IndexSelectorConfig postgresWithMaxFilterPatterns(int maxFilterPatterns) {
+    var indexSelection = mock(IndexSelectionConfig.class);
+    when(indexSelection.getMaxIndexes()).thenReturn(8);
+    when(indexSelection.getMaxIndexColumns()).thenReturn(3);
+    when(indexSelection.getMaxFilterPatterns()).thenReturn(maxFilterPatterns);
+    when(indexSelection.getMinCostReduction()).thenReturn(0.05);
+    when(indexSelection.getMinDistinctCount()).thenReturn(20);
+    return new IndexSelectorConfigByDialect(JdbcDialect.Postgres, indexSelection);
   }
 
   private static Optional<IndexDefinition> primaryKeyIndex(int column, String columnName) {

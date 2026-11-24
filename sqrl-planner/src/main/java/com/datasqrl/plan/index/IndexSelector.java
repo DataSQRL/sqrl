@@ -31,7 +31,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -177,31 +176,43 @@ public class IndexSelector {
           queryIndexSummaries.size(),
           config.maxIndexColumnSets(),
           INDEX_REMEDIATION);
-      // Generate individual indexes so the database can combine them on-demand at query time
-      var indexedColumns = getFallbackIndexColumns(queryIndexSummaries, getPrimaryKeyIndex(table));
-      Set<IndexableFunctionCall> indexedFunctions = new HashSet<>();
-      for (QueryIndexSummary conj : queryIndexSummaries) {
-        indexedFunctions.addAll(conj.functionCalls);
-      }
-      var genericType = config.getPreferredGenericIndexType();
-      Set<IndexDefinition> indexes = new LinkedHashSet<>();
-      for (int colIndex : indexedColumns) {
-        indexes.add(
-            new IndexDefinition(
-                table.getTableName(),
-                List.of(colIndex),
-                table.getAnalysis().getRowType().getFieldNames(),
-                -1,
-                genericType));
-      }
-      indexedFunctions.stream()
-          .map(fcall -> getIndexDefinition(fcall, table))
-          .flatMap(Optional::stream)
-          .forEach(indexes::add);
-      return indexes;
+      return createSingleColumnIndexes(table, queryIndexSummaries);
     } else {
       return optimizeIndexesWithCostMinimization(table, queryIndexSummaries);
     }
+  }
+
+  /**
+   * An index for each filtered column, which the database combines on demand at query time. A
+   * column with an inequality constraint or a sort needs an index that keeps its values in order.
+   * Every other column gets the index type that suits an equality best.
+   */
+  private Set<IndexDefinition> createSingleColumnIndexes(
+      NamedTable table, Collection<QueryIndexSummary> queryIndexSummaries) {
+    var inequalityColumns =
+        queryIndexSummaries.stream()
+            .flatMap(queryIndexSummary -> queryIndexSummary.getInequalityColumns().stream())
+            .collect(Collectors.toSet());
+    Set<IndexDefinition> indexes = new LinkedHashSet<>();
+    for (int column : getFallbackIndexColumns(queryIndexSummaries, getPrimaryKeyIndex(table))) {
+      var indexType =
+          inequalityColumns.contains(column)
+              ? config.getPreferredGenericIndexType()
+              : config.getPreferredEqualityIndexType();
+      indexes.add(
+          new IndexDefinition(
+              table.getTableName(),
+              List.of(column),
+              table.getAnalysis().getRowType().getFieldNames(),
+              -1,
+              indexType));
+    }
+    queryIndexSummaries.stream()
+        .flatMap(queryIndexSummary -> queryIndexSummary.getFunctionCalls().stream())
+        .map(functionCall -> getIndexDefinition(functionCall, table))
+        .flatMap(Optional::stream)
+        .forEach(indexes::add);
+    return indexes;
   }
 
   @VisibleForTesting
