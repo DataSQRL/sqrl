@@ -460,6 +460,24 @@ class IndexSelectorTest {
       assertThat(indexesForEqualityOn(customers, EMAIL, COUNTRY)).containsExactly("HASH[email]");
     }
 
+    @Test
+    void givenColumnWithFewDistinctValues_whenOptimizeIndexes_thenLeavesItOutOfTheIndex() {
+      var customers =
+          customersWith(
+              TableStatistic.fromHint(1e6).withDistinctCounts(Map.of(Set.of(COUNTRY), 5.0)));
+
+      assertThat(indexesForEqualityOn(customers, EMAIL, COUNTRY)).containsExactly("HASH[email]");
+    }
+
+    @Test
+    void givenOnlyColumnWithFewDistinctValues_whenOptimizeIndexes_thenCreatesNoIndex() {
+      var customers =
+          customersWith(
+              TableStatistic.fromHint(1e6).withDistinctCounts(Map.of(Set.of(COUNTRY), 5.0)));
+
+      assertThat(indexesForEqualityOn(customers, COUNTRY)).isEmpty();
+    }
+
     private List<String> indexesForEqualityOn(NamedTable table, Integer... equalityColumns) {
       var query = new QueryIndexSummary(table, Set.of(equalityColumns), Set.of(), Set.of(), 1.0);
       var selector = new IndexSelector(null, postgresDefaults(), Map.of(), ErrorCollector.root());
@@ -494,6 +512,7 @@ class IndexSelectorTest {
       when(indexSelection.getMaxIndexColumns()).thenReturn(3);
       when(indexSelection.getMaxFilterPatterns()).thenReturn(50);
       when(indexSelection.getMinCostReduction()).thenReturn(0.05);
+      when(indexSelection.getMinDistinctCount()).thenReturn(20);
       return new IndexSelectorConfigByDialect(JdbcDialect.Postgres, indexSelection);
     }
   }

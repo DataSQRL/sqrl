@@ -107,14 +107,18 @@ public class IndexSelector {
   }
 
   public Set<IndexDefinition> optimizeIndexes(Collection<QueryIndexSummary> queryIndexSummaries) {
+    var filterColumnTrimmer = new FilterColumnTrimmer(config.getMinDistinctCount());
     // Prune down to database indexes and remove duplicates
     Set<IndexDefinition> optIndexes = new LinkedHashSet<>();
     LinkedHashMultimap<NamedTable, QueryIndexSummary> callsByTable = LinkedHashMultimap.create();
-    queryIndexSummaries.forEach(
-        idx -> {
-          // TODO: Add up counts so we preserve relative frequency
-          callsByTable.put(idx.getTable(), idx);
-        });
+    queryIndexSummaries.stream()
+        .map(filterColumnTrimmer::trim)
+        .flatMap(Optional::stream)
+        .forEach(
+            idx -> {
+              // TODO: Add up counts so we preserve relative frequency
+              callsByTable.put(idx.getTable(), idx);
+            });
 
     for (NamedTable table : callsByTable.keySet()) {
       optIndexes.addAll(optimizeIndexes(table, callsByTable.get(table)));
