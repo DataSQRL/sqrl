@@ -19,11 +19,13 @@ import com.datasqrl.plan.table.TableStatistic;
 import com.google.common.collect.Comparators;
 import com.google.common.collect.ImmutableSet;
 import java.util.Comparator;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import lombok.AllArgsConstructor;
 
 /**
@@ -48,13 +50,11 @@ class FilterColumnTrimmer {
   Optional<QueryIndexSummary> trim(QueryIndexSummary queryIndexSummary) {
     var tableStatistic = queryIndexSummary.getTable().getAnalysis().getTableStatistic();
     var uniqueColumns = findUniqueColumns(queryIndexSummary.getEqualityColumns(), tableStatistic);
-    var columnsWithFewDistinctValues =
-        getColumnsWithFewDistinctValues(tableStatistic.getDistinctCounts());
 
     var equalityColumns =
-        uniqueColumns.orElse(queryIndexSummary.getEqualityColumns()).stream()
-            .filter(column -> !columnsWithFewDistinctValues.contains(column))
-            .collect(ImmutableSet.toImmutableSet());
+        removeColumnsThatAddFewDistinctValues(
+            uniqueColumns.orElse(queryIndexSummary.getEqualityColumns()),
+            tableStatistic.getDistinctCounts());
     // The unique columns match at most one row, which needs neither a range nor a sort
     var inequalityColumns =
         uniqueColumns.isPresent() ? Set.<Integer>of() : queryIndexSummary.getInequalityColumns();
@@ -97,18 +97,64 @@ class FilterColumnTrimmer {
   }
 
   /**
-   * One value of such a column matches so many rows that an index on the column does not pay off. A
-   * column has at most as many distinct values as a column combination that it is part of, so a low
+   * Removes each column that multiplies the distinct value combinations of other equality columns
+   * by less than {@link #minDistinctCount}. An index on those other columns narrows the rows almost
+   * as far without it. The distinct counts of two {@code row_count} hints show this, where the
+   * columns of one hint are part of the columns of the other.
+   *
+   * <p>A column with fewer distinct values than {@link #minDistinctCount} is the case with no other
+   * columns: one of its values matches so many rows that an index on it does not pay off. A column
+   * has at most as many distinct values as a column combination that it is part of, so a low
    * distinct count of the combination holds for each of its columns.
    *
    * <p>Only an equality column is trimmed for this reason. An inequality column can stand for the
    * sort of a query with a limit, and an index serves that sort however few distinct values the
    * column has.
    */
-  private Set<Integer> getColumnsWithFewDistinctValues(Map<Set<Integer>, Double> distinctCounts) {
-    return distinctCounts.entrySet().stream()
-        .filter(distinctCount -> distinctCount.getValue() < minDistinctCount)
-        .flatMap(distinctCount -> distinctCount.getKey().stream())
-        .collect(Collectors.toUnmodifiableSet());
+  private Set<Integer> removeColumnsThatAddFewDistinctValues(
+      Set<Integer> equalityColumns, Map<Set<Integer>, Double> distinctCounts) {
+    var distinctCountsWithFewestColumnsFirst =
+        Stream.concat(
+                Stream.of(ColumnsDistinctCount.NO_COLUMNS),
+                distinctCounts.entrySet().stream().map(ColumnsDistinctCount::of))
+            .sorted(Comparator.comparing(ColumnsDistinctCount::columns, FEWEST_COLUMNS_FIRST))
+            .toList();
+    var remainingColumns = new LinkedHashSet<>(equalityColumns);
+    // A removal holds only while the columns it was compared with stay in the filter
+    Set<Integer> columnsThatMustStay = new HashSet<>();
+
+    for (var fewerColumns : distinctCountsWithFewestColumnsFirst) {
+      for (var moreColumns : distinctCountsWithFewestColumnsFirst) {
+        if (!remainingColumns.containsAll(fewerColumns.columns())
+            || !moreColumns.addsColumnsTo(fewerColumns)
+            || moreColumns.distinctCount() >= minDistinctCount * fewerColumns.distinctCount()) {
+          continue;
+        }
+        var addedColumns = new HashSet<>(moreColumns.columns());
+        addedColumns.removeAll(fewerColumns.columns());
+        addedColumns.removeAll(columnsThatMustStay);
+        if (remainingColumns.removeAll(addedColumns)) {
+          columnsThatMustStay.addAll(fewerColumns.columns());
+        }
+      }
+    }
+    return ImmutableSet.copyOf(remainingColumns);
+  }
+
+  /** The distinct count of a {@code row_count} hint, with its columns in ascending order. */
+  private record ColumnsDistinctCount(List<Integer> columns, double distinctCount) {
+
+    /** No columns have a single value combination: the one without any value. */
+    static final ColumnsDistinctCount NO_COLUMNS = new ColumnsDistinctCount(List.of(), 1.0);
+
+    static ColumnsDistinctCount of(Map.Entry<Set<Integer>, Double> distinctCount) {
+      return new ColumnsDistinctCount(
+          distinctCount.getKey().stream().sorted().toList(), distinctCount.getValue());
+    }
+
+    boolean addsColumnsTo(ColumnsDistinctCount fewerColumns) {
+      return columns.size() > fewerColumns.columns.size()
+          && columns.containsAll(fewerColumns.columns);
+    }
   }
 }

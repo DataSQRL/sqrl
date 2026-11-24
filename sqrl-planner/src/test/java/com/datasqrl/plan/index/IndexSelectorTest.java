@@ -472,6 +472,16 @@ class IndexSelectorTest {
     }
 
     @Test
+    void givenColumnThatAddsFewDistinctValues_whenOptimizeIndexes_thenLeavesItOutOfTheIndex() {
+      var customers =
+          customersWith(
+              TableStatistic.fromHint(1e6)
+                  .withDistinctCounts(Map.of(Set.of(COUNTRY), 200.0, Set.of(COUNTRY, CITY), 2e3)));
+
+      assertThat(indexesForEqualityOn(customers, COUNTRY, CITY)).containsExactly("HASH[country]");
+    }
+
+    @Test
     void givenColumnWithFewDistinctValues_whenOptimizeIndexes_thenLeavesItOutOfTheIndex() {
       var customers =
           customersWith(

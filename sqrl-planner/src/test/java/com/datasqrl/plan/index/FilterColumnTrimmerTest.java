@@ -205,6 +205,74 @@ class FilterColumnTrimmerTest {
             trimmed -> assertThat(trimmed.getEqualityColumns()).containsExactly(EMAIL));
   }
 
+  @Test
+  void givenColumnThatAddsFewDistinctValues_whenTrim_thenRemovesTheColumn() {
+    var customers = customersWith(Map.of(Set.of(COUNTRY), 200.0, Set.of(COUNTRY, CITY), 2e3));
+    var countryAndCity = equalityOn(customers, COUNTRY, CITY);
+
+    assertThat(filterColumnTrimmer.trim(countryAndCity))
+        .hasValueSatisfying(
+            trimmed -> assertThat(trimmed.getEqualityColumns()).containsExactly(COUNTRY));
+  }
+
+  @Test
+  void givenColumnThatAddsMinDistinctCountTimesTheDistinctValues_whenTrim_thenKeepsTheColumn() {
+    var customers =
+        customersWith(
+            Map.of(Set.of(COUNTRY), 200.0, Set.of(COUNTRY, CITY), 200.0 * MIN_DISTINCT_COUNT));
+    var countryAndCity = equalityOn(customers, COUNTRY, CITY);
+
+    assertThat(filterColumnTrimmer.trim(countryAndCity)).containsSame(countryAndCity);
+  }
+
+  @Test
+  void givenColumnThatAddsFewDistinctValuesToUnfilteredColumn_whenTrim_thenKeepsTheColumn() {
+    var customers = customersWith(Map.of(Set.of(COUNTRY), 200.0, Set.of(COUNTRY, CITY), 2e3));
+    var emailAndCity = equalityOn(customers, EMAIL, CITY);
+
+    assertThat(filterColumnTrimmer.trim(emailAndCity)).containsSame(emailAndCity);
+  }
+
+  @Test
+  void givenTwoColumnsThatAddFewDistinctValuesToEachOther_whenTrim_thenKeepsOneOfThem() {
+    var customers =
+        customersWith(Map.of(Set.of(EMAIL), 1e3, Set.of(CITY), 1e3, Set.of(EMAIL, CITY), 1.2e3));
+    var emailAndCity = equalityOn(customers, EMAIL, CITY);
+
+    assertThat(filterColumnTrimmer.trim(emailAndCity))
+        .hasValueSatisfying(
+            trimmed -> assertThat(trimmed.getEqualityColumns()).containsExactly(EMAIL));
+  }
+
+  /** The gender column is removed itself, so the country column has nothing to add little to. */
+  @Test
+  void givenColumnThatAddsFewDistinctValuesToRemovedColumn_whenTrim_thenKeepsTheColumn() {
+    var customers = customersWith(Map.of(Set.of(GENDER), 10.0, Set.of(GENDER, COUNTRY), 150.0));
+    var genderAndCountry = equalityOn(customers, GENDER, COUNTRY);
+
+    assertThat(filterColumnTrimmer.trim(genderAndCountry))
+        .hasValueSatisfying(
+            trimmed -> assertThat(trimmed.getEqualityColumns()).containsExactly(COUNTRY));
+  }
+
+  /** The city column is removed for the email column, so the email column must stay. */
+  @Test
+  void givenColumnThatAnotherRemovalWasComparedWith_whenTrim_thenKeepsTheColumn() {
+    var customers =
+        customersWith(
+            Map.of(
+                Set.of(EMAIL), 1e3,
+                Set.of(EMAIL, CITY), 1.2e3,
+                Set.of(COUNTRY), 1e5,
+                Set.of(EMAIL, COUNTRY), 1.5e5));
+    var emailCityAndCountry = equalityOn(customers, EMAIL, CITY, COUNTRY);
+
+    assertThat(filterColumnTrimmer.trim(emailCityAndCountry))
+        .hasValueSatisfying(
+            trimmed ->
+                assertThat(trimmed.getEqualityColumns()).containsExactlyInAnyOrder(EMAIL, COUNTRY));
+  }
+
   private static QueryIndexSummary equalityOn(NamedTable table, Integer... equalityColumns) {
     return new QueryIndexSummary(table, Set.of(equalityColumns), Set.of(), Set.of(), 1.0);
   }
