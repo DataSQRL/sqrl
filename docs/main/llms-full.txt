@@ -167,7 +167,7 @@ Passing `-e ANTHROPIC_API_KEY` without a value copies the variable from your cur
 
 Once the Pi terminal is running, give the coding agent a prompt like:
 
-> Build a pipeline that ingests our order data from Kafka in real time and serves hourly revenue per product through an API.
+> Build a pipeline that ingests order confirmations that have an id, timestamp, customerid, and nested list of items with productid, quantity, and total amount through an API and serves hourly revenue per product as well as a total count per product.
 
 The [agent README on GitHub](https://github.com/DataSQRL/sqrl/blob/main/agent/README.md) shows how to customize the core agent to use a different coding agent, skills, AGENTS.md, and more.
 
@@ -226,7 +226,7 @@ This copies the skills into `.github/skills/` and `.agents/skills/`. The skills 
 
 In your project repository, tell your coding agent what you want to build in plain English:
 
-> Build a pipeline that ingests our order data from Kafka in real time and serves hourly revenue per product through an API.
+> Build a pipeline that ingests order confirmations that have an id, timestamp, customerid, and nested list of items with productid, quantity, and total amount through an API and serves hourly revenue per product as well as a total count per product.
 
 You rarely need to type a skill command. When you describe pipeline work, the DataSQRL workflow starts on its own. In Claude Code, you can also start it explicitly with `/datasqrl:start`.
 
@@ -258,7 +258,7 @@ Compiling the project also writes files for inspection to the `build` directory:
 - `pipeline_explain.txt`: a text version of the DAG with table types, keys, timestamps, and engine assignments.
 - `deploy/plan`: the deployment assets, including Flink plans, Kafka topics, Postgres schemas, and API definitions.
 
-![DataSQRL Pipeline Visualization](https://docs.datasqrl.com/img/screenshots/dag_messenger.png)
+![DataSQRL Pipeline Visualization](https://docs.datasqrl.com/img/screenshots/dag_order_revenue.png)
 
 To run the pipeline and its API locally, use the [`run` command](https://docs.datasqrl.com/docs/main/compiler.md#run-command). The API is then available at [http://localhost:8888/v1/graphiql/](http://localhost:8888/v1/graphiql/), and via REST and MCP.
 
