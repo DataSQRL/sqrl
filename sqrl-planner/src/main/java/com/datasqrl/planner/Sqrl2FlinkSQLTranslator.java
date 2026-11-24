@@ -531,6 +531,11 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
     final var query = removeSort(originalQuery);
     var removedSort = originalQuery != query;
     final var rewrittenViewDef = updateViewQuery(query, viewDef);
+    // Flink skips CREATE VIEW IF NOT EXISTS of an existing view, which then keeps its own plan
+    var keepsExistingView =
+        rewrittenViewDef instanceof SqlCreateView createView
+            && createView.isIfNotExists()
+            && catalogManager.getTable(qualifyIdentifier(createView.getName())).isPresent();
     // Add the view to Flink using the rewritten SqlNode from stage 1.
     var op = executeSqlNode(rewrittenViewDef);
     ObjectIdentifier identifier;
@@ -556,8 +561,10 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
               mustDeclareTags,
               errors);
       tableLookup.registerTable(tableAnalysis);
-      // The analyzed plan is the query of the view without its top-level sort, as Flink expands it
-      viewPlans.reuse(identifier, viewAnalysis.originalRelnode());
+      if (!keepsExistingView) {
+        // The analyzed plan is the view's query without its top-level sort, as Flink expands it
+        viewPlans.reuse(identifier, viewAnalysis.originalRelnode());
+      }
 
       return tableAnalysis;
     } catch (RuntimeException e) {

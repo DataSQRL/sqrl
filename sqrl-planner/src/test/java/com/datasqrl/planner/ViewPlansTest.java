@@ -128,6 +128,39 @@ class ViewPlansTest {
   }
 
   @Test
+  void givenNewView_whenCreatedIfNotExists_thenQueriesUseItsPlan() {
+    try (var translator = createTranslator()) {
+      translator.addView(
+          "CREATE VIEW IF NOT EXISTS Amounts AS SELECT id, amount FROM Orders",
+          HintsAndDoc.EMPTY,
+          false,
+          ErrorCollector.root());
+
+      assertThat(isTemporary(translator, "Amounts")).isTrue();
+    }
+  }
+
+  @Test
+  void givenViewWithReusedPlan_whenCreatedAgainIfNotExists_thenQueriesUseTheExistingView() {
+    try (var translator = createTranslator()) {
+      translator.addView(
+          "CREATE VIEW Amounts AS SELECT id, amount FROM Orders",
+          HintsAndDoc.EMPTY,
+          false,
+          ErrorCollector.root());
+      translator.addView(
+          "CREATE VIEW IF NOT EXISTS Amounts AS SELECT id FROM Orders",
+          HintsAndDoc.EMPTY,
+          false,
+          ErrorCollector.root());
+
+      var plan = plan(translator, "CREATE VIEW Totals AS SELECT * FROM Amounts");
+
+      assertThat(plan.getRowType().getFieldNames()).containsExactly("id", "amount");
+    }
+  }
+
+  @Test
   void givenTemporaryView_whenAdded_thenQueriesUseThatView() {
     try (var translator = createTranslator()) {
       translator.addView(
