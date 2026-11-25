@@ -20,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.datasqrl.deployment.model.StateUpgradeBreak.ChangedMaxParallelism;
 import com.datasqrl.deployment.model.StateUpgradeBreak.ChangedOperatorType;
 import com.datasqrl.deployment.model.StateUpgradeBreak.ChangedStateField;
+import com.datasqrl.deployment.model.StateUpgradeBreak.OldState;
 import com.datasqrl.deployment.model.StateUpgradeBreak.RemovedOperator;
 import com.datasqrl.deployment.model.StateUpgradeNote.ChangedFlinkVersion;
 import com.datasqrl.deployment.model.StateUpgradeNote.ChangedStateTtl;
@@ -68,7 +69,8 @@ class FlinkStateUpgradeCheckTest {
             plan("2.3", sourceOperator(), sinkOperator()));
 
     assertThat(result.breaks())
-        .containsExactly(new RemovedOperator("2", "GroupAggregate(groupBy=[customerid])"));
+        .containsExactly(
+            new RemovedOperator("2", "GroupAggregate(groupBy=[customerid])", OldState.UNCLAIMED));
     assertThat(result.breaks().get(0).toMessage())
         .isEqualTo("operator id=2 removed: GroupAggregate(groupBy=[customerid])");
   }
@@ -83,7 +85,11 @@ class FlinkStateUpgradeCheckTest {
     assertThat(result.breaks())
         .containsExactly(
             new ChangedOperatorType(
-                "3", "stream-exec-sink_1", "stream-exec-sink_2", "Sink(table=[CustomerCount])"));
+                "3",
+                "stream-exec-sink_1",
+                "stream-exec-sink_2",
+                "Sink(table=[CustomerCount])",
+                OldState.NONE));
     assertThat(result.breaks().get(0).toMessage())
         .isEqualTo(
             "operator id=3 changed: field 'type' differs:"
@@ -100,7 +106,12 @@ class FlinkStateUpgradeCheckTest {
     assertThat(result.breaks())
         .containsExactly(
             new ChangedStateField(
-                "4", fieldName, "missing", "\"changed\"", "Join(joinType=[InnerJoin])"));
+                "4",
+                fieldName,
+                "missing",
+                "\"changed\"",
+                "Join(joinType=[InnerJoin])",
+                OldState.NONE));
   }
 
   @Test
@@ -152,7 +163,8 @@ class FlinkStateUpgradeCheckTest {
                 "outputType",
                 "[id INT, val BIGINT]",
                 "[id INT, val BIGINT, extra INT]",
-                "Deduplicate(keep=[LastRow], key=[id])"));
+                "Deduplicate(keep=[LastRow], key=[id])",
+                OldState.INCOMPATIBLE));
     assertThat(result.breaks().get(0).toMessage())
         .isEqualTo(
             "operator id=5 changed: field 'outputType' differs: [id INT, val BIGINT] ->"
@@ -178,7 +190,8 @@ class FlinkStateUpgradeCheckTest {
                 "outputType",
                 "[id INT, val BIGINT]",
                 "[id INT, val " + newColumnType + "]",
-                "Deduplicate(keep=[LastRow], key=[id])"));
+                "Deduplicate(keep=[LastRow], key=[id])",
+                OldState.INCOMPATIBLE));
   }
 
   @Test
@@ -235,7 +248,8 @@ class FlinkStateUpgradeCheckTest {
                 "outputType",
                 "ROW<`id` INT, `cnt` BIGINT NOT NULL>",
                 "ROW<`id` INT, `cnt` BIGINT NOT NULL, `total` BIGINT>",
-                "GroupAggregate(groupBy=[customerid])"));
+                "GroupAggregate(groupBy=[customerid])",
+                OldState.INCOMPATIBLE));
   }
 
   @Test
@@ -279,7 +293,8 @@ class FlinkStateUpgradeCheckTest {
                 "state",
                 "[{\"index\":0,\"ttl\":\"0 ms\",\"name\":\"deduplicateState\"}]",
                 "[{\"index\":0,\"ttl\":\"1 h\",\"name\":\"otherState\"}]",
-                "Deduplicate(keep=[LastRow], key=[id])"));
+                "Deduplicate(keep=[LastRow], key=[id])",
+                OldState.UNCLAIMED));
   }
 
   @Test
@@ -300,9 +315,92 @@ class FlinkStateUpgradeCheckTest {
                 "2",
                 "stream-exec-group-aggregate_1",
                 "stream-exec-group-aggregate_2",
-                aggregateDescription),
+                aggregateDescription,
+                OldState.INCOMPATIBLE),
             new ChangedStateField(
-                "2", "state", "\"groupAggregateState\"", "\"otherState\"", aggregateDescription));
+                "2",
+                "state",
+                "\"groupAggregateState\"",
+                "\"otherState\"",
+                aggregateDescription,
+                OldState.INCOMPATIBLE));
+  }
+
+  @Test
+  void givenOperatorWithStateChangesKind_whenCheck_thenUnclaimedState() {
+    var newOperatorAtSameId = operator(2, "stream-exec-calc_1", "Calc(select=[customerid])");
+
+    var result = check(plan("2.3", aggregateOperator()), plan("2.3", newOperatorAtSameId));
+
+    assertThat(result.breaks())
+        .filteredOn(ChangedOperatorType.class::isInstance)
+        .singleElement()
+        .extracting(StateUpgradeBreak::oldState)
+        .isEqualTo(OldState.UNCLAIMED);
+  }
+
+  @Test
+  void givenSourceChangesKind_whenCheck_thenUnclaimedState() {
+    var result =
+        check(
+            plan("2.3", sourceOperator()),
+            plan(
+                "2.3", operator(1, "stream-exec-exchange_1", "Exchange(distribution=[hash[id]])")));
+
+    assertThat(result.breaks())
+        .singleElement()
+        .extracting(StateUpgradeBreak::oldState)
+        .isEqualTo(OldState.UNCLAIMED);
+  }
+
+  @Test
+  void givenOperatorWithoutStateChangesKind_whenCheck_thenNoState() {
+    var result =
+        check(
+            plan("2.3", operator(2, "stream-exec-calc_1", "Calc(select=[id])")),
+            plan(
+                "2.3", operator(2, "stream-exec-exchange_1", "Exchange(distribution=[hash[id]])")));
+
+    assertThat(result.breaks())
+        .singleElement()
+        .extracting(StateUpgradeBreak::oldState)
+        .isEqualTo(OldState.NONE);
+  }
+
+  @Test
+  void givenRemovedStateEntry_whenCheck_thenUnclaimedState() {
+    var oldSinkOperator = sinkOperator();
+    oldSinkOperator
+        .putArray("state")
+        .addObject()
+        .put("index", 0)
+        .put("ttl", "0 ms")
+        .put("name", "sinkMaterializeState");
+
+    var result = check(plan("2.3", oldSinkOperator), plan("2.3", sinkOperator()));
+
+    assertThat(result.breaks())
+        .singleElement()
+        .extracting(StateUpgradeBreak::oldState)
+        .isEqualTo(OldState.UNCLAIMED);
+  }
+
+  @Test
+  void givenNewStateEntry_whenCheck_thenNoState() {
+    var newSinkOperator = sinkOperator();
+    newSinkOperator
+        .putArray("state")
+        .addObject()
+        .put("index", 0)
+        .put("ttl", "0 ms")
+        .put("name", "sinkMaterializeState");
+
+    var result = check(plan("2.3", sinkOperator()), plan("2.3", newSinkOperator));
+
+    assertThat(result.breaks())
+        .singleElement()
+        .extracting(StateUpgradeBreak::oldState)
+        .isEqualTo(OldState.NONE);
   }
 
   @Test
@@ -342,9 +440,9 @@ class FlinkStateUpgradeCheckTest {
 
     assertThat(result.breaks())
         .containsExactly(
-            new RemovedOperator("1", "TableSourceScan(table=[Orders])"),
-            new RemovedOperator("2", "GroupAggregate(groupBy=[customerid])"),
-            new RemovedOperator("3", "Sink(table=[CustomerCount])"));
+            new RemovedOperator("1", "TableSourceScan(table=[Orders])", OldState.UNCLAIMED),
+            new RemovedOperator("2", "GroupAggregate(groupBy=[customerid])", OldState.UNCLAIMED),
+            new RemovedOperator("3", "Sink(table=[CustomerCount])", OldState.UNCLAIMED));
   }
 
   @Test

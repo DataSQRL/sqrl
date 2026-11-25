@@ -342,8 +342,9 @@ class CheckStateUpgradeOptionTest {
     }
 
     @Test
-    void givenRemovedOperator_whenCompareBuildPlans_thenFatalWithBreakLineAndHint() {
-      var oldBuildPlan = buildPlan(plan("2.3", SOURCE_OPERATOR, SINK_OPERATOR), Optional.empty());
+    void givenRemovedOperatorWithState_whenCompareBuildPlans_thenMarkedLineAndUnclaimedStateNote() {
+      var oldBuildPlan =
+          buildPlan(plan("2.3", SOURCE_OPERATOR, deduplicateOperator("0 ms")), Optional.empty());
       var newBuildPlan = buildPlan(plan("2.3", SOURCE_OPERATOR), Optional.empty());
 
       assertThatThrownBy(
@@ -352,8 +353,60 @@ class CheckStateUpgradeOptionTest {
                       oldBuildPlan, newBuildPlan, ErrorCollector.root()))
           .isInstanceOf(CollectedException.class)
           .hasMessageContaining("cannot restore the state")
-          .hasMessageContaining("operator id=2 removed: Sink(CustomerCount)")
-          .hasMessageContaining("execution.state-recovery.ignore-unclaimed-state");
+          .hasMessageContaining(
+              "operator id=5 removed: Deduplicate(keep=[LastRow], key=[id]) [unclaimed state]")
+          .hasMessageContaining(
+              "The lines marked [unclaimed state] leave old state that no operator of the new plan"
+                  + " claims.")
+          .hasMessageContaining("execution.state-recovery.ignore-unclaimed-state is true")
+          .hasMessageNotContaining("[incompatible state]");
+    }
+
+    @Test
+    void givenRemovedOperatorWithoutState_whenCompareBuildPlans_thenNoMarkAndNoNote() {
+      var calcOperator =
+          "{\"id\": 2, \"type\": \"stream-exec-calc_1\", \"description\": \"Calc(select=[id])\"}";
+      var oldBuildPlan = buildPlan(plan("2.3", SOURCE_OPERATOR, calcOperator), Optional.empty());
+      var newBuildPlan = buildPlan(plan("2.3", SOURCE_OPERATOR), Optional.empty());
+
+      assertThatThrownBy(
+              () ->
+                  CheckStateUpgradeOption.compareBuildPlans(
+                      oldBuildPlan, newBuildPlan, ErrorCollector.root()))
+          .isInstanceOf(CollectedException.class)
+          .hasMessageContaining("operator id=2 removed: Calc(select=[id])")
+          .hasMessageNotContaining("[unclaimed state]")
+          .hasMessageNotContaining("[incompatible state]")
+          .hasMessageNotContaining("ignore-unclaimed-state");
+    }
+
+    @Test
+    void givenUnclaimedAndIncompatibleState_whenCompareBuildPlans_thenBothMarksAndBothNotes() {
+      var oldDeduplicateOperator =
+          "{\"id\": 4, \"type\": \"stream-exec-deduplicate_1\", \"description\": \"Deduplicate\","
+              + " \"state\": [{\"index\": 0, \"name\": \"deduplicateState\"}], \"outputType\":"
+              + " \"ROW<`id` INT>\"}";
+      var newDeduplicateOperator =
+          oldDeduplicateOperator.replace("ROW<`id` INT>", "ROW<`id` INT, `extra` INT>");
+      var oldBuildPlan =
+          buildPlan(
+              plan("2.3", oldDeduplicateOperator, deduplicateOperator("0 ms")), Optional.empty());
+      var newBuildPlan = buildPlan(plan("2.3", newDeduplicateOperator), Optional.empty());
+
+      assertThatThrownBy(
+              () ->
+                  CheckStateUpgradeOption.compareBuildPlans(
+                      oldBuildPlan, newBuildPlan, ErrorCollector.root()))
+          .isInstanceOf(CollectedException.class)
+          .hasMessageContaining(
+              "operator id=4 changed: field 'outputType' differs: ROW<`id` INT> -> ROW<`id` INT,"
+                  + " `extra` INT> (Deduplicate) [incompatible state]")
+          .hasMessageContaining(
+              "operator id=5 removed: Deduplicate(keep=[LastRow], key=[id]) [unclaimed state]")
+          .hasMessageContaining("The lines marked [unclaimed state] leave old state")
+          .hasMessageContaining(
+              "The lines marked [incompatible state] belong to an operator that claims the old state"
+                  + " but cannot read it.");
     }
 
     @Test
