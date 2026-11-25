@@ -156,6 +156,11 @@ commands:
               echo "export TAG_SUFFIX=dev"             >> "$BASH_ENV"
               echo "export REGISTRY=datasqrl"          >> "$BASH_ENV"
               echo "export IS_RELEASE=false"           >> "$BASH_ENV"
+            elif [[ "$CIRCLE_BRANCH" =~ ^release-([0-9]+\.[0-9]+)$ ]]; then
+              # release-0.12 publishes ghcr.io/datasqrl/*:0.12-dev
+              echo "export TAG_SUFFIX=${BASH_REMATCH[1]}-dev" >> "$BASH_ENV"
+              echo "export REGISTRY=ghcr.io/datasqrl"         >> "$BASH_ENV"
+              echo "export IS_RELEASE=false"                  >> "$BASH_ENV"
             else
               echo "export TAG_SUFFIX=$CIRCLE_BRANCH"  >> "$BASH_ENV"
               echo "export REGISTRY=ghcr.io/datasqrl"  >> "$BASH_ENV"
@@ -540,8 +545,10 @@ jobs:
             # without hitting Docker Hub rate limits.
             # Push PR images to ghcr.io/datasqrl/* so downstream CI (e.g. datasqrl-examples) can
             # validate examples against the snapshot built from this PR.
-            if [ "$IS_RELEASE" != "true" ] && [ "$TAG_SUFFIX" != "dev" ] && [[ "$TAG_SUFFIX" != pr-* ]]; then
-              echo "Skipping image publishing for TAG_SUFFIX=$TAG_SUFFIX (only tagged releases, main=:dev, and pr-* are published)."
+            # Push release branch images to ghcr.io/datasqrl/* as <major>.<minor>-dev (release-0.12=:0.12-dev).
+            if [ "$IS_RELEASE" != "true" ] && [ "$TAG_SUFFIX" != "dev" ] && [[ "$TAG_SUFFIX" != pr-* ]] \
+                && ! [[ "$TAG_SUFFIX" =~ ^[0-9]+\.[0-9]+-dev$ ]]; then
+              echo "Skipping image publishing for TAG_SUFFIX=$TAG_SUFFIX (only tagged releases, main=:dev, release-X.Y=:X.Y-dev, and pr-* are published)."
               circleci step halt
             fi
       - run:
