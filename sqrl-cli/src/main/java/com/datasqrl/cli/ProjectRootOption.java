@@ -27,8 +27,9 @@ public class ProjectRootOption {
   @Option(
       names = {"-r", "--project-root"},
       description =
-          "Project root folder. Must be a relative path. If omitted, it is inferred from the"
-              + " package path(s), or is \"/workspace\" for a command that takes none.")
+          "Project root folder. Must be a relative path inside the workspace. If omitted, it is"
+              + " inferred from the package path(s), or is \"/workspace\" for a command that"
+              + " takes none.")
   Optional<Path> projectRoot = Optional.empty();
 
   boolean isSet() {

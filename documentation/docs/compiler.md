@@ -129,9 +129,9 @@ project.
                       one.
   -h, --help        Show this help message and exit.
   -r, --project-root=<projectRoot>
-                    Project root folder. Must be a relative path. If omitted,
-                      it is inferred from the package path(s), or is
-                      "/workspace" for a command that takes none.
+                    Project root folder. Must be a relative path inside the
+                      workspace. If omitted, it is inferred from the package
+                      path(s), or is "/workspace" for a command that takes none.
   -V, --version     Print version information and exit.
 ```
 
@@ -188,9 +188,10 @@ Compiles an SQRL project and produces all build artifacts.
   -B, --batch-output        Run in batch output mode (disables colored output).
   -h, --help                Show this help message and exit.
   -r, --project-root=<projectRoot>
-                            Project root folder. Must be a relative path. If
-                              omitted, it is inferred from the package path(s),
-                              or is "/workspace" for a command that takes none.
+                            Project root folder. Must be a relative path inside
+                              the workspace. If omitted, it is inferred from
+                              the package path(s), or is "/workspace" for a
+                              command that takes none.
   -t, --target=<targetFolder>
                             Folder for deployment artifacts and plans. The
                               value must be a relative path that remains within
@@ -266,9 +267,10 @@ Compiles, then runs a SQRL project in a lightweight, standalone environment.
   -B, --batch-output        Run in batch output mode (disables colored output).
   -h, --help                Show this help message and exit.
   -r, --project-root=<projectRoot>
-                            Project root folder. Must be a relative path. If
-                              omitted, it is inferred from the package path(s),
-                              or is "/workspace" for a command that takes none.
+                            Project root folder. Must be a relative path inside
+                              the workspace. If omitted, it is inferred from
+                              the package path(s), or is "/workspace" for a
+                              command that takes none.
   -t, --target=<targetFolder>
                             Folder for deployment artifacts and plans. The
                               value must be a relative path that remains within
@@ -380,9 +382,10 @@ Compiles, then tests a SQRL project.
   -B, --batch-output        Run in batch output mode (disables colored output).
   -h, --help                Show this help message and exit.
   -r, --project-root=<projectRoot>
-                            Project root folder. Must be a relative path. If
-                              omitted, it is inferred from the package path(s),
-                              or is "/workspace" for a command that takes none.
+                            Project root folder. Must be a relative path inside
+                              the workspace. If omitted, it is inferred from
+                              the package path(s), or is "/workspace" for a
+                              command that takes none.
   -t, --target=<targetFolder>
                             Folder for deployment artifacts and plans. The
                               value must be a relative path that remains within
@@ -457,9 +460,9 @@ Executes an already compiled SQRL script using its existing build artifacts.
 
   -h, --help      Show this help message and exit.
   -r, --project-root=<projectRoot>
-                  Project root folder. Must be a relative path. If omitted, it
-                    is inferred from the package path(s), or is "/workspace"
-                    for a command that takes none.
+                  Project root folder. Must be a relative path inside the
+                    workspace. If omitted, it is inferred from the package path
+                    (s), or is "/workspace" for a command that takes none.
   -t, --target=<targetFolder>
                   Folder for deployment artifacts and plans. The value must be
                     a relative path that remains within "<project-root>".
