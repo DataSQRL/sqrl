@@ -150,9 +150,8 @@ public class CheckStateUpgradeOption {
   }
 
   /**
-   * Fails when the old plan folder is inside a folder that the compile empties. It compares the
-   * real paths, so that a symbolic link cannot hide this. The message names the option that sets
-   * the compile folder, so that the user knows which option to change.
+   * Fails when the old plan folder is inside a folder that the compile empties. The message names
+   * the option that sets the compile folder, so that the user knows which option to change.
    */
   private static void checkPlanDirOutside(
       Path oldPlanDir,
@@ -162,12 +161,23 @@ public class CheckStateUpgradeOption {
       ErrorCollector errors) {
     var absoluteCompileFolder = compileFolder.toAbsolutePath().normalize();
     errors.checkFatal(
-        !realPath(oldPlanDir).startsWith(realPath(absoluteCompileFolder)),
+        !isInsideFolder(oldPlanDir, absoluteCompileFolder),
         "%s",
         ("The old plan folder %s of --check-state-upgrade-from is inside the %s %s of this compile."
                 + " The compile empties its build folder and its target folder, so it would delete"
-                + " the old build. Give this compile a %s value that is outside the old build.")
+                + " the old build or the symbolic link to it. Give this compile a %s value that is"
+                + " outside the old build.")
             .formatted(oldPlanDir, compileFolderName, absoluteCompileFolder, compileFolderOption));
+  }
+
+  /**
+   * Returns true when the path is inside the folder before or after the symbolic links resolve. A
+   * link to the folder hides the path before the links resolve. A link inside the folder hides the
+   * path after the links resolve, and the compile deletes that link when it empties the folder.
+   */
+  private static boolean isInsideFolder(Path absolutePath, Path absoluteFolder) {
+    return absolutePath.startsWith(absoluteFolder)
+        || realPath(absolutePath).startsWith(realPath(absoluteFolder));
   }
 
   /**
