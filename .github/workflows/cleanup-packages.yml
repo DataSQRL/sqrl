@@ -132,13 +132,14 @@ jobs:
                 # without tags, but is required for the multi-arch manifest to work.
                 # Deleting these breaks multi-arch containers.
 
-                # Delete tagged versions older than 30 days (excluding dev, latest, and semver tags)
-                echo "Fetching tagged versions older than $cutoff_date for $package_name (excluding dev, latest, and semver tags)..."
+                # Delete tagged versions older than 30 days (excluding dev, latest, release branch dev
+                # tags such as 0.12-dev, and semver tags)
+                echo "Fetching tagged versions older than $cutoff_date for $package_name (excluding dev, latest, X.Y-dev, and semver tags)..."
                 old_tagged_versions=$(gh api \
                   --method GET \
                   -H "Accept: application/vnd.github+json" \
                   "/$endpoint/packages/container/$package_name/versions" \
-                  --jq --arg cutoff "$cutoff_date" '.[] | select(.metadata.container.tags | length > 0) | select(.updated_at < $cutoff) | select(.metadata.container.tags | any(. == "dev" or . == "latest" or test("^\\d+\\.\\d+\\.\\d+(-.*)?$")) | not) | .id' 2>/dev/null || echo "")
+                  --jq --arg cutoff "$cutoff_date" '.[] | select(.metadata.container.tags | length > 0) | select(.updated_at < $cutoff) | select(.metadata.container.tags | any(. == "dev" or . == "latest" or test("^\\d+\\.\\d+-dev$") or test("^\\d+\\.\\d+\\.\\d+(-.*)?$")) | not) | .id' 2>/dev/null || echo "")
 
                 if [ -n "$old_tagged_versions" ]; then
                   echo "$old_tagged_versions" | while read -r version_id; do
