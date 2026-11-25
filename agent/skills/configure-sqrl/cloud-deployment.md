@@ -84,7 +84,8 @@ Postgres has one primary and zero or more same-sized read replicas.
         "auto-expand-percentage": 0.2,
         "create-indexes": true,
         "data-checksums": true,
-        "parameters": {}
+        "parameters": {},
+        "iops-factor": 1
       }
     }
   }
@@ -100,6 +101,17 @@ Postgres has one primary and zero or more same-sized read replicas.
 | `xlarge` | 8 | 32 GiB | 1 TB | 600 |
 
 `replica-count` is zero or greater. `disk-size-gb` must be positive; `auto-expand-percentage` is zero to disable and otherwise less than one. `create-indexes` defaults to `true`; set it to `false` only for a catch-up deployment, then upgrade to a steady-state profile that creates indexes before serving production traffic. `data-checksums` defaults to `true` and is immutable after database creation. `parameters` overrides PostgreSQL server parameters, typically only for an explicit catch-up profile.
+
+`iops-factor` is optional and must be `1`, `2`, `4` or `8`; when unset, volumes run at the gp3 baseline. It multiplies the baseline of every volume the Postgres cluster uses (today data, and WAL if configured):
+
+| Factor | IOPS | Throughput | Minimum volume size |
+|---|---:|---:|---:|
+| `1` | 3,000 | 125 MiB/s | - |
+| `2` | 6,000 | 250 MiB/s | 12 GiB |
+| `4` | 12,000 | 500 MiB/s | 24 GiB |
+| `8` | 24,000 | 1,000 MiB/s | 48 GiB |
+
+It is best effort: EBS allows at most 500 IOPS per GiB, so each volume is independently rounded down to the highest factor its size allows (the `dev` 10 GB data disk always stays at `1`), using the smaller of the requested and live size on an upgrade. Rounding down logs a warning but does not fail the deployment, and the node's own EBS bandwidth limit can still cap actual performance. Changing it on an upgrade modifies the volumes in place without data loss or restart; removing it returns them to the baseline. AWS allows at most four modifications per volume per 24 hours, one at a time, so do not toggle it repeatedly. Factors above `1` cost extra per volume. Raise it in a catch-up profile when a backfill is I/O bound on Postgres writes, then drop it for steady state.
 
 ## Vert.x (`engines.vertx.deployment`)
 

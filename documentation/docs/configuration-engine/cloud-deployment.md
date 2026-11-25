@@ -122,7 +122,8 @@ PostgreSQL deployments consist of one primary instance and a configurable number
         "auto-expand-percentage": 0.2,  // Auto-expand threshold (0 to disable, must be < 1)
         "create-indexes": true,         // Whether to create table indexes (see "Create Indexes" below)
         "data-checksums": true,         // Whether data-page checksums are enabled (see "Data Checksums" below)
-        "parameters": {}                // Extra postgresql.parameters (see "Parameters" below)
+        "parameters": {},               // Extra postgresql.parameters (see "Parameters" below)
+        "iops-factor": 1                // Disk performance multiplier: 1, 2, 4 or 8 (see "IOPS Factor" below)
       }
     }
   }
@@ -487,3 +488,38 @@ Typically used in a catch-up profile that trades durability for ingest throughpu
 ```
 
 For deployments with [partitioned tables](postgres.md#partitioning), `pg_partman_bgw.interval` (seconds between pg_partman background-worker maintenance runs, default `3600`) can also be overridden here. The `pg_partman_bgw.dbname` and `pg_partman_bgw.role` settings are managed by the platform and cannot be overridden.
+
+## IOPS Factor (`iops-factor`)
+
+Multiplies the gp3 baseline disk performance of every volume the PostgreSQL cluster uses, which today is the data volume and, if one is configured, the separate WAL volume. Accepts `1`, `2`, `4` or `8`; any other value fails validation. When unset, the volumes run at the gp3 baseline. PostgreSQL only.
+
+| Engine     | Field         | Default     |
+|:-----------|:--------------|:------------|
+| PostgreSQL | `iops-factor` | unset (`1`) |
+
+| Factor | IOPS   | Throughput  | Minimum volume size |
+|:-------|:-------|:------------|:--------------------|
+| 1      | 3,000  | 125 MiB/s   | -                   |
+| 2      | 6,000  | 250 MiB/s   | 12 GiB              |
+| 4      | 12,000 | 500 MiB/s   | 24 GiB              |
+| 8      | 24,000 | 1,000 MiB/s | 48 GiB              |
+
+The factor is best effort. EBS allows at most 500 IOPS per GiB, so each volume is rounded down, independently, to the highest factor its size allows: the 10GB data disk of the `dev` size always stays at `1`. On an upgrade, the smaller of the requested and the live volume size decides. A rounded-down volume logs a warning, and the deployment continues. The volumes' node can also cap actual performance below the factor through its own EBS bandwidth limit.
+
+Changing the factor on an upgrade modifies the existing volumes in place, without data loss or a restart, and removing it returns them to the baseline. AWS allows at most four modifications per volume in 24 hours, one at a time, so avoid toggling it repeatedly. Factors above `1` add a per-volume cost for the provisioned IOPS and throughput above the baseline.
+
+Typically raised in a catch-up profile while a heavy backfill is I/O bound on PostgreSQL writes, then dropped for the steady-state upgrade.
+
+```json
+{
+  "engines": {
+    "postgres": {
+      "deployment": {
+        "instance-size": "medium",
+        "wal-disk-size-gb": 100,
+        "iops-factor": 4          // 12,000 IOPS / 500 MiB/s on both the data and WAL volumes
+      }
+    }
+  }
+}
+```
