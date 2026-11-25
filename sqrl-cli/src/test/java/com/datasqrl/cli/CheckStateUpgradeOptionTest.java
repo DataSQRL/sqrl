@@ -388,7 +388,8 @@ class CheckStateUpgradeOptionTest {
       assertThat(messages(errors, ErrorMessage::isWarning))
           .singleElement()
           .asString()
-          .contains("Only the old build sets pipeline.max-parallelism (128)");
+          .contains("Only the old build sets pipeline.max-parallelism (128)")
+          .contains("Flink takes this value from the savepoint.");
     }
 
     @Test
