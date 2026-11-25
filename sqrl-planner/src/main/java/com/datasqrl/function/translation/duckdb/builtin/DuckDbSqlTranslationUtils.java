@@ -19,7 +19,6 @@ import java.math.BigDecimal;
 import java.util.Map;
 import org.apache.calcite.avatica.util.TimeUnit;
 import org.apache.calcite.sql.SqlCall;
-import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlLiteral;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlWriter;
@@ -72,27 +71,6 @@ final class DuckDbSqlTranslationUtils {
   /** Converts a Calcite {@link TimeUnit} enum to a DuckDB time unit string. */
   static String extractTimeUnit(TimeUnit timeUnit) {
     return extractTimeUnit(timeUnit.name());
-  }
-
-  static String extractTimeUnit(SqlNode timeUnitNode) {
-    // TIMESTAMPADD accepts a time unit token (e.g. DAY, HOUR).
-    // Depending on how the SQL was produced, this may be a SYMBOL literal, identifier, etc.
-    String raw;
-    if (timeUnitNode instanceof SqlLiteral literal) {
-      var val = literal.toValue();
-      raw = val == null ? "" : val;
-    } else if (timeUnitNode instanceof SqlIdentifier identifier) {
-      raw = identifier.toString();
-    } else {
-      raw = timeUnitNode.toString();
-    }
-
-    raw = raw.trim();
-    if (raw.regionMatches(true, 0, "SQL_TSI_", 0, "SQL_TSI_".length())) {
-      raw = raw.substring("SQL_TSI_".length());
-    }
-
-    return extractTimeUnit(raw);
   }
 
   static String flinkDateFormatToDuckDb(SqlLiteral patternLiteral) {
