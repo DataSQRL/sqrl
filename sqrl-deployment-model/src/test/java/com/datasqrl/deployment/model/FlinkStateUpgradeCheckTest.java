@@ -207,6 +207,53 @@ class FlinkStateUpgradeCheckTest {
   }
 
   @Test
+  void givenRenamedColumnsInTextOutputType_whenCheck_thenNoBreaks() {
+    var oldAggregateOperator =
+        aggregateOperator().put("outputType", "ROW<`id` INT, `cnt` BIGINT NOT NULL>");
+    var newAggregateOperator =
+        aggregateOperator().put("outputType", "ROW<`customer` INT, `total` BIGINT NOT NULL>");
+
+    var result = check(plan("2.3", oldAggregateOperator), plan("2.3", newAggregateOperator));
+
+    assertThat(result.breaks()).isEmpty();
+  }
+
+  @Test
+  void givenNewColumnInTextOutputType_whenCheck_thenChangedOutputTypeShowsText() {
+    var oldAggregateOperator =
+        aggregateOperator().put("outputType", "ROW<`id` INT, `cnt` BIGINT NOT NULL>");
+    var newAggregateOperator =
+        aggregateOperator()
+            .put("outputType", "ROW<`id` INT, `cnt` BIGINT NOT NULL, `total` BIGINT>");
+
+    var result = check(plan("2.3", oldAggregateOperator), plan("2.3", newAggregateOperator));
+
+    assertThat(result.breaks())
+        .containsExactly(
+            new ChangedStateField(
+                "2",
+                "outputType",
+                "ROW<`id` INT, `cnt` BIGINT NOT NULL>",
+                "ROW<`id` INT, `cnt` BIGINT NOT NULL, `total` BIGINT>",
+                "GroupAggregate(groupBy=[customerid])"));
+  }
+
+  @Test
+  void givenRenamedNestedFieldInTextOutputType_whenCheck_thenChangedOutputType() {
+    var oldDeduplicateOperator =
+        deduplicateOperator("0 ms").put("outputType", "ROW<`id` INT, `payload` ROW<`a` INT>>");
+    var newDeduplicateOperator =
+        deduplicateOperator("0 ms").put("outputType", "ROW<`id` INT, `payload` ROW<`b` INT>>");
+
+    var result = check(plan("2.3", oldDeduplicateOperator), plan("2.3", newDeduplicateOperator));
+
+    assertThat(result.breaks())
+        .singleElement()
+        .extracting(stateUpgradeBreak -> ((ChangedStateField) stateUpgradeBreak).fieldName())
+        .isEqualTo("outputType");
+  }
+
+  @Test
   void givenNewColumnOnOperatorWithoutState_whenCheck_thenNoBreaks() {
     var result =
         check(

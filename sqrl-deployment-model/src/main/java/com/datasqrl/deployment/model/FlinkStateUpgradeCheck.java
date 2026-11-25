@@ -151,23 +151,38 @@ public final class FlinkStateUpgradeCheck {
 
   /**
    * Returns the column types of a {@code ROW} output type in their order, without the column names,
-   * because a renamed column does not change the stored rows. Returns the whole value for another
-   * type, and {@code null} for a missing output type.
+   * because a renamed column does not change the stored rows. A compiled plan writes the type as an
+   * object with {@code fields} when a column is a time attribute, and as text in the other cases.
+   * Returns the whole value for another type, and {@code null} for a missing output type.
    */
   private static JsonNode columnTypes(JsonNode outputType) {
-    if (outputType == null || !outputType.path("fields").isArray()) {
-      return outputType;
+    if (outputType == null) {
+      return null;
     }
     var columnTypes = JsonNodeFactory.instance.arrayNode();
-    outputType.path("fields").forEach(column -> columnTypes.add(column.path("fieldType")));
-    return columnTypes;
+    if (outputType.path("fields").isArray()) {
+      outputType.path("fields").forEach(column -> columnTypes.add(column.path("fieldType")));
+      return columnTypes;
+    }
+    if (outputType.isTextual()) {
+      var columnTypeTexts = RowTypeText.columnTypes(outputType.asText());
+      if (columnTypeTexts.isPresent()) {
+        columnTypeTexts.get().forEach(columnTypes::add);
+        return columnTypes;
+      }
+    }
+    return outputType;
   }
 
   /**
    * Returns the columns of a {@code ROW} output type as {@code [name type, ...]}, which is shorter
-   * than the JSON. A type that is not plain text, such as a time attribute, stays compact JSON.
+   * than the JSON. A type that is not plain text, such as a time attribute, stays compact JSON. The
+   * text form of a type is already short, so it stays as it is.
    */
   private static String outputTypeText(JsonNode outputType) {
+    if (outputType != null && outputType.isTextual()) {
+      return outputType.asText();
+    }
     if (outputType == null || !outputType.path("fields").isArray()) {
       return valueText(outputType);
     }
