@@ -43,7 +43,9 @@ Commands:
 
 :::warning
 You need to mount the current directory (`$PWD` or `${PWD}` on Windows with Powershell) to the `/workspace`
-directory for file access in Docker.
+directory for file access in Docker. The paths in a package file must stay inside `/workspace`, so when a project
+includes or references a sibling project, mount the directory that holds both and select the project with `-r` or
+by the path of its package file. See the [configuration documentation](configuration.md#source-files-script).
 :::
 
 :::info
@@ -147,7 +149,7 @@ docker run --rm -v $PWD:/workspace datasqrl/cmd compile my-project-test-package.
 This creates a new scalar function template in the `functions/` directory, which the `compile` command builds with JBang.
 Use `--aggregate` to create an aggregate function instead.
 
-To add a function without changing into the project folder, pass the project root with `-r`. It is relative to the mounted directory and must exist:
+To add a function without changing into the project folder, pass the project root with `-r`. It is relative to the mounted directory and must be an existing directory inside it:
 
 ```bash
 docker run --rm -v $PWD:/workspace datasqrl/cmd add-func -r my-project MyAwesomeFunction

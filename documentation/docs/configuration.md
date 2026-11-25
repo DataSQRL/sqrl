@@ -147,7 +147,7 @@ Set the optional `mcp-apps` field to a directory of MCP apps, interactive HTML U
 
 When multiple SQRL projects rely on the same logic or data catalog definitions, duplicating them would create unnecessary maintenance work.
 Instead, include and reuse other SQRL projects with the `include` config. Each `include` key is the namespace used to import the included project's modules.
-The required `package` value is the path to the included project's package JSON file, relative to the current project root.
+The required `package` value is the path to the included project's package JSON file, relative to the current project root. The included project must be inside the workspace, like every path in `script`.
 DataSQRL uses the package file's parent directory as the include root and loads the SQRL files in that directory and its subdirectories.
 Each `include` entry can define `config` overrides for the included project's `script.config` template values.
 
@@ -227,7 +227,7 @@ When the included project is deployed on its own, set `"standalone": true` on it
 That project then owns its internal Kafka tables, also when the current project imports them or exports into them.
 
 The deployment of the included project also writes what its own statements write, so the current project does not write it again.
-Which statements those are follows from the `script.main` of the included project's package file, i.e. the `package` of the include entry: its deployment plans the main script and the scripts that the main script imports, transitively.
+Which statements those are follows from the `script.main` of the included project's package file, i.e. the `package` of the include entry: its deployment plans the main script and the scripts that the main script imports, transitively. That `script.main` must be a path inside the included project.
 
 - **Subscriptions:** the deployment writes the topics of the subscriptions that it exposes, i.e. of the `SUBSCRIBE` tables, and of the tables that `SUBSCRIBE` functions read, in the main script and in the scripts that it imports inline (`IMPORT script.*`), transitively.
   The current project reads these topics for the subscriptions that it plans from these scripts, and for its own subscriptions on these tables, instead of computing the tables and writing them again.
