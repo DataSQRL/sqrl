@@ -34,6 +34,8 @@ import org.apache.calcite.rel.logical.LogicalTableScan;
 import org.apache.calcite.rex.RexBuilder;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.sql.SqlIntervalQualifier;
+import org.apache.calcite.sql.SqlLiteral;
+import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.SqlTypeName;
@@ -95,6 +97,21 @@ class SqlConvertersIntervalLiteralTest {
           .as(dialect.name())
           .contains("THEN INTERVAL '14' DAY ELSE INTERVAL '21' DAY END");
     }
+  }
+
+  @Test
+  void givenUnchangedIntervalInImmutableList_whenUseValueUnits_thenLeavesListAlone() {
+    var day =
+        SqlLiteral.createInterval(
+            1,
+            "2",
+            new SqlIntervalQualifier(TimeUnit.DAY, null, SqlParserPos.ZERO),
+            SqlParserPos.ZERO);
+    var list = SqlNodeList.of(SqlParserPos.ZERO, List.of(day));
+
+    IntervalLiterals.useValueUnits(list);
+
+    assertThat(list.get(0)).isSameAs(day);
   }
 
   /** Builds {@code SELECT ts + INTERVAL '<count>' <unit> FROM Records}. */

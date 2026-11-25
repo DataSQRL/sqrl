@@ -60,7 +60,10 @@ final class IntervalLiterals {
           public SqlNode visit(SqlNodeList nodeList) {
             for (var i = 0; i < nodeList.size(); i++) {
               if (nodeList.get(i) instanceof SqlIntervalLiteral literal) {
-                nodeList.set(i, withValueUnit(literal));
+                var relabelled = withValueUnit(literal);
+                if (relabelled != literal) {
+                  nodeList.set(i, relabelled);
+                }
               }
             }
             return super.visit(nodeList);
