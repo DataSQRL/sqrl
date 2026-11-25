@@ -53,14 +53,17 @@ public class FilePreprocessingPipeline {
   private final WorkspacePaths workspacePaths;
   private final Path buildBaseDir;
   private final Set<Preprocessor> preprocessors;
+  private final SourceFiles sourceFiles;
 
   public FilePreprocessingPipeline(
       WorkspacePaths workspacePaths,
       @Qualifier("buildBaseDir") Path buildBaseDir,
-      Set<Preprocessor> preprocessors) {
+      Set<Preprocessor> preprocessors,
+      SourceFiles sourceFiles) {
     this.workspacePaths = workspacePaths;
     this.buildBaseDir = buildBaseDir;
     this.preprocessors = preprocessors;
+    this.sourceFiles = sourceFiles;
   }
 
   public void run(Path sourceDir, ErrorCollector errors) throws IOException {
@@ -124,7 +127,8 @@ public class FilePreprocessingPipeline {
                 workspacePaths.getUdfPath(),
                 workspacePaths.getDataPath(),
                 includeNamespace,
-                errors);
+                errors,
+                sourceFiles);
       }
 
       ctxDeque.push(currentCtx.getSubContext(dir));
@@ -161,7 +165,8 @@ public class FilePreprocessingPipeline {
       Path libDir,
       Path dataDir,
       Optional<String> includeNamespace,
-      ErrorCollector errorCollector) {
+      ErrorCollector errorCollector,
+      SourceFiles sourceFiles) {
 
     private Path getRelativeBuildPath(Path srcPath) {
       checkArgument(Files.isDirectory(srcPath));
@@ -194,12 +199,25 @@ public class FilePreprocessingPipeline {
           libDir,
           dataDir,
           includeNamespace,
-          errorCollector);
+          errorCollector,
+          sourceFiles);
     }
 
+    /** Copies a source file into the build directory, using its overlaid content if any. */
+    @SneakyThrows
     public Path copyToBuild(Path file) {
       var destination = getRelativeBuildPath(file.getParent());
-      return copy(file, destination);
+      var overlay = sourceFiles.getOverlay(file);
+      Path buildFile;
+      if (overlay.isPresent()) {
+        buildFile = destination.resolve(file.getFileName());
+        ensureDirectoryExists(destination);
+        Files.writeString(buildFile, overlay.get());
+      } else {
+        buildFile = copy(file, destination);
+      }
+      sourceFiles.recordBuildFile(buildFile, file);
+      return buildFile;
     }
 
     public void copyToData(Path file) {

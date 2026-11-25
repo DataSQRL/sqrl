@@ -82,8 +82,10 @@ class PackagerTest {
 
     var preprocessors =
         Set.<Preprocessor>of(new JarPreprocessor(), new JBangPreprocessor(jBangRunner, errors));
-    var pipeline = new FilePreprocessingPipeline(workspacePaths, buildDir, preprocessors);
-    underTest = new Packager(workspacePaths, packageJson, pipeline, mainScript);
+    var sourceFiles = new SourceFiles();
+    var pipeline =
+        new FilePreprocessingPipeline(workspacePaths, buildDir, preprocessors, sourceFiles);
+    underTest = new Packager(workspacePaths, packageJson, pipeline, mainScript, sourceFiles);
 
     when(jBangRunner.isJBangAvailable()).thenReturn(true);
     doAnswer(invocation -> exportFatJar(invocation.getArgument(0), invocation.getArgument(1)))

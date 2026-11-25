@@ -49,7 +49,8 @@ public class JBangRunner {
   private static final String META_INF_PREFIX = "META-INF/";
   private static final String META_INF_SERVICES_PREFIX = META_INF_PREFIX + "services/";
 
-  private volatile Boolean available = null;
+  // JBang does not come or go while the JVM runs, so check once, also for repeated compilations
+  private static volatile Boolean available = null;
 
   public static JBangRunner create() {
     return new JBangRunner();
@@ -211,7 +212,7 @@ public class JBangRunner {
 
   public boolean isJBangAvailable() {
     if (available == null) {
-      synchronized (this) {
+      synchronized (JBangRunner.class) {
         if (available == null) {
           try {
             var proc = new ProcessBuilder("jbang", "--version").start();
