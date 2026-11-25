@@ -24,6 +24,7 @@ import com.datasqrl.deployment.model.StateUpgradeNote.ChangedStateTtl;
 import com.datasqrl.deployment.model.StateUpgradeNote.MaxParallelismOnlyInNewBuild;
 import com.datasqrl.deployment.model.StateUpgradeNote.MaxParallelismOnlyInOldBuild;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -36,9 +37,10 @@ import java.util.Optional;
  * Checks if Flink can restore the state of an old build from a new build.
  *
  * <p>The operator check is one-way: each operator of the old compiled plan needs an operator in the
- * new compiled plan with the same {@code id}, {@code type} and state fields. An operator that only
- * the new plan has starts with empty state, so it is accepted. Both builds also need the same
- * {@code pipeline.max-parallelism}.
+ * new compiled plan with the same {@code id}, {@code type} and state fields. An operator with state
+ * also needs the same column types in its {@code outputType}. An operator that only the new plan
+ * has starts with empty state, so it is accepted. Both builds also need the same {@code
+ * pipeline.max-parallelism}.
  */
 public final class FlinkStateUpgradeCheck {
 
@@ -50,6 +52,14 @@ public final class FlinkStateUpgradeCheck {
       List.of("state", "stateMetadata", "joinSpec", "inputProperties", "inputChangelogMode");
 
   private static final String STATE_FIELD = "state";
+
+  private static final String JOIN_SPEC_FIELD = "joinSpec";
+
+  /**
+   * The field with the row type of an operator. An operator with state stores rows of this type, so
+   * a new, removed or changed column makes the restore fail. Flink ignores the column names.
+   */
+  private static final String OUTPUT_TYPE_FIELD = "outputType";
 
   /** The field of a {@code state} entry that holds the TTL, for example {@code "1 h"}. */
   private static final String TTL_FIELD = "ttl";
@@ -116,8 +126,63 @@ public final class FlinkStateUpgradeCheck {
                   description(oldOperator)));
         }
       }
+
+      var oldOutputType = fieldValue(oldOperator, OUTPUT_TYPE_FIELD);
+      var newOutputType = fieldValue(newOperator, OUTPUT_TYPE_FIELD);
+      if (hasState(oldOperator)
+          && !Objects.equals(columnTypes(oldOutputType), columnTypes(newOutputType))) {
+        operatorBreaks.add(
+            new ChangedStateField(
+                operatorId,
+                OUTPUT_TYPE_FIELD,
+                outputTypeText(oldOutputType),
+                outputTypeText(newOutputType),
+                description(oldOperator)));
+      }
     }
     return operatorBreaks;
+  }
+
+  /** An operator has state when it has a {@code state} field or a {@code joinSpec}. */
+  private static boolean hasState(JsonNode operator) {
+    return fieldValue(operator, STATE_FIELD) != null
+        || fieldValue(operator, JOIN_SPEC_FIELD) != null;
+  }
+
+  /**
+   * Returns the column types of a {@code ROW} output type in their order, without the column names,
+   * because a renamed column does not change the stored rows. Returns the whole value for another
+   * type, and {@code null} for a missing output type.
+   */
+  private static JsonNode columnTypes(JsonNode outputType) {
+    if (outputType == null || !outputType.path("fields").isArray()) {
+      return outputType;
+    }
+    var columnTypes = JsonNodeFactory.instance.arrayNode();
+    outputType.path("fields").forEach(column -> columnTypes.add(column.path("fieldType")));
+    return columnTypes;
+  }
+
+  /**
+   * Returns the columns of a {@code ROW} output type as {@code [name type, ...]}, which is shorter
+   * than the JSON. A type that is not plain text, such as a time attribute, stays compact JSON.
+   */
+  private static String outputTypeText(JsonNode outputType) {
+    if (outputType == null || !outputType.path("fields").isArray()) {
+      return valueText(outputType);
+    }
+    var columnTexts = new ArrayList<String>();
+    outputType
+        .path("fields")
+        .forEach(
+            column -> {
+              var columnType = column.path("fieldType");
+              columnTexts.add(
+                  column.path("name").asText()
+                      + " "
+                      + (columnType.isTextual() ? columnType.asText() : columnType.toString()));
+            });
+    return "[" + String.join(", ", columnTexts) + "]";
   }
 
   /**

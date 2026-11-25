@@ -137,6 +137,86 @@ class FlinkStateUpgradeCheckTest {
   }
 
   @Test
+  void givenNewColumnOnOperatorWithState_whenCheck_thenChangedOutputType() {
+    var result =
+        check(
+            plan("2.3", withOutputType(deduplicateOperator("0 ms"), "id INT", "val BIGINT")),
+            plan(
+                "2.3",
+                withOutputType(deduplicateOperator("0 ms"), "id INT", "val BIGINT", "extra INT")));
+
+    assertThat(result.breaks())
+        .containsExactly(
+            new ChangedStateField(
+                "5",
+                "outputType",
+                "[id INT, val BIGINT]",
+                "[id INT, val BIGINT, extra INT]",
+                "Deduplicate(keep=[LastRow], key=[id])"));
+    assertThat(result.breaks().get(0).toMessage())
+        .isEqualTo(
+            "operator id=5 changed: field 'outputType' differs: [id INT, val BIGINT] ->"
+                + " [id INT, val BIGINT, extra INT] (Deduplicate(keep=[LastRow], key=[id]))");
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"BIGINT NOT NULL", "INT"})
+  void givenChangedColumnTypeOnOperatorWithState_whenCheck_thenChangedOutputType(
+      String newColumnType) {
+    var result =
+        check(
+            plan("2.3", withOutputType(deduplicateOperator("0 ms"), "id INT", "val BIGINT")),
+            plan(
+                "2.3",
+                withOutputType(deduplicateOperator("0 ms"), "id INT", "val " + newColumnType)));
+
+    assertThat(result.breaks())
+        .singleElement()
+        .isEqualTo(
+            new ChangedStateField(
+                "5",
+                "outputType",
+                "[id INT, val BIGINT]",
+                "[id INT, val " + newColumnType + "]",
+                "Deduplicate(keep=[LastRow], key=[id])"));
+  }
+
+  @Test
+  void givenRenamedColumnOnOperatorWithState_whenCheck_thenNoBreaks() {
+    var result =
+        check(
+            plan("2.3", withOutputType(deduplicateOperator("0 ms"), "id INT", "val BIGINT")),
+            plan("2.3", withOutputType(deduplicateOperator("0 ms"), "id INT", "amount BIGINT")));
+
+    assertThat(result.breaks()).isEmpty();
+  }
+
+  @Test
+  void givenNewColumnOnJoinWithJoinSpec_whenCheck_thenChangedOutputType() {
+    var oldJoinOperator = withOutputType(joinOperator(), "id INT");
+    oldJoinOperator.putObject("joinSpec").put("joinType", "INNER");
+    var newJoinOperator = withOutputType(joinOperator(), "id INT", "extra INT");
+    newJoinOperator.putObject("joinSpec").put("joinType", "INNER");
+
+    var result = check(plan("2.3", oldJoinOperator), plan("2.3", newJoinOperator));
+
+    assertThat(result.breaks())
+        .singleElement()
+        .extracting(stateUpgradeBreak -> ((ChangedStateField) stateUpgradeBreak).fieldName())
+        .isEqualTo("outputType");
+  }
+
+  @Test
+  void givenNewColumnOnOperatorWithoutState_whenCheck_thenNoBreaks() {
+    var result =
+        check(
+            plan("2.3", withOutputType(sourceOperator(), "id INT")),
+            plan("2.3", withOutputType(sourceOperator(), "id INT", "extra INT")));
+
+    assertThat(result.breaks()).isEmpty();
+  }
+
+  @Test
   void givenStateNameAndTtlChanged_whenCheck_thenChangedStateFieldWithFullValues() {
     var newDeduplicateOperator = deduplicateOperator("1 h");
     ((ObjectNode) newDeduplicateOperator.get("state").get(0)).put("name", "otherState");
@@ -339,6 +419,19 @@ class FlinkStateUpgradeCheckTest {
         .put("ttl", ttl)
         .put("name", "deduplicateState");
     return deduplicateOperator;
+  }
+
+  /**
+   * Sets the {@code outputType} of the operator to a {@code ROW} with the columns, in the form that
+   * Flink writes it. Each column is {@code "<name> <type>"}, for example {@code "id INT"}.
+   */
+  private static ObjectNode withOutputType(ObjectNode operator, String... columns) {
+    var columnFields = operator.putObject("outputType").put("type", "ROW").putArray("fields");
+    for (var column : columns) {
+      var nameAndType = column.split(" ", 2);
+      columnFields.addObject().put("name", nameAndType[0]).put("fieldType", nameAndType[1]);
+    }
+    return operator;
   }
 
   private static ObjectNode joinOperator() {
