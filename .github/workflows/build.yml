@@ -99,6 +99,10 @@ jobs:
             "ci/circleci: integration-tests-0-2"
             "ci/circleci: integration-tests-1-2"
             "ci/circleci: container-e2e-test"
+            "ci/circleci: docker-build-base-image-amd64"
+            "ci/circleci: docker-build-base-image-arm64"
+            "ci/circleci: build-images-amd64"
+            "ci/circleci: build-images-arm64"
             "ci/circleci: build-images"
             "ci/circleci: deploy"
           )
