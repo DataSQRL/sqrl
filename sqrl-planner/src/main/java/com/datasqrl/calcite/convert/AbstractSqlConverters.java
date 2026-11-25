@@ -43,6 +43,7 @@ abstract class AbstractSqlConverters implements SqlConverters {
             .visitRoot(relNode)
             .asStatement();
 
+    IntervalLiterals.useValueUnits(sqlNode);
     if (appendSelectLists) {
       CalciteFixes.appendSelectLists(sqlNode);
     }
