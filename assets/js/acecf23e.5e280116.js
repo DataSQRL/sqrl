@@ -1,0 +1,1 @@
+"use strict";(Array.isArray(globalThis.webpackChunkdocumentation)?globalThis.webpackChunkdocumentation:globalThis.webpackChunkdocumentation=[]).push([[1903],{1912(a){a.exports=JSON.parse('{"blogBasePath":"/blog","blogTitle":"DataSQRL Blog","authorsListPath":"/blog/authors"}')}}]);
