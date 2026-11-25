@@ -30,6 +30,7 @@ import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorMessage;
 import com.datasqrl.plan.index.IndexSelector.NamedTable;
 import com.datasqrl.plan.table.TableStatistic;
+import com.datasqrl.plan.util.PrimaryKeyMap;
 import com.datasqrl.planner.Sqrl2FlinkSQLTranslator;
 import com.datasqrl.planner.analyzer.TableAnalysis;
 import java.util.EnumSet;
@@ -41,6 +42,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 import org.apache.calcite.config.CalciteConnectionConfig;
 import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.plan.RelOptCluster;
@@ -496,6 +498,44 @@ class IndexSelectorTest {
       assertThat(indexesForEqualityOn(customers, COUNTRY)).isEmpty();
     }
 
+    /** Both queries filter on the email column once the country column is left out. */
+    @Test
+    void givenQueriesThatDifferInColumnWithFewDistinctValues_whenOptimizeIndexes_thenShareIndex() {
+      var customers =
+          customersWith(
+              TableStatistic.fromHint(1e6).withDistinctCounts(Map.of(Set.of(COUNTRY), 5.0)));
+      var queries =
+          List.of(
+              new QueryIndexSummary(customers, Set.of(EMAIL, COUNTRY), Set.of(), Set.of(), 1.0),
+              new QueryIndexSummary(customers, Set.of(EMAIL), Set.of(), Set.of(), 1.0));
+
+      assertThat(selectIndexes(postgres(8, 50), queries)).containsExactly("HASH[email]");
+    }
+
+    /** The primary key index on the country and email columns serves the query as it is. */
+    @Test
+    void givenPrimaryKeyLookupWithColumnOfFewDistinctValues_whenOptimizeIndexes_thenNoIndex() {
+      var customers =
+          customersWith(
+              TableStatistic.fromHint(1e6).withDistinctCounts(Map.of(Set.of(COUNTRY), 5.0)),
+              List.of(COUNTRY, EMAIL));
+
+      assertThat(indexesForEqualityOn(customers, COUNTRY, EMAIL)).isEmpty();
+    }
+
+    /** The primary key index serves the equality on country and the range on email. */
+    @Test
+    void givenPrimaryKeyRangeScanWithColumnOfFewDistinctValues_whenOptimizeIndexes_thenNoIndex() {
+      var customers =
+          customersWith(
+              TableStatistic.fromHint(1e6).withDistinctCounts(Map.of(Set.of(COUNTRY), 5.0)),
+              List.of(COUNTRY, EMAIL));
+      var countryAndEmailRange =
+          new QueryIndexSummary(customers, Set.of(COUNTRY), Set.of(EMAIL), Set.of(), 1.0);
+
+      assertThat(selectIndexes(postgres(8, 50), List.of(countryAndEmailRange))).isEmpty();
+    }
+
     private List<String> indexesForEqualityOn(NamedTable table, Integer... equalityColumns) {
       var query = new QueryIndexSummary(table, Set.of(equalityColumns), Set.of(), Set.of(), 1.0);
 
@@ -534,6 +574,34 @@ class IndexSelectorTest {
               "The query filter patterns of table `Customers` need 6 indexes which exceeds the "
                   + "maximum of 2. Created a single-column index for each filtered column "
                   + "instead, and none of the 6 indexes. The query results are not affected.");
+    }
+
+    /** The country column has too few distinct values for an index of its own. */
+    @Test
+    void givenColumnWithFewDistinctValues_whenIndexesEachColumn_thenLeavesThatColumnOut() {
+      var customersWithFewCountries =
+          customersWith(
+              TableStatistic.fromHint(1e6).withDistinctCounts(Map.of(Set.of(COUNTRY), 5.0)));
+      var queries =
+          Stream.of(
+                  List.of(EMAIL, CITY),
+                  List.of(EMAIL, ZIP),
+                  List.of(CITY, EMAIL),
+                  List.of(CITY, ZIP),
+                  List.of(ZIP, EMAIL),
+                  List.of(ZIP, CITY))
+              .map(
+                  equalityAndRangeColumn ->
+                      new QueryIndexSummary(
+                          customersWithFewCountries,
+                          Set.of(COUNTRY, equalityAndRangeColumn.get(0)),
+                          Set.of(equalityAndRangeColumn.get(1)),
+                          Set.of(),
+                          1.0))
+              .toList();
+
+      assertThat(selectIndexes(postgres(MAX_INDEXES, 50), queries))
+          .containsExactly("BTREE[email]", "BTREE[city]", "BTREE[zip]");
     }
 
     @Test
@@ -632,7 +700,8 @@ class IndexSelectorTest {
   private static final int EMAIL = 0;
   private static final int COUNTRY = 1;
   private static final int CITY = 2;
-  private static final List<String> COLUMN_NAMES = List.of("email", "country", "city");
+  private static final int ZIP = 3;
+  private static final List<String> COLUMN_NAMES = List.of("email", "country", "city", "zip");
 
   private static List<String> selectIndexes(
       IndexSelectorConfig config, List<QueryIndexSummary> queries) {
@@ -652,8 +721,18 @@ class IndexSelectorTest {
   }
 
   private static NamedTable customersWith(TableStatistic tableStatistic) {
+    return customersWith(tableStatistic, List.of());
+  }
+
+  private static NamedTable customersWith(
+      TableStatistic tableStatistic, List<Integer> primaryKeyColumns) {
     var rowType = mock(RelDataType.class);
     when(rowType.getFieldNames()).thenReturn(COLUMN_NAMES);
+    for (var columnName : COLUMN_NAMES) {
+      var field = mock(RelDataTypeField.class);
+      when(field.getIndex()).thenReturn(COLUMN_NAMES.indexOf(columnName));
+      when(rowType.getField(columnName, true, false)).thenReturn(field);
+    }
     var relNode = mock(RelNode.class);
     when(relNode.getRowType()).thenReturn(rowType);
     var analysis =
@@ -661,9 +740,16 @@ class IndexSelectorTest {
             .objectIdentifier(ObjectIdentifier.of("datasqrl", "public", "Customers"))
             .collapsedRelnode(relNode)
             .originalRelnode(relNode)
+            .primaryKey(
+                primaryKeyColumns.isEmpty()
+                    ? PrimaryKeyMap.UNDEFINED
+                    : PrimaryKeyMap.of(primaryKeyColumns))
             .tableStatistic(tableStatistic)
             .build();
-    return new NamedTable("Customers", "Customers", analysis, mock(CreateTableJdbcStatement.class));
+    var createTableStatement = mock(CreateTableJdbcStatement.class);
+    when(createTableStatement.getPrimaryKey())
+        .thenReturn(primaryKeyColumns.stream().map(COLUMN_NAMES::get).toList());
+    return new NamedTable("Customers", "Customers", analysis, createTableStatement);
   }
 
   private static IndexSelectorConfig postgres(int maxIndexes, int maxFilterPatterns) {

@@ -112,7 +112,13 @@ public class IndexSelector {
     Set<IndexDefinition> optIndexes = new LinkedHashSet<>();
     LinkedHashMultimap<NamedTable, QueryIndexSummary> callsByTable = LinkedHashMultimap.create();
     queryIndexSummaries.stream()
-        .map(filterColumnTrimmer::trim)
+        .map(
+            queryIndexSummary ->
+                filterColumnTrimmer.trim(
+                    queryIndexSummary,
+                    getPrimaryKeyIndex(queryIndexSummary.getTable())
+                        .map(IndexDefinition::getColumns)
+                        .orElse(List.of())))
         .flatMap(Optional::stream)
         .forEach(
             idx -> {

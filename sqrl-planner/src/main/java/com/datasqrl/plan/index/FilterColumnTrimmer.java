@@ -18,6 +18,7 @@ package com.datasqrl.plan.index;
 import com.datasqrl.plan.table.TableStatistic;
 import com.google.common.collect.Comparators;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -44,17 +45,25 @@ class FilterColumnTrimmer {
   private final int minDistinctCount;
 
   /**
+   * @param primaryKeyColumns the columns of the primary key index of the table in index order, or
+   *     none when the table has no such index
    * @return the query index summary without the trimmed columns, or empty when it has no filter
    *     left to index
    */
-  Optional<QueryIndexSummary> trim(QueryIndexSummary queryIndexSummary) {
+  Optional<QueryIndexSummary> trim(
+      QueryIndexSummary queryIndexSummary, List<Integer> primaryKeyColumns) {
     var tableStatistic = queryIndexSummary.getTable().getAnalysis().getTableStatistic();
-    var uniqueColumns = findUniqueColumns(queryIndexSummary.getEqualityColumns(), tableStatistic);
+    var primaryKeyLookupColumns =
+        findPrimaryKeyLookupColumns(queryIndexSummary.getEqualityColumns(), primaryKeyColumns);
+    var uniqueColumns =
+        findUniqueColumns(queryIndexSummary.getEqualityColumns(), tableStatistic)
+            .<Set<Integer>>map(columns -> Sets.union(columns, primaryKeyLookupColumns));
 
     var equalityColumns =
         removeColumnsThatAddFewDistinctValues(
             uniqueColumns.orElse(queryIndexSummary.getEqualityColumns()),
-            tableStatistic.getDistinctCounts());
+            tableStatistic.getDistinctCounts(),
+            primaryKeyLookupColumns);
     // The unique columns match at most one row, which needs neither a range nor a sort
     var inequalityColumns =
         uniqueColumns.isPresent() ? Set.<Integer>of() : queryIndexSummary.getInequalityColumns();
@@ -75,6 +84,18 @@ class FilterColumnTrimmer {
             inequalityColumns,
             queryIndexSummary.getFunctionCalls(),
             queryIndexSummary.getCount()));
+  }
+
+  /**
+   * The leading columns of the primary key index that the filter has an equality on. The primary
+   * key index serves these columns at no cost, and it serves the filter only while each of them
+   * stays in the filter. So these columns always stay.
+   */
+  private static Set<Integer> findPrimaryKeyLookupColumns(
+      Set<Integer> equalityColumns, List<Integer> primaryKeyColumns) {
+    return primaryKeyColumns.stream()
+        .takeWhile(equalityColumns::contains)
+        .collect(ImmutableSet.toImmutableSet());
   }
 
   /**
@@ -112,7 +133,9 @@ class FilterColumnTrimmer {
    * column has.
    */
   private Set<Integer> removeColumnsThatAddFewDistinctValues(
-      Set<Integer> equalityColumns, Map<Set<Integer>, Double> distinctCounts) {
+      Set<Integer> equalityColumns,
+      Map<Set<Integer>, Double> distinctCounts,
+      Set<Integer> primaryKeyLookupColumns) {
     var distinctCountsWithFewestColumnsFirst =
         Stream.concat(
                 Stream.of(ColumnsDistinctCount.NO_COLUMNS),
@@ -121,7 +144,7 @@ class FilterColumnTrimmer {
             .toList();
     var remainingColumns = new LinkedHashSet<>(equalityColumns);
     // A removal holds only while the columns it was compared with stay in the filter
-    Set<Integer> columnsThatMustStay = new HashSet<>();
+    Set<Integer> columnsThatMustStay = new HashSet<>(primaryKeyLookupColumns);
 
     for (var fewerColumns : distinctCountsWithFewestColumnsFirst) {
       for (var moreColumns : distinctCountsWithFewestColumnsFirst) {

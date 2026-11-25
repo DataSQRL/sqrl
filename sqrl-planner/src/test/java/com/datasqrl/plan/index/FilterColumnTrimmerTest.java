@@ -40,6 +40,7 @@ class FilterColumnTrimmerTest {
   private static final int SIGNUP_TIME = 5;
   private static final int MIN_DISTINCT_COUNT = 20;
   private static final double ROW_COUNT = 1e6;
+  private static final List<Integer> NO_PRIMARY_KEY = List.of();
 
   private final FilterColumnTrimmer filterColumnTrimmer =
       new FilterColumnTrimmer(MIN_DISTINCT_COUNT);
@@ -49,7 +50,7 @@ class FilterColumnTrimmerTest {
     var customers = customersWith(Map.of(Set.of(GENDER), 2.0));
     var emailAndGender = equalityOn(customers, EMAIL, GENDER);
 
-    assertThat(filterColumnTrimmer.trim(emailAndGender))
+    assertThat(filterColumnTrimmer.trim(emailAndGender, NO_PRIMARY_KEY))
         .hasValueSatisfying(
             trimmed -> assertThat(trimmed.getEqualityColumns()).containsExactly(EMAIL));
   }
@@ -59,7 +60,8 @@ class FilterColumnTrimmerTest {
     var customers = customersWith(Map.of(Set.of(STATUS), (double) MIN_DISTINCT_COUNT));
     var emailAndStatus = equalityOn(customers, EMAIL, STATUS);
 
-    assertThat(filterColumnTrimmer.trim(emailAndStatus)).containsSame(emailAndStatus);
+    assertThat(filterColumnTrimmer.trim(emailAndStatus, NO_PRIMARY_KEY))
+        .containsSame(emailAndStatus);
   }
 
   @Test
@@ -67,7 +69,8 @@ class FilterColumnTrimmerTest {
     var customers = customersWith(Map.of());
     var emailAndGender = equalityOn(customers, EMAIL, GENDER);
 
-    assertThat(filterColumnTrimmer.trim(emailAndGender)).containsSame(emailAndGender);
+    assertThat(filterColumnTrimmer.trim(emailAndGender, NO_PRIMARY_KEY))
+        .containsSame(emailAndGender);
   }
 
   @Test
@@ -75,7 +78,7 @@ class FilterColumnTrimmerTest {
     var customers = customersWith(Map.of(Set.of(GENDER), 2.0, Set.of(STATUS), 6.0));
     var genderAndStatus = equalityOn(customers, GENDER, STATUS);
 
-    assertThat(filterColumnTrimmer.trim(genderAndStatus)).isEmpty();
+    assertThat(filterColumnTrimmer.trim(genderAndStatus, NO_PRIMARY_KEY)).isEmpty();
   }
 
   @Test
@@ -83,7 +86,7 @@ class FilterColumnTrimmerTest {
     var customers = customersWith(Map.of(Set.of(GENDER, STATUS), 12.0));
     var emailAndGender = equalityOn(customers, EMAIL, GENDER);
 
-    assertThat(filterColumnTrimmer.trim(emailAndGender))
+    assertThat(filterColumnTrimmer.trim(emailAndGender, NO_PRIMARY_KEY))
         .hasValueSatisfying(
             trimmed -> assertThat(trimmed.getEqualityColumns()).containsExactly(EMAIL));
   }
@@ -94,7 +97,8 @@ class FilterColumnTrimmerTest {
     var customers = customersWith(Map.of(Set.of(STATUS), 6.0));
     var sortedByStatus = new QueryIndexSummary(customers, Set.of(), Set.of(STATUS), Set.of(), 1.0);
 
-    assertThat(filterColumnTrimmer.trim(sortedByStatus)).containsSame(sortedByStatus);
+    assertThat(filterColumnTrimmer.trim(sortedByStatus, NO_PRIMARY_KEY))
+        .containsSame(sortedByStatus);
   }
 
   @Test
@@ -104,7 +108,7 @@ class FilterColumnTrimmerTest {
     var genderWithOtherFilters =
         new QueryIndexSummary(customers, Set.of(GENDER), Set.of(STATUS), Set.of(textSearch), 3.0);
 
-    assertThat(filterColumnTrimmer.trim(genderWithOtherFilters))
+    assertThat(filterColumnTrimmer.trim(genderWithOtherFilters, NO_PRIMARY_KEY))
         .hasValueSatisfying(
             trimmed -> {
               assertThat(trimmed.getEqualityColumns()).isEmpty();
@@ -119,7 +123,7 @@ class FilterColumnTrimmerTest {
     var customers = customersWith(Map.of(Set.of(GENDER), 2.0));
     var gender = equalityOn(customers, GENDER);
 
-    assertThat(new FilterColumnTrimmer(0).trim(gender)).containsSame(gender);
+    assertThat(new FilterColumnTrimmer(0).trim(gender, NO_PRIMARY_KEY)).containsSame(gender);
   }
 
   @Test
@@ -129,7 +133,7 @@ class FilterColumnTrimmerTest {
         new QueryIndexSummary(
             customers, Set.of(EMAIL, COUNTRY), Set.of(SIGNUP_TIME), Set.of(), 1.0);
 
-    assertThat(filterColumnTrimmer.trim(emailCountryAndSignupTime))
+    assertThat(filterColumnTrimmer.trim(emailCountryAndSignupTime, NO_PRIMARY_KEY))
         .hasValueSatisfying(
             trimmed -> {
               assertThat(trimmed.getEqualityColumns()).containsExactly(EMAIL);
@@ -142,7 +146,7 @@ class FilterColumnTrimmerTest {
     var customers = customersWith(Map.of(Set.of(COUNTRY, CITY), ROW_COUNT));
     var countryCityAndStatus = equalityOn(customers, COUNTRY, CITY, STATUS);
 
-    assertThat(filterColumnTrimmer.trim(countryCityAndStatus))
+    assertThat(filterColumnTrimmer.trim(countryCityAndStatus, NO_PRIMARY_KEY))
         .hasValueSatisfying(
             trimmed ->
                 assertThat(trimmed.getEqualityColumns()).containsExactlyInAnyOrder(COUNTRY, CITY));
@@ -153,7 +157,8 @@ class FilterColumnTrimmerTest {
     var customers = customersWith(Map.of(Set.of(COUNTRY, CITY), ROW_COUNT));
     var countryAndStatus = equalityOn(customers, COUNTRY, STATUS);
 
-    assertThat(filterColumnTrimmer.trim(countryAndStatus)).containsSame(countryAndStatus);
+    assertThat(filterColumnTrimmer.trim(countryAndStatus, NO_PRIMARY_KEY))
+        .containsSame(countryAndStatus);
   }
 
   @Test
@@ -161,7 +166,8 @@ class FilterColumnTrimmerTest {
     var customers = customersWith(Map.of(Set.of(EMAIL), ROW_COUNT - 1));
     var emailAndCountry = equalityOn(customers, EMAIL, COUNTRY);
 
-    assertThat(filterColumnTrimmer.trim(emailAndCountry)).containsSame(emailAndCountry);
+    assertThat(filterColumnTrimmer.trim(emailAndCountry, NO_PRIMARY_KEY))
+        .containsSame(emailAndCountry);
   }
 
   @Test
@@ -170,7 +176,7 @@ class FilterColumnTrimmerTest {
         customersWith(Map.of(Set.of(COUNTRY, CITY), ROW_COUNT, Set.of(EMAIL), ROW_COUNT));
     var emailCountryAndCity = equalityOn(customers, EMAIL, COUNTRY, CITY);
 
-    assertThat(filterColumnTrimmer.trim(emailCountryAndCity))
+    assertThat(filterColumnTrimmer.trim(emailCountryAndCity, NO_PRIMARY_KEY))
         .hasValueSatisfying(
             trimmed -> assertThat(trimmed.getEqualityColumns()).containsExactly(EMAIL));
   }
@@ -182,7 +188,8 @@ class FilterColumnTrimmerTest {
     var customers = customersWith(estimatedStatistic);
     var emailAndCountry = equalityOn(customers, EMAIL, COUNTRY);
 
-    assertThat(filterColumnTrimmer.trim(emailAndCountry)).containsSame(emailAndCountry);
+    assertThat(filterColumnTrimmer.trim(emailAndCountry, NO_PRIMARY_KEY))
+        .containsSame(emailAndCountry);
   }
 
   @Test
@@ -192,7 +199,8 @@ class FilterColumnTrimmerTest {
     var customers = customersWith(unknownStatistic);
     var emailAndCountry = equalityOn(customers, EMAIL, COUNTRY);
 
-    assertThat(filterColumnTrimmer.trim(emailAndCountry)).containsSame(emailAndCountry);
+    assertThat(filterColumnTrimmer.trim(emailAndCountry, NO_PRIMARY_KEY))
+        .containsSame(emailAndCountry);
   }
 
   @Test
@@ -200,7 +208,7 @@ class FilterColumnTrimmerTest {
     var customers = customersWith(Map.of(Set.of(EMAIL, GENDER), ROW_COUNT, Set.of(GENDER), 2.0));
     var emailGenderAndCountry = equalityOn(customers, EMAIL, GENDER, COUNTRY);
 
-    assertThat(filterColumnTrimmer.trim(emailGenderAndCountry))
+    assertThat(filterColumnTrimmer.trim(emailGenderAndCountry, NO_PRIMARY_KEY))
         .hasValueSatisfying(
             trimmed -> assertThat(trimmed.getEqualityColumns()).containsExactly(EMAIL));
   }
@@ -210,7 +218,7 @@ class FilterColumnTrimmerTest {
     var customers = customersWith(Map.of(Set.of(COUNTRY), 200.0, Set.of(COUNTRY, CITY), 2e3));
     var countryAndCity = equalityOn(customers, COUNTRY, CITY);
 
-    assertThat(filterColumnTrimmer.trim(countryAndCity))
+    assertThat(filterColumnTrimmer.trim(countryAndCity, NO_PRIMARY_KEY))
         .hasValueSatisfying(
             trimmed -> assertThat(trimmed.getEqualityColumns()).containsExactly(COUNTRY));
   }
@@ -222,7 +230,8 @@ class FilterColumnTrimmerTest {
             Map.of(Set.of(COUNTRY), 200.0, Set.of(COUNTRY, CITY), 200.0 * MIN_DISTINCT_COUNT));
     var countryAndCity = equalityOn(customers, COUNTRY, CITY);
 
-    assertThat(filterColumnTrimmer.trim(countryAndCity)).containsSame(countryAndCity);
+    assertThat(filterColumnTrimmer.trim(countryAndCity, NO_PRIMARY_KEY))
+        .containsSame(countryAndCity);
   }
 
   @Test
@@ -230,7 +239,7 @@ class FilterColumnTrimmerTest {
     var customers = customersWith(Map.of(Set.of(COUNTRY), 200.0, Set.of(COUNTRY, CITY), 2e3));
     var emailAndCity = equalityOn(customers, EMAIL, CITY);
 
-    assertThat(filterColumnTrimmer.trim(emailAndCity)).containsSame(emailAndCity);
+    assertThat(filterColumnTrimmer.trim(emailAndCity, NO_PRIMARY_KEY)).containsSame(emailAndCity);
   }
 
   @Test
@@ -239,7 +248,7 @@ class FilterColumnTrimmerTest {
         customersWith(Map.of(Set.of(EMAIL), 1e3, Set.of(CITY), 1e3, Set.of(EMAIL, CITY), 1.2e3));
     var emailAndCity = equalityOn(customers, EMAIL, CITY);
 
-    assertThat(filterColumnTrimmer.trim(emailAndCity))
+    assertThat(filterColumnTrimmer.trim(emailAndCity, NO_PRIMARY_KEY))
         .hasValueSatisfying(
             trimmed -> assertThat(trimmed.getEqualityColumns()).containsExactly(EMAIL));
   }
@@ -250,7 +259,7 @@ class FilterColumnTrimmerTest {
     var customers = customersWith(Map.of(Set.of(GENDER), 10.0, Set.of(GENDER, COUNTRY), 150.0));
     var genderAndCountry = equalityOn(customers, GENDER, COUNTRY);
 
-    assertThat(filterColumnTrimmer.trim(genderAndCountry))
+    assertThat(filterColumnTrimmer.trim(genderAndCountry, NO_PRIMARY_KEY))
         .hasValueSatisfying(
             trimmed -> assertThat(trimmed.getEqualityColumns()).containsExactly(COUNTRY));
   }
@@ -267,10 +276,42 @@ class FilterColumnTrimmerTest {
                 Set.of(EMAIL, COUNTRY), 1.5e5));
     var emailCityAndCountry = equalityOn(customers, EMAIL, CITY, COUNTRY);
 
-    assertThat(filterColumnTrimmer.trim(emailCityAndCountry))
+    assertThat(filterColumnTrimmer.trim(emailCityAndCountry, NO_PRIMARY_KEY))
         .hasValueSatisfying(
             trimmed ->
                 assertThat(trimmed.getEqualityColumns()).containsExactlyInAnyOrder(EMAIL, COUNTRY));
+  }
+
+  /** The primary key index serves the filter only while the country column stays in it. */
+  @Test
+  void givenFirstPrimaryKeyColumnWithFewDistinctValues_whenTrim_thenKeepsTheColumn() {
+    var customers = customersWith(Map.of(Set.of(COUNTRY), 5.0));
+    var countryAndEmail = equalityOn(customers, COUNTRY, EMAIL);
+
+    assertThat(filterColumnTrimmer.trim(countryAndEmail, List.of(COUNTRY, EMAIL)))
+        .containsSame(countryAndEmail);
+  }
+
+  /** The primary key index cannot serve a filter without its first column. */
+  @Test
+  void givenLaterPrimaryKeyColumnWithFewDistinctValues_whenTrim_thenRemovesTheColumn() {
+    var customers = customersWith(Map.of(Set.of(GENDER), 2.0));
+    var emailAndGender = equalityOn(customers, EMAIL, GENDER);
+
+    assertThat(filterColumnTrimmer.trim(emailAndGender, List.of(COUNTRY, GENDER)))
+        .hasValueSatisfying(
+            trimmed -> assertThat(trimmed.getEqualityColumns()).containsExactly(EMAIL));
+  }
+
+  @Test
+  void givenUniqueColumnBesidePrimaryKeyColumns_whenTrim_thenKeepsThePrimaryKeyColumns() {
+    var customers = customersWith(Map.of(Set.of(EMAIL), ROW_COUNT));
+    var countryEmailAndCity = equalityOn(customers, COUNTRY, EMAIL, CITY);
+
+    assertThat(filterColumnTrimmer.trim(countryEmailAndCity, List.of(COUNTRY, EMAIL)))
+        .hasValueSatisfying(
+            trimmed ->
+                assertThat(trimmed.getEqualityColumns()).containsExactlyInAnyOrder(COUNTRY, EMAIL));
   }
 
   private static QueryIndexSummary equalityOn(NamedTable table, Integer... equalityColumns) {
