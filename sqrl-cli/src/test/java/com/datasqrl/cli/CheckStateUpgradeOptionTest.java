@@ -420,6 +420,31 @@ class CheckStateUpgradeOptionTest {
     }
 
     @Test
+    void givenOnlyStateTtlChanged_whenCompareBuildPlans_thenNoticeAndNoWarning() {
+      var errors = ErrorCollector.root();
+
+      CheckStateUpgradeOption.compareBuildPlans(
+          buildPlan(plan("2.3", deduplicateOperator("0 ms")), Optional.empty()),
+          buildPlan(plan("2.3", deduplicateOperator("1 h")), Optional.empty()),
+          errors);
+
+      assertThat(errors.hasErrors()).isFalse();
+      assertThat(messages(errors, ErrorMessage::isWarning)).isEmpty();
+      assertThat(messages(errors, ErrorMessage::isNotice))
+          .anySatisfy(
+              message ->
+                  assertThat(message)
+                      .contains("the TTL of state 'deduplicateState' changes: 0 ms -> 1 h"));
+    }
+
+    private static String deduplicateOperator(String ttl) {
+      return ("{\"id\": 5, \"type\": \"stream-exec-deduplicate_1\", \"description\":"
+              + " \"Deduplicate(keep=[LastRow], key=[id])\", \"state\": [{\"index\": 0, \"ttl\":"
+              + " \"%s\", \"name\": \"deduplicateState\"}]}")
+          .formatted(ttl);
+    }
+
+    @Test
     void givenDifferentFlinkVersion_whenCompareBuildPlans_thenFlinkVersionNotice() {
       var errors = ErrorCollector.root();
 

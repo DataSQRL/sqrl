@@ -128,7 +128,7 @@ class FlinkStateUpgradeCheckTest {
         .containsExactly(
             new ChangedStateTtl(
                 "5", "deduplicateState", "0 ms", "1 h", "Deduplicate(keep=[LastRow], key=[id])"));
-    assertThat(result.notes().get(0).level()).isEqualTo(Level.WARN);
+    assertThat(result.notes().get(0).level()).isEqualTo(Level.NOTICE);
     assertThat(result.notes().get(0).toMessage())
         .isEqualTo(
             "operator id=5: the TTL of state 'deduplicateState' changes: 0 ms -> 1 h"
