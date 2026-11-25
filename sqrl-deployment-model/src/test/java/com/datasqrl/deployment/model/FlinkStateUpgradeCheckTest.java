@@ -21,6 +21,11 @@ import com.datasqrl.deployment.model.StateUpgradeBreak.ChangedMaxParallelism;
 import com.datasqrl.deployment.model.StateUpgradeBreak.ChangedOperatorType;
 import com.datasqrl.deployment.model.StateUpgradeBreak.ChangedStateField;
 import com.datasqrl.deployment.model.StateUpgradeBreak.RemovedOperator;
+import com.datasqrl.deployment.model.StateUpgradeNote.ChangedFlinkVersion;
+import com.datasqrl.deployment.model.StateUpgradeNote.ChangedStateTtl;
+import com.datasqrl.deployment.model.StateUpgradeNote.Level;
+import com.datasqrl.deployment.model.StateUpgradeNote.MaxParallelismOnlyInNewBuild;
+import com.datasqrl.deployment.model.StateUpgradeNote.MaxParallelismOnlyInOldBuild;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -42,7 +47,7 @@ class FlinkStateUpgradeCheckTest {
             plan("2.3", sourceOperator(), aggregateOperator(), sinkOperator()));
 
     assertThat(result.breaks()).isEmpty();
-    assertThat(result.warnings()).isEmpty();
+    assertThat(result.notes()).isEmpty();
   }
 
   @Test
@@ -114,13 +119,18 @@ class FlinkStateUpgradeCheckTest {
   }
 
   @Test
-  void givenOnlyStateTtlChanged_whenCheck_thenNoBreaksAndTtlWarning() {
+  void givenOnlyStateTtlChanged_whenCheck_thenNoBreaksAndChangedStateTtl() {
     var result =
         check(plan("2.3", deduplicateOperator("0 ms")), plan("2.3", deduplicateOperator("1 h")));
 
     assertThat(result.breaks()).isEmpty();
-    assertThat(result.warnings())
+    assertThat(result.notes())
         .containsExactly(
+            new ChangedStateTtl(
+                "5", "deduplicateState", "0 ms", "1 h", "Deduplicate(keep=[LastRow], key=[id])"));
+    assertThat(result.notes().get(0).level()).isEqualTo(Level.WARN);
+    assertThat(result.notes().get(0).toMessage())
+        .isEqualTo(
             "operator id=5: the TTL of state 'deduplicateState' changes: 0 ms -> 1 h"
                 + " (Deduplicate(keep=[LastRow], key=[id])). The check does not report a TTL"
                 + " change as a break.");
@@ -134,7 +144,7 @@ class FlinkStateUpgradeCheckTest {
     var result =
         check(plan("2.3", deduplicateOperator("0 ms")), plan("2.3", newDeduplicateOperator));
 
-    assertThat(result.warnings()).isEmpty();
+    assertThat(result.notes()).isEmpty();
     assertThat(result.breaks())
         .containsExactly(
             new ChangedStateField(
@@ -211,23 +221,28 @@ class FlinkStateUpgradeCheckTest {
   }
 
   @Test
-  void givenDifferentFlinkVersion_whenCheck_thenFlinkVersionChange() {
-    assertThat(check(plan("2.2"), plan("2.3")).flinkVersionChange()).contains("2.2 -> 2.3");
+  void givenDifferentFlinkVersion_whenCheck_thenChangedFlinkVersion() {
+    var result = check(plan("2.2"), plan("2.3"));
+
+    assertThat(result.notes()).containsExactly(new ChangedFlinkVersion("2.2", "2.3"));
+    assertThat(result.notes().get(0).level()).isEqualTo(Level.NOTICE);
+    assertThat(result.notes().get(0).toMessage())
+        .isEqualTo("The Flink version changes: 2.2 -> 2.3");
   }
 
   @Test
-  void givenSameFlinkVersion_whenCheck_thenNoFlinkVersionChange() {
-    assertThat(check(plan("2.3"), plan("2.3")).flinkVersionChange()).isEmpty();
+  void givenSameFlinkVersion_whenCheck_thenNoChangedFlinkVersion() {
+    assertThat(check(plan("2.3"), plan("2.3")).notes()).isEmpty();
   }
 
   @Test
-  void givenNewPlanWithoutFlinkVersion_whenCheck_thenNoFlinkVersionChange() {
-    assertThat(check(plan("2.3"), OBJECT_MAPPER.createObjectNode()).flinkVersionChange()).isEmpty();
+  void givenNewPlanWithoutFlinkVersion_whenCheck_thenNoChangedFlinkVersion() {
+    assertThat(check(plan("2.3"), OBJECT_MAPPER.createObjectNode()).notes()).isEmpty();
   }
 
   @Test
-  void givenOldPlanWithoutFlinkVersion_whenCheck_thenNoFlinkVersionChange() {
-    assertThat(check(OBJECT_MAPPER.createObjectNode(), plan("2.3")).flinkVersionChange()).isEmpty();
+  void givenOldPlanWithoutFlinkVersion_whenCheck_thenNoChangedFlinkVersion() {
+    assertThat(check(OBJECT_MAPPER.createObjectNode(), plan("2.3")).notes()).isEmpty();
   }
 
   @Test
@@ -239,43 +254,43 @@ class FlinkStateUpgradeCheckTest {
     assertThat(result.breaks()).containsExactly(new ChangedMaxParallelism(128, 144));
     assertThat(result.breaks().get(0).toMessage())
         .isEqualTo("pipeline.max-parallelism differs: 128 -> 144");
-    assertThat(result.warnings()).isEmpty();
+    assertThat(result.notes()).isEmpty();
   }
 
   @Test
-  void givenSameMaxParallelism_whenCheck_thenNoBreaksAndNoWarnings() {
+  void givenSameMaxParallelism_whenCheck_thenNoBreaksAndNoNotes() {
     var result =
         FlinkStateUpgradeCheck.check(
             jobPlan(plan("2.3"), Optional.of(128)), jobPlan(plan("2.3"), Optional.of(128)));
 
     assertThat(result.breaks()).isEmpty();
-    assertThat(result.warnings()).isEmpty();
+    assertThat(result.notes()).isEmpty();
   }
 
   @Test
-  void givenOnlyOldMaxParallelism_whenCheck_thenWarning() {
+  void givenOnlyOldMaxParallelism_whenCheck_thenMaxParallelismOnlyInOldBuild() {
     var result =
         FlinkStateUpgradeCheck.check(
             jobPlan(plan("2.3"), Optional.of(128)), jobPlan(plan("2.3"), Optional.empty()));
 
     assertThat(result.breaks()).isEmpty();
-    assertThat(result.warnings())
-        .singleElement()
-        .asString()
+    assertThat(result.notes()).containsExactly(new MaxParallelismOnlyInOldBuild(128));
+    assertThat(result.notes().get(0).level()).isEqualTo(Level.WARN);
+    assertThat(result.notes().get(0).toMessage())
         .startsWith("Only the old build sets pipeline.max-parallelism (128).")
         .contains("Flink takes this value from the savepoint.");
   }
 
   @Test
-  void givenOnlyNewMaxParallelism_whenCheck_thenWarning() {
+  void givenOnlyNewMaxParallelism_whenCheck_thenMaxParallelismOnlyInNewBuild() {
     var result =
         FlinkStateUpgradeCheck.check(
             jobPlan(plan("2.3"), Optional.empty()), jobPlan(plan("2.3"), Optional.of(144)));
 
     assertThat(result.breaks()).isEmpty();
-    assertThat(result.warnings())
-        .singleElement()
-        .asString()
+    assertThat(result.notes()).containsExactly(new MaxParallelismOnlyInNewBuild(144));
+    assertThat(result.notes().get(0).level()).isEqualTo(Level.WARN);
+    assertThat(result.notes().get(0).toMessage())
         .startsWith("Only the new build sets pipeline.max-parallelism (144).");
   }
 

@@ -16,16 +16,11 @@
 package com.datasqrl.deployment.model;
 
 import java.util.List;
-import java.util.Optional;
 
 /**
  * The result of {@link FlinkStateUpgradeCheck#check}.
  *
  * @param breaks the reasons why Flink cannot restore the state, empty when the restore can work
- * @param warnings the risks that the check cannot decide, for example a {@code
- *     pipeline.max-parallelism} that only one build sets, or a changed state TTL
- * @param flinkVersionChange {@code "<old> -> <new>"} when the Flink versions are different. This is
- *     information only.
+ * @param notes the messages that do not fail the compile, each with its own level
  */
-public record StateUpgradeResult(
-    List<StateUpgradeBreak> breaks, List<String> warnings, Optional<String> flinkVersionChange) {}
+public record StateUpgradeResult(List<StateUpgradeBreak> breaks, List<StateUpgradeNote> notes) {}

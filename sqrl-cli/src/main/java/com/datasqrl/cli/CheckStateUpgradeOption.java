@@ -19,6 +19,7 @@ import com.datasqrl.config.SqrlConstants;
 import com.datasqrl.deployment.model.FlinkStateUpgradeCheck;
 import com.datasqrl.deployment.model.StateUpgradeBreak;
 import com.datasqrl.deployment.model.StateUpgradeBreak.RemovedOperator;
+import com.datasqrl.deployment.model.StateUpgradeNote;
 import com.datasqrl.error.ErrorCollector;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -115,12 +116,7 @@ public class CheckStateUpgradeOption {
     var stateUpgradeResult =
         FlinkStateUpgradeCheck.check(
             oldBuildPlan.flinkJobPlan().get(), newBuildPlan.flinkJobPlan().get());
-    stateUpgradeResult
-        .flinkVersionChange()
-        .ifPresent(
-            flinkVersionChange ->
-                errors.notice("%s", "The Flink version changes: " + flinkVersionChange));
-    stateUpgradeResult.warnings().forEach(warning -> errors.warn("%s", warning));
+    stateUpgradeResult.notes().forEach(stateUpgradeNote -> report(stateUpgradeNote, errors));
 
     var stateUpgradeBreaks = stateUpgradeResult.breaks();
     if (stateUpgradeBreaks.isEmpty()) {
@@ -143,6 +139,14 @@ public class CheckStateUpgradeOption {
         "%s",
         "The new Flink plan cannot restore the state of the old build in %s:\n- %s"
             .formatted(oldBuildPlan.planDir(), String.join("\n- ", breakMessages)));
+  }
+
+  /** Reports the note at the level that the check sets for it. */
+  private static void report(StateUpgradeNote stateUpgradeNote, ErrorCollector errors) {
+    switch (stateUpgradeNote.level()) {
+      case NOTICE -> errors.notice("%s", stateUpgradeNote.toMessage());
+      case WARN -> errors.warn("%s", stateUpgradeNote.toMessage());
+    }
   }
 
   private static Path resolveOldBuildFolder(Path projectRoot, Path givenOldBuildFolder) {
