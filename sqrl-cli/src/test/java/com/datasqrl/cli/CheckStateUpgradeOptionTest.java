@@ -57,7 +57,7 @@ class CheckStateUpgradeOptionTest {
       var errors = ErrorCollector.root();
 
       option.checkOldBuildFolder(projectRoot, buildDir(), targetDir(), errors);
-      option.checkUpgrade(projectRoot, targetDir(), errors);
+      option.checkUpgrade(targetDir(), errors);
 
       assertThat(errors.hasErrorsWarningsOrNotices()).isFalse();
     }
@@ -201,6 +201,33 @@ class CheckStateUpgradeOptionTest {
     }
 
     @Test
+    void givenTargetFolderOptionInsideOldTargetFolder_whenCheckUpgrade_thenComparesOldPlanFolder()
+        throws IOException {
+      assertCheckUpgradeComparesOldPlanFolder(
+          "artifacts",
+          projectRoot.resolve("artifacts/plan"),
+          projectRoot.resolve("artifacts/deploy"));
+    }
+
+    @Test
+    void givenTargetFolderOptionInsideOldPlanFolder_whenCheckUpgrade_thenComparesOldPlanFolder()
+        throws IOException {
+      assertCheckUpgradeComparesOldPlanFolder(
+          "deployed-plan",
+          projectRoot.resolve("deployed-plan"),
+          projectRoot.resolve("deployed-plan/deploy"));
+    }
+
+    @Test
+    void givenOptionSetWithoutCheckOldBuildFolder_whenCheckUpgrade_thenIllegalState() {
+      var option = option("build/shop-replay");
+
+      assertThatThrownBy(() -> option.checkUpgrade(targetDir(), ErrorCollector.root()))
+          .isInstanceOf(IllegalStateException.class)
+          .hasMessage("Call checkOldBuildFolder before checkUpgrade");
+    }
+
+    @Test
     void givenBuildFolderWithoutFlinkPlan_whenCheckUpgrade_thenNoticeNoFlinkPlan()
         throws IOException {
       Files.createDirectories(projectRoot.resolve("build/shop-replay/deploy/plan"));
@@ -224,15 +251,44 @@ class CheckStateUpgradeOptionTest {
       return errors;
     }
 
-    /** Writes a compatible new plan into the target folder and returns the notices of the check. */
+    /**
+     * Checks the folder, writes a compatible new plan into the target folder as the compile does,
+     * and returns the notices of the check.
+     */
     private List<String> checkUpgradeNotices(String oldBuildFolder) throws IOException {
-      writeCompiledPlan(targetDir().resolve("plan"));
+      var option = option(oldBuildFolder);
       var errors = ErrorCollector.root();
+      option.checkOldBuildFolder(projectRoot, buildDir(), targetDir(), errors);
+      writeCompiledPlan(targetDir().resolve("plan"));
 
-      option(oldBuildFolder).checkUpgrade(projectRoot, targetDir(), errors);
+      option.checkUpgrade(targetDir(), errors);
 
       assertThat(errors.hasErrors()).isFalse();
       return messages(errors, ErrorMessage::isNotice);
+    }
+
+    /**
+     * Runs the check for a compile whose {@code -t} folder is inside the old build. The old plan
+     * has a sink that the new plan removes, so the check fails only when it reads the old plan.
+     */
+    private void assertCheckUpgradeComparesOldPlanFolder(
+        String oldBuildFolder, Path oldPlanDir, Path targetFolderOption) throws IOException {
+      Files.createDirectories(oldPlanDir);
+      Files.writeString(
+          oldPlanDir.resolve("flink-compiled-plan.json"),
+          plan("2.3", SOURCE_OPERATOR, SINK_OPERATOR));
+      var option = option(oldBuildFolder);
+      var errors = ErrorCollector.root();
+
+      option.checkOldBuildFolder(projectRoot, buildDir(), targetFolderOption, errors);
+      // The compile writes the new plan to <target folder>/plan. A new search in the old build
+      // finds this folder first, because it is <old build>/deploy/plan.
+      writeCompiledPlan(targetFolderOption.resolve("plan"));
+
+      assertThatThrownBy(() -> option.checkUpgrade(targetFolderOption, errors))
+          .isInstanceOf(CollectedException.class)
+          .hasMessageContaining("cannot restore the state of the old build in " + oldPlanDir)
+          .hasMessageContaining("operator id=2 removed: Sink(CustomerCount)");
     }
 
     /** The build folder of a compile with {@code -b shop}. */
