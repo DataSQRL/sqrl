@@ -141,7 +141,9 @@ public class CheckStateUpgradeOption {
     if (stateUpgradeBreaks.isEmpty()) {
       errors.notice(
           "%s",
-          "The new Flink plan can restore the state of the old build in %s."
+          ("The new Flink plan passes the state upgrade check against the old build in %s. The"
+                  + " check does not prove that the results match a fresh run, for example after a"
+                  + " new table.")
               .formatted(oldBuildPlan.planDir()));
       return;
     }

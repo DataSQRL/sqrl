@@ -192,7 +192,7 @@ class CheckStateUpgradeOptionTest {
       assertThat(checkUpgradeNotices("build/shop-replay"))
           .singleElement()
           .asString()
-          .contains("can restore the state of the old build in " + oldPlanDir);
+          .contains("passes the state upgrade check against the old build in " + oldPlanDir);
     }
 
     @Test
@@ -338,7 +338,7 @@ class CheckStateUpgradeOptionTest {
       assertThat(messages(errors, ErrorMessage::isNotice))
           .singleElement()
           .asString()
-          .contains("can restore the state");
+          .contains("passes the state upgrade check");
     }
 
     @Test
