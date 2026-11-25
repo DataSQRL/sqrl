@@ -633,6 +633,11 @@ jobs:
           command: |
             set -x
 
+            # Push by digest only, no tag, and hand the digests to the build-images merge job,
+            # so the merge combines exactly the images this pipeline built.
+            DIGESTS=/tmp/workspace/digests/<< parameters.arch >>
+            mkdir -p "$DIGESTS"
+
             build_and_push() {
               local repo="$1" ; shift
               local dockerfile="$1" ; shift
@@ -641,16 +646,24 @@ jobs:
 
               docker buildx build \
                 --platform linux/<< parameters.arch >> \
-                --push \
+                --output type=image,name=$REGISTRY/$repo,push-by-digest=true,name-canonical=true,push=true \
+                --metadata-file /tmp/metadata-$repo.json \
                 $extra_args \
-                -t $REGISTRY/$repo:$TAG_SUFFIX-<< parameters.arch >> \
                 -f "$dockerfile" \
                 "$context"
+
+              python3 -c 'import json, sys; print(json.load(open(sys.argv[1]))["containerimage.digest"])' \
+                /tmp/metadata-$repo.json > "$DIGESTS/$repo"
             }
 
             build_and_push cmd         sqrl-cli/Dockerfile                      sqrl-cli                      --build-arg IMG_REPO=ghcr.io/datasqrl --build-arg BASE_TAG=$BASE_TAG
             build_and_push sqrl-server sqrl-server/sqrl-server-vertx/Dockerfile sqrl-server/sqrl-server-vertx --build-arg IMG_REPO=ghcr.io/datasqrl --build-arg DUCKDB_EXTENSIONS_TAG=$DUCKDB_EXTENSIONS_TAG
-            build_and_push core-agent  agent/Dockerfile                         .                             --build-arg SQRL_IMAGE=$REGISTRY/cmd:$TAG_SUFFIX-<< parameters.arch >>
+            build_and_push core-agent  agent/Dockerfile                         .                             --build-arg SQRL_IMAGE=$REGISTRY/cmd@$(cat "$DIGESTS/cmd")
+
+      - persist_to_workspace:
+          root: /tmp/workspace
+          paths:
+            - digests/<< parameters.arch >>
 
   build-images:
     executor: default-machine
@@ -660,6 +673,8 @@ jobs:
       - skip-if-docs-only
       - determine-version
       - skip-unpublished-images
+      - attach_workspace:
+          at: /tmp/workspace
       - setup-buildx:
           builder_name: "sqrl-builder"
           qemu: false
@@ -691,8 +706,8 @@ jobs:
 
               docker buildx imagetools create \
                 "${tags[@]}" \
-                $REGISTRY/$repo:$TAG_SUFFIX-amd64 \
-                $REGISTRY/$repo:$TAG_SUFFIX-arm64
+                $REGISTRY/$repo@$(cat /tmp/workspace/digests/amd64/$repo) \
+                $REGISTRY/$repo@$(cat /tmp/workspace/digests/arm64/$repo)
             }
 
             merge_manifests cmd
