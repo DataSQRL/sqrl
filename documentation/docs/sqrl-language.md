@@ -477,6 +477,20 @@ CustomersByEmail(email STRING NOT NULL, country STRING NOT NULL) := SELECT * FRO
 
 A distinct count of several columns, like `row_count(country, city, 2e3)`, applies only to a query with an equality on all of them. A filter with `<`, `<=`, `>` or `>=` on a column does not use its distinct count.
 
+A distinct count also tells the compiler which equality columns narrow the rows too little for an index. The compiler leaves such a column out of the indexes of the table:
+
+- A column with fewer than 20 distinct values. With `row_count(gender, 2)`, the filter `email = :email AND gender = :gender` gets an index on `email` alone, and a filter on `gender` alone gets no index and no warning. A distinct count of several columns that is below 20 holds for each of those columns.
+- Every column beyond a unique column set. When the distinct count of some columns is at least the row count of the table, an equality on them matches at most one row, and the query needs no other column in the index, not even one with `<`, `<=`, `>` or `>=`. This takes both hints, the row count of the table and the distinct count of the columns: with `row_count(1e6), row_count(email, 1e6)`, the filter `email = :email AND age > :minAge` gets an index on `email` alone. A row count that the compiler estimates itself, without a `row_count` hint, does not count.
+- A column that multiplies the distinct values of the other equality columns by less than 20. With `row_count(country, 200), row_count(country, city, 2e3)`, `city` adds a factor of 10, so the filter `country = :country AND city = :city` gets an index on `country` alone.
+
+The limit of 20 is the [`min-distinct-count`](configuration-engine/postgres#index-selection) of the `postgres` engine. These columns always stay in the indexes:
+
+- A column without a distinct count.
+- A column with `<`, `<=`, `>` or `>=`, or the sort column of a query with a `LIMIT`, unless a unique column set makes it unnecessary.
+- The leading columns of the primary key that the filter has an equality on, because the primary key index serves the query only with them.
+
+To index a column that the compiler leaves out, add an `index` hint to the table.
+
 A table that holds at most 100 rows gets no automatic index and no such warning. The limit is the [`small-table-row-limit`](configuration-engine/postgres#index-selection) of the `postgres` engine. PostgreSQL reads it in about one page, so an index makes no query faster. PostgreSQL also never analyzes a table that small on its own, and without statistics it can probe an index once for each row of a join instead of building a hash join. The compiler takes the size from the definition of the table, like a `VALUES` list, or from a `row_count` hint. A table that reads another table, even a small one, does not count.
 
 An `index` hint replaces the automatic selection for its table, including these warnings, and also applies to a small table.
