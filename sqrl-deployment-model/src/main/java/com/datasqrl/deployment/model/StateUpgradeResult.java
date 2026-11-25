@@ -23,7 +23,7 @@ import java.util.Optional;
  *
  * @param breaks the reasons why Flink cannot restore the state, empty when the restore can work
  * @param warnings the risks that the check cannot decide, for example a {@code
- *     pipeline.max-parallelism} that only one build sets
+ *     pipeline.max-parallelism} that only one build sets, or a changed state TTL
  * @param flinkVersionChange {@code "<old> -> <new>"} when the Flink versions are different. This is
  *     information only.
  */

@@ -52,17 +52,18 @@ public sealed interface StateUpgradeBreak
   }
 
   /**
-   * The new plan has an operator with this id, but one of its state fields is different. The
-   * message shows the descriptions, because the field values are large JSON blocks.
+   * The new plan has an operator with this id, but one of its state fields is different. The values
+   * are compact JSON, or {@code missing} for a missing field. The description is the one of the old
+   * operator.
    */
   record ChangedStateField(
-      String operatorId, String fieldName, String oldDescription, String newDescription)
+      String operatorId, String fieldName, String oldValue, String newValue, String description)
       implements StateUpgradeBreak {
 
     @Override
     public String toMessage() {
-      return "operator id=%s changed: field '%s' differs (old: %s, new: %s)"
-          .formatted(operatorId, fieldName, oldDescription, newDescription);
+      return "operator id=%s changed: field '%s' differs: %s -> %s (%s)"
+          .formatted(operatorId, fieldName, oldValue, newValue, description);
     }
   }
 
