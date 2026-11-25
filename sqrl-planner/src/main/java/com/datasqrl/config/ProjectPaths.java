@@ -49,13 +49,13 @@ public record ProjectPaths(Path workspaceDir, Path projectRoot) {
    * @return the normalized path
    */
   public Path resolve(String key, String path, ErrorCollector errors) {
-    var resolved = isRelative(path) ? projectRoot.resolve(path).normalize() : null;
+    var resolved = isRelative(path) ? projectRoot.resolve(path) : null;
     // Throws also with a collector that does not abort on fatal errors, since callers use the path
     if (resolved == null || !isInsideWorkspace(resolved)) {
       throw errors.exception("Value [%s] for key [%s] is not valid. %s", path, key, RULE);
     }
 
-    return resolved;
+    return resolved.normalize();
   }
 
   /**
@@ -93,11 +93,16 @@ public record ProjectPaths(Path workspaceDir, Path projectRoot) {
    * that does not exist, the nearest directory above it that exists is resolved, so a link above a
    * folder that is created later counts as well.
    *
+   * <p>A {@code ..} after a link differs between the path as written, in which the OS resolves it
+   * from the link's target, and the normalized path, from which it removes the link. Callers use
+   * either form, so both must be inside.
+   *
    * @param path a path to check, absolute or relative to the working directory
    * @return {@code true} if the real path is inside the real workspace directory
    */
   public boolean isInsideWorkspace(Path path) {
-    return realPath(path).startsWith(realPath(workspaceDir));
+    var workspace = realPath(workspaceDir);
+    return realPath(path).startsWith(workspace) && realPath(path.normalize()).startsWith(workspace);
   }
 
   /**
@@ -121,19 +126,20 @@ public record ProjectPaths(Path workspaceDir, Path projectRoot) {
     return isRelative(path) && !Path.of(path).normalize().startsWith("..");
   }
 
+  /** Resolves the path the way the OS does, so a {@code ..} after a link applies to its target. */
   private static Path realPath(Path path) {
-    var absolute = path.toAbsolutePath().normalize();
+    var absolute = path.toAbsolutePath();
     var existing = absolute;
     while (existing != null && !Files.exists(existing)) {
       existing = existing.getParent();
     }
     if (existing == null) {
-      return absolute;
+      return absolute.normalize();
     }
     try {
-      return existing.toRealPath().resolve(existing.relativize(absolute));
+      return existing.toRealPath().resolve(existing.relativize(absolute)).normalize();
     } catch (IOException e) {
-      return absolute;
+      return absolute.normalize();
     }
   }
 }

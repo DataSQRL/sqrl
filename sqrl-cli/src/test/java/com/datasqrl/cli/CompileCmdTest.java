@@ -211,6 +211,25 @@ class CompileCmdTest {
   }
 
   @Test
+  void givenPackageFileBehindDotDotAfterLinkToOutside_whenFormatting_thenThrows(
+      @TempDir Path outside) throws IOException {
+    Files.createDirectories(tempDir.resolve("orders"));
+    Files.createDirectories(outside.resolve("a"));
+    Files.writeString(outside.resolve("package.json"), "{}");
+    Files.createSymbolicLink(tempDir.resolve("orders/link"), outside.resolve("a"));
+
+    var compileCmd = new CompileCmd();
+    compileCmd.cli = new DatasqrlCli(tempDir, StatusHook.NONE, true);
+    compileCmd.projectRootOption.projectRoot = Optional.of(Path.of("orders"));
+    // Normalized, it is orders/package.json, but the OS resolves it to the outside package file
+    compileCmd.packageFiles = List.of(Path.of("link/../package.json"));
+
+    assertThatThrownBy(compileCmd::formatGivenPackageFiles)
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageStartingWith("Package file must be a relative path inside the workspace");
+  }
+
+  @Test
   void givenNoBuildFolder_whenGettingBuildDir_thenUsesDefaultFolder() {
     var compileCmd = new CompileCmd();
     compileCmd.cli = new DatasqrlCli(tempDir, StatusHook.NONE, true);

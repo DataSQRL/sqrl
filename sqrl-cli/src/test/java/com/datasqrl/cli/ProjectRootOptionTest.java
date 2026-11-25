@@ -52,6 +52,18 @@ class ProjectRootOptionTest {
   }
 
   @Test
+  void givenProjectBehindDotDotAfterLinkToOutside_whenResolve_thenThrows() throws IOException {
+    Files.createDirectories(tempDir.resolve("outside/a"));
+    Files.createDirectories(tempDir.resolve("outside/x"));
+    Files.createSymbolicLink(workspaceDir.resolve("project/link"), tempDir.resolve("outside/a"));
+
+    // Normalized, the root is project/x, but the OS resolves it to outside/x
+    assertThatThrownBy(() -> ProjectRootOption.resolve(workspaceDir, Path.of("project/link/../x")))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageStartingWith("Project root must be inside the workspace");
+  }
+
+  @Test
   void givenProjectLinkedToOutsideWorkspace_whenResolve_thenThrows() throws IOException {
     Files.createSymbolicLink(workspaceDir.resolve("linked"), tempDir.resolve("outside"));
 

@@ -73,6 +73,42 @@ class ProjectPathsTest {
   }
 
   @Test
+  void givenDotDotAfterLinkToOutsideWorkspace_whenResolve_thenFails() throws IOException {
+    // The normalized path is the project's x, but the OS resolves it next to the link's target
+    Files.createDirectories(outsideDir.resolve("a"));
+    Files.createSymbolicLink(projectDir.resolve("link"), outsideDir.resolve("a"));
+
+    assertThatThrownBy(
+            () ->
+                paths.resolve(
+                    "script.include.lib.package", "link/../x/package.json", ErrorCollector.root()))
+        .isInstanceOf(CollectedException.class)
+        .hasMessageContaining("for key [script.include.lib.package] is not valid");
+  }
+
+  @Test
+  void givenDotDotAfterLinkWhoseNormalizedPathLeavesWorkspace_whenResolve_thenFails()
+      throws IOException {
+    // The OS resolves link/../../.. to the workspace, but the normalized path is above it
+    var target = Files.createDirectories(workspaceDir.resolve("a/b/c"));
+    Files.createSymbolicLink(projectDir.resolve("link"), target);
+
+    assertThatThrownBy(
+            () -> paths.resolve("script.graphql", "link/../../..", ErrorCollector.root()))
+        .isInstanceOf(CollectedException.class);
+  }
+
+  @Test
+  void givenDotDotAfterLinkInsideWorkspace_whenResolve_thenResolvesNormalizedPath()
+      throws IOException {
+    var target = Files.createDirectories(workspaceDir.resolve("shared/dir"));
+    Files.createSymbolicLink(projectDir.resolve("link"), target);
+
+    assertThat(paths.resolve("script.graphql", "link/../x.graphqls", ErrorCollector.root()))
+        .isEqualTo(projectDir.resolve("x.graphqls"));
+  }
+
+  @Test
   void givenCollectorThatDoesNotAbort_whenResolvePathLeavingWorkspace_thenStillThrows() {
     var errors = ErrorCollector.root().abortOnFatal(false);
 

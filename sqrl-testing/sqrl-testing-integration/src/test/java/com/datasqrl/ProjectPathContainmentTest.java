@@ -184,6 +184,29 @@ class ProjectPathContainmentTest {
   }
 
   @Test
+  void givenIncludeThatLeavesWorkspaceThroughLinkAndDotDot_whenCompile_thenFailsNamingKey()
+      throws IOException {
+    // link/.. normalizes to the project, but the OS resolves it next to the link's target
+    Files.createDirectories(outsideDir.resolve("a"));
+    Files.createDirectories(outsideDir.resolve("ext"));
+    Files.writeString(outsideDir.resolve("ext/package.json"), "{}");
+    Files.writeString(
+        outsideDir.resolve("ext/secret.graphql"),
+        "# " + OUTSIDE_CONTENT + "\nquery Secret { Sales(limit: 1) { region } }\n");
+    Files.createSymbolicLink(projectDir.resolve("link"), outsideDir.resolve("a"));
+    setPath("script.include.ext.package", "link/../ext/package.json");
+
+    var hook = cli.execute(projectDir, "compile", "package.json");
+
+    assertThat(hook.isFailed()).as(hook.getMessages()).isTrue();
+    assertThat(hook.getMessages())
+        .contains(
+            "Value [link/../ext/package.json] for key [script.include.ext.package] is not valid. "
+                + ProjectPaths.RULE);
+    assertThat(cli.getBuildDir().resolve("ext/secret.graphql")).doesNotExist();
+  }
+
+  @Test
   void givenStandaloneIncludeWithMainOutsideItsRoot_whenCompile_thenFailsNamingInclude()
       throws IOException {
     var includingDir = workspaceDir.resolve("kafka-include-subscribe-compile");

@@ -209,7 +209,7 @@ public abstract class AbstractCompileCmd extends BasePackageConfCmd {
    */
   private static Path resolvePackageFile(ProjectPaths projectPaths, Path basePath, Path pkg) {
     var file = basePath.resolve(pkg);
-    if (pkg.isAbsolute() || !projectPaths.isInsideWorkspace(file.normalize())) {
+    if (pkg.isAbsolute() || !projectPaths.isInsideWorkspace(file)) {
       throw new IllegalArgumentException(
           "Package file must be a relative path inside the workspace, got: " + pkg);
     }
