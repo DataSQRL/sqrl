@@ -23,10 +23,12 @@ import com.datasqrl.error.ErrorCollector;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 class ProjectPathsTest {
@@ -121,5 +123,49 @@ class ProjectPathsTest {
   @ValueSource(strings = {"..", "../main.sqrl", "scripts/../../main.sqrl", "/etc/hosts"})
   void givenPathThatLeavesOrIsAbsolute_whenStaysInside_thenFalse(String path) {
     assertThat(ProjectPaths.staysInside(path)).isFalse();
+  }
+
+  @Test
+  void givenAllPathsInsideWorkspace_whenValidate_thenPasses() {
+    var config = packageJson();
+    config.setProperty("script.api.v1.operations", List.of("../shared/ops.graphql"));
+    config.setProperty("script.api.v1.mcp-apps", "apps");
+    config.setProperty("script.include.lib.package", "../lib/package.json");
+
+    paths.validate(new PackageJsonImpl(config), ErrorCollector.root());
+  }
+
+  @ParameterizedTest
+  @CsvSource({
+    "script.main, false",
+    "script.graphql, false",
+    "script.operations, true",
+    "script.database, false",
+    "script.api.v1.schema, false",
+    "script.api.v1.operations, true",
+    "script.api.v1.openapi, false",
+    "script.api.v1.mcp-apps, false",
+    "script.include.lib.package, false",
+    "test-runner.snapshot-folder, false",
+    "test-runner.test-folder, false"
+  })
+  void givenPathOutsideWorkspace_whenValidate_thenFailsNamingKeyAndValue(
+      String key, boolean isList) {
+    var config = packageJson();
+    var path = "../../outside/file";
+    config.setProperty(key, isList ? List.of(path) : path);
+
+    assertThatThrownBy(() -> paths.validate(new PackageJsonImpl(config), ErrorCollector.root()))
+        .isInstanceOf(CollectedException.class)
+        .hasMessage("Value [%s] for key [%s] is not valid. %s", path, key, ProjectPaths.RULE);
+  }
+
+  /** A package configuration with the keys that every compilation has. */
+  private static SqrlConfig packageJson() {
+    var config = SqrlConfig.createCurrentVersion();
+    config.setProperty("script.main", "main.sqrl");
+    config.setProperty("test-runner.snapshot-folder", "snapshots");
+    config.setProperty("test-runner.test-folder", "tests");
+    return config;
   }
 }

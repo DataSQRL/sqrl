@@ -20,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.entry;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -85,6 +86,8 @@ class PackagerTest {
     var pipeline = new FilePreprocessingPipeline(workspacePaths, buildDir, preprocessors);
     underTest = new Packager(workspacePaths, packageJson, pipeline, mainScript);
 
+    // The packager checks the configured paths first, see ProjectPaths#validate
+    lenient().when(packageJson.getScriptConfig().getMainScript()).thenReturn("main.sqrl");
     when(jBangRunner.isJBangAvailable()).thenReturn(true);
     doAnswer(invocation -> exportFatJar(invocation.getArgument(0), invocation.getArgument(1)))
         .when(jBangRunner)

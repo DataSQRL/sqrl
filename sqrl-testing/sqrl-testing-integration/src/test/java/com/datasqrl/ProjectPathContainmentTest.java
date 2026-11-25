@@ -84,6 +84,7 @@ class ProjectPathContainmentTest {
     "script.api.v1.mcp-apps, ../../outside/apps",
     "script.api.v1.openapi, ../../outside/notes.txt",
     "test-runner.test-folder, ../../outside",
+    "test-runner.snapshot-folder, ../../outside",
     "script.include.ext.package, ../../outside/package.json"
   })
   void givenAbsolutePathOrPathOutsideWorkspace_whenCompile_thenFailsNamingKeyAndValue(
@@ -100,6 +101,25 @@ class ProjectPathContainmentTest {
         .contains("Value [" + value + "] for key [" + key + "] is not valid. " + ProjectPaths.RULE)
         .doesNotContain(OUTSIDE_CONTENT);
     assertThat(cli.getPlanDir().resolve("vertx.json")).doesNotExist();
+  }
+
+  @Test
+  void givenMcpAppsOutsideWorkspaceWithoutMcp_whenCompile_thenFailsNamingKeyAndValue()
+      throws IOException {
+    var packageFile = projectDir.resolve("package.json");
+    var json = (ObjectNode) SqrlObjectMapper.INSTANCE.readTree(packageFile.toFile());
+    json.putObject("compiler").putObject("api").putArray("protocols").add("GRAPHQL").add("REST");
+    SqrlObjectMapper.INSTANCE.writeValue(packageFile.toFile(), json);
+    setPath("script.api.v1.mcp-apps", "../../outside/apps");
+
+    var hook = cli.execute(projectDir, "compile", "package.json");
+
+    assertThat(hook.isFailed()).as(hook.getMessages()).isTrue();
+    assertThat(hook.getMessages())
+        .contains(
+            "Value [../../outside/apps] for key [script.api.v1.mcp-apps] is not valid. "
+                + ProjectPaths.RULE)
+        .doesNotContain(OUTSIDE_CONTENT);
   }
 
   @Test
@@ -131,8 +151,7 @@ class ProjectPathContainmentTest {
   }
 
   @Test
-  void givenOperationsLinkedToOutsideWorkspace_whenCompile_thenSkipsLinkAndFails()
-      throws IOException {
+  void givenOperationsLinkedToOutsideWorkspace_whenCompile_thenFailsNamingKey() throws IOException {
     Files.delete(projectDir.resolve("operations.graphql"));
     Files.createSymbolicLink(
         projectDir.resolve("operations.graphql"), outsideDir.resolve("ops.graphql"));
@@ -142,10 +161,26 @@ class ProjectPathContainmentTest {
     assertThat(hook.isFailed()).as(hook.getMessages()).isTrue();
     assertThat(hook.getMessages())
         .contains(
-            "Skipped the symbolic link 'operations.graphql', because it leads outside the"
-                + " workspace")
+            "Value [operations.graphql] for key [script.api.v1.operations] is not valid. "
+                + ProjectPaths.RULE)
         .doesNotContain(OUTSIDE_CONTENT);
-    assertThat(cli.getBuildDir().resolve("operations.graphql")).doesNotExist();
+  }
+
+  @Test
+  void givenUnconfiguredFileLinkedToOutsideWorkspace_whenCompile_thenSkipsLink()
+      throws IOException {
+    Files.createSymbolicLink(
+        projectDir.resolve("extra.graphql"), outsideDir.resolve("ops.graphql"));
+
+    var hook = cli.execute(projectDir, "compile", "package.json");
+
+    assertThat(hook.isSuccess()).as(hook.getMessages()).isTrue();
+    assertThat(hook.getMessages())
+        .contains(
+            "Skipped the symbolic link 'extra.graphql', because it leads outside the workspace")
+        .doesNotContain(OUTSIDE_CONTENT);
+    assertThat(cli.getBuildDir().resolve("extra.graphql")).doesNotExist();
+    assertThat(cli.getPlanDir().resolve("vertx.json")).content().doesNotContain(OUTSIDE_CONTENT);
   }
 
   @Test

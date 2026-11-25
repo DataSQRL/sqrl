@@ -61,6 +61,36 @@ public record ProjectPaths(Path workspaceDir, Path projectRoot) {
   }
 
   /**
+   * Checks every path that the package file configures against the rule, also a path that no
+   * enabled feature reads, such as the MCP apps of an API version without MCP, so that the rule
+   * does not depend on the enabled features. The compiler checks each path again where it reads it.
+   *
+   * @param config the package configuration
+   * @param errors the collector to fail with
+   */
+  public void validate(PackageJson config, ErrorCollector errors) {
+    var script = config.getScriptConfig();
+    resolve("script.main", script.getMainScript(), errors);
+    script.getGraphql().ifPresent(path -> resolve("script.graphql", path, errors));
+    script.getOperations().forEach(path -> resolve("script.operations", path, errors));
+    script.getDatabase().ifPresent(path -> resolve("script.database", path, errors));
+    for (var api : script.getScriptApiConfigs()) {
+      var prefix = "script.api." + api.getVersion() + ".";
+      api.getSchema().ifPresent(path -> resolve(prefix + "schema", path, errors));
+      api.getOperations().forEach(path -> resolve(prefix + "operations", path, errors));
+      api.getOpenApi().ifPresent(path -> resolve(prefix + "openapi", path, errors));
+      api.getMcpApps().ifPresent(path -> resolve(prefix + "mcp-apps", path, errors));
+    }
+    for (var include : script.getIncludeConfigs()) {
+      var key = "script.include." + include.getNamespace() + ".package";
+      resolve(key, include.getPackage(), errors);
+    }
+    var testConfig = config.getTestConfig();
+    testConfig.getSnapshotDir(this);
+    testConfig.getTestDir(this);
+  }
+
+  /**
    * Returns whether the path is inside the workspace once symbolic links are resolved. For a path
    * that does not exist, the nearest directory above it that exists is resolved, so a link above a
    * folder that is created later counts as well.
