@@ -359,7 +359,8 @@ class CompileCmdTest {
     var errors = runCompile(compileCmd, ErrorCollector.root());
 
     assertThat(errors.hasErrors()).isFalse();
-    assertThat(notices(errors)).anyMatch(notice -> notice.contains("can restore the state"));
+    assertThat(notices(errors))
+        .anyMatch(notice -> notice.contains("passes the state upgrade check"));
     assertThat(compileOutput.toString()).contains("BUILD SUCCESS");
   }
 
@@ -378,7 +379,8 @@ class CompileCmdTest {
     var errors = runCompile(compileCmd, ErrorCollector.root());
 
     assertThat(errors.hasErrors()).isFalse();
-    assertThat(notices(errors)).anyMatch(notice -> notice.contains("can restore the state"));
+    assertThat(notices(errors))
+        .anyMatch(notice -> notice.contains("passes the state upgrade check"));
   }
 
   @Test
