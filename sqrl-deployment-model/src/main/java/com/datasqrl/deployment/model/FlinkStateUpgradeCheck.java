@@ -19,6 +19,10 @@ import com.datasqrl.deployment.model.StateUpgradeBreak.ChangedMaxParallelism;
 import com.datasqrl.deployment.model.StateUpgradeBreak.ChangedOperatorType;
 import com.datasqrl.deployment.model.StateUpgradeBreak.ChangedStateField;
 import com.datasqrl.deployment.model.StateUpgradeBreak.RemovedOperator;
+import com.datasqrl.deployment.model.StateUpgradeNote.ChangedFlinkVersion;
+import com.datasqrl.deployment.model.StateUpgradeNote.ChangedStateTtl;
+import com.datasqrl.deployment.model.StateUpgradeNote.MaxParallelismOnlyInNewBuild;
+import com.datasqrl.deployment.model.StateUpgradeNote.MaxParallelismOnlyInOldBuild;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.util.ArrayList;
@@ -54,22 +58,22 @@ public final class FlinkStateUpgradeCheck {
 
   private FlinkStateUpgradeCheck() {}
 
-  /** Returns all breaks and warnings for an upgrade from the old build to the new build. */
+  /** Returns all breaks and notes for an upgrade from the old build to the new build. */
   public static StateUpgradeResult check(FlinkJobPlan oldJobPlan, FlinkJobPlan newJobPlan) {
     var stateUpgradeBreaks =
         new ArrayList<>(operatorBreaks(oldJobPlan.compiledPlan(), newJobPlan.compiledPlan()));
     maxParallelismBreak(oldJobPlan.maxParallelism(), newJobPlan.maxParallelism())
         .ifPresent(stateUpgradeBreaks::add);
 
-    var warnings =
-        new ArrayList<>(stateTtlWarnings(oldJobPlan.compiledPlan(), newJobPlan.compiledPlan()));
-    maxParallelismWarning(oldJobPlan.maxParallelism(), newJobPlan.maxParallelism())
-        .ifPresent(warnings::add);
+    var stateUpgradeNotes = new ArrayList<StateUpgradeNote>();
+    changedFlinkVersion(oldJobPlan.compiledPlan(), newJobPlan.compiledPlan())
+        .ifPresent(stateUpgradeNotes::add);
+    stateUpgradeNotes.addAll(
+        changedStateTtls(oldJobPlan.compiledPlan(), newJobPlan.compiledPlan()));
+    maxParallelismOnlyInOneBuild(oldJobPlan.maxParallelism(), newJobPlan.maxParallelism())
+        .ifPresent(stateUpgradeNotes::add);
 
-    return new StateUpgradeResult(
-        List.copyOf(stateUpgradeBreaks),
-        List.copyOf(warnings),
-        flinkVersionChange(oldJobPlan.compiledPlan(), newJobPlan.compiledPlan()));
+    return new StateUpgradeResult(List.copyOf(stateUpgradeBreaks), List.copyOf(stateUpgradeNotes));
   }
 
   /**
@@ -117,13 +121,14 @@ public final class FlinkStateUpgradeCheck {
   }
 
   /**
-   * Returns one warning for each state entry whose {@code ttl} is the only change. Flink restores
-   * the state after a TTL change, so {@link #operatorBreaks} ignores the {@code ttl}. When other
-   * parts of the {@code state} field change too, the break shows the full values instead.
+   * Returns one note for each state entry whose {@code ttl} is the only change. Flink restores the
+   * state after a TTL change, so {@link #operatorBreaks} ignores the {@code ttl}. When other parts
+   * of the {@code state} field change too, the break shows the full values instead.
    */
-  private static List<String> stateTtlWarnings(JsonNode oldCompiledPlan, JsonNode newCompiledPlan) {
+  private static List<ChangedStateTtl> changedStateTtls(
+      JsonNode oldCompiledPlan, JsonNode newCompiledPlan) {
     var newOperatorsById = operatorsById(newCompiledPlan);
-    var stateTtlWarnings = new ArrayList<String>();
+    var changedStateTtls = new ArrayList<ChangedStateTtl>();
 
     for (var oldOperator : oldCompiledPlan.path("nodes")) {
       var newOperator = newOperatorsById.get(operatorId(oldOperator));
@@ -142,8 +147,8 @@ public final class FlinkStateUpgradeCheck {
         var oldTtl = oldStateEntries.get(entryIndex).path(TTL_FIELD).asText(MISSING_VALUE);
         var newTtl = newStateEntries.get(entryIndex).path(TTL_FIELD).asText(MISSING_VALUE);
         if (!oldTtl.equals(newTtl)) {
-          stateTtlWarnings.add(
-              stateTtlWarning(
+          changedStateTtls.add(
+              new ChangedStateTtl(
                   operatorId(oldOperator),
                   oldStateEntries.get(entryIndex).path("name").asText(),
                   oldTtl,
@@ -152,14 +157,7 @@ public final class FlinkStateUpgradeCheck {
         }
       }
     }
-    return stateTtlWarnings;
-  }
-
-  private static String stateTtlWarning(
-      String operatorId, String stateName, String oldTtl, String newTtl, String description) {
-    return ("operator id=%s: the TTL of state '%s' changes: %s -> %s (%s). The check does not"
-            + " report a TTL change as a break.")
-        .formatted(operatorId, stateName, oldTtl, newTtl, description);
+    return changedStateTtls;
   }
 
   /** Returns the value to compare: the {@code state} field without the {@code ttl} entries. */
@@ -198,36 +196,20 @@ public final class FlinkStateUpgradeCheck {
     return Optional.empty();
   }
 
-  /**
-   * Returns a warning when only one build sets {@code pipeline.max-parallelism}. When only the old
-   * build sets it, Flink takes the value from the savepoint, so the restore fails only when the new
-   * job gets a different value from outside the build. When only the new build sets it, the check
-   * cannot see the value of the running job.
-   */
-  private static Optional<String> maxParallelismWarning(
+  /** Returns a note when only one build sets {@code pipeline.max-parallelism}. */
+  private static Optional<StateUpgradeNote> maxParallelismOnlyInOneBuild(
       Optional<Integer> oldMaxParallelism, Optional<Integer> newMaxParallelism) {
     if (oldMaxParallelism.isPresent() && newMaxParallelism.isEmpty()) {
-      return Optional.of(
-          ("Only the old build sets pipeline.max-parallelism (%d). Flink takes this value from the"
-                  + " savepoint. The restore fails only when the new job gets a different value"
-                  + " from outside the build, for example from the Flink cluster configuration.")
-              .formatted(oldMaxParallelism.get()));
+      return Optional.of(new MaxParallelismOnlyInOldBuild(oldMaxParallelism.get()));
     }
     if (oldMaxParallelism.isEmpty() && newMaxParallelism.isPresent()) {
-      return Optional.of(
-          ("Only the new build sets pipeline.max-parallelism (%d). Make sure that the running job"
-                  + " uses the same value, because a different value makes the restore fail.")
-              .formatted(newMaxParallelism.get()));
+      return Optional.of(new MaxParallelismOnlyInNewBuild(newMaxParallelism.get()));
     }
     return Optional.empty();
   }
 
-  /**
-   * Returns {@code "<old> -> <new>"} when both plans have a {@code flinkVersion} and the versions
-   * are different. This is information only: a Flink upgrade that changes an operator also changes
-   * its {@code type}, which {@link #operatorBreaks} reports.
-   */
-  private static Optional<String> flinkVersionChange(
+  /** Returns a note when both plans have a {@code flinkVersion} and the versions are different. */
+  private static Optional<ChangedFlinkVersion> changedFlinkVersion(
       JsonNode oldCompiledPlan, JsonNode newCompiledPlan) {
     var oldFlinkVersion = oldCompiledPlan.path("flinkVersion").asText();
     var newFlinkVersion = newCompiledPlan.path("flinkVersion").asText();
@@ -237,7 +219,7 @@ public final class FlinkStateUpgradeCheck {
         || oldFlinkVersion.equals(newFlinkVersion)) {
       return Optional.empty();
     }
-    return Optional.of(oldFlinkVersion + " -> " + newFlinkVersion);
+    return Optional.of(new ChangedFlinkVersion(oldFlinkVersion, newFlinkVersion));
   }
 
   private static Map<String, JsonNode> operatorsById(JsonNode plan) {
