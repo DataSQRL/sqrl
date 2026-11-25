@@ -18,12 +18,13 @@ package com.datasqrl.cli;
 import com.datasqrl.config.SqrlConstants;
 import com.datasqrl.deployment.model.FlinkStateUpgradeCheck;
 import com.datasqrl.deployment.model.StateUpgradeBreak;
-import com.datasqrl.deployment.model.StateUpgradeBreak.RemovedOperator;
+import com.datasqrl.deployment.model.StateUpgradeBreak.OldState;
 import com.datasqrl.deployment.model.StateUpgradeNote;
 import com.datasqrl.error.ErrorCollector;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 import lombok.SneakyThrows;
@@ -37,6 +38,24 @@ import picocli.CommandLine.Option;
  * collector formats its message text, and an operator description can contain a {@code %} sign.
  */
 public class CheckStateUpgradeOption {
+
+  /** Marks each break line whose old state no operator of the new plan claims. */
+  private static final String UNCLAIMED_STATE_MARKER = "[unclaimed state]";
+
+  /** Marks each break line whose old state an operator claims but cannot read. */
+  private static final String INCOMPATIBLE_STATE_MARKER = "[incompatible state]";
+
+  private static final String UNCLAIMED_STATE_NOTE =
+      ("The lines marked %s leave old state that no operator of the new plan claims. Flink restores"
+              + " without that state only when execution.state-recovery.ignore-unclaimed-state is"
+              + " true, and it then drops that state.")
+          .formatted(UNCLAIMED_STATE_MARKER);
+
+  private static final String INCOMPATIBLE_STATE_NOTE =
+      ("The lines marked %s belong to an operator that claims the old state but cannot read it."
+              + " The option execution.state-recovery.ignore-unclaimed-state does not help for them."
+              + " Change the script back, or start the new job without the savepoint.")
+          .formatted(INCOMPATIBLE_STATE_MARKER);
 
   @Option(
       names = "--check-state-upgrade-from",
@@ -128,17 +147,36 @@ public class CheckStateUpgradeOption {
     }
 
     var breakMessages =
-        new ArrayList<>(stateUpgradeBreaks.stream().map(StateUpgradeBreak::toMessage).toList());
-    if (stateUpgradeBreaks.stream().anyMatch(RemovedOperator.class::isInstance)) {
-      breakMessages.add(
-          "Flink restores a plan without these operators only when"
-              + " execution.state-recovery.ignore-unclaimed-state is true, and it then drops their"
-              + " state.");
+        new ArrayList<>(
+            stateUpgradeBreaks.stream().map(CheckStateUpgradeOption::breakLine).toList());
+    if (hasOldState(stateUpgradeBreaks, OldState.UNCLAIMED)) {
+      breakMessages.add(UNCLAIMED_STATE_NOTE);
+    }
+    if (hasOldState(stateUpgradeBreaks, OldState.INCOMPATIBLE)) {
+      breakMessages.add(INCOMPATIBLE_STATE_NOTE);
     }
     errors.fatal(
         "%s",
         "The new Flink plan cannot restore the state of the old build in %s:\n- %s"
             .formatted(oldBuildPlan.planDir(), String.join("\n- ", breakMessages)));
+  }
+
+  /**
+   * Returns the line of a break with the mark of its old state. A break of an operator without
+   * state has no mark.
+   */
+  private static String breakLine(StateUpgradeBreak stateUpgradeBreak) {
+    return switch (stateUpgradeBreak.oldState()) {
+      case UNCLAIMED -> stateUpgradeBreak.toMessage() + " " + UNCLAIMED_STATE_MARKER;
+      case INCOMPATIBLE -> stateUpgradeBreak.toMessage() + " " + INCOMPATIBLE_STATE_MARKER;
+      case NONE -> stateUpgradeBreak.toMessage();
+    };
+  }
+
+  private static boolean hasOldState(
+      List<StateUpgradeBreak> stateUpgradeBreaks, OldState oldState) {
+    return stateUpgradeBreaks.stream()
+        .anyMatch(stateUpgradeBreak -> stateUpgradeBreak.oldState() == oldState);
   }
 
   /** Reports the note at the level that the check sets for it. */

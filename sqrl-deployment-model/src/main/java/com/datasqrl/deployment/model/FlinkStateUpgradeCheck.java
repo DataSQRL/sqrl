@@ -18,6 +18,7 @@ package com.datasqrl.deployment.model;
 import com.datasqrl.deployment.model.StateUpgradeBreak.ChangedMaxParallelism;
 import com.datasqrl.deployment.model.StateUpgradeBreak.ChangedOperatorType;
 import com.datasqrl.deployment.model.StateUpgradeBreak.ChangedStateField;
+import com.datasqrl.deployment.model.StateUpgradeBreak.OldState;
 import com.datasqrl.deployment.model.StateUpgradeBreak.RemovedOperator;
 import com.datasqrl.deployment.model.StateUpgradeNote.ChangedFlinkVersion;
 import com.datasqrl.deployment.model.StateUpgradeNote.ChangedStateTtl;
@@ -28,10 +29,12 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Checks if Flink can restore the state of an old build from a new build.
@@ -54,6 +57,10 @@ public final class FlinkStateUpgradeCheck {
   private static final String STATE_FIELD = "state";
 
   private static final String JOIN_SPEC_FIELD = "joinSpec";
+
+  private static final String SOURCE_KIND = "stream-exec-table-source-scan";
+
+  private static final String SINK_KIND = "stream-exec-sink";
 
   /**
    * The field with the row type of an operator. An operator with state stores rows of this type, so
@@ -100,8 +107,9 @@ public final class FlinkStateUpgradeCheck {
       var operatorId = operatorId(oldOperator);
       var newOperator = newOperatorsById.get(operatorId);
 
+      var oldState = oldState(oldOperator, newOperator);
       if (newOperator == null) {
-        operatorBreaks.add(new RemovedOperator(operatorId, description(oldOperator)));
+        operatorBreaks.add(new RemovedOperator(operatorId, description(oldOperator), oldState));
         continue;
       }
 
@@ -109,7 +117,8 @@ public final class FlinkStateUpgradeCheck {
       var newType = type(newOperator);
       if (!oldType.equals(newType)) {
         operatorBreaks.add(
-            new ChangedOperatorType(operatorId, oldType, newType, description(oldOperator)));
+            new ChangedOperatorType(
+                operatorId, oldType, newType, description(oldOperator), oldState));
       }
 
       for (var fieldName : STATE_FIELDS) {
@@ -123,7 +132,8 @@ public final class FlinkStateUpgradeCheck {
                   fieldName,
                   valueText(oldValue),
                   valueText(newValue),
-                  description(oldOperator)));
+                  description(oldOperator),
+                  oldState));
         }
       }
 
@@ -137,10 +147,58 @@ public final class FlinkStateUpgradeCheck {
                 OUTPUT_TYPE_FIELD,
                 outputTypeText(oldOutputType),
                 outputTypeText(newOutputType),
-                description(oldOperator)));
+                description(oldOperator),
+                oldState));
       }
     }
     return operatorBreaks;
+  }
+
+  /**
+   * Decides what happens to the old state of an operator, the same for each break of the operator.
+   * The old state is unclaimed when the operator can hold state, and the new plan has no operator
+   * with its id, an operator of another kind at its id, or no {@code state} entry with the name of
+   * an old entry. Otherwise the old state is incompatible when the plan shows state for the
+   * operator, and the operator has no state in the other cases.
+   */
+  private static OldState oldState(JsonNode oldOperator, JsonNode newOperator) {
+    var oldStateIsUnclaimed =
+        newOperator == null
+            || !operatorKind(type(oldOperator)).equals(operatorKind(type(newOperator)))
+            || !stateNames(fieldValue(newOperator, STATE_FIELD))
+                .containsAll(stateNames(fieldValue(oldOperator, STATE_FIELD)));
+    if (canHoldState(oldOperator) && oldStateIsUnclaimed) {
+      return OldState.UNCLAIMED;
+    }
+    return hasState(oldOperator) ? OldState.INCOMPATIBLE : OldState.NONE;
+  }
+
+  /**
+   * An operator can hold state when the plan shows state for it, and also when it is a source or a
+   * sink. A source keeps its read position, and a sink can keep the rows that it did not write yet,
+   * but the plan does not show this state.
+   */
+  private static boolean canHoldState(JsonNode operator) {
+    var operatorKind = operatorKind(type(operator));
+    return hasState(operator) || operatorKind.equals(SOURCE_KIND) || operatorKind.equals(SINK_KIND);
+  }
+
+  /**
+   * Returns the kind of an operator type without its ExecNode version, for example {@code
+   * stream-exec-sink} for {@code stream-exec-sink_2}. Flink matches the state of an operator by its
+   * id and its kind, so a new version of the same kind still claims the old state.
+   */
+  private static String operatorKind(String type) {
+    return type.replaceFirst("_\\d+$", "");
+  }
+
+  /** Returns the names of the entries of a {@code state} field, or no names for another value. */
+  private static Set<String> stateNames(JsonNode stateEntries) {
+    var stateNames = new HashSet<String>();
+    if (stateEntries != null && stateEntries.isArray()) {
+      stateEntries.forEach(stateEntry -> stateNames.add(stateEntry.path("name").asText()));
+    }
+    return stateNames;
   }
 
   /** An operator has state when it has a {@code state} field or a {@code joinSpec}. */
