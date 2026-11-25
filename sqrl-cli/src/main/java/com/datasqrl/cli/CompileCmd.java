@@ -45,6 +45,6 @@ public class CompileCmd extends AbstractCompileCmd {
   /** Runs after a compile without errors. */
   @Override
   protected void execute(ErrorCollector errors) {
-    checkStateUpgradeOption.checkUpgrade(getProjectRoot(), getTargetDir(), errors);
+    checkStateUpgradeOption.checkUpgrade(getTargetDir(), errors);
   }
 }

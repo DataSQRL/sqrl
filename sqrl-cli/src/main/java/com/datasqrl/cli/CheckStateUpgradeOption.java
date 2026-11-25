@@ -48,6 +48,13 @@ public class CheckStateUpgradeOption {
   Optional<Path> oldBuildFolder = Optional.empty();
 
   /**
+   * The plan folder that {@link #checkOldBuildFolder} finds before the compile. {@link
+   * #checkUpgrade} reads this folder and does not search again, because the compile can create a
+   * folder that the search finds first.
+   */
+  private Optional<Path> oldPlanDir = Optional.empty();
+
+  /**
    * Fails when the folder of the option does not exist, has no plan folder, or has its plan folder
    * inside the build folder or the target folder of this compile. Call it before the compile,
    * because the compile empties both folders.
@@ -62,26 +69,28 @@ public class CheckStateUpgradeOption {
               "The --check-state-upgrade-from folder %s does not exist"
                   .formatted(oldBuildFolderPath));
 
-          var oldPlanDir = findPlanDir(oldBuildFolderPath, errors);
-          checkPlanDirOutside(oldPlanDir, "build folder", "-b", buildDir, errors);
-          checkPlanDirOutside(oldPlanDir, "target folder", "-t", targetDir, errors);
+          var foundOldPlanDir = findPlanDir(oldBuildFolderPath, errors);
+          checkPlanDirOutside(foundOldPlanDir, "build folder", "-b", buildDir, errors);
+          checkPlanDirOutside(foundOldPlanDir, "target folder", "-t", targetDir, errors);
+          oldPlanDir = Optional.of(foundOldPlanDir);
         });
   }
 
   /**
-   * Compares the old build of the option with the new build in the target folder. Call it after a
-   * compile without errors.
+   * Compares the old plan folder that {@link #checkOldBuildFolder} found with the new build in the
+   * target folder. Call it after a compile without errors.
    */
-  void checkUpgrade(Path projectRoot, Path targetDir, ErrorCollector errors) {
-    oldBuildFolder.ifPresent(
-        givenOldBuildFolder -> {
-          var oldPlanDir =
-              findPlanDir(resolveOldBuildFolder(projectRoot, givenOldBuildFolder), errors);
-          compareBuildPlans(
-              FlinkBuildPlan.read(oldPlanDir, errors),
-              FlinkBuildPlan.read(targetDir.resolve(SqrlConstants.PLAN_DIR), errors),
-              errors);
-        });
+  void checkUpgrade(Path targetDir, ErrorCollector errors) {
+    if (oldBuildFolder.isEmpty()) {
+      return;
+    }
+    var checkedOldPlanDir =
+        oldPlanDir.orElseThrow(
+            () -> new IllegalStateException("Call checkOldBuildFolder before checkUpgrade"));
+    compareBuildPlans(
+        FlinkBuildPlan.read(checkedOldPlanDir, errors),
+        FlinkBuildPlan.read(targetDir.resolve(SqrlConstants.PLAN_DIR), errors),
+        errors);
   }
 
   /**
