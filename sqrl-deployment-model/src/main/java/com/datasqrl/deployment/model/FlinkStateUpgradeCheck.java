@@ -20,6 +20,7 @@ import com.datasqrl.deployment.model.StateUpgradeBreak.ChangedOperatorType;
 import com.datasqrl.deployment.model.StateUpgradeBreak.ChangedStateField;
 import com.datasqrl.deployment.model.StateUpgradeBreak.RemovedOperator;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -44,6 +45,13 @@ public final class FlinkStateUpgradeCheck {
   private static final List<String> STATE_FIELDS =
       List.of("state", "stateMetadata", "joinSpec", "inputProperties", "inputChangelogMode");
 
+  private static final String STATE_FIELD = "state";
+
+  /** The field of a {@code state} entry that holds the TTL, for example {@code "1 h"}. */
+  private static final String TTL_FIELD = "ttl";
+
+  private static final String MISSING_VALUE = "missing";
+
   private FlinkStateUpgradeCheck() {}
 
   /** Returns all breaks and warnings for an upgrade from the old build to the new build. */
@@ -53,10 +61,14 @@ public final class FlinkStateUpgradeCheck {
     maxParallelismBreak(oldJobPlan.maxParallelism(), newJobPlan.maxParallelism())
         .ifPresent(stateUpgradeBreaks::add);
 
+    var warnings =
+        new ArrayList<>(stateTtlWarnings(oldJobPlan.compiledPlan(), newJobPlan.compiledPlan()));
+    maxParallelismWarning(oldJobPlan.maxParallelism(), newJobPlan.maxParallelism())
+        .ifPresent(warnings::add);
+
     return new StateUpgradeResult(
         List.copyOf(stateUpgradeBreaks),
-        maxParallelismWarning(oldJobPlan.maxParallelism(), newJobPlan.maxParallelism()).stream()
-            .toList(),
+        List.copyOf(warnings),
         flinkVersionChange(oldJobPlan.compiledPlan(), newJobPlan.compiledPlan()));
   }
 
@@ -87,15 +99,92 @@ public final class FlinkStateUpgradeCheck {
       }
 
       for (var fieldName : STATE_FIELDS) {
+        var oldValue = fieldValue(oldOperator, fieldName);
+        var newValue = fieldValue(newOperator, fieldName);
         if (!Objects.equals(
-            fieldValue(oldOperator, fieldName), fieldValue(newOperator, fieldName))) {
+            comparableValue(fieldName, oldValue), comparableValue(fieldName, newValue))) {
           operatorBreaks.add(
               new ChangedStateField(
-                  operatorId, fieldName, description(oldOperator), description(newOperator)));
+                  operatorId,
+                  fieldName,
+                  valueText(oldValue),
+                  valueText(newValue),
+                  description(oldOperator)));
         }
       }
     }
     return operatorBreaks;
+  }
+
+  /**
+   * Returns one warning for each state entry whose {@code ttl} is the only change. Flink restores
+   * the state after a TTL change, so {@link #operatorBreaks} ignores the {@code ttl}. When other
+   * parts of the {@code state} field change too, the break shows the full values instead.
+   */
+  private static List<String> stateTtlWarnings(JsonNode oldCompiledPlan, JsonNode newCompiledPlan) {
+    var newOperatorsById = operatorsById(newCompiledPlan);
+    var stateTtlWarnings = new ArrayList<String>();
+
+    for (var oldOperator : oldCompiledPlan.path("nodes")) {
+      var newOperator = newOperatorsById.get(operatorId(oldOperator));
+      if (newOperator == null) {
+        continue;
+      }
+      var oldStateEntries = fieldValue(oldOperator, STATE_FIELD);
+      var newStateEntries = fieldValue(newOperator, STATE_FIELD);
+      if (oldStateEntries == null
+          || !oldStateEntries.isArray()
+          || !Objects.equals(withoutTtl(oldStateEntries), withoutTtl(newStateEntries))) {
+        continue;
+      }
+
+      for (var entryIndex = 0; entryIndex < oldStateEntries.size(); entryIndex++) {
+        var oldTtl = oldStateEntries.get(entryIndex).path(TTL_FIELD).asText(MISSING_VALUE);
+        var newTtl = newStateEntries.get(entryIndex).path(TTL_FIELD).asText(MISSING_VALUE);
+        if (!oldTtl.equals(newTtl)) {
+          stateTtlWarnings.add(
+              stateTtlWarning(
+                  operatorId(oldOperator),
+                  oldStateEntries.get(entryIndex).path("name").asText(),
+                  oldTtl,
+                  newTtl,
+                  description(oldOperator)));
+        }
+      }
+    }
+    return stateTtlWarnings;
+  }
+
+  private static String stateTtlWarning(
+      String operatorId, String stateName, String oldTtl, String newTtl, String description) {
+    return ("operator id=%s: the TTL of state '%s' changes: %s -> %s (%s). The check does not"
+            + " report a TTL change as a break.")
+        .formatted(operatorId, stateName, oldTtl, newTtl, description);
+  }
+
+  /** Returns the value to compare: the {@code state} field without the {@code ttl} entries. */
+  private static JsonNode comparableValue(String fieldName, JsonNode value) {
+    return STATE_FIELD.equals(fieldName) ? withoutTtl(value) : value;
+  }
+
+  /** Returns a copy of a {@code state} array without the {@code ttl} of each entry. */
+  private static JsonNode withoutTtl(JsonNode stateEntries) {
+    if (stateEntries == null || !stateEntries.isArray()) {
+      return stateEntries;
+    }
+    var stateEntriesWithoutTtl = stateEntries.deepCopy();
+    stateEntriesWithoutTtl.forEach(
+        stateEntry -> {
+          if (stateEntry instanceof ObjectNode stateEntryObject) {
+            stateEntryObject.remove(TTL_FIELD);
+          }
+        });
+    return stateEntriesWithoutTtl;
+  }
+
+  /** Returns the field value as compact JSON, or {@code missing} for a missing field. */
+  private static String valueText(JsonNode value) {
+    return value == null ? MISSING_VALUE : value.toString();
   }
 
   private static Optional<StateUpgradeBreak> maxParallelismBreak(

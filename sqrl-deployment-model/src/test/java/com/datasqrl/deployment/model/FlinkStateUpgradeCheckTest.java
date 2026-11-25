@@ -95,26 +95,54 @@ class FlinkStateUpgradeCheckTest {
     assertThat(result.breaks())
         .containsExactly(
             new ChangedStateField(
-                "4", fieldName, "Join(joinType=[InnerJoin])", "Join(joinType=[InnerJoin])"));
+                "4", fieldName, "missing", "\"changed\"", "Join(joinType=[InnerJoin])"));
   }
 
   @Test
-  void givenStateAndDescriptionChanged_whenCheck_thenMessageShowsBothDescriptions() {
+  void givenStateChanged_whenCheck_thenMessageShowsOldAndNewValue() {
     var result =
         check(
             plan("2.3", aggregateOperator()),
-            plan(
-                "2.3",
-                aggregateOperator()
-                    .put("state", "otherState")
-                    .put("description", "GroupAggregate(groupBy=[customerid, region])")));
+            plan("2.3", aggregateOperator().put("state", "otherState")));
 
     assertThat(result.breaks()).hasSize(1);
     assertThat(result.breaks().get(0).toMessage())
         .isEqualTo(
-            "operator id=2 changed: field 'state' differs"
-                + " (old: GroupAggregate(groupBy=[customerid]),"
-                + " new: GroupAggregate(groupBy=[customerid, region]))");
+            "operator id=2 changed: field 'state' differs:"
+                + " \"groupAggregateState\" -> \"otherState\""
+                + " (GroupAggregate(groupBy=[customerid]))");
+  }
+
+  @Test
+  void givenOnlyStateTtlChanged_whenCheck_thenNoBreaksAndTtlWarning() {
+    var result =
+        check(plan("2.3", deduplicateOperator("0 ms")), plan("2.3", deduplicateOperator("1 h")));
+
+    assertThat(result.breaks()).isEmpty();
+    assertThat(result.warnings())
+        .containsExactly(
+            "operator id=5: the TTL of state 'deduplicateState' changes: 0 ms -> 1 h"
+                + " (Deduplicate(keep=[LastRow], key=[id])). The check does not report a TTL"
+                + " change as a break.");
+  }
+
+  @Test
+  void givenStateNameAndTtlChanged_whenCheck_thenChangedStateFieldWithFullValues() {
+    var newDeduplicateOperator = deduplicateOperator("1 h");
+    ((ObjectNode) newDeduplicateOperator.get("state").get(0)).put("name", "otherState");
+
+    var result =
+        check(plan("2.3", deduplicateOperator("0 ms")), plan("2.3", newDeduplicateOperator));
+
+    assertThat(result.warnings()).isEmpty();
+    assertThat(result.breaks())
+        .containsExactly(
+            new ChangedStateField(
+                "5",
+                "state",
+                "[{\"index\":0,\"ttl\":\"0 ms\",\"name\":\"deduplicateState\"}]",
+                "[{\"index\":0,\"ttl\":\"1 h\",\"name\":\"otherState\"}]",
+                "Deduplicate(keep=[LastRow], key=[id])"));
   }
 
   @Test
@@ -136,7 +164,8 @@ class FlinkStateUpgradeCheckTest {
                 "stream-exec-group-aggregate_1",
                 "stream-exec-group-aggregate_2",
                 aggregateDescription),
-            new ChangedStateField("2", "state", aggregateDescription, aggregateDescription));
+            new ChangedStateField(
+                "2", "state", "\"groupAggregateState\"", "\"otherState\"", aggregateDescription));
   }
 
   @Test
@@ -282,6 +311,19 @@ class FlinkStateUpgradeCheckTest {
         .putObject("resolvedTable")
         .putObject("options")
         .put("connector", "jdbc");
+  }
+
+  /** A deduplicate operator with one state entry, in the form that Flink writes it. */
+  private static ObjectNode deduplicateOperator(String ttl) {
+    var deduplicateOperator =
+        operator(5, "stream-exec-deduplicate_1", "Deduplicate(keep=[LastRow], key=[id])");
+    deduplicateOperator
+        .putArray("state")
+        .addObject()
+        .put("index", 0)
+        .put("ttl", ttl)
+        .put("name", "deduplicateState");
+    return deduplicateOperator;
   }
 
   private static ObjectNode joinOperator() {
