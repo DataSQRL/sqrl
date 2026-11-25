@@ -101,7 +101,7 @@ Before an upgrade, check that the new plan can restore the state of the running 
 - When only one build sets `pipeline.max-parallelism`, the compile gives a warning.
   - Only the old build sets it: Flink takes the value from the savepoint. Make sure that no other configuration gives the new job a different value.
   - Only the new build sets it: make sure that the running job uses the same value.
-- A change of `table.exec.state.ttl` is not a break. The compile gives a warning for each state whose TTL changes.
+- A change of `table.exec.state.ttl` is not a break. The compile gives a notice for each state whose TTL changes. You do not need to change the TTL back.
 
 To accept removed stateful operators, restore once with `execution.state-recovery.ignore-unclaimed-state: true`. With the Flink Kubernetes Operator, use `job.allowNonRestoredState: true`. Then remove the option, so that it cannot hide an unexpected state mismatch later.
 The state of the removed operators is dropped. For example, plans compiled by earlier DataSQRL versions write `STREAM` tables through `WatermarkTimestampAssigner` and `SinkMaterializer` operators that current plans no longer have; rows still held in their state are not written to the database after the restore.

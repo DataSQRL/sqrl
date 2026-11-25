@@ -58,8 +58,8 @@ public sealed interface StateUpgradeNote
 
   /**
    * The {@code ttl} is the only change of a state entry. Flink restores the state after a TTL
-   * change, so the check does not report it as a break. The description is the one of the old
-   * operator.
+   * change, so the check does not report it as a break. The level is a notice, because a warning
+   * makes the agent change a good TTL back. The description is the one of the old operator.
    */
   record ChangedStateTtl(
       String operatorId, String stateName, String oldTtl, String newTtl, String description)
@@ -67,7 +67,7 @@ public sealed interface StateUpgradeNote
 
     @Override
     public Level level() {
-      return Level.WARN;
+      return Level.NOTICE;
     }
 
     @Override
