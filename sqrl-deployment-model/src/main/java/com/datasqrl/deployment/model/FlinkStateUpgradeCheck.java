@@ -110,15 +110,18 @@ public final class FlinkStateUpgradeCheck {
   }
 
   /**
-   * Returns a warning when only one build sets {@code pipeline.max-parallelism}. Flink then
-   * computes the value of the other build, so the check cannot decide if the values are the same.
+   * Returns a warning when only one build sets {@code pipeline.max-parallelism}. When only the old
+   * build sets it, Flink takes the value from the savepoint, so the restore fails only when the new
+   * job gets a different value from outside the build. When only the new build sets it, the check
+   * cannot see the value of the running job.
    */
   private static Optional<String> maxParallelismWarning(
       Optional<Integer> oldMaxParallelism, Optional<Integer> newMaxParallelism) {
     if (oldMaxParallelism.isPresent() && newMaxParallelism.isEmpty()) {
       return Optional.of(
-          ("Only the old build sets pipeline.max-parallelism (%d). Set the same value for the new"
-                  + " build, because a different value makes the restore fail.")
+          ("Only the old build sets pipeline.max-parallelism (%d). Flink takes this value from the"
+                  + " savepoint. The restore fails only when the new job gets a different value"
+                  + " from outside the build, for example from the Flink cluster configuration.")
               .formatted(oldMaxParallelism.get()));
     }
     if (oldMaxParallelism.isEmpty() && newMaxParallelism.isPresent()) {

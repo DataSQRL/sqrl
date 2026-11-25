@@ -233,7 +233,8 @@ class FlinkStateUpgradeCheckTest {
     assertThat(result.warnings())
         .singleElement()
         .asString()
-        .startsWith("Only the old build sets pipeline.max-parallelism (128).");
+        .startsWith("Only the old build sets pipeline.max-parallelism (128).")
+        .contains("Flink takes this value from the savepoint.");
   }
 
   @Test
