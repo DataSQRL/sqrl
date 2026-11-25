@@ -318,22 +318,73 @@ commands:
       builder_name:
         type: string
         default: "default-builder"
+      qemu:
+        type: boolean
+        default: true
     steps:
-      - run:
-          name: Enable QEMU for ARM build
-          command: |
-            sudo apt-get update && sudo apt-get install -y qemu-user-static binfmt-support
-            docker run --privileged --rm tonistiigi/binfmt --install all
+      - when:
+          condition: << parameters.qemu >>
+          steps:
+            - run:
+                name: Enable QEMU for ARM build
+                command: |
+                  sudo apt-get update && sudo apt-get install -y qemu-user-static binfmt-support
+                  docker run --privileged --rm tonistiigi/binfmt --install all
       - run:
           name: Install docker buildx
           command: |
             sudo mkdir -p /usr/local/lib/docker/cli-plugins
-            curl -sSL https://github.com/docker/buildx/releases/download/v0.12.0/buildx-v0.12.0.linux-amd64 \
+            curl -sSL https://github.com/docker/buildx/releases/download/v0.12.0/buildx-v0.12.0.linux-$(dpkg --print-architecture) \
                  -o buildx
             chmod +x buildx
             sudo mv buildx /usr/local/lib/docker/cli-plugins/docker-buildx
             docker buildx create --use --name << parameters.builder_name >>
             docker buildx inspect --bootstrap
+
+  skip-if-base-image-exists:
+    steps:
+      - run:
+          name: Skip build if base already exists
+          command: |
+            set +e
+
+            if docker buildx imagetools inspect ghcr.io/datasqrl/sqrl-base:${BASE_TAG} \
+                --format '{{json .}}' > /tmp/manifest.json 2>/dev/null; then
+              echo "── Manifest for ghcr.io/datasqrl/sqrl-base:${BASE_TAG} ────────────────"
+              cat /tmp/manifest.json | jq .
+              echo "───────────────────────────────────────────────────────────────"
+              echo "Tag already exists – skipping base-image build."
+              circleci step halt
+            else
+              echo "Tag does not exist yet – will build base image."
+            fi
+
+  skip-unpublished-images:
+    steps:
+      - run:
+          name: Skip image generation
+          command: |
+            set -x
+
+            # Push to Docker Hub for tagged releases (datasqrl/*) and main=:dev (datasqrl/*).
+            # Tagged releases are also mirrored to ghcr.io/datasqrl/* so downstream can pull
+            # without hitting Docker Hub rate limits.
+            # Push PR images to ghcr.io/datasqrl/* so downstream CI (e.g. datasqrl-examples) can
+            # validate examples against the snapshot built from this PR.
+            # Push release branch images to ghcr.io/datasqrl/* as <major>.<minor>-dev (release-0.12=:0.12-dev).
+            if [ "$IS_RELEASE" != "true" ] && [ "$TAG_SUFFIX" != "dev" ] && [[ "$TAG_SUFFIX" != pr-* ]] \
+                && ! [[ "$TAG_SUFFIX" =~ ^[0-9]+\.[0-9]+-dev$ ]]; then
+              echo "Skipping image publishing for TAG_SUFFIX=$TAG_SUFFIX (only tagged releases, main=:dev, release-X.Y=:X.Y-dev, and pr-* are published)."
+              circleci step halt
+            fi
+
+  login-to-registries:
+    steps:
+      - run:
+          name: Login to registries
+          command: |
+            echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_USER" --password-stdin
+            echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
 
   checkout-and-version:
     steps:
@@ -527,30 +578,22 @@ jobs:
             done
             exit 1
 
-  build-images:
-    # use a full VM so we can run Docker / Buildx
-    executor: default-machine
+  build-images-platform:
+    parameters:
+      arch:
+        type: enum
+        enum: ["amd64", "arm64"]
+      resource_class:
+        type: string
+    machine:
+      image: ubuntu-2404:current
+    resource_class: << parameters.resource_class >>
 
     steps:
       - checkout-and-version
       - skip-if-docs-only
       - determine-version
-      - run:
-          name: Skip image generation
-          command: |
-            set -x
-
-            # Push to Docker Hub for tagged releases (datasqrl/*) and main=:dev (datasqrl/*).
-            # Tagged releases are also mirrored to ghcr.io/datasqrl/* so downstream can pull
-            # without hitting Docker Hub rate limits.
-            # Push PR images to ghcr.io/datasqrl/* so downstream CI (e.g. datasqrl-examples) can
-            # validate examples against the snapshot built from this PR.
-            # Push release branch images to ghcr.io/datasqrl/* as <major>.<minor>-dev (release-0.12=:0.12-dev).
-            if [ "$IS_RELEASE" != "true" ] && [ "$TAG_SUFFIX" != "dev" ] && [[ "$TAG_SUFFIX" != pr-* ]] \
-                && ! [[ "$TAG_SUFFIX" =~ ^[0-9]+\.[0-9]+-dev$ ]]; then
-              echo "Skipping image publishing for TAG_SUFFIX=$TAG_SUFFIX (only tagged releases, main=:dev, release-X.Y=:X.Y-dev, and pr-* are published)."
-              circleci step halt
-            fi
+      - skip-unpublished-images
       - run:
           name: Checkout stdlib-docs at the Flink SQL Runner version
           # The core-agent image bundles the generated docs, which include the function docs
@@ -569,30 +612,77 @@ jobs:
       - compute-sha1-tags
       - setup-buildx:
           builder_name: "sqrl-builder"
+          qemu: false
 
-      - run:
-          name: Login to registries
-          command: |
-            echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_USER" --password-stdin
-            echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+      - login-to-registries
 
       - run:
           name: Pull base images
           command: |
             # release/dev images depend on base layers that are published to GHCR
-            docker pull ghcr.io/datasqrl/duckdb-extensions:$DUCKDB_EXTENSIONS_TAG
-            docker pull ghcr.io/datasqrl/sqrl-base:$BASE_TAG
+            docker pull --platform linux/<< parameters.arch >> ghcr.io/datasqrl/duckdb-extensions:$DUCKDB_EXTENSIONS_TAG
+            docker pull --platform linux/<< parameters.arch >> ghcr.io/datasqrl/sqrl-base:$BASE_TAG
 
       - run:
-          name: Build + push Docker images
+          name: Build + push << parameters.arch >> Docker images
           command: |
             set -x
+
+            # Push by digest only, no tag, and hand the digests to the build-images merge job,
+            # so the merge combines exactly the images this pipeline built.
+            DIGESTS=/tmp/workspace/digests/<< parameters.arch >>
+            mkdir -p "$DIGESTS"
 
             build_and_push() {
               local repo="$1" ; shift
               local dockerfile="$1" ; shift
               local context="$1" ; shift
               local extra_args="$@"
+
+              docker buildx build \
+                --platform linux/<< parameters.arch >> \
+                --output type=image,name=$REGISTRY/$repo,push-by-digest=true,name-canonical=true,push=true \
+                --metadata-file /tmp/metadata-$repo.json \
+                $extra_args \
+                -f "$dockerfile" \
+                "$context"
+
+              python3 -c 'import json, sys; print(json.load(open(sys.argv[1]))["containerimage.digest"])' \
+                /tmp/metadata-$repo.json > "$DIGESTS/$repo"
+            }
+
+            build_and_push cmd         sqrl-cli/Dockerfile                      sqrl-cli                      --build-arg IMG_REPO=ghcr.io/datasqrl --build-arg BASE_TAG=$BASE_TAG
+            build_and_push sqrl-server sqrl-server/sqrl-server-vertx/Dockerfile sqrl-server/sqrl-server-vertx --build-arg IMG_REPO=ghcr.io/datasqrl --build-arg DUCKDB_EXTENSIONS_TAG=$DUCKDB_EXTENSIONS_TAG
+            build_and_push core-agent  agent/Dockerfile                         .                             --build-arg SQRL_IMAGE=$REGISTRY/cmd@$(cat "$DIGESTS/cmd")
+
+      - persist_to_workspace:
+          root: /tmp/workspace
+          paths:
+            - digests/<< parameters.arch >>
+
+  build-images:
+    executor: default-machine
+
+    steps:
+      - checkout
+      - skip-if-docs-only
+      - determine-version
+      - skip-unpublished-images
+      - attach_workspace:
+          at: /tmp/workspace
+      - setup-buildx:
+          builder_name: "sqrl-builder"
+          qemu: false
+
+      - login-to-registries
+
+      - run:
+          name: Merge multi-arch Docker images
+          command: |
+            set -x
+
+            merge_manifests() {
+              local repo="$1"
 
               # Mirror releases to GHCR alongside Docker Hub so downstream can pull
               # without hitting Docker Hub rate limits.
@@ -601,30 +691,23 @@ jobs:
                 tags+=(-t ghcr.io/datasqrl/$repo:$TAG_SUFFIX)
               fi
 
-              docker buildx build \
-                --platform linux/amd64,linux/arm64 \
-                --push \
-                $extra_args \
-                "${tags[@]}" \
-                -f "$dockerfile" \
-                "$context"
-
               # tag :latest on release builds
               if [ "$LATEST_TAG" = "true" ]; then
-                docker buildx imagetools create \
-                  -t $REGISTRY/$repo:latest \
-                  $REGISTRY/$repo:$TAG_SUFFIX
+                tags+=(-t $REGISTRY/$repo:latest)
                 if [ "$IS_RELEASE" = "true" ]; then
-                  docker buildx imagetools create \
-                    -t ghcr.io/datasqrl/$repo:latest \
-                    $REGISTRY/$repo:$TAG_SUFFIX
+                  tags+=(-t ghcr.io/datasqrl/$repo:latest)
                 fi
               fi
+
+              docker buildx imagetools create \
+                "${tags[@]}" \
+                $REGISTRY/$repo@$(cat /tmp/workspace/digests/amd64/$repo) \
+                $REGISTRY/$repo@$(cat /tmp/workspace/digests/arm64/$repo)
             }
 
-            build_and_push cmd         sqrl-cli/Dockerfile                      sqrl-cli                      --build-arg IMG_REPO=ghcr.io/datasqrl --build-arg BASE_TAG=$BASE_TAG
-            build_and_push sqrl-server sqrl-server/sqrl-server-vertx/Dockerfile sqrl-server/sqrl-server-vertx --build-arg IMG_REPO=ghcr.io/datasqrl --build-arg DUCKDB_EXTENSIONS_TAG=$DUCKDB_EXTENSIONS_TAG
-            build_and_push core-agent  agent/Dockerfile                         .                             --build-arg SQRL_IMAGE=$REGISTRY/cmd:$TAG_SUFFIX
+            merge_manifests cmd
+            merge_manifests sqrl-server
+            merge_manifests core-agent
 
   docs-test:
     # Runs the documented first-run commands verbatim against the image built for this change
@@ -693,30 +776,23 @@ jobs:
               -f Dockerfile.duckdb-extensions \
               .
 
-  docker-build-base-image:
+  docker-build-base-image-platform:
+    parameters:
+      arch:
+        type: enum
+        enum: ["amd64", "arm64"]
+      resource_class:
+        type: string
     machine:
       image: ubuntu-2404:current
+    resource_class: << parameters.resource_class >>
     steps:
       - checkout
       - compute-sha1-tags
       - setup-buildx:
           builder_name: "base-builder"
-      - run:
-          name: Skip build if base already exists
-          command: |
-            set +e
-
-            if docker buildx imagetools inspect ghcr.io/datasqrl/sqrl-base:${BASE_TAG} \
-                --format '{{json .}}' > /tmp/manifest.json 2>/dev/null; then
-              echo "── Manifest for ghcr.io/datasqrl/sqrl-base:${BASE_TAG} ────────────────"
-              cat /tmp/manifest.json | jq .
-              echo "───────────────────────────────────────────────────────────────"
-              echo "Tag already exists – skipping base-image build."
-              circleci step halt
-            else
-              echo "Tag does not exist yet – will build base image."
-            fi
-
+          qemu: false
+      - skip-if-base-image-exists
 
       - run:
           name: Login to GHCR
@@ -726,20 +802,44 @@ jobs:
       - run:
           name: Pull duckdb-extensions image
           command: |
-            docker pull ghcr.io/datasqrl/duckdb-extensions:$DUCKDB_EXTENSIONS_TAG
+            docker pull --platform linux/<< parameters.arch >> ghcr.io/datasqrl/duckdb-extensions:$DUCKDB_EXTENSIONS_TAG
 
       - run:
-          name: Build & push ghcr.io/datasqrl/sqrl-base:$BASE_TAG
+          name: Build & push ghcr.io/datasqrl/sqrl-base:$BASE_TAG-<< parameters.arch >>
           command: |
             docker buildx build \
               --push \
-              --platform linux/amd64,linux/arm64 \
+              --platform linux/<< parameters.arch >> \
               --build-arg IMG_REPO=ghcr.io/datasqrl \
               --build-arg DUCKDB_EXTENSIONS_TAG=$DUCKDB_EXTENSIONS_TAG \
-              -t ghcr.io/datasqrl/sqrl-base:$BASE_TAG \
-              -t ghcr.io/datasqrl/sqrl-base:latest \
+              -t ghcr.io/datasqrl/sqrl-base:$BASE_TAG-<< parameters.arch >> \
               -f sqrl-cli/Dockerfile.base \
               sqrl-cli
+
+  docker-build-base-image:
+    machine:
+      image: ubuntu-2404:current
+    steps:
+      - checkout
+      - compute-sha1-tags
+      - setup-buildx:
+          builder_name: "base-builder"
+          qemu: false
+      - skip-if-base-image-exists
+
+      - run:
+          name: Login to GHCR
+          command: |
+            echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_USER" --password-stdin
+
+      - run:
+          name: Merge ghcr.io/datasqrl/sqrl-base:$BASE_TAG manifest
+          command: |
+            docker buildx imagetools create \
+              -t ghcr.io/datasqrl/sqrl-base:$BASE_TAG \
+              -t ghcr.io/datasqrl/sqrl-base:latest \
+              ghcr.io/datasqrl/sqrl-base:$BASE_TAG-amd64 \
+              ghcr.io/datasqrl/sqrl-base:$BASE_TAG-arm64
 
   docker-build-mcp-inspector:
     machine:
@@ -787,10 +887,25 @@ workflows:
     jobs:
       - docker-build-duckdb-extensions:
           <<: *job-defaults
+      - docker-build-base-image-platform:
+          <<: *job-defaults
+          name: docker-build-base-image-amd64
+          arch: amd64
+          resource_class: large
+          requires:
+            - docker-build-duckdb-extensions
+      - docker-build-base-image-platform:
+          <<: *job-defaults
+          name: docker-build-base-image-arm64
+          arch: arm64
+          resource_class: arm.large
+          requires:
+            - docker-build-duckdb-extensions
       - docker-build-base-image:
           <<: *job-defaults
           requires:
-            - docker-build-duckdb-extensions
+            - docker-build-base-image-amd64
+            - docker-build-base-image-arm64
       - docker-build-mcp-inspector:
           <<: *job-defaults
       - download-maven-dependencies:
@@ -819,12 +934,29 @@ workflows:
               test_sharding_index: [0, 1]
           requires:
             - download-maven-dependencies
-      - build-images:
+      - build-images-platform:
           <<: *job-defaults
+          name: build-images-amd64
+          arch: amd64
+          resource_class: large
           requires:
             - download-maven-dependencies
             - docker-build-duckdb-extensions
             - docker-build-base-image
+      - build-images-platform:
+          <<: *job-defaults
+          name: build-images-arm64
+          arch: arm64
+          resource_class: arm.large
+          requires:
+            - download-maven-dependencies
+            - docker-build-duckdb-extensions
+            - docker-build-base-image
+      - build-images:
+          <<: *job-defaults
+          requires:
+            - build-images-amd64
+            - build-images-arm64
       - docs-test:
           <<: *job-defaults
           requires:
