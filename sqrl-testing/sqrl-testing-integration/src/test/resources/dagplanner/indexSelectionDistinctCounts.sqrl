@@ -32,3 +32,40 @@ AddressesPairByZip(country STRING NOT NULL, city STRING NOT NULL, zip STRING NOT
 CREATE TABLE AddressesPartial (country STRING NOT NULL, city STRING NOT NULL, zip STRING NOT NULL, ts TIMESTAMP_LTZ(3) NOT NULL, WATERMARK FOR ts AS ts) WITH ('connector' = 'datagen', 'number-of-rows' = '10');
 AddressesPartialByZip(country STRING NOT NULL, zip STRING NOT NULL) := SELECT * FROM AddressesPartial
   WHERE country = :country AND zip = :zip;
+
+/* A column with fewer distinct values than `min-distinct-count`: an equality on gender narrows the
+   rows too little for an index column, and CustomersFewValues gets a hash index on email alone. */
+/*+row_count(1e6), row_count(gender, 2) */
+CREATE TABLE CustomersFewValues (email STRING NOT NULL, gender STRING NOT NULL, ts TIMESTAMP_LTZ(3) NOT NULL, WATERMARK FOR ts AS ts) WITH ('connector' = 'datagen', 'number-of-rows' = '10');
+CustomersFewValuesByEmail(email STRING NOT NULL, gender STRING NOT NULL) := SELECT * FROM CustomersFewValues
+  WHERE email = :email AND gender = :gender;
+
+/* A filter on only such a column gets no index: CustomersOnlyFewValues has no index. */
+/*+row_count(1e6), row_count(gender, 2) */
+CREATE TABLE CustomersOnlyFewValues (email STRING NOT NULL, gender STRING NOT NULL, ts TIMESTAMP_LTZ(3) NOT NULL, WATERMARK FOR ts AS ts) WITH ('connector' = 'datagen', 'number-of-rows' = '10');
+CustomersOnlyFewValuesByGender(gender STRING NOT NULL) := SELECT * FROM CustomersOnlyFewValues
+  WHERE gender = :gender;
+
+/* A unique column next to a comparison: an equality on email matches one row, so the comparison
+   on age adds nothing, and CustomersUniqueRange gets a hash index on email alone. */
+/*+row_count(1e6), row_count(email, 1e6) */
+CREATE TABLE CustomersUniqueRange (email STRING NOT NULL, age INT NOT NULL, ts TIMESTAMP_LTZ(3) NOT NULL, WATERMARK FOR ts AS ts) WITH ('connector' = 'datagen', 'number-of-rows' = '10');
+CustomersUniqueRangeByEmail(email STRING NOT NULL, minAge INT NOT NULL) := SELECT * FROM CustomersUniqueRange
+  WHERE email = :email AND age > :minAge;
+
+/* A column that adds few distinct values: city multiplies the 200 distinct values of country by
+   10, which is less than `min-distinct-count`, and AddressesFewCities gets a hash index on country
+   alone. */
+/*+row_count(1e6), row_count(country, 200), row_count(country, city, 2e3) */
+CREATE TABLE AddressesFewCities (country STRING NOT NULL, city STRING NOT NULL, ts TIMESTAMP_LTZ(3) NOT NULL, WATERMARK FOR ts AS ts) WITH ('connector' = 'datagen', 'number-of-rows' = '10');
+AddressesFewCitiesByCity(country STRING NOT NULL, city STRING NOT NULL) := SELECT * FROM AddressesFewCities
+  WHERE country = :country AND city = :city;
+
+/* A column with few distinct values that leads the primary key: the primary key index on country
+   and email serves the query only while country stays in the filter, so country stays, and
+   CustomerTotals gets no index besides its primary key. */
+CREATE TABLE CustomerEvents (email STRING NOT NULL, country STRING NOT NULL, ts TIMESTAMP_LTZ(3) NOT NULL, WATERMARK FOR ts AS ts) WITH ('connector' = 'datagen', 'number-of-rows' = '10');
+/*+row_count(1e6), row_count(country, 5) */
+CustomerTotals := SELECT country, email, COUNT(*) AS total FROM CustomerEvents GROUP BY country, email;
+CustomerTotalsByEmail(country STRING NOT NULL, email STRING NOT NULL) := SELECT * FROM CustomerTotals
+  WHERE country = :country AND email = :email;

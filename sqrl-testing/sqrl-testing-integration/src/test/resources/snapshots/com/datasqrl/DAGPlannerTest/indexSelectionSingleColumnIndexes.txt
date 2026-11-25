@@ -1,0 +1,1735 @@
+>>>pipeline_explain.txt
+=== ByCategoryAfterCustomerId
+ID:          default_catalog.default_database.ByCategoryAfterCustomerId
+Type:        query
+Stage:       postgres
+--- definition ---
+Inputs:
+ - default_catalog.default_database.Orders
+Annotations:
+ - parameters: category, customerId
+ - base-table: Orders
+Plan:
+LogicalProject(customerId=[$0], storeId=[$1], productId=[$2], category=[$3], ts=[$4])
+  LogicalFilter(condition=[AND(=($3, ?0), >($0, ?1))])
+    LogicalTableScan(table=[[default_catalog, default_database, Orders]])
+SQL:
+CREATE VIEW `ByCategoryAfterCustomerId` AS  SELECT * FROM Orders
+  WHERE category = ?         AND customerId > ?          ;
+
+=== ByCategoryAfterProductId
+ID:          default_catalog.default_database.ByCategoryAfterProductId
+Type:        query
+Stage:       postgres
+--- definition ---
+Inputs:
+ - default_catalog.default_database.Orders
+Annotations:
+ - parameters: category, productId
+ - base-table: Orders
+Plan:
+LogicalProject(customerId=[$0], storeId=[$1], productId=[$2], category=[$3], ts=[$4])
+  LogicalFilter(condition=[AND(=($3, ?0), >($2, ?1))])
+    LogicalTableScan(table=[[default_catalog, default_database, Orders]])
+SQL:
+CREATE VIEW `ByCategoryAfterProductId` AS  SELECT * FROM Orders
+  WHERE category = ?         AND productId > ?         ;
+
+=== ByCategoryAfterStoreId
+ID:          default_catalog.default_database.ByCategoryAfterStoreId
+Type:        query
+Stage:       postgres
+--- definition ---
+Inputs:
+ - default_catalog.default_database.Orders
+Annotations:
+ - parameters: category, storeId
+ - base-table: Orders
+Plan:
+LogicalProject(customerId=[$0], storeId=[$1], productId=[$2], category=[$3], ts=[$4])
+  LogicalFilter(condition=[AND(=($3, ?0), >($1, ?1))])
+    LogicalTableScan(table=[[default_catalog, default_database, Orders]])
+SQL:
+CREATE VIEW `ByCategoryAfterStoreId` AS  SELECT * FROM Orders
+  WHERE category = ?         AND storeId > ?       ;
+
+=== ByCustomerIdAfterCategory
+ID:          default_catalog.default_database.ByCustomerIdAfterCategory
+Type:        query
+Stage:       postgres
+--- definition ---
+Inputs:
+ - default_catalog.default_database.Orders
+Annotations:
+ - parameters: customerId, category
+ - base-table: Orders
+Plan:
+LogicalProject(customerId=[$0], storeId=[$1], productId=[$2], category=[$3], ts=[$4])
+  LogicalFilter(condition=[AND(=($0, ?0), >($3, ?1))])
+    LogicalTableScan(table=[[default_catalog, default_database, Orders]])
+SQL:
+CREATE VIEW `ByCustomerIdAfterCategory` AS  SELECT * FROM Orders
+  WHERE customerId = ?           AND category > ?        ;
+
+=== ByCustomerIdAfterProductId
+ID:          default_catalog.default_database.ByCustomerIdAfterProductId
+Type:        query
+Stage:       postgres
+--- definition ---
+Inputs:
+ - default_catalog.default_database.Orders
+Annotations:
+ - parameters: customerId, productId
+ - base-table: Orders
+Plan:
+LogicalProject(customerId=[$0], storeId=[$1], productId=[$2], category=[$3], ts=[$4])
+  LogicalFilter(condition=[AND(=($0, ?0), >($2, ?1))])
+    LogicalTableScan(table=[[default_catalog, default_database, Orders]])
+SQL:
+CREATE VIEW `ByCustomerIdAfterProductId` AS  SELECT * FROM Orders
+  WHERE customerId = ?           AND productId > ?         ;
+
+=== ByCustomerIdAfterStoreId
+ID:          default_catalog.default_database.ByCustomerIdAfterStoreId
+Type:        query
+Stage:       postgres
+--- definition ---
+Inputs:
+ - default_catalog.default_database.Orders
+Annotations:
+ - parameters: customerId, storeId
+ - base-table: Orders
+Plan:
+LogicalProject(customerId=[$0], storeId=[$1], productId=[$2], category=[$3], ts=[$4])
+  LogicalFilter(condition=[AND(=($0, ?0), >($1, ?1))])
+    LogicalTableScan(table=[[default_catalog, default_database, Orders]])
+SQL:
+CREATE VIEW `ByCustomerIdAfterStoreId` AS  SELECT * FROM Orders
+  WHERE customerId = ?           AND storeId > ?       ;
+
+=== ByProductIdAfterCategory
+ID:          default_catalog.default_database.ByProductIdAfterCategory
+Type:        query
+Stage:       postgres
+--- definition ---
+Inputs:
+ - default_catalog.default_database.Orders
+Annotations:
+ - parameters: productId, category
+ - base-table: Orders
+Plan:
+LogicalProject(customerId=[$0], storeId=[$1], productId=[$2], category=[$3], ts=[$4])
+  LogicalFilter(condition=[AND(=($2, ?0), >($3, ?1))])
+    LogicalTableScan(table=[[default_catalog, default_database, Orders]])
+SQL:
+CREATE VIEW `ByProductIdAfterCategory` AS  SELECT * FROM Orders
+  WHERE productId = ?          AND category > ?        ;
+
+=== ByProductIdAfterCustomerId
+ID:          default_catalog.default_database.ByProductIdAfterCustomerId
+Type:        query
+Stage:       postgres
+--- definition ---
+Inputs:
+ - default_catalog.default_database.Orders
+Annotations:
+ - parameters: productId, customerId
+ - base-table: Orders
+Plan:
+LogicalProject(customerId=[$0], storeId=[$1], productId=[$2], category=[$3], ts=[$4])
+  LogicalFilter(condition=[AND(=($2, ?0), >($0, ?1))])
+    LogicalTableScan(table=[[default_catalog, default_database, Orders]])
+SQL:
+CREATE VIEW `ByProductIdAfterCustomerId` AS  SELECT * FROM Orders
+  WHERE productId = ?          AND customerId > ?          ;
+
+=== ByProductIdAfterStoreId
+ID:          default_catalog.default_database.ByProductIdAfterStoreId
+Type:        query
+Stage:       postgres
+--- definition ---
+Inputs:
+ - default_catalog.default_database.Orders
+Annotations:
+ - parameters: productId, storeId
+ - base-table: Orders
+Plan:
+LogicalProject(customerId=[$0], storeId=[$1], productId=[$2], category=[$3], ts=[$4])
+  LogicalFilter(condition=[AND(=($2, ?0), >($1, ?1))])
+    LogicalTableScan(table=[[default_catalog, default_database, Orders]])
+SQL:
+CREATE VIEW `ByProductIdAfterStoreId` AS  SELECT * FROM Orders
+  WHERE productId = ?          AND storeId > ?       ;
+
+=== ByStoreIdAfterCategory
+ID:          default_catalog.default_database.ByStoreIdAfterCategory
+Type:        query
+Stage:       postgres
+--- definition ---
+Inputs:
+ - default_catalog.default_database.Orders
+Annotations:
+ - parameters: storeId, category
+ - base-table: Orders
+Plan:
+LogicalProject(customerId=[$0], storeId=[$1], productId=[$2], category=[$3], ts=[$4])
+  LogicalFilter(condition=[AND(=($1, ?0), >($3, ?1))])
+    LogicalTableScan(table=[[default_catalog, default_database, Orders]])
+SQL:
+CREATE VIEW `ByStoreIdAfterCategory` AS  SELECT * FROM Orders
+  WHERE storeId = ?        AND category > ?        ;
+
+=== ByStoreIdAfterCustomerId
+ID:          default_catalog.default_database.ByStoreIdAfterCustomerId
+Type:        query
+Stage:       postgres
+--- definition ---
+Inputs:
+ - default_catalog.default_database.Orders
+Annotations:
+ - parameters: storeId, customerId
+ - base-table: Orders
+Plan:
+LogicalProject(customerId=[$0], storeId=[$1], productId=[$2], category=[$3], ts=[$4])
+  LogicalFilter(condition=[AND(=($1, ?0), >($0, ?1))])
+    LogicalTableScan(table=[[default_catalog, default_database, Orders]])
+SQL:
+CREATE VIEW `ByStoreIdAfterCustomerId` AS  SELECT * FROM Orders
+  WHERE storeId = ?        AND customerId > ?          ;
+
+=== ByStoreIdAfterProductId
+ID:          default_catalog.default_database.ByStoreIdAfterProductId
+Type:        query
+Stage:       postgres
+--- definition ---
+Inputs:
+ - default_catalog.default_database.Orders
+Annotations:
+ - parameters: storeId, productId
+ - base-table: Orders
+Plan:
+LogicalProject(customerId=[$0], storeId=[$1], productId=[$2], category=[$3], ts=[$4])
+  LogicalFilter(condition=[AND(=($1, ?0), >($2, ?1))])
+    LogicalTableScan(table=[[default_catalog, default_database, Orders]])
+SQL:
+CREATE VIEW `ByStoreIdAfterProductId` AS  SELECT * FROM Orders
+  WHERE storeId = ?        AND productId > ?         ;
+
+=== Orders
+ID:          default_catalog.default_database.Orders
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   ts
+Row count:   1e6
+--- definition ---
+Schema:
+ - customerId: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - storeId: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - productId: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - category: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - ts: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.Orders__base
+Plan:
+LogicalWatermarkAssigner(rowtime=[ts], watermark=[$4])
+  LogicalTableScan(table=[[default_catalog, default_database, Orders]])
+SQL:
+CREATE TABLE `Orders` (
+  `customerId` STRING NOT NULL,
+  `storeId` STRING NOT NULL,
+  `productId` STRING NOT NULL,
+  `category` STRING NOT NULL,
+  `ts` TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR `ts` AS `ts`
+)
+WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10'
+)
+--- physical ---
+Table Orders_1 (postgres):
+ - primary key: __pk_hash (generated hash key)
+ - index Orders_1_btree_c0 (btree): customerId
+ - index Orders_1_btree_c1 (btree): storeId
+ - index Orders_1_btree_c2 (btree): productId
+ - index Orders_1_btree_c3 (btree): category
+
+>>>flink-sql-no-functions.sql
+CREATE TABLE `Orders` (
+  `customerId` STRING NOT NULL,
+  `storeId` STRING NOT NULL,
+  `productId` STRING NOT NULL,
+  `category` STRING NOT NULL,
+  `ts` TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR `ts` AS `ts`
+)
+WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10'
+);
+CREATE TABLE `Orders_1` (
+  `customerId` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `storeId` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `productId` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `category` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `ts` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'Orders_1',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+EXECUTE STATEMENT SET BEGIN
+INSERT INTO `default_catalog`.`default_database`.`Orders_1`
+SELECT `customerId`, `storeId`, `productId`, `category`, `ts`, `hash_key`(`customerId`, `storeId`, `productId`, `category`, `ts`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`Orders`
+ON CONFLICT DO DEDUPLICATE
+;
+END
+>>>kafka.json
+{
+  "topics" : [ ],
+  "testRunnerTopics" : [ ]
+}
+>>>postgres.json
+{
+  "statements" : [
+    {
+      "name" : "Orders_1",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"Orders_1\" (\"customerId\" TEXT NOT NULL, \"storeId\" TEXT NOT NULL, \"productId\" TEXT NOT NULL, \"category\" TEXT NOT NULL, \"ts\" TIMESTAMP WITH TIME ZONE NOT NULL, \"__pk_hash\" TEXT, PRIMARY KEY (\"__pk_hash\"))",
+      "fields" : [
+        {
+          "name" : "customerId",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "storeId",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "productId",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "category",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "ts",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "__pk_hash",
+          "type" : "TEXT",
+          "nullable" : true
+        }
+      ],
+      "primaryKey" : [
+        "__pk_hash"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0,
+      "logicalName" : "Orders",
+      "role" : "MATERIALIZATION"
+    },
+    {
+      "name" : "Orders",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"customerId\", \"storeId\", \"productId\", \"category\", \"ts\") AS SELECT \"customerId\", \"storeId\", \"productId\", \"category\", \"ts\"\nFROM \"Orders_1\"",
+      "fields" : [
+        {
+          "name" : "customerId",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "storeId",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "productId",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "category",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "ts",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ],
+      "referencedTables" : [
+        "Orders_1"
+      ]
+    },
+    {
+      "name" : "Orders_1_btree_c0",
+      "type" : "INDEX",
+      "sql" : "CREATE INDEX IF NOT EXISTS \"Orders_1_btree_c0\" ON \"Orders_1\" USING btree (\"customerId\")"
+    },
+    {
+      "name" : "Orders_1_btree_c1",
+      "type" : "INDEX",
+      "sql" : "CREATE INDEX IF NOT EXISTS \"Orders_1_btree_c1\" ON \"Orders_1\" USING btree (\"storeId\")"
+    },
+    {
+      "name" : "Orders_1_btree_c2",
+      "type" : "INDEX",
+      "sql" : "CREATE INDEX IF NOT EXISTS \"Orders_1_btree_c2\" ON \"Orders_1\" USING btree (\"productId\")"
+    },
+    {
+      "name" : "Orders_1_btree_c3",
+      "type" : "INDEX",
+      "sql" : "CREATE INDEX IF NOT EXISTS \"Orders_1_btree_c3\" ON \"Orders_1\" USING btree (\"category\")"
+    }
+  ],
+  "standaloneExtensionStatements" : [ ]
+}
+>>>vertx.json
+{
+  "models" : {
+    "v1" : {
+      "queries" : [
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "Orders",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"customerId\", \"storeId\", \"productId\", \"category\", \"ts\"\nFROM \"Orders_1\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "ByCategoryAfterCustomerId",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "customerId"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "category"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"customerId\", \"storeId\", \"productId\", \"category\", \"ts\"\n  FROM \"Orders_1\") AS \"t\"\nWHERE \"category\" = $1 AND \"customerId\" > $2",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "category",
+                  "sqlType" : "VARCHAR"
+                },
+                {
+                  "type" : "arg",
+                  "path" : "customerId",
+                  "sqlType" : "VARCHAR"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "ByCategoryAfterProductId",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "category"
+              },
+              {
+                "type" : "variable",
+                "path" : "productId"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"customerId\", \"storeId\", \"productId\", \"category\", \"ts\"\n  FROM \"Orders_1\") AS \"t\"\nWHERE \"category\" = $1 AND \"productId\" > $2",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "category",
+                  "sqlType" : "VARCHAR"
+                },
+                {
+                  "type" : "arg",
+                  "path" : "productId",
+                  "sqlType" : "VARCHAR"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "ByCategoryAfterStoreId",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "storeId"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "category"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"customerId\", \"storeId\", \"productId\", \"category\", \"ts\"\n  FROM \"Orders_1\") AS \"t\"\nWHERE \"category\" = $1 AND \"storeId\" > $2",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "category",
+                  "sqlType" : "VARCHAR"
+                },
+                {
+                  "type" : "arg",
+                  "path" : "storeId",
+                  "sqlType" : "VARCHAR"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "ByCustomerIdAfterCategory",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "customerId"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "category"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"customerId\", \"storeId\", \"productId\", \"category\", \"ts\"\n  FROM \"Orders_1\") AS \"t\"\nWHERE \"customerId\" = $1 AND \"category\" > $2",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "customerId",
+                  "sqlType" : "VARCHAR"
+                },
+                {
+                  "type" : "arg",
+                  "path" : "category",
+                  "sqlType" : "VARCHAR"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "ByCustomerIdAfterProductId",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "customerId"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "productId"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"customerId\", \"storeId\", \"productId\", \"category\", \"ts\"\n  FROM \"Orders_1\") AS \"t\"\nWHERE \"customerId\" = $1 AND \"productId\" > $2",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "customerId",
+                  "sqlType" : "VARCHAR"
+                },
+                {
+                  "type" : "arg",
+                  "path" : "productId",
+                  "sqlType" : "VARCHAR"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "ByCustomerIdAfterStoreId",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "customerId"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "storeId"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"customerId\", \"storeId\", \"productId\", \"category\", \"ts\"\n  FROM \"Orders_1\") AS \"t\"\nWHERE \"customerId\" = $1 AND \"storeId\" > $2",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "customerId",
+                  "sqlType" : "VARCHAR"
+                },
+                {
+                  "type" : "arg",
+                  "path" : "storeId",
+                  "sqlType" : "VARCHAR"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "ByProductIdAfterCategory",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "productId"
+              },
+              {
+                "type" : "variable",
+                "path" : "category"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"customerId\", \"storeId\", \"productId\", \"category\", \"ts\"\n  FROM \"Orders_1\") AS \"t\"\nWHERE \"productId\" = $1 AND \"category\" > $2",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "productId",
+                  "sqlType" : "VARCHAR"
+                },
+                {
+                  "type" : "arg",
+                  "path" : "category",
+                  "sqlType" : "VARCHAR"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "ByProductIdAfterCustomerId",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "customerId"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "productId"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"customerId\", \"storeId\", \"productId\", \"category\", \"ts\"\n  FROM \"Orders_1\") AS \"t\"\nWHERE \"productId\" = $1 AND \"customerId\" > $2",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "productId",
+                  "sqlType" : "VARCHAR"
+                },
+                {
+                  "type" : "arg",
+                  "path" : "customerId",
+                  "sqlType" : "VARCHAR"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "ByProductIdAfterStoreId",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "storeId"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "productId"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"customerId\", \"storeId\", \"productId\", \"category\", \"ts\"\n  FROM \"Orders_1\") AS \"t\"\nWHERE \"productId\" = $1 AND \"storeId\" > $2",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "productId",
+                  "sqlType" : "VARCHAR"
+                },
+                {
+                  "type" : "arg",
+                  "path" : "storeId",
+                  "sqlType" : "VARCHAR"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "ByStoreIdAfterCategory",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "storeId"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "category"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"customerId\", \"storeId\", \"productId\", \"category\", \"ts\"\n  FROM \"Orders_1\") AS \"t\"\nWHERE \"storeId\" = $1 AND \"category\" > $2",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "storeId",
+                  "sqlType" : "VARCHAR"
+                },
+                {
+                  "type" : "arg",
+                  "path" : "category",
+                  "sqlType" : "VARCHAR"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "ByStoreIdAfterCustomerId",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "customerId"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "storeId"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"customerId\", \"storeId\", \"productId\", \"category\", \"ts\"\n  FROM \"Orders_1\") AS \"t\"\nWHERE \"storeId\" = $1 AND \"customerId\" > $2",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "storeId",
+                  "sqlType" : "VARCHAR"
+                },
+                {
+                  "type" : "arg",
+                  "path" : "customerId",
+                  "sqlType" : "VARCHAR"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "ByStoreIdAfterProductId",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "storeId"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "productId"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"customerId\", \"storeId\", \"productId\", \"category\", \"ts\"\n  FROM \"Orders_1\") AS \"t\"\nWHERE \"storeId\" = $1 AND \"productId\" > $2",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "storeId",
+                  "sqlType" : "VARCHAR"
+                },
+                {
+                  "type" : "arg",
+                  "path" : "productId",
+                  "sqlType" : "VARCHAR"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        }
+      ],
+      "mutations" : [ ],
+      "subscriptions" : [ ],
+      "operations" : [
+        {
+          "function" : {
+            "name" : "GetOrders",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query Orders($limit: Int = 10, $offset: Int = 0) {\nOrders(limit: $limit, offset: $offset) {\ncustomerId\nstoreId\nproductId\ncategory\nts\n}\n\n}",
+            "queryName" : "Orders",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Orders{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "customerId" : {
+                  "type" : "string"
+                },
+                "storeId" : {
+                  "type" : "string"
+                },
+                "productId" : {
+                  "type" : "string"
+                },
+                "category" : {
+                  "type" : "string"
+                },
+                "ts" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetByCategoryAfterCustomerId",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "customerId" : {
+                  "type" : "string"
+                },
+                "limit" : {
+                  "type" : "integer"
+                },
+                "category" : {
+                  "type" : "string"
+                }
+              },
+              "required" : [
+                "category",
+                "customerId"
+              ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query ByCategoryAfterCustomerId($category: String!, $customerId: String!, $limit: Int = 10, $offset: Int = 0) {\nByCategoryAfterCustomerId(category: $category, customerId: $customerId, limit: $limit, offset: $offset) {\ncustomerId\nstoreId\nproductId\ncategory\nts\n}\n\n}",
+            "queryName" : "ByCategoryAfterCustomerId",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/ByCategoryAfterCustomerId{?offset,customerId,limit,category}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "customerId" : {
+                  "type" : "string"
+                },
+                "storeId" : {
+                  "type" : "string"
+                },
+                "productId" : {
+                  "type" : "string"
+                },
+                "category" : {
+                  "type" : "string"
+                },
+                "ts" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetByCategoryAfterProductId",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "productId" : {
+                  "type" : "string"
+                },
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                },
+                "category" : {
+                  "type" : "string"
+                }
+              },
+              "required" : [
+                "category",
+                "productId"
+              ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query ByCategoryAfterProductId($category: String!, $productId: String!, $limit: Int = 10, $offset: Int = 0) {\nByCategoryAfterProductId(category: $category, productId: $productId, limit: $limit, offset: $offset) {\ncustomerId\nstoreId\nproductId\ncategory\nts\n}\n\n}",
+            "queryName" : "ByCategoryAfterProductId",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/ByCategoryAfterProductId{?productId,offset,limit,category}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "customerId" : {
+                  "type" : "string"
+                },
+                "storeId" : {
+                  "type" : "string"
+                },
+                "productId" : {
+                  "type" : "string"
+                },
+                "category" : {
+                  "type" : "string"
+                },
+                "ts" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetByCategoryAfterStoreId",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                },
+                "category" : {
+                  "type" : "string"
+                },
+                "storeId" : {
+                  "type" : "string"
+                }
+              },
+              "required" : [
+                "category",
+                "storeId"
+              ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query ByCategoryAfterStoreId($category: String!, $storeId: String!, $limit: Int = 10, $offset: Int = 0) {\nByCategoryAfterStoreId(category: $category, storeId: $storeId, limit: $limit, offset: $offset) {\ncustomerId\nstoreId\nproductId\ncategory\nts\n}\n\n}",
+            "queryName" : "ByCategoryAfterStoreId",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/ByCategoryAfterStoreId{?offset,limit,category,storeId}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "customerId" : {
+                  "type" : "string"
+                },
+                "storeId" : {
+                  "type" : "string"
+                },
+                "productId" : {
+                  "type" : "string"
+                },
+                "category" : {
+                  "type" : "string"
+                },
+                "ts" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetByCustomerIdAfterCategory",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "customerId" : {
+                  "type" : "string"
+                },
+                "limit" : {
+                  "type" : "integer"
+                },
+                "category" : {
+                  "type" : "string"
+                }
+              },
+              "required" : [
+                "customerId",
+                "category"
+              ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query ByCustomerIdAfterCategory($customerId: String!, $category: String!, $limit: Int = 10, $offset: Int = 0) {\nByCustomerIdAfterCategory(customerId: $customerId, category: $category, limit: $limit, offset: $offset) {\ncustomerId\nstoreId\nproductId\ncategory\nts\n}\n\n}",
+            "queryName" : "ByCustomerIdAfterCategory",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/ByCustomerIdAfterCategory{?offset,customerId,limit,category}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "customerId" : {
+                  "type" : "string"
+                },
+                "storeId" : {
+                  "type" : "string"
+                },
+                "productId" : {
+                  "type" : "string"
+                },
+                "category" : {
+                  "type" : "string"
+                },
+                "ts" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetByCustomerIdAfterProductId",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "productId" : {
+                  "type" : "string"
+                },
+                "offset" : {
+                  "type" : "integer"
+                },
+                "customerId" : {
+                  "type" : "string"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [
+                "customerId",
+                "productId"
+              ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query ByCustomerIdAfterProductId($customerId: String!, $productId: String!, $limit: Int = 10, $offset: Int = 0) {\nByCustomerIdAfterProductId(customerId: $customerId, productId: $productId, limit: $limit, offset: $offset) {\ncustomerId\nstoreId\nproductId\ncategory\nts\n}\n\n}",
+            "queryName" : "ByCustomerIdAfterProductId",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/ByCustomerIdAfterProductId{?productId,offset,customerId,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "customerId" : {
+                  "type" : "string"
+                },
+                "storeId" : {
+                  "type" : "string"
+                },
+                "productId" : {
+                  "type" : "string"
+                },
+                "category" : {
+                  "type" : "string"
+                },
+                "ts" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetByCustomerIdAfterStoreId",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "customerId" : {
+                  "type" : "string"
+                },
+                "limit" : {
+                  "type" : "integer"
+                },
+                "storeId" : {
+                  "type" : "string"
+                }
+              },
+              "required" : [
+                "customerId",
+                "storeId"
+              ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query ByCustomerIdAfterStoreId($customerId: String!, $storeId: String!, $limit: Int = 10, $offset: Int = 0) {\nByCustomerIdAfterStoreId(customerId: $customerId, storeId: $storeId, limit: $limit, offset: $offset) {\ncustomerId\nstoreId\nproductId\ncategory\nts\n}\n\n}",
+            "queryName" : "ByCustomerIdAfterStoreId",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/ByCustomerIdAfterStoreId{?offset,customerId,limit,storeId}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "customerId" : {
+                  "type" : "string"
+                },
+                "storeId" : {
+                  "type" : "string"
+                },
+                "productId" : {
+                  "type" : "string"
+                },
+                "category" : {
+                  "type" : "string"
+                },
+                "ts" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetByProductIdAfterCategory",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "productId" : {
+                  "type" : "string"
+                },
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                },
+                "category" : {
+                  "type" : "string"
+                }
+              },
+              "required" : [
+                "productId",
+                "category"
+              ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query ByProductIdAfterCategory($productId: String!, $category: String!, $limit: Int = 10, $offset: Int = 0) {\nByProductIdAfterCategory(productId: $productId, category: $category, limit: $limit, offset: $offset) {\ncustomerId\nstoreId\nproductId\ncategory\nts\n}\n\n}",
+            "queryName" : "ByProductIdAfterCategory",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/ByProductIdAfterCategory{?productId,offset,limit,category}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "customerId" : {
+                  "type" : "string"
+                },
+                "storeId" : {
+                  "type" : "string"
+                },
+                "productId" : {
+                  "type" : "string"
+                },
+                "category" : {
+                  "type" : "string"
+                },
+                "ts" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetByProductIdAfterCustomerId",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "productId" : {
+                  "type" : "string"
+                },
+                "offset" : {
+                  "type" : "integer"
+                },
+                "customerId" : {
+                  "type" : "string"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [
+                "productId",
+                "customerId"
+              ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query ByProductIdAfterCustomerId($productId: String!, $customerId: String!, $limit: Int = 10, $offset: Int = 0) {\nByProductIdAfterCustomerId(productId: $productId, customerId: $customerId, limit: $limit, offset: $offset) {\ncustomerId\nstoreId\nproductId\ncategory\nts\n}\n\n}",
+            "queryName" : "ByProductIdAfterCustomerId",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/ByProductIdAfterCustomerId{?productId,offset,customerId,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "customerId" : {
+                  "type" : "string"
+                },
+                "storeId" : {
+                  "type" : "string"
+                },
+                "productId" : {
+                  "type" : "string"
+                },
+                "category" : {
+                  "type" : "string"
+                },
+                "ts" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetByProductIdAfterStoreId",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "productId" : {
+                  "type" : "string"
+                },
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                },
+                "storeId" : {
+                  "type" : "string"
+                }
+              },
+              "required" : [
+                "productId",
+                "storeId"
+              ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query ByProductIdAfterStoreId($productId: String!, $storeId: String!, $limit: Int = 10, $offset: Int = 0) {\nByProductIdAfterStoreId(productId: $productId, storeId: $storeId, limit: $limit, offset: $offset) {\ncustomerId\nstoreId\nproductId\ncategory\nts\n}\n\n}",
+            "queryName" : "ByProductIdAfterStoreId",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/ByProductIdAfterStoreId{?productId,offset,limit,storeId}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "customerId" : {
+                  "type" : "string"
+                },
+                "storeId" : {
+                  "type" : "string"
+                },
+                "productId" : {
+                  "type" : "string"
+                },
+                "category" : {
+                  "type" : "string"
+                },
+                "ts" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetByStoreIdAfterCategory",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                },
+                "storeId" : {
+                  "type" : "string"
+                },
+                "category" : {
+                  "type" : "string"
+                }
+              },
+              "required" : [
+                "storeId",
+                "category"
+              ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query ByStoreIdAfterCategory($storeId: String!, $category: String!, $limit: Int = 10, $offset: Int = 0) {\nByStoreIdAfterCategory(storeId: $storeId, category: $category, limit: $limit, offset: $offset) {\ncustomerId\nstoreId\nproductId\ncategory\nts\n}\n\n}",
+            "queryName" : "ByStoreIdAfterCategory",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/ByStoreIdAfterCategory{?offset,limit,storeId,category}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "customerId" : {
+                  "type" : "string"
+                },
+                "storeId" : {
+                  "type" : "string"
+                },
+                "productId" : {
+                  "type" : "string"
+                },
+                "category" : {
+                  "type" : "string"
+                },
+                "ts" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetByStoreIdAfterCustomerId",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "customerId" : {
+                  "type" : "string"
+                },
+                "limit" : {
+                  "type" : "integer"
+                },
+                "storeId" : {
+                  "type" : "string"
+                }
+              },
+              "required" : [
+                "storeId",
+                "customerId"
+              ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query ByStoreIdAfterCustomerId($storeId: String!, $customerId: String!, $limit: Int = 10, $offset: Int = 0) {\nByStoreIdAfterCustomerId(storeId: $storeId, customerId: $customerId, limit: $limit, offset: $offset) {\ncustomerId\nstoreId\nproductId\ncategory\nts\n}\n\n}",
+            "queryName" : "ByStoreIdAfterCustomerId",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/ByStoreIdAfterCustomerId{?offset,customerId,limit,storeId}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "customerId" : {
+                  "type" : "string"
+                },
+                "storeId" : {
+                  "type" : "string"
+                },
+                "productId" : {
+                  "type" : "string"
+                },
+                "category" : {
+                  "type" : "string"
+                },
+                "ts" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetByStoreIdAfterProductId",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "productId" : {
+                  "type" : "string"
+                },
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                },
+                "storeId" : {
+                  "type" : "string"
+                }
+              },
+              "required" : [
+                "storeId",
+                "productId"
+              ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query ByStoreIdAfterProductId($storeId: String!, $productId: String!, $limit: Int = 10, $offset: Int = 0) {\nByStoreIdAfterProductId(storeId: $storeId, productId: $productId, limit: $limit, offset: $offset) {\ncustomerId\nstoreId\nproductId\ncategory\nts\n}\n\n}",
+            "queryName" : "ByStoreIdAfterProductId",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/ByStoreIdAfterProductId{?productId,offset,limit,storeId}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "customerId" : {
+                  "type" : "string"
+                },
+                "storeId" : {
+                  "type" : "string"
+                },
+                "productId" : {
+                  "type" : "string"
+                },
+                "category" : {
+                  "type" : "string"
+                },
+                "ts" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "schema" : {
+        "type" : "string",
+        "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Orders {\n  customerId: String!\n  storeId: String!\n  productId: String!\n  category: String!\n  ts: DateTime!\n}\n\ntype Query {\n  Orders(limit: Int = 10, offset: Int = 0): [Orders!]\n  ByCategoryAfterCustomerId(category: String!, customerId: String!, limit: Int = 10, offset: Int = 0): [Orders!]\n  ByCategoryAfterProductId(category: String!, productId: String!, limit: Int = 10, offset: Int = 0): [Orders!]\n  ByCategoryAfterStoreId(category: String!, storeId: String!, limit: Int = 10, offset: Int = 0): [Orders!]\n  ByCustomerIdAfterCategory(customerId: String!, category: String!, limit: Int = 10, offset: Int = 0): [Orders!]\n  ByCustomerIdAfterProductId(customerId: String!, productId: String!, limit: Int = 10, offset: Int = 0): [Orders!]\n  ByCustomerIdAfterStoreId(customerId: String!, storeId: String!, limit: Int = 10, offset: Int = 0): [Orders!]\n  ByProductIdAfterCategory(productId: String!, category: String!, limit: Int = 10, offset: Int = 0): [Orders!]\n  ByProductIdAfterCustomerId(productId: String!, customerId: String!, limit: Int = 10, offset: Int = 0): [Orders!]\n  ByProductIdAfterStoreId(productId: String!, storeId: String!, limit: Int = 10, offset: Int = 0): [Orders!]\n  ByStoreIdAfterCategory(storeId: String!, category: String!, limit: Int = 10, offset: Int = 0): [Orders!]\n  ByStoreIdAfterCustomerId(storeId: String!, customerId: String!, limit: Int = 10, offset: Int = 0): [Orders!]\n  ByStoreIdAfterProductId(storeId: String!, productId: String!, limit: Int = 10, offset: Int = 0): [Orders!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n}\n\nenum _McpVisibility {\n  MODEL\n  APP\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String, appName: String, visibility: [_McpVisibility!]) on QUERY | MUTATION | FIELD_DEFINITION\n"
+      }
+    }
+  }
+}
