@@ -155,6 +155,21 @@ class CheckStateUpgradeOptionTest {
     }
 
     @Test
+    void
+        givenSymbolicLinkInsideBuildFolderOfThisCompile_whenCheckOldBuildFolder_thenFatalInsideBuildFolder()
+            throws IOException {
+      var deployedBuild = projectRoot.resolve("deployed");
+      writeCompiledPlan(deployedBuild.resolve("deploy/plan"));
+      Files.createDirectories(buildDir());
+      Files.createSymbolicLink(buildDir().resolve("deployed"), deployedBuild);
+
+      assertThatThrownBy(() -> checkOldBuildFolder("build/shop/deployed"))
+          .isInstanceOf(CollectedException.class)
+          .hasMessageContaining("is inside the build folder")
+          .hasMessageContaining("the symbolic link to it");
+    }
+
+    @Test
     void givenOldBuildInsideTargetFolderOption_whenCheckOldBuildFolder_thenFatalInsideTargetFolder()
         throws IOException {
       writeCompiledPlan(projectRoot.resolve("artifacts/plan"));
