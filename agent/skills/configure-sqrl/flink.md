@@ -101,6 +101,7 @@ Before an upgrade, check that the new plan can restore the state of the running 
 - When only one build sets `pipeline.max-parallelism`, the compile gives a warning.
   - Only the old build sets it: Flink takes the value from the savepoint. Make sure that no other configuration gives the new job a different value.
   - Only the new build sets it: make sure that the running job uses the same value.
+- A new column, a removed column, a changed type or a changed `NOT NULL` on a table that an operator with state stores is a break, for example on a `DISTINCT` table. The line names the field `outputType`. A renamed column is not a break.
 - A change of `table.exec.state.ttl` is not a break. The compile gives a notice for each state whose TTL changes. You do not need to change the TTL back.
 
 To accept removed stateful operators, restore once with `execution.state-recovery.ignore-unclaimed-state: true`. With the Flink Kubernetes Operator, use `job.allowNonRestoredState: true`. Then remove the option, so that it cannot hide an unexpected state mismatch later.
