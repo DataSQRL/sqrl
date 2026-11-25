@@ -79,8 +79,9 @@ public class IndexSelector {
   private static final int MAX_LIMIT_INDEX_SCAN = 10000;
 
   private static final String INDEX_REMEDIATION =
-      "Reduce the number of distinct filter patterns on this table or specify the indexes "
-          + "explicitly with an `index` hint.";
+      "The query results are not affected. See the indexes of the table in "
+          + "`pipeline_explain.txt`. To select different indexes, either specify them explicitly "
+          + "with an `index` hint or reduce the number of distinct filter patterns on this table.";
 
   private final Sqrl2FlinkSQLTranslator framework;
   private final IndexSelectorConfig config;
@@ -260,7 +261,7 @@ public class IndexSelector {
 
   private Set<IndexDefinition> optimizeIndexesWithCostMinimization(
       NamedTable table, Collection<QueryIndexSummary> indexes) {
-    Set<IndexDefinition> optIndexes = new LinkedHashSet<>();
+    List<IndexDefinition> optIndexes = new ArrayList<>();
     // Determine all index candidates
     Set<IndexDefinition> candidates = new LinkedHashSet<>();
     indexes.forEach(idx -> candidates.addAll(generateIndexCandidates(idx)));
@@ -276,8 +277,13 @@ public class IndexSelector {
     for (QueryIndexSummary idx : indexes) {
       currentCost.put(idx, initialCost.apply(idx));
     }
-    // Determine which index candidates reduce the cost the most
-    while (optIndexes.size() < config.maxIndexes()) {
+    // Determine which index candidates reduce the cost the most. The selection goes past the
+    // maximum number of indexes to learn how many indexes the queries need.
+    Map<QueryIndexSummary, Double> costWithMaxIndexes = null;
+    while (true) {
+      if (optIndexes.size() == config.maxIndexes()) {
+        costWithMaxIndexes = currentCost;
+      }
       IndexDefinition bestCandidate = null;
       Map<QueryIndexSummary, Double> bestCosts = null;
       var bestTotal = Double.POSITIVE_INFINITY;
@@ -300,32 +306,78 @@ public class IndexSelector {
         }
       }
       if (bestCandidate == null) {
-        return optIndexes;
+        break;
       }
       optIndexes.add(bestCandidate);
       candidates.remove(bestCandidate);
       currentCost = bestCosts;
     }
-    warnAboutFullTableScans(table, currentCost);
-    return optIndexes;
+
+    if (optIndexes.size() < config.maxIndexes()) {
+      return new LinkedHashSet<>(optIndexes);
+    }
+    if (optIndexes.size() > config.maxIndexes() && config.hasGenericIndexType()) {
+      var singleColumnIndexes = createSingleColumnIndexes(table, indexes);
+      if (singleColumnIndexes.size() < optIndexes.size()) {
+        errors.warn(
+            "The query filter patterns of table `%s` need %d indexes which exceeds the maximum of "
+                + "%d. Created a single-column index for each filtered column instead, and none "
+                + "of the %d indexes. %s",
+            table.getTableName(),
+            optIndexes.size(),
+            config.maxIndexes(),
+            optIndexes.size(),
+            INDEX_REMEDIATION);
+        return singleColumnIndexes;
+      }
+    }
+    var omittedIndexes = optIndexes.subList(config.maxIndexes(), optIndexes.size());
+    warnAboutMaxIndexes(table, omittedIndexes, costWithMaxIndexes);
+    return new LinkedHashSet<>(optIndexes.subList(0, config.maxIndexes()));
   }
 
-  /** Only reached once {@link IndexSelectorConfig#maxIndexes()} is exhausted. */
-  private void warnAboutFullTableScans(NamedTable table, Map<QueryIndexSummary, Double> finalCost) {
+  /**
+   * Only reached once {@link IndexSelectorConfig#maxIndexes()} is exhausted. Warns when the limit
+   * left out an index or left a query filter pattern with a full table scan.
+   */
+  private void warnAboutMaxIndexes(
+      NamedTable table,
+      List<IndexDefinition> omittedIndexes,
+      Map<QueryIndexSummary, Double> costWithMaxIndexes) {
     var fullTableScans =
-        finalCost.entrySet().stream()
+        costWithMaxIndexes.entrySet().stream()
             .filter(entry -> entry.getValue() + EPSILON >= entry.getKey().getBaseCost())
             .map(entry -> entry.getKey().getFilterColumnNames())
             .sorted(Comparator.comparing(columns -> String.join(",", columns)))
             .map(columns -> "(" + String.join(", ", columns) + ")")
             .collect(Collectors.joining(", "));
-    if (fullTableScans.isEmpty()) {
+    if (omittedIndexes.isEmpty() && fullTableScans.isEmpty()) {
       return;
     }
-    errors.warn(
-        "Created the maximum of %d indexes for table `%s`. These query filter patterns have no "
-            + "supporting index and require a full table scan: %s. %s",
-        config.maxIndexes(), table.getTableName(), fullTableScans, INDEX_REMEDIATION);
+    var warning =
+        new StringBuilder(
+            "Created the maximum of %d indexes for table `%s`."
+                .formatted(config.maxIndexes(), table.getTableName()));
+    if (!omittedIndexes.isEmpty()) {
+      warning.append(
+          " Its query filter patterns need %d indexes. The limit omits these indexes: %s."
+              .formatted(
+                  config.maxIndexes() + omittedIndexes.size(),
+                  omittedIndexes.stream()
+                      .map(IndexSelector::toIndexHint)
+                      .collect(Collectors.joining(", "))));
+    }
+    if (!fullTableScans.isEmpty()) {
+      warning.append(
+          " These query filter patterns have no supporting index and require a full table scan: %s."
+              .formatted(fullTableScans));
+    }
+    errors.warn("%s %s", warning, INDEX_REMEDIATION);
+  }
+
+  /** The form of the {@code index} hint that creates the given index. */
+  private static String toIndexHint(IndexDefinition index) {
+    return "index(%s, %s)".formatted(index.getType(), String.join(", ", index.getColumnNames()));
   }
 
   /**

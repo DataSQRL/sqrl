@@ -27,6 +27,7 @@ import com.datasqrl.engine.database.relational.CreateTableJdbcStatement;
 import com.datasqrl.engine.database.relational.IndexSelectorConfigByDialect;
 import com.datasqrl.engine.database.relational.JdbcEngineCreateTable;
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.error.ErrorMessage;
 import com.datasqrl.plan.index.IndexSelector.NamedTable;
 import com.datasqrl.plan.table.TableStatistic;
 import com.datasqrl.planner.Sqrl2FlinkSQLTranslator;
@@ -63,6 +64,7 @@ import org.apache.calcite.util.Holder;
 import org.apache.flink.table.catalog.ObjectIdentifier;
 import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
 import org.apache.flink.table.planner.calcite.FlinkTypeSystem;
+import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
@@ -497,7 +499,102 @@ class IndexSelectorTest {
     private List<String> indexesForEqualityOn(NamedTable table, Integer... equalityColumns) {
       var query = new QueryIndexSummary(table, Set.of(equalityColumns), Set.of(), Set.of(), 1.0);
 
-      return selectIndexes(postgresWithMaxFilterPatterns(50), List.of(query));
+      return selectIndexes(postgres(8, 50), List.of(query));
+    }
+  }
+
+  /** A table whose filter patterns need more indexes than {@code max-indexes}. */
+  @Nested
+  class MoreIndexesThanMaxIndexes {
+
+    private static final int MAX_INDEXES = 2;
+
+    private final NamedTable customers = customersWith(TableStatistic.fromHint(1e6));
+
+    @Test
+    void givenMoreCompositeIndexesThanColumns_whenOptimizeIndexes_thenIndexesEachColumn() {
+      var queries =
+          List.of(
+              equalityAndRangeOn(EMAIL, COUNTRY),
+              equalityAndRangeOn(EMAIL, CITY),
+              equalityAndRangeOn(COUNTRY, EMAIL),
+              equalityAndRangeOn(COUNTRY, CITY),
+              equalityAndRangeOn(CITY, EMAIL),
+              equalityAndRangeOn(CITY, COUNTRY));
+
+      var errors = ErrorCollector.root();
+
+      var indexes = selectIndexes(postgres(MAX_INDEXES, 50), queries, errors);
+
+      assertThat(indexes).containsExactly("BTREE[email]", "BTREE[country]", "BTREE[city]");
+      assertThat(errors)
+          .extracting(ErrorMessage::getMessage)
+          .singleElement(InstanceOfAssertFactories.STRING)
+          .startsWith(
+              "The query filter patterns of table `Customers` need 6 indexes which exceeds the "
+                  + "maximum of 2. Created a single-column index for each filtered column "
+                  + "instead, and none of the 6 indexes. The query results are not affected.");
+    }
+
+    @Test
+    void givenAsManyIndexesAsColumns_whenOptimizeIndexes_thenKeepsTheFirstMaxIndexes() {
+      var queries = List.of(equalityOn(EMAIL), equalityOn(COUNTRY), equalityOn(CITY));
+
+      assertThat(selectIndexes(postgres(MAX_INDEXES, 50), queries))
+          .containsExactly("HASH[email]", "HASH[country]");
+    }
+
+    @Test
+    void givenOmittedIndexWithoutFullTableScan_whenOptimizeIndexes_thenWarnsAboutNeededIndexes() {
+      var queries =
+          List.of(
+              equalityAndRangeOn(EMAIL, COUNTRY),
+              equalityAndRangeOn(COUNTRY, EMAIL),
+              equalityAndRangeOn(EMAIL, CITY));
+      var errors = ErrorCollector.root();
+
+      var indexes = selectIndexes(postgres(MAX_INDEXES, 50), queries, errors);
+
+      assertThat(indexes).hasSize(MAX_INDEXES);
+      assertThat(errors)
+          .extracting(ErrorMessage::getMessage)
+          .singleElement(InstanceOfAssertFactories.STRING)
+          .startsWith(
+              "Created the maximum of 2 indexes for table `Customers`. Its query filter patterns "
+                  + "need 3 indexes. The limit omits these indexes: index(BTREE, email, city). "
+                  + "The query results are not affected.")
+          .doesNotContain("full table scan");
+    }
+
+    @Test
+    void givenIndexesWithinMaxIndexes_whenOptimizeIndexes_thenKeepsCompositeIndexes() {
+      var queries = List.of(equalityAndRangeOn(EMAIL, COUNTRY), equalityAndRangeOn(COUNTRY, EMAIL));
+
+      assertThat(selectIndexes(postgres(MAX_INDEXES, 50), queries))
+          .containsExactly("BTREE[email, country]", "BTREE[country, email]");
+    }
+
+    /** A partitioned table has one partition index and no index type for a single column. */
+    @Test
+    void givenIceberg_whenOptimizeIndexes_thenKeepsOnePartitionIndex() {
+      var queries =
+          List.of(
+              equalityAndRangeOn(EMAIL, COUNTRY),
+              equalityAndRangeOn(COUNTRY, EMAIL),
+              equalityAndRangeOn(CITY, EMAIL),
+              equalityAndRangeOn(CITY, COUNTRY));
+      var iceberg = new IndexSelectorConfigByDialect(JdbcDialect.Iceberg, defaults(8, 50));
+
+      assertThat(selectIndexes(iceberg, queries)).hasSize(1);
+    }
+
+    private QueryIndexSummary equalityOn(int equalityColumn) {
+      return new QueryIndexSummary(customers, Set.of(equalityColumn), Set.of(), Set.of(), 1.0);
+    }
+
+    private QueryIndexSummary equalityAndRangeOn(int equalityColumn, int inequalityColumn) {
+      return new QueryIndexSummary(
+          customers, Set.of(equalityColumn), Set.of(inequalityColumn), Set.of(), 1.0);
     }
   }
 
@@ -513,7 +610,7 @@ class IndexSelectorTest {
     void givenColumnWithOnlyEqualityFilters_whenTooManyFilterPatterns_thenGetsHashIndex() {
       var queries = List.of(equalityOn(EMAIL), equalityOn(COUNTRY), equalityOn(EMAIL, COUNTRY));
 
-      assertThat(selectIndexes(postgresWithMaxFilterPatterns(MAX_FILTER_PATTERNS), queries))
+      assertThat(selectIndexes(postgres(8, MAX_FILTER_PATTERNS), queries))
           .containsExactly("HASH[email]", "HASH[country]");
     }
 
@@ -523,7 +620,7 @@ class IndexSelectorTest {
           new QueryIndexSummary(customers, Set.of(COUNTRY), Set.of(CITY), Set.of(), 1.0);
       var queries = List.of(equalityOn(EMAIL), equalityOn(CITY), countryAndCityRange);
 
-      assertThat(selectIndexes(postgresWithMaxFilterPatterns(MAX_FILTER_PATTERNS), queries))
+      assertThat(selectIndexes(postgres(8, MAX_FILTER_PATTERNS), queries))
           .containsExactly("HASH[email]", "BTREE[city]", "HASH[country]");
     }
 
@@ -539,7 +636,12 @@ class IndexSelectorTest {
 
   private static List<String> selectIndexes(
       IndexSelectorConfig config, List<QueryIndexSummary> queries) {
-    var selector = new IndexSelector(null, config, Map.of(), ErrorCollector.root());
+    return selectIndexes(config, queries, ErrorCollector.root());
+  }
+
+  private static List<String> selectIndexes(
+      IndexSelectorConfig config, List<QueryIndexSummary> queries, ErrorCollector errors) {
+    var selector = new IndexSelector(null, config, Map.of(), errors);
 
     return selector.optimizeIndexes(queries).stream()
         .map(
@@ -564,15 +666,20 @@ class IndexSelectorTest {
     return new NamedTable("Customers", "Customers", analysis, mock(CreateTableJdbcStatement.class));
   }
 
-  /** The defaults of the {@code index-selection} settings, except for the given one. */
-  private static IndexSelectorConfig postgresWithMaxFilterPatterns(int maxFilterPatterns) {
+  private static IndexSelectorConfig postgres(int maxIndexes, int maxFilterPatterns) {
+    return new IndexSelectorConfigByDialect(
+        JdbcDialect.Postgres, defaults(maxIndexes, maxFilterPatterns));
+  }
+
+  /** The defaults of the {@code index-selection} settings, except for the given ones. */
+  private static IndexSelectionConfig defaults(int maxIndexes, int maxFilterPatterns) {
     var indexSelection = mock(IndexSelectionConfig.class);
-    when(indexSelection.getMaxIndexes()).thenReturn(8);
+    when(indexSelection.getMaxIndexes()).thenReturn(maxIndexes);
     when(indexSelection.getMaxIndexColumns()).thenReturn(3);
     when(indexSelection.getMaxFilterPatterns()).thenReturn(maxFilterPatterns);
     when(indexSelection.getMinCostReduction()).thenReturn(0.05);
     when(indexSelection.getMinDistinctCount()).thenReturn(20);
-    return new IndexSelectorConfigByDialect(JdbcDialect.Postgres, indexSelection);
+    return indexSelection;
   }
 
   private static Optional<IndexDefinition> primaryKeyIndex(int column, String columnName) {

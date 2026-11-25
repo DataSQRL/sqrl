@@ -18,6 +18,7 @@ package com.datasqrl.plan.index;
 import java.util.EnumSet;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 
 public interface IndexSelectorConfig {
 
@@ -68,6 +69,11 @@ public interface IndexSelectorConfig {
 
   /** The relative cost of creating this index against some fixed baseline. */
   double relativeIndexCost(IndexDefinition index);
+
+  /** Whether the database has an index type for a column that is no partition column. */
+  default boolean hasGenericIndexType() {
+    return Stream.of(PREFERRED_GENERIC_INDEX).anyMatch(supportedIndexTypes()::contains);
+  }
 
   default IndexType getPreferredGenericIndexType() {
     for (IndexType type : PREFERRED_GENERIC_INDEX) {
