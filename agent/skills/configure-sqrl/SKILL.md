@@ -233,6 +233,16 @@ Always read [Cloud Deployment Configuration](cloud-deployment.md) when configuri
 }
 ```
 
+### Paths
+
+Every path in `script` (`main`, `graphql`, `operations`, `database`, and the `schema`, `operations`, `openapi` and `mcp-apps` of an API version), the `package` of an include, and the test runner's `snapshot-folder` and `test-folder` is relative to the project root and must stay inside `/workspace`.
+
+* A path may leave the project to reach a sibling project in `/workspace`, e.g. `../shared/schema.graphqls`. Use `script.include` for the SQRL scripts of another project.
+* Never write an absolute path, and never a path that leads out of `/workspace`. The compile fails with `Value [<path>] for key [<key>] is not valid. A path must be relative to the project root and stay inside the workspace.` Fix the path in the package file.
+* The project root, given with `-r` or inferred from the package paths, must be inside `/workspace` too.
+* Symbolic links are followed while they stay inside `/workspace`. A link that leads outside is skipped with `Skipped the symbolic link '<path>', because it leads outside the workspace`, and its file is missing from the build.
+* When a project includes or references a sibling project, the folder that holds both must be the mounted `/workspace`, and commands select the project with `-r <project>`. Tell the user to mount that folder when they run the `datasqrl/cmd` image themselves.
+
 ### API Versioning and Compatibility
 
 `script.api` serves one or more versioned APIs. Version keys must be `v` followed by a number (`v1`, `v2`); each version requires a `schema`, `operations`, an `openapi` compatibility specification, or an `mcp-apps` directory. SQRL infers the schema from the SQRL script when one is not configured, and generates an OpenAPI specification for every version. Set `openapi` to a previously generated specification when compilation must reject backward-incompatible API changes. Set `mcp-apps` to the directory with the self-contained `.html` files of the version's MCP apps; there is no top-level `script.mcp-apps`.
