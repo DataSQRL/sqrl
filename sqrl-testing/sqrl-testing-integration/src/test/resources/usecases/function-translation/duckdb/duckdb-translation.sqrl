@@ -118,6 +118,18 @@ FunctionCalls := SELECT
     CAST(
         TIMESTAMPADD(DAY, 2, TIMESTAMP '2024-01-02 03:04:05')
     AS TIMESTAMP (3))                                          AS timestampadd_example,
+    CAST(
+        TIMESTAMPADD(WEEK, 2, TIMESTAMP '2024-01-02 03:04:05')
+    AS TIMESTAMP (3))                                          AS timestampadd_week_example,
+    CAST(
+        TIMESTAMPADD(QUARTER, 2, TIMESTAMP '2024-01-02 03:04:05')
+    AS TIMESTAMP (3))                                          AS timestampadd_quarter_example,
+    CAST(
+        TIMESTAMP '2024-01-02 03:04:05' + INTERVAL '2' WEEK
+    AS TIMESTAMP (3))                                          AS interval_week_example,
+    CAST(
+        TIMESTAMP '2024-01-02 03:04:05' - INTERVAL '1' QUARTER
+    AS TIMESTAMP (3))                                          AS interval_quarter_example,
     TIMESTAMPDIFF(
         SECOND,
         TIMESTAMP '2024-01-01 00:00:00',
