@@ -91,7 +91,7 @@ The planner consists of the following components.
 ### Packager
 
 The packager populates the `build/` directory with the files of the local project and the packages included through the `script.include` configuration option, each under its own namespace.
-It follows symbolic links that stay inside the workspace and skips the others with a warning.
+It follows symbolic links that stay inside the workspace and skips the others, with a warning unless the link is in a hidden folder such as `.claude`.
 It writes the merged configuration to `build/package.json`.
 
 As part of this process, the packager executes the following preprocessors:

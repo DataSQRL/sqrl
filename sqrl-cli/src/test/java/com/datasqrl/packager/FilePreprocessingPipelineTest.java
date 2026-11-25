@@ -86,6 +86,32 @@ class FilePreprocessingPipelineTest {
   }
 
   @Test
+  void givenLinksThatLeaveWorkspaceInHiddenFolders_whenRun_thenSkipsThemWithoutWarning()
+      throws IOException {
+    var workspaceDir = tempDir.resolve("workspace");
+    var projectDir = workspaceDir.resolve("project");
+    var buildDir = projectDir.resolve("build");
+    var outsideDir = tempDir.resolve("outside");
+    write(projectDir.resolve("ops.graphql"), "query Ping { ping }");
+    write(outsideDir.resolve("skills/configure/SKILL.md"), "# Configure");
+    write(outsideDir.resolve("skills/configure/settings.json"), "{}");
+    write(outsideDir.resolve("python"), "binary");
+    // A coding agent links its skills into the project, a virtual environment its interpreter
+    Files.createDirectories(projectDir.resolve(".claude/skills"));
+    Files.createSymbolicLink(
+        projectDir.resolve(".claude/skills/configure"), outsideDir.resolve("skills/configure"));
+    Files.createDirectories(projectDir.resolve(".venv/bin"));
+    Files.createSymbolicLink(projectDir.resolve(".venv/bin/python"), outsideDir.resolve("python"));
+    var errors = ErrorCollector.root();
+
+    newPipeline(workspaceDir, projectDir).run(projectDir, errors);
+
+    assertThat(buildDir.resolve("ops.graphql")).hasContent("query Ping { ping }");
+    assertThat(buildDir.resolve(".claude/skills/configure")).doesNotExist();
+    assertThat(warnings(errors)).isEmpty();
+  }
+
+  @Test
   void givenLinksInsideWorkspace_whenRun_thenFollowsThem() throws IOException {
     var workspaceDir = tempDir.resolve("workspace");
     var projectDir = workspaceDir.resolve("project");

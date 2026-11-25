@@ -45,6 +45,8 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
@@ -174,6 +176,38 @@ class CompileCmdTest {
 
     assertThat(compileCmd.formatGivenPackageFiles())
         .containsExactly(projectDir.resolve("package.json"));
+  }
+
+  @Test
+  void givenExplicitProjectRootAndSiblingPackageFile_whenFormattingPackageFiles_thenResolvesIt()
+      throws IOException {
+    Files.createDirectories(tempDir.resolve("orders"));
+    Files.createDirectories(tempDir.resolve("shared"));
+
+    var compileCmd = new CompileCmd();
+    compileCmd.cli = new DatasqrlCli(tempDir, StatusHook.NONE, true);
+    compileCmd.projectRootOption.projectRoot = Optional.of(Path.of("orders"));
+    compileCmd.packageFiles = List.of(Path.of("../shared/shared-package.json"));
+
+    assertThat(compileCmd.formatGivenPackageFiles())
+        .containsExactly(tempDir.resolve("orders").resolve("../shared/shared-package.json"));
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"../../outside/package.json", "/etc/package.json"})
+  void givenExplicitProjectRootAndPackageFileOutsideWorkspace_whenFormatting_thenThrows(
+      String packageFile) throws IOException {
+    Files.createDirectories(tempDir.resolve("orders"));
+
+    var compileCmd = new CompileCmd();
+    compileCmd.cli = new DatasqrlCli(tempDir, StatusHook.NONE, true);
+    compileCmd.projectRootOption.projectRoot = Optional.of(Path.of("orders"));
+    compileCmd.packageFiles = List.of(Path.of(packageFile));
+
+    assertThatThrownBy(compileCmd::formatGivenPackageFiles)
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage(
+            "Package file must be a relative path inside the workspace, got: " + packageFile);
   }
 
   @Test

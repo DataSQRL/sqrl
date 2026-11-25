@@ -239,8 +239,8 @@ Every path in `script` (`main`, `graphql`, `operations`, `database`, and the `sc
 
 * A path may leave the project to reach a sibling project in `/workspace`, e.g. `../shared/schema.graphqls`. Use `script.include` for the SQRL scripts of another project.
 * Never write an absolute path, and never a path that leads out of `/workspace`. The compile fails with `Value [<path>] for key [<key>] is not valid. A path must be relative to the project root and stay inside the workspace.` Fix the path in the package file.
-* The project root, given with `-r` or inferred from the package paths, must be inside `/workspace` too.
-* Symbolic links are followed while they stay inside `/workspace`. A link that leads outside is skipped with `Skipped the symbolic link '<path>', because it leads outside the workspace`, and its file is missing from the build. A path in the package file that points at such a link fails the compile like any path outside `/workspace`.
+* The project root, given with `-r` or inferred from the package paths, must be inside `/workspace` too, and so must the package files you pass to the command.
+* Symbolic links are followed while they stay inside `/workspace`. A link that leads outside is skipped with `Skipped the symbolic link '<path>', because it leads outside the workspace` (without the warning in a hidden folder such as `.claude`), and its file is missing from the build. A path in the package file that points at such a link fails the compile like any path outside `/workspace`.
 * When a project includes or references a sibling project, the folder that holds both must be the mounted `/workspace`, and commands select the project with `-r <project>`. Tell the user to mount that folder when they run the `datasqrl/cmd` image themselves.
 
 ### API Versioning and Compatibility

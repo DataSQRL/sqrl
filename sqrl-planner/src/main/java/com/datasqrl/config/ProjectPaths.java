@@ -50,12 +50,10 @@ public record ProjectPaths(Path workspaceDir, Path projectRoot) {
    */
   public Path resolve(String key, String path, ErrorCollector errors) {
     var resolved = isRelative(path) ? projectRoot.resolve(path).normalize() : null;
-    errors.checkFatal(
-        resolved != null && isInsideWorkspace(resolved),
-        "Value [%s] for key [%s] is not valid. %s",
-        path,
-        key,
-        RULE);
+    // Throws also with a collector that does not abort on fatal errors, since callers use the path
+    if (resolved == null || !isInsideWorkspace(resolved)) {
+      throw errors.exception("Value [%s] for key [%s] is not valid. %s", path, key, RULE);
+    }
 
     return resolved;
   }

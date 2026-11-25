@@ -73,6 +73,15 @@ class ProjectPathsTest {
   }
 
   @Test
+  void givenCollectorThatDoesNotAbort_whenResolvePathLeavingWorkspace_thenStillThrows() {
+    var errors = ErrorCollector.root().abortOnFatal(false);
+
+    assertThatThrownBy(() -> paths.resolve("script.main", "../../main.sqrl", errors))
+        .isInstanceOf(CollectedException.class);
+    assertThat(errors.hasErrors()).isTrue();
+  }
+
+  @Test
   void givenAbsolutePathInsideWorkspace_whenResolve_thenFails() {
     var absolute = projectDir.resolve("main.sqrl").toAbsolutePath().toString();
 

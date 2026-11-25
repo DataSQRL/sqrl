@@ -48,8 +48,8 @@ import org.springframework.stereotype.Component;
  * preprocessing than just copying files.
  *
  * <p>Symbolic links are followed as long as they stay inside the workspace, which is considered
- * safe to read. A link that leads outside is skipped with a warning, so that the build holds no
- * file from outside the workspace.
+ * safe to read. A link that leads outside is skipped, so that the build holds no file from outside
+ * the workspace, with a warning unless it is in a hidden folder.
  */
 @Component
 public class FilePreprocessingPipeline {
@@ -162,18 +162,34 @@ public class FilePreprocessingPipeline {
      * Returns whether the path is a symbolic link that leads outside the workspace, and warns if
      * so. Checking the links is enough: the visitor skips a directory link that leads outside, so
      * every other path below a directory inside the workspace resolves inside it.
+     *
+     * <p>A link in a hidden folder, such as the skills that a coding agent links into {@code
+     * .claude/skills}, is skipped without a warning: it holds tool files, not project sources, and
+     * SQRL imports cannot name a hidden folder.
      */
     private boolean isLinkOutside(Path path) {
       if (!Files.isSymbolicLink(path) || workspacePaths.projectPaths().isInsideWorkspace(path)) {
         return false;
       }
-      errors.warn(
-          "Skipped the symbolic link '%s'%s, because it leads outside the workspace",
-          sourceDir.relativize(path),
-          includeNamespace
-              .map(namespace -> " of the included project '%s'".formatted(namespace))
-              .orElse(""));
+      var relativePath = sourceDir.relativize(path);
+      if (!isHidden(relativePath)) {
+        errors.warn(
+            "Skipped the symbolic link '%s'%s, because it leads outside the workspace",
+            relativePath,
+            includeNamespace
+                .map(namespace -> " of the included project '%s'".formatted(namespace))
+                .orElse(""));
+      }
       return true;
+    }
+
+    private static boolean isHidden(Path relativePath) {
+      for (var name : relativePath) {
+        if (name.toString().startsWith(".")) {
+          return true;
+        }
+      }
+      return false;
     }
   }
 

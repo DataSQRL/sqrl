@@ -196,10 +196,24 @@ public abstract class AbstractCompileCmd extends BasePackageConfCmd {
         .filter(path -> !path.normalize().equals(DirectoryUtils.EMPTY_PATH))
         .ifPresent(p -> log.info("Inferred project root folder from given package file(s): {}", p));
 
+    var projectPaths = new ProjectPaths(cli.workspaceDir, basePath);
     return packageFiles.stream()
         .map(pkg -> inferredProjectRoot.map(root -> root.relativize(pkg.normalize())).orElse(pkg))
-        .map(basePath::resolve)
+        .map(pkg -> resolvePackageFile(projectPaths, basePath, pkg))
         .toList();
+  }
+
+  /**
+   * Resolves a package file argument against the project root. Like the paths in the package files,
+   * it must be relative and stay inside the workspace, see {@link ProjectPaths}.
+   */
+  private static Path resolvePackageFile(ProjectPaths projectPaths, Path basePath, Path pkg) {
+    var file = basePath.resolve(pkg);
+    if (pkg.isAbsolute() || !projectPaths.isInsideWorkspace(file.normalize())) {
+      throw new IllegalArgumentException(
+          "Package file must be a relative path inside the workspace, got: " + pkg);
+    }
+    return file;
   }
 
   private void validateTestPath(Path path) {

@@ -43,9 +43,9 @@ Commands:
 
 :::warning
 You need to mount the current directory (`$PWD` or `${PWD}` on Windows with Powershell) to the `/workspace`
-directory for file access in Docker. The paths in a package file must stay inside `/workspace`, so when a project
-includes or references a sibling project, mount the directory that holds both and select the project with `-r` or
-by the path of its package file. See the [configuration documentation](configuration.md#source-files-script).
+directory for file access in Docker. The package files and the paths in them must stay inside `/workspace`,
+so when a project includes or references a sibling project, mount the directory that holds both and select the
+project with `-r` or by the path of its package file. See the [configuration documentation](configuration.md#source-files-script).
 :::
 
 :::info
