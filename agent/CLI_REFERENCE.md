@@ -37,7 +37,7 @@ Creates a new project in the `/workspace/<name>/` folder with `<name>.sqrl`, `<n
 
 ### add-func
 
-Adds a Java UDF template to the `functions/` folder of an existing project. `-r` names the project root, relative to `/workspace`; without it the file goes to `/workspace/functions/`. `--aggregate` creates an aggregate function instead of a scalar one.
+Adds a Java UDF template to the `functions/` folder of an existing project. `-r` names the project root, relative to `/workspace` and inside it; without it the file goes to `/workspace/functions/`. `--aggregate` creates an aggregate function instead of a scalar one.
 
 ```bash
 /opt/agent/cmd.sh add-func -r myproject MyFunction
