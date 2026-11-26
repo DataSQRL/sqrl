@@ -192,8 +192,9 @@ Compiles an SQRL project and produces all build artifacts.
                               example "build/shop-replay". After the compile,
                               the compile fails when Flink cannot restore the
                               state of that build from the new compiled plan.
-                              Also accepts a target folder or a plan folder. A
-                              relative path resolves against the project root.
+                              Also accepts a target folder or a plan folder.
+                              The path must be relative to the project root and
+                              stay inside the workspace.
 
   -h, --help                Show this help message and exit.
   -r, --project-root=<projectRoot>

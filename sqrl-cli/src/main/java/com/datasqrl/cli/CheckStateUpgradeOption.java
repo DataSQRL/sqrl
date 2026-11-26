@@ -17,6 +17,7 @@ package com.datasqrl.cli;
 
 import com.datasqrl.cli.FlinkStateUpgradeCheck.FlinkJob;
 import com.datasqrl.cli.StateUpgradeBreak.OldState;
+import com.datasqrl.config.ProjectPaths;
 import com.datasqrl.config.SqrlConstants;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.util.ConfigLoaderUtils;
@@ -27,7 +28,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
-import lombok.SneakyThrows;
 import org.apache.flink.configuration.PipelineOptions;
 import picocli.CommandLine.Option;
 
@@ -62,7 +62,8 @@ public class CheckStateUpgradeOption {
           "Build folder of the deployed (old) version, for example \"build/shop-replay\"."
               + " After the compile, the compile fails when Flink cannot restore the state of"
               + " that build from the new compiled plan. Also accepts a target folder or a plan"
-              + " folder. A relative path resolves against the project root.\n")
+              + " folder. The path must be relative to the project root and stay inside the"
+              + " workspace.\n")
   Optional<Path> oldBuildFolder = Optional.empty();
 
   /**
@@ -73,20 +74,26 @@ public class CheckStateUpgradeOption {
   private Optional<Path> oldPlanDir = Optional.empty();
 
   /**
-   * Fails when the folder of the option does not exist, has no plan folder, or has its plan folder
-   * inside the build folder or the target folder of this compile. Call it before the compile,
-   * because the compile empties both folders.
+   * Fails when the path of the option breaks the rule of {@link ProjectPaths}, when the folder does
+   * not exist or has no plan folder, or when its plan folder is inside the build folder or the
+   * target folder of this compile. Call it before the compile, because the compile empties both
+   * folders.
    */
-  void checkOldBuildFolder(Path projectRoot, Path buildDir, Path targetDir, ErrorCollector errors) {
+  void checkOldBuildFolder(
+      ProjectPaths projectPaths, Path buildDir, Path targetDir, ErrorCollector errors) {
     oldBuildFolder.ifPresent(
         givenOldBuildFolder -> {
-          var oldBuildFolderPath = resolveOldBuildFolder(projectRoot, givenOldBuildFolder);
+          var oldBuildDir =
+              projectPaths
+                  .resolve("--check-state-upgrade-from", givenOldBuildFolder.toString(), errors)
+                  .toAbsolutePath()
+                  .normalize();
           errors.checkFatal(
-              Files.exists(oldBuildFolderPath),
+              Files.exists(oldBuildDir),
               "The --check-state-upgrade-from folder %s does not exist",
-              oldBuildFolderPath);
+              oldBuildDir);
 
-          var foundOldPlanDir = findPlanDir(oldBuildFolderPath, errors);
+          var foundOldPlanDir = findPlanDir(oldBuildDir, errors);
           checkPlanDirOutside(foundOldPlanDir, "build folder", "-b", buildDir, errors);
           checkPlanDirOutside(foundOldPlanDir, "target folder", "-t", targetDir, errors);
           oldPlanDir = Optional.of(foundOldPlanDir);
@@ -202,10 +209,6 @@ public class CheckStateUpgradeOption {
         .anyMatch(stateUpgradeBreak -> stateUpgradeBreak.oldState() == oldState);
   }
 
-  private static Path resolveOldBuildFolder(Path projectRoot, Path givenOldBuildFolder) {
-    return projectRoot.resolve(givenOldBuildFolder).toAbsolutePath().normalize();
-  }
-
   /**
    * Fails when the old plan folder is inside a folder that the compile empties. The message names
    * the option that sets the compile folder, so that the user knows which option to change.
@@ -214,18 +217,18 @@ public class CheckStateUpgradeOption {
       Path oldPlanDir,
       String compileFolderName,
       String compileFolderOption,
-      Path compileFolder,
+      Path compileDir,
       ErrorCollector errors) {
-    var absoluteCompileFolder = compileFolder.toAbsolutePath().normalize();
+    var absoluteCompileDir = compileDir.toAbsolutePath().normalize();
     errors.checkFatal(
-        !isInsideFolder(oldPlanDir, absoluteCompileFolder),
+        !isInsideDir(oldPlanDir, absoluteCompileDir),
         "The old plan folder %s of --check-state-upgrade-from is inside the %s %s of this compile."
             + " The compile empties its build folder and its target folder, so it would delete the"
             + " old build or the symbolic link to it. Give this compile a %s value that is outside"
             + " the old build.",
         oldPlanDir,
         compileFolderName,
-        absoluteCompileFolder,
+        absoluteCompileDir,
         compileFolderOption);
   }
 
@@ -233,42 +236,33 @@ public class CheckStateUpgradeOption {
    * Returns true when the path is inside the folder before or after the symbolic links resolve. A
    * link to the folder hides the path before the links resolve. A link inside the folder hides the
    * path after the links resolve, and the compile deletes that link when it empties the folder.
+   *
+   * <p>{@link ProjectPaths#isInsideWorkspace} needs both forms inside, because it decides if a path
+   * is safe to read. This check needs one form inside, because it decides if the compile can delete
+   * the old build.
    */
-  private static boolean isInsideFolder(Path absolutePath, Path absoluteFolder) {
-    return absolutePath.startsWith(absoluteFolder)
-        || realPath(absolutePath).startsWith(realPath(absoluteFolder));
-  }
-
-  /**
-   * Returns the path with all symbolic links resolved. The target folder can be missing before its
-   * first compile, so the part of the path that does not exist stays as it is.
-   */
-  @SneakyThrows
-  private static Path realPath(Path absolutePath) {
-    var existingPath = absolutePath;
-    while (!Files.exists(existingPath)) {
-      existingPath = existingPath.getParent();
-    }
-    return existingPath.toRealPath().resolve(existingPath.relativize(absolutePath));
+  private static boolean isInsideDir(Path absolutePath, Path absoluteDir) {
+    return absolutePath.startsWith(absoluteDir)
+        || ProjectPaths.realPath(absolutePath).startsWith(ProjectPaths.realPath(absoluteDir));
   }
 
   /** Finds the plan folder in a build folder, a target folder, or a plan folder. */
-  private static Path findPlanDir(Path oldBuildFolderPath, ErrorCollector errors) {
+  private static Path findPlanDir(Path oldBuildDir, ErrorCollector errors) {
     var buildPlanDir =
-        oldBuildFolderPath.resolve(SqrlConstants.DEPLOY_DIR_NAME).resolve(SqrlConstants.PLAN_DIR);
-    var targetPlanDir = oldBuildFolderPath.resolve(SqrlConstants.PLAN_DIR);
+        oldBuildDir.resolve(SqrlConstants.DEPLOY_DIR_NAME).resolve(SqrlConstants.PLAN_DIR);
+    var targetPlanDir = oldBuildDir.resolve(SqrlConstants.PLAN_DIR);
 
     return Stream.of(buildPlanDir, targetPlanDir)
         .filter(Files::isDirectory)
         .findFirst()
-        .or(() -> Optional.of(oldBuildFolderPath).filter(CheckStateUpgradeOption::hasFlinkFiles))
+        .or(() -> Optional.of(oldBuildDir).filter(CheckStateUpgradeOption::hasFlinkFiles))
         .orElseThrow(
             () ->
                 errors.exception(
                     "Cannot find the plan folder in %s. Give a build folder (with deploy/plan), a"
                         + " target folder (with plan), or a plan folder (with"
                         + " flink-compiled-plan.json or flink-config.yaml).",
-                    oldBuildFolderPath));
+                    oldBuildDir));
   }
 
   /** Returns true when the folder holds a Flink file, so the folder is itself a plan folder. */

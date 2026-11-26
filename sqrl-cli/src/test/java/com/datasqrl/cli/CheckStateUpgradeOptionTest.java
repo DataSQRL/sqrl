@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.datasqrl.cli.FlinkStateUpgradeCheck.FlinkJob;
+import com.datasqrl.config.ProjectPaths;
 import com.datasqrl.error.CollectedException;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorMessage;
@@ -51,12 +52,71 @@ class CheckStateUpgradeOptionTest {
 
     @TempDir private Path projectRoot;
 
+    /** A folder outside the workspace. The tests use the project root as the workspace. */
+    @TempDir private Path outsideWorkspace;
+
+    @Test
+    void givenAbsolutePath_whenCheckOldBuildFolder_thenFatalPathRule() throws IOException {
+      writeCompiledPlan(projectRoot.resolve("build/shop-replay/deploy/plan"));
+
+      assertThatThrownBy(
+              () -> checkOldBuildFolder(projectRoot.resolve("build/shop-replay").toString()))
+          .isInstanceOf(CollectedException.class)
+          .hasMessageContaining("for key [--check-state-upgrade-from] is not valid")
+          .hasMessageContaining(ProjectPaths.RULE);
+    }
+
+    @Test
+    void givenPathOutsideWorkspace_whenCheckOldBuildFolder_thenFatalPathRule() throws IOException {
+      writeCompiledPlan(outsideWorkspace.resolve("deploy/plan"));
+      var pathOutsideWorkspace = projectRoot.relativize(outsideWorkspace).toString();
+
+      assertThatThrownBy(() -> checkOldBuildFolder(pathOutsideWorkspace))
+          .isInstanceOf(CollectedException.class)
+          .hasMessageContaining("for key [--check-state-upgrade-from] is not valid")
+          .hasMessageContaining(ProjectPaths.RULE);
+    }
+
+    @Test
+    void givenSymbolicLinkToFolderOutsideWorkspace_whenCheckOldBuildFolder_thenFatalPathRule()
+        throws IOException {
+      writeCompiledPlan(outsideWorkspace.resolve("deploy/plan"));
+      Files.createSymbolicLink(projectRoot.resolve("released-build"), outsideWorkspace);
+
+      assertThatThrownBy(() -> checkOldBuildFolder("released-build"))
+          .isInstanceOf(CollectedException.class)
+          .hasMessageContaining("for key [--check-state-upgrade-from] is not valid")
+          .hasMessageContaining(ProjectPaths.RULE);
+    }
+
+    @Test
+    void givenOtherProjectInWorkspace_whenCheckOldBuildFolder_thenNoErrors() throws IOException {
+      var otherProjectRoot = Files.createDirectories(projectRoot.resolve("other-project"));
+      writeCompiledPlan(projectRoot.resolve("other-project/build/deploy/plan"));
+      var errors = ErrorCollector.root();
+
+      option("../other-project/build")
+          .checkOldBuildFolder(
+              new ProjectPaths(projectRoot, projectRoot.resolve("shop")),
+              buildDir(),
+              targetDir(),
+              errors);
+
+      assertThat(errors.hasErrors()).isFalse();
+      assertThat(otherProjectRoot).isDirectory();
+    }
+
+    /** The paths of a project whose root is also the workspace. */
+    private ProjectPaths projectPaths() {
+      return new ProjectPaths(projectRoot, projectRoot);
+    }
+
     @Test
     void givenOptionNotSet_whenCheckOldBuildFolderAndCheckUpgrade_thenNoMessages() {
       var option = new CheckStateUpgradeOption();
       var errors = ErrorCollector.root();
 
-      option.checkOldBuildFolder(projectRoot, buildDir(), targetDir(), errors);
+      option.checkOldBuildFolder(projectPaths(), buildDir(), targetDir(), errors);
       option.checkUpgrade(targetDir(), errors);
 
       assertThat(errors.hasErrorsWarningsOrNotices()).isFalse();
@@ -134,7 +194,7 @@ class CheckStateUpgradeOptionTest {
               () ->
                   option("build/shop-replay")
                       .checkOldBuildFolder(
-                          projectRoot,
+                          projectPaths(),
                           defaultBuildDir,
                           defaultBuildDir.resolve("deploy"),
                           ErrorCollector.root()))
@@ -179,7 +239,7 @@ class CheckStateUpgradeOptionTest {
               () ->
                   option("artifacts")
                       .checkOldBuildFolder(
-                          projectRoot, buildDir(), targetFolderOption, ErrorCollector.root()))
+                          projectPaths(), buildDir(), targetFolderOption, ErrorCollector.root()))
           .isInstanceOf(CollectedException.class)
           .hasMessageContaining("is inside the target folder");
     }
@@ -262,7 +322,7 @@ class CheckStateUpgradeOptionTest {
     /** Checks the folder for a compile with {@code -b shop}. */
     private ErrorCollector checkOldBuildFolder(String oldBuildFolder) {
       var errors = ErrorCollector.root();
-      option(oldBuildFolder).checkOldBuildFolder(projectRoot, buildDir(), targetDir(), errors);
+      option(oldBuildFolder).checkOldBuildFolder(projectPaths(), buildDir(), targetDir(), errors);
       return errors;
     }
 
@@ -273,7 +333,7 @@ class CheckStateUpgradeOptionTest {
     private List<String> checkUpgradeNotices(String oldBuildFolder) throws IOException {
       var option = option(oldBuildFolder);
       var errors = ErrorCollector.root();
-      option.checkOldBuildFolder(projectRoot, buildDir(), targetDir(), errors);
+      option.checkOldBuildFolder(projectPaths(), buildDir(), targetDir(), errors);
       writeCompiledPlan(targetDir().resolve("plan"));
 
       option.checkUpgrade(targetDir(), errors);
@@ -295,7 +355,7 @@ class CheckStateUpgradeOptionTest {
       var option = option(oldBuildFolder);
       var errors = ErrorCollector.root();
 
-      option.checkOldBuildFolder(projectRoot, buildDir(), targetFolderOption, errors);
+      option.checkOldBuildFolder(projectPaths(), buildDir(), targetFolderOption, errors);
       // The compile writes the new plan to <target folder>/plan. A new search in the old build
       // finds this folder first, because it is <old build>/deploy/plan.
       writeCompiledPlan(targetFolderOption.resolve("plan"));
