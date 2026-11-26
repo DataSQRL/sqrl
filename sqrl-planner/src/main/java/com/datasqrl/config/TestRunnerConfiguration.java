@@ -22,9 +22,11 @@ import java.util.Optional;
 
 public interface TestRunnerConfiguration {
 
-  Path getSnapshotDir(Path projectRoot);
+  /** Returns the snapshot folder, resolved by the rule of the given project paths. */
+  Path getSnapshotDir(ProjectPaths projectPaths);
 
-  Optional<Path> getTestDir(Path projectRoot);
+  /** Returns the test folder if it exists, resolved by the rule of the given project paths. */
+  Optional<Path> getTestDir(ProjectPaths projectPaths);
 
   boolean useInferredSchema();
 

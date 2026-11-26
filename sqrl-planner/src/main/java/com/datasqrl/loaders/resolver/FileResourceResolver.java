@@ -55,13 +55,6 @@ public class FileResourceResolver implements ResourceResolver {
   }
 
   @Override
-  public Optional<Path> resolveFile(Path relativePath) {
-    var path = baseDir.resolve(relativePath);
-
-    return !Files.exists(path) ? Optional.empty() : Optional.of(path);
-  }
-
-  @Override
   public ResourceResolver getNested(Path subPath) {
     Preconditions.checkArgument(
         subPath.startsWith(baseDir), "Not a sub-path: %s of %s", subPath, baseDir);

@@ -16,10 +16,33 @@
 package com.datasqrl.config;
 
 import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.util.NameUtil;
 import java.nio.file.Path;
 
 public record WorkspacePaths(Path workspaceDir, Path buildDir, Path targetDir, Path projectRoot) {
+
+  /** Returns the rule for the paths that the project configures. */
+  public ProjectPaths projectPaths() {
+    return new ProjectPaths(workspaceDir, projectRoot);
+  }
+
+  /**
+   * Resolves a path that the package file configures, relative to the project root, see {@link
+   * ProjectPaths}. A path inside the project resolves to its copy in the build directory, which the
+   * packager preprocessed, and a path elsewhere in the workspace to the file itself.
+   *
+   * @param key the configuration key, for the error message
+   * @param path the path as configured
+   * @param errors the collector to fail with if the path leads outside the workspace
+   * @return the path to read
+   */
+  public Path resolveConfiguredPath(String key, String path, ErrorCollector errors) {
+    var resolved = projectPaths().resolve(key, path, errors).toAbsolutePath();
+    var root = projectRoot.toAbsolutePath().normalize();
+
+    return resolved.startsWith(root) ? buildDir.resolve(root.relativize(resolved)) : resolved;
+  }
 
   public Path getIncludePath(String namespace) {
     return NameUtil.namepath2Path(buildDir, NamePath.of(namespace));

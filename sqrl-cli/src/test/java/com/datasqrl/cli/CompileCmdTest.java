@@ -29,6 +29,7 @@ import com.datasqrl.compile.CompilationProcess;
 import com.datasqrl.compile.TestPlan;
 import com.datasqrl.config.ExecutionEnginesHolder;
 import com.datasqrl.config.PackageJson;
+import com.datasqrl.config.ProjectPaths;
 import com.datasqrl.config.TestRunnerConfiguration;
 import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.error.ErrorCollector;
@@ -44,6 +45,8 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
@@ -75,7 +78,8 @@ class CompileCmdTest {
     var testPlan = new TestPlan();
 
     when(sqrlConfig.getTestConfig()).thenReturn(testConfig);
-    when(testConfig.getTestDir(projectRoot)).thenReturn(Optional.of(testDir));
+    when(testConfig.getTestDir(new ProjectPaths(tempDir, projectRoot)))
+        .thenReturn(Optional.of(testDir));
     when(compilationProcess.executeCompilation(Optional.of(testDir)))
         .thenReturn(Pair.of(physicalPlan, testPlan));
 
@@ -97,8 +101,8 @@ class CompileCmdTest {
 
       compileCmd.compile(ErrorCollector.root());
 
-      verify(testConfig).getTestDir(projectRoot);
-      verify(testConfig, never()).getTestDir(tempDir);
+      verify(testConfig).getTestDir(new ProjectPaths(tempDir, projectRoot));
+      verify(testConfig, never()).getTestDir(new ProjectPaths(tempDir, tempDir));
       verify(compilationProcess).executeCompilation(Optional.of(testDir));
     }
   }
@@ -116,7 +120,8 @@ class CompileCmdTest {
     compileCmd.packageFiles = List.of(Path.of("project", "package.json"));
 
     when(sqrlConfig.getTestConfig()).thenReturn(testConfig);
-    when(testConfig.getTestDir(projectRoot)).thenReturn(Optional.empty());
+    when(testConfig.getTestDir(new ProjectPaths(tempDir, projectRoot)))
+        .thenReturn(Optional.empty());
     when(compilationProcess.executeCompilation(Optional.empty()))
         .thenReturn(Pair.of(PhysicalPlan.builder().build(), new TestPlan()));
 
@@ -171,6 +176,57 @@ class CompileCmdTest {
 
     assertThat(compileCmd.formatGivenPackageFiles())
         .containsExactly(projectDir.resolve("package.json"));
+  }
+
+  @Test
+  void givenExplicitProjectRootAndSiblingPackageFile_whenFormattingPackageFiles_thenResolvesIt()
+      throws IOException {
+    Files.createDirectories(tempDir.resolve("orders"));
+    Files.createDirectories(tempDir.resolve("shared"));
+
+    var compileCmd = new CompileCmd();
+    compileCmd.cli = new DatasqrlCli(tempDir, StatusHook.NONE, true);
+    compileCmd.projectRootOption.projectRoot = Optional.of(Path.of("orders"));
+    compileCmd.packageFiles = List.of(Path.of("../shared/shared-package.json"));
+
+    assertThat(compileCmd.formatGivenPackageFiles())
+        .containsExactly(tempDir.resolve("orders").resolve("../shared/shared-package.json"));
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"../../outside/package.json", "/etc/package.json"})
+  void givenExplicitProjectRootAndPackageFileOutsideWorkspace_whenFormatting_thenThrows(
+      String packageFile) throws IOException {
+    Files.createDirectories(tempDir.resolve("orders"));
+
+    var compileCmd = new CompileCmd();
+    compileCmd.cli = new DatasqrlCli(tempDir, StatusHook.NONE, true);
+    compileCmd.projectRootOption.projectRoot = Optional.of(Path.of("orders"));
+    compileCmd.packageFiles = List.of(Path.of(packageFile));
+
+    assertThatThrownBy(compileCmd::formatGivenPackageFiles)
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage(
+            "Package file must be a relative path inside the workspace, got: " + packageFile);
+  }
+
+  @Test
+  void givenPackageFileBehindDotDotAfterLinkToOutside_whenFormatting_thenThrows(
+      @TempDir Path outside) throws IOException {
+    Files.createDirectories(tempDir.resolve("orders"));
+    Files.createDirectories(outside.resolve("a"));
+    Files.writeString(outside.resolve("package.json"), "{}");
+    Files.createSymbolicLink(tempDir.resolve("orders/link"), outside.resolve("a"));
+
+    var compileCmd = new CompileCmd();
+    compileCmd.cli = new DatasqrlCli(tempDir, StatusHook.NONE, true);
+    compileCmd.projectRootOption.projectRoot = Optional.of(Path.of("orders"));
+    // Normalized, it is orders/package.json, but the OS resolves it to the outside package file
+    compileCmd.packageFiles = List.of(Path.of("link/../package.json"));
+
+    assertThatThrownBy(compileCmd::formatGivenPackageFiles)
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageStartingWith("Package file must be a relative path inside the workspace");
   }
 
   @Test

@@ -125,3 +125,5 @@ A script that reads a claim (`METADATA FROM 'auth.<claim>'`) compiles only with 
   }
 }
 ```
+
+`snapshot-folder` and `test-folder` are relative to the project root and must stay inside `/workspace`, also through symbolic links. A folder of a sibling project, such as `../shared/tests`, works when both projects are in `/workspace`. An absolute path, or one that leads out of `/workspace`, fails the `test` command with `Value [<path>] for key [test-runner.snapshot-folder] is not valid. A path must be relative to the project root and stay inside the workspace.` (or `test-runner.test-folder`). See Paths in the `/configure-sqrl` skill.

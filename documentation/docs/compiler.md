@@ -43,7 +43,9 @@ Commands:
 
 :::warning
 You need to mount the current directory (`$PWD` or `${PWD}` on Windows with Powershell) to the `/workspace`
-directory for file access in Docker.
+directory for file access in Docker. The package files and the paths in them must stay inside `/workspace`,
+so when a project includes or references a sibling project, mount the directory that holds both and select the
+project with `-r` or by the path of its package file. See the [configuration documentation](configuration.md#source-files-script).
 :::
 
 :::info
@@ -127,9 +129,9 @@ project.
                       one.
   -h, --help        Show this help message and exit.
   -r, --project-root=<projectRoot>
-                    Project root folder. Must be a relative path. If omitted,
-                      it is inferred from the package path(s), or is
-                      "/workspace" for a command that takes none.
+                    Project root folder. Must be a relative path inside the
+                      workspace. If omitted, it is inferred from the package
+                      path(s), or is "/workspace" for a command that takes none.
   -V, --version     Print version information and exit.
 ```
 
@@ -147,7 +149,7 @@ docker run --rm -v $PWD:/workspace datasqrl/cmd compile my-project-test-package.
 This creates a new scalar function template in the `functions/` directory, which the `compile` command builds with JBang.
 Use `--aggregate` to create an aggregate function instead.
 
-To add a function without changing into the project folder, pass the project root with `-r`. It is relative to the mounted directory and must exist:
+To add a function without changing into the project folder, pass the project root with `-r`. It is relative to the mounted directory and must be an existing directory inside it:
 
 ```bash
 docker run --rm -v $PWD:/workspace datasqrl/cmd add-func -r my-project MyAwesomeFunction
@@ -186,9 +188,10 @@ Compiles an SQRL project and produces all build artifacts.
   -B, --batch-output        Run in batch output mode (disables colored output).
   -h, --help                Show this help message and exit.
   -r, --project-root=<projectRoot>
-                            Project root folder. Must be a relative path. If
-                              omitted, it is inferred from the package path(s),
-                              or is "/workspace" for a command that takes none.
+                            Project root folder. Must be a relative path inside
+                              the workspace. If omitted, it is inferred from
+                              the package path(s), or is "/workspace" for a
+                              command that takes none.
   -t, --target=<targetFolder>
                             Folder for deployment artifacts and plans. The
                               value must be a relative path that remains within
@@ -266,9 +269,10 @@ Compiles, then runs a SQRL project in a lightweight, standalone environment.
   -B, --batch-output        Run in batch output mode (disables colored output).
   -h, --help                Show this help message and exit.
   -r, --project-root=<projectRoot>
-                            Project root folder. Must be a relative path. If
-                              omitted, it is inferred from the package path(s),
-                              or is "/workspace" for a command that takes none.
+                            Project root folder. Must be a relative path inside
+                              the workspace. If omitted, it is inferred from
+                              the package path(s), or is "/workspace" for a
+                              command that takes none.
   -t, --target=<targetFolder>
                             Folder for deployment artifacts and plans. The
                               value must be a relative path that remains within
@@ -380,9 +384,10 @@ Compiles, then tests a SQRL project.
   -B, --batch-output        Run in batch output mode (disables colored output).
   -h, --help                Show this help message and exit.
   -r, --project-root=<projectRoot>
-                            Project root folder. Must be a relative path. If
-                              omitted, it is inferred from the package path(s),
-                              or is "/workspace" for a command that takes none.
+                            Project root folder. Must be a relative path inside
+                              the workspace. If omitted, it is inferred from
+                              the package path(s), or is "/workspace" for a
+                              command that takes none.
   -t, --target=<targetFolder>
                             Folder for deployment artifacts and plans. The
                               value must be a relative path that remains within
@@ -457,9 +462,9 @@ Executes an already compiled SQRL script using its existing build artifacts.
 
   -h, --help      Show this help message and exit.
   -r, --project-root=<projectRoot>
-                  Project root folder. Must be a relative path. If omitted, it
-                    is inferred from the package path(s), or is "/workspace"
-                    for a command that takes none.
+                  Project root folder. Must be a relative path inside the
+                    workspace. If omitted, it is inferred from the package path
+                    (s), or is "/workspace" for a command that takes none.
   -t, --target=<targetFolder>
                   Folder for deployment artifacts and plans. The value must be
                     a relative path that remains within "<project-root>".

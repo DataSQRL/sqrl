@@ -10,7 +10,7 @@ description: Use when SQRL/SQL alone cannot implement required logic. Use to cre
 Only implement a UDF if the functionality cannot be implemented with existing Flink SQL or DataSQRL functions. Look up existing functions first.
 
 Follow these steps:
-- Initialize function with `/opt/agent/cmd.sh add-func -r <project-root> <function-name>` to create a scalar UDF. Append `--aggregate` to create an aggregate function. `-r` is the project root relative to `/workspace`, the same value you pass to `compile` and `test`, and not the current directory. Without `-r` the project root is `/workspace`.
+- Initialize function with `/opt/agent/cmd.sh add-func -r <project-root> <function-name>` to create a scalar UDF. Append `--aggregate` to create an aggregate function. `-r` is the project root relative to `/workspace`, the same value you pass to `compile` and `test`, and not the current directory. It must stay inside `/workspace`: a root such as `../other` is rejected with `Project root must be inside the workspace`. Without `-r` the project root is `/workspace`.
 - New function implementation is added in the project's `functions/` folder with the name `<function-name>.java`
 - The generated file declares `//DEPS org.apache.flink:flink-table-common:<version>` with the compiler's Flink version. Keep this line: the UDF does not compile without it.
 - Import into SQRL script with `IMPORT functions.<function-name>` or `IMPORT functions.*` for all functions. `functions/` sits at the project root, so from a script in a **subfolder** use the reserved `root` prefix — `IMPORT root.functions.<function-name>` — since SQRL relative dot-paths cannot climb upward. (Inside an included project, keep the import relative so it travels with the copied files.)

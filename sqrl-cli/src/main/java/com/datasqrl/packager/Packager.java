@@ -59,8 +59,8 @@ public class Packager {
   private final MainScript mainScript;
 
   public void preprocess(ErrorCollector errors) {
-    // Validate main script
-    config.getScriptConfig().getMainScript();
+    // Check every configured path before the first one is read
+    workspacePaths.projectPaths().validate(config, errors);
     try {
       cleanDir(workspacePaths.buildDir());
       cleanDir(workspacePaths.workspaceDir().resolve(SqrlConstants.DEFAULT_ICEBERG_WAREHOUSE_DIR));
@@ -71,14 +71,14 @@ public class Packager {
       var includes = config.getScriptConfig().getIncludeConfigs();
       for (var include : includes) {
         preprocessingPipeline.runInclude(
-            includeDir(basePath, include), include.getNamespace(), errors);
+            includeDir(include, errors), include.getNamespace(), errors);
       }
 
       preprocessingPipeline.run(basePath, errors);
 
       var libDir = workspacePaths.getUdfPath();
       var namespaces = includes.stream().map(IncludeConfig::getNamespace).toList();
-      JBangJars.warnIfBundledSeparately(libDir, externalIncludes(basePath, includes), errors);
+      JBangJars.warnIfBundledSeparately(libDir, externalIncludes(includes, errors), errors);
       JBangJars.failOnConflictingUdfs(libDir, namespaces, errors);
 
       writePackageConfig();
@@ -87,17 +87,24 @@ public class Packager {
     }
   }
 
-  private static Path includeDir(Path basePath, IncludeConfig include) {
-    return basePath.resolve(include.getPackage()).getParent();
+  /**
+   * Returns the root directory of an included project, the directory of its package file, which
+   * must be inside the workspace.
+   */
+  private Path includeDir(IncludeConfig include, ErrorCollector errors) {
+    var key = "script.include.%s.package".formatted(include.getNamespace());
+    workspacePaths.projectPaths().resolve(key, include.getPackage(), errors);
+    // Not normalized: the SqrlPreprocessor finds the include of a script by the configured path
+    return workspacePaths.projectRoot().resolve(include.getPackage()).getParent();
   }
 
   /** Returns the namespaces of the included projects outside the project folder. */
-  private static List<String> externalIncludes(Path basePath, List<IncludeConfig> includes) {
-    var projectDir = basePath.toAbsolutePath().normalize();
+  private List<String> externalIncludes(List<IncludeConfig> includes, ErrorCollector errors) {
+    var projectDir = workspacePaths.projectRoot().toAbsolutePath().normalize();
     return includes.stream()
         .filter(
             include ->
-                !includeDir(basePath, include).toAbsolutePath().normalize().startsWith(projectDir))
+                !includeDir(include, errors).toAbsolutePath().normalize().startsWith(projectDir))
         .map(IncludeConfig::getNamespace)
         .toList();
   }

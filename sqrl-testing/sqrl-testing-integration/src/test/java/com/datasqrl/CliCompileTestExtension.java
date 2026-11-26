@@ -24,6 +24,7 @@ import com.datasqrl.util.SnapshotTest.Snapshot;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
@@ -91,26 +92,34 @@ public class CliCompileTestExtension implements BeforeEachCallback, AfterEachCal
     clearDir(tempRoot);
   }
 
-  public AssertStatusHook execute(Path workspaceDir, String... args) {
-    return execute(workspaceDir, List.of(args));
+  public AssertStatusHook execute(Path projectDir, String... args) {
+    return execute(projectDir, List.of(args));
   }
 
   /**
-   * Executes the compiler command specified by the provided argument list. Sets {@link #buildDir}
-   * and {@link #planDir} based on the root directory.
+   * Executes the compiler command specified by the provided argument list on the project in the
+   * given directory. Sets {@link #buildDir} and {@link #planDir} based on the project directory.
+   *
+   * <p>The parent of the project directory is the workspace, as when it is mounted with the other
+   * projects that the project includes, and the command gets the project directory as {@code -r}.
+   *
+   * @param projectDir the project directory
+   * @param argsList the command, followed by its arguments
    */
-  public AssertStatusHook execute(Path workspaceDir, List<String> argsList) {
-    this.buildDir = workspaceDir.resolve(SqrlConstants.BUILD_DIR_NAME).toAbsolutePath();
+  public AssertStatusHook execute(Path projectDir, List<String> argsList) {
+    this.buildDir = projectDir.resolve(SqrlConstants.BUILD_DIR_NAME).toAbsolutePath();
     this.planDir =
         buildDir
             .resolve(SqrlConstants.DEPLOY_DIR_NAME)
             .resolve(SqrlConstants.PLAN_DIR)
             .toAbsolutePath();
+    var args = new ArrayList<>(argsList);
+    args.addAll(1, List.of("-r", projectDir.getFileName().toString()));
     var statusHook = new AssertStatusHook();
     var code =
-        new DatasqrlCli(workspaceDir, statusHook, true)
+        new DatasqrlCli(projectDir.toAbsolutePath().getParent(), statusHook, true)
             .getCmd()
-            .execute(argsList.toArray(String[]::new));
+            .execute(args.toArray(String[]::new));
     if (statusHook.isSuccess() && code != 0) {
       assertThat(code).isEqualTo(0);
     }

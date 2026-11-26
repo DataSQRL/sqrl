@@ -39,10 +39,6 @@ public class FileUtil {
     return p.getFileName().toString().endsWith(extension);
   }
 
-  public static Path combineWithBaseIfRelative(Path baseDir, Path dir) {
-    return dir.isAbsolute() ? dir : baseDir.resolve(dir);
-  }
-
   /**
    * Creates a hidden directory in the provided basePath.
    *

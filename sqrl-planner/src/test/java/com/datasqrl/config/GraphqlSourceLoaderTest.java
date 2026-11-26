@@ -24,7 +24,8 @@ import static org.mockito.Mockito.when;
 
 import com.datasqrl.config.PackageJson.ScriptApiConfig;
 import com.datasqrl.engine.server.ServerPhysicalPlan;
-import com.datasqrl.loaders.resolver.ResourceResolver;
+import com.datasqrl.error.CollectedException;
+import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.plan.validate.ExecutionGoal;
 import com.datasqrl.server.ApiSource;
 import com.datasqrl.server.GraphqlSchemaHandler;
@@ -46,7 +47,6 @@ class GraphqlSourceLoaderTest {
   @TempDir Path tempDir;
 
   @Mock ScriptFiles scriptFiles;
-  @Mock ResourceResolver resolver;
   @Mock GraphqlSchemaHandler graphqlSchemaHandler;
   @Mock ServerPhysicalPlan serverPlan;
 
@@ -61,17 +61,20 @@ class GraphqlSourceLoaderTest {
   @Test
   void givenExplicitSchemaAndOperations_whenLoad_thenValidatesAndReturnsExplicitVersions()
       throws IOException {
-    var schemaPath = writeFile("schema.graphqls", "type Query { foo: String }");
-    var opPath = writeFile("op.graphql", "query Foo { foo }");
+    writeFile("schema.graphqls", "type Query { foo: String }");
+    writeFile("op.graphql", "query Foo { foo }");
     when(scriptFiles.getApiConfigs()).thenReturn(List.of());
     when(scriptFiles.getGraphql()).thenReturn(Optional.of("schema.graphqls"));
     when(scriptFiles.getOperations()).thenReturn(List.of("op.graphql"));
-    when(resolver.resolveFile(Path.of("schema.graphqls"))).thenReturn(Optional.of(schemaPath));
-    when(resolver.resolveFile(Path.of("op.graphql"))).thenReturn(Optional.of(opPath));
 
     var loader =
         new GraphqlSourceLoader(
-            scriptFiles, resolver, graphqlSchemaHandler, config, ExecutionGoal.COMPILE);
+            scriptFiles,
+            workspacePaths(),
+            graphqlSchemaHandler,
+            config,
+            ExecutionGoal.COMPILE,
+            ErrorCollector.root());
     var result = loader.load(serverPlan);
 
     assertThat(result.apiVersions()).hasSize(1);
@@ -87,7 +90,7 @@ class GraphqlSourceLoaderTest {
 
   @Test
   void givenApiConfigs_whenLoad_thenValidatesConfiguredVersions() throws IOException {
-    var schemaPath = writeFile("v1-schema.graphqls", "type Query { foo: String }");
+    writeFile("v1-schema.graphqls", "type Query { foo: String }");
     when(scriptFiles.getApiConfigs())
         .thenReturn(
             List.of(
@@ -102,11 +105,15 @@ class GraphqlSourceLoaderTest {
                     return Optional.of("v1-schema.graphqls");
                   }
                 }));
-    when(resolver.resolveFile(Path.of("v1-schema.graphqls"))).thenReturn(Optional.of(schemaPath));
 
     var loader =
         new GraphqlSourceLoader(
-            scriptFiles, resolver, graphqlSchemaHandler, config, ExecutionGoal.COMPILE);
+            scriptFiles,
+            workspacePaths(),
+            graphqlSchemaHandler,
+            config,
+            ExecutionGoal.COMPILE,
+            ErrorCollector.root());
     var result = loader.load(serverPlan);
 
     assertThat(result.apiVersions()).hasSize(1);
@@ -117,7 +124,7 @@ class GraphqlSourceLoaderTest {
 
   @Test
   void givenVersionedOpenApiWithoutSchema_whenLoad_thenInfersVersionedSchema() throws IOException {
-    var opPath = writeFile("op.graphql", "query Foo { foo }");
+    writeFile("op.graphql", "query Foo { foo }");
     when(scriptFiles.getApiConfigs())
         .thenReturn(
             List.of(
@@ -137,13 +144,17 @@ class GraphqlSourceLoaderTest {
                     return Optional.of("openapi.json");
                   }
                 }));
-    when(resolver.resolveFile(Path.of("op.graphql"))).thenReturn(Optional.of(opPath));
     when(graphqlSchemaHandler.inferGraphQLSchema(serverPlan))
         .thenReturn("type Query { foo: String }");
 
     var loader =
         new GraphqlSourceLoader(
-            scriptFiles, resolver, graphqlSchemaHandler, config, ExecutionGoal.COMPILE);
+            scriptFiles,
+            workspacePaths(),
+            graphqlSchemaHandler,
+            config,
+            ExecutionGoal.COMPILE,
+            ErrorCollector.root());
     var result = loader.load(serverPlan);
 
     assertThat(result.inferredSchema()).contains("type Query { foo: String }");
@@ -164,7 +175,7 @@ class GraphqlSourceLoaderTest {
   @Test
   void givenVersionedOperationsWithoutSchema_whenLoad_thenInfersVersionedSchema()
       throws IOException {
-    var opPath = writeFile("op.graphql", "query Foo { foo }");
+    writeFile("op.graphql", "query Foo { foo }");
     when(scriptFiles.getApiConfigs())
         .thenReturn(
             List.of(
@@ -179,13 +190,17 @@ class GraphqlSourceLoaderTest {
                     return List.of("op.graphql");
                   }
                 }));
-    when(resolver.resolveFile(Path.of("op.graphql"))).thenReturn(Optional.of(opPath));
     when(graphqlSchemaHandler.inferGraphQLSchema(serverPlan))
         .thenReturn("type Query { foo: String }");
 
     var loader =
         new GraphqlSourceLoader(
-            scriptFiles, resolver, graphqlSchemaHandler, config, ExecutionGoal.COMPILE);
+            scriptFiles,
+            workspacePaths(),
+            graphqlSchemaHandler,
+            config,
+            ExecutionGoal.COMPILE,
+            ErrorCollector.root());
     var result = loader.load(serverPlan);
 
     assertThat(result.inferredSchema()).contains("type Query { foo: String }");
@@ -205,17 +220,21 @@ class GraphqlSourceLoaderTest {
   @Test
   void givenNoSchemaWithOperations_whenLoad_thenInfersSchemaAndIncludesOperations()
       throws IOException {
-    var opPath = writeFile("op.graphql", "query Foo { foo }");
+    writeFile("op.graphql", "query Foo { foo }");
     when(scriptFiles.getApiConfigs()).thenReturn(List.of());
     when(scriptFiles.getGraphql()).thenReturn(Optional.empty());
     when(scriptFiles.getOperations()).thenReturn(List.of("op.graphql"));
-    when(resolver.resolveFile(Path.of("op.graphql"))).thenReturn(Optional.of(opPath));
     when(graphqlSchemaHandler.inferGraphQLSchema(serverPlan))
         .thenReturn("type Query { foo: String }");
 
     var loader =
         new GraphqlSourceLoader(
-            scriptFiles, resolver, graphqlSchemaHandler, config, ExecutionGoal.COMPILE);
+            scriptFiles,
+            workspacePaths(),
+            graphqlSchemaHandler,
+            config,
+            ExecutionGoal.COMPILE,
+            ErrorCollector.root());
     var result = loader.load(serverPlan);
 
     assertThat(result.inferredSchema()).contains("type Query { foo: String }");
@@ -236,7 +255,12 @@ class GraphqlSourceLoaderTest {
 
     var loader =
         new GraphqlSourceLoader(
-            scriptFiles, resolver, graphqlSchemaHandler, config, ExecutionGoal.COMPILE);
+            scriptFiles,
+            workspacePaths(),
+            graphqlSchemaHandler,
+            config,
+            ExecutionGoal.COMPILE,
+            ErrorCollector.root());
     var result = loader.load(serverPlan);
 
     assertThat(result.inferredSchema()).contains("type Query { foo: String }");
@@ -247,19 +271,22 @@ class GraphqlSourceLoaderTest {
   @Test
   void givenExplicitSchemaInTestMode_whenUseInferredSchema_thenOverridesWithInferred()
       throws IOException {
-    var schemaPath = writeFile("schema.graphqls", "type Query { foo: String }");
-    var opPath = writeFile("op.graphql", "query Foo { foo }");
+    writeFile("schema.graphqls", "type Query { foo: String }");
+    writeFile("op.graphql", "query Foo { foo }");
     when(scriptFiles.getApiConfigs()).thenReturn(List.of());
     when(scriptFiles.getGraphql()).thenReturn(Optional.of("schema.graphqls"));
     when(scriptFiles.getOperations()).thenReturn(List.of("op.graphql"));
-    when(resolver.resolveFile(Path.of("schema.graphqls"))).thenReturn(Optional.of(schemaPath));
-    when(resolver.resolveFile(Path.of("op.graphql"))).thenReturn(Optional.of(opPath));
     when(graphqlSchemaHandler.inferGraphQLSchema(serverPlan))
         .thenReturn("type Query { bar: String }");
 
     var loader =
         new GraphqlSourceLoader(
-            scriptFiles, resolver, graphqlSchemaHandler, config, ExecutionGoal.TEST);
+            scriptFiles,
+            workspacePaths(),
+            graphqlSchemaHandler,
+            config,
+            ExecutionGoal.TEST,
+            ErrorCollector.root());
     var result = loader.load(serverPlan);
 
     assertThat(result.inferredSchema()).contains("type Query { bar: String }");
@@ -288,11 +315,15 @@ class GraphqlSourceLoaderTest {
                     return Optional.of("does-not-exist.graphqls");
                   }
                 }));
-    when(resolver.resolveFile(Path.of("does-not-exist.graphqls"))).thenReturn(Optional.empty());
 
     var loader =
         new GraphqlSourceLoader(
-            scriptFiles, resolver, graphqlSchemaHandler, config, ExecutionGoal.TEST);
+            scriptFiles,
+            workspacePaths(),
+            graphqlSchemaHandler,
+            config,
+            ExecutionGoal.TEST,
+            ErrorCollector.root());
 
     assertThatThrownBy(() -> loader.load(serverPlan))
         .isInstanceOf(IllegalArgumentException.class)
@@ -304,19 +335,83 @@ class GraphqlSourceLoaderTest {
     when(scriptFiles.getApiConfigs()).thenReturn(List.of());
     when(scriptFiles.getGraphql()).thenReturn(Optional.empty());
     when(scriptFiles.getOperations()).thenReturn(List.of("does-not-exist.graphql"));
-    when(resolver.resolveFile(Path.of("does-not-exist.graphql"))).thenReturn(Optional.empty());
 
     var loader =
         new GraphqlSourceLoader(
-            scriptFiles, resolver, graphqlSchemaHandler, config, ExecutionGoal.COMPILE);
+            scriptFiles,
+            workspacePaths(),
+            graphqlSchemaHandler,
+            config,
+            ExecutionGoal.COMPILE,
+            ErrorCollector.root());
 
     assertThatThrownBy(() -> loader.load(serverPlan))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("does-not-exist.graphql");
   }
 
+  @Test
+  void givenSchemaOfSiblingProjectInWorkspace_whenLoad_thenReadsItWhereItIs() throws IOException {
+    var projectDir = Files.createDirectories(tempDir.resolve("project"));
+    writeFile("shared/schema.graphqls", "type Query { shared: String }");
+    when(scriptFiles.getApiConfigs()).thenReturn(List.of(apiConfig("../shared/schema.graphqls")));
+
+    var loader =
+        new GraphqlSourceLoader(
+            scriptFiles,
+            new WorkspacePaths(tempDir, projectDir.resolve("build"), tempDir, projectDir),
+            graphqlSchemaHandler,
+            config,
+            ExecutionGoal.COMPILE,
+            ErrorCollector.root());
+    var result = loader.load(serverPlan);
+
+    assertThat(result.apiVersions().get(0).schema().getDefinition())
+        .isEqualTo("type Query { shared: String }");
+  }
+
+  @Test
+  void givenSchemaOutsideWorkspace_whenLoad_thenFailsNamingKeyAndValue() {
+    when(scriptFiles.getApiConfigs()).thenReturn(List.of(apiConfig("../outside.graphqls")));
+
+    var loader =
+        new GraphqlSourceLoader(
+            scriptFiles,
+            workspacePaths(),
+            graphqlSchemaHandler,
+            config,
+            ExecutionGoal.COMPILE,
+            ErrorCollector.root());
+
+    assertThatThrownBy(() -> loader.load(serverPlan))
+        .isInstanceOf(CollectedException.class)
+        .hasMessage(
+            "Value [../outside.graphqls] for key [script.api.v1.schema] is not valid. "
+                + ProjectPaths.RULE);
+  }
+
+  private static ScriptApiConfig apiConfig(String schema) {
+    return new ScriptApiConfig() {
+      @Override
+      public String getVersion() {
+        return "v1";
+      }
+
+      @Override
+      public Optional<String> getSchema() {
+        return Optional.of(schema);
+      }
+    };
+  }
+
+  /** The temporary directory is the workspace, the project root and the build directory. */
+  private WorkspacePaths workspacePaths() {
+    return new WorkspacePaths(tempDir, tempDir, tempDir.resolve("deploy"), tempDir);
+  }
+
   private Path writeFile(String name, String content) throws IOException {
     var path = tempDir.resolve(name);
+    Files.createDirectories(path.getParent());
     Files.writeString(path, content);
     return path;
   }
