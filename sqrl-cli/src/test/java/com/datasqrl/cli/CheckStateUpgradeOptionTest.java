@@ -462,8 +462,8 @@ class CheckStateUpgradeOptionTest {
                       OLD_PLAN_DIR, oldFlinkJob, newFlinkJob, ErrorCollector.root()))
           .isInstanceOf(CollectedException.class)
           .hasMessageContaining(
-              "operator id=4 changed: field 'outputType' differs: ROW<`id` INT> -> ROW<`id` INT,"
-                  + " `extra` INT> (Deduplicate) [incompatible state]")
+              "operator id=4 changed: field 'outputType' differs: [id INT] -> [id INT, extra INT]"
+                  + " (Deduplicate) [incompatible state]")
           .hasMessageContaining(
               "operator id=5 removed: Deduplicate(keep=[LastRow], key=[id]) [unclaimed state]")
           .hasMessageContaining("The lines marked [unclaimed state] leave old state")

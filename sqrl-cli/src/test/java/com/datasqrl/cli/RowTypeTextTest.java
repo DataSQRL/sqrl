@@ -61,4 +61,30 @@ class RowTypeTextTest {
   void givenTypeThatIsNotRow_whenColumnTypes_thenEmpty() {
     assertThat(RowTypeText.columnTypes("BIGINT")).isEmpty();
   }
+
+  @Test
+  void givenRowType_whenColumns_thenNamesAndTypes() {
+    assertThat(RowTypeText.columns("ROW<`id` INT, `price` DECIMAL(10, 2) NOT NULL>"))
+        .hasValue(
+            List.of(
+                new RowTypeText.Column("id", "INT"),
+                new RowTypeText.Column("price", "DECIMAL(10, 2) NOT NULL")));
+  }
+
+  @Test
+  void givenNameWithDoubledBacktick_whenColumns_thenNameHasOneBacktick() {
+    assertThat(RowTypeText.columns("ROW<`a, ``b` INT>"))
+        .hasValue(List.of(new RowTypeText.Column("a, `b", "INT")));
+  }
+
+  @Test
+  void givenColumnDescription_whenColumns_thenDescriptionRemoved() {
+    assertThat(RowTypeText.columns("ROW<`id` INT 'the id, unique'>"))
+        .hasValue(List.of(new RowTypeText.Column("id", "INT")));
+  }
+
+  @Test
+  void givenTypeThatIsNotRow_whenColumns_thenEmpty() {
+    assertThat(RowTypeText.columns("BIGINT")).isEmpty();
+  }
 }

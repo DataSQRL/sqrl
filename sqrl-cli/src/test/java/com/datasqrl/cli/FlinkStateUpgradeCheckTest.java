@@ -209,7 +209,7 @@ class FlinkStateUpgradeCheckTest {
   }
 
   @Test
-  void givenNewColumnInTextOutputType_whenCheck_thenChangedOutputTypeShowsText() {
+  void givenNewColumnInTextOutputType_whenCheck_thenChangedOutputTypeShowsColumns() {
     var oldAggregateOperator =
         aggregateOperator().put("outputType", "ROW<`id` INT, `cnt` BIGINT NOT NULL>");
     var newAggregateOperator =
@@ -222,10 +222,47 @@ class FlinkStateUpgradeCheckTest {
         .containsExactly(
             new StateUpgradeBreak(
                 "operator id=2 changed: field 'outputType' differs:"
-                    + " ROW<`id` INT, `cnt` BIGINT NOT NULL> ->"
-                    + " ROW<`id` INT, `cnt` BIGINT NOT NULL, `total` BIGINT>"
+                    + " [id INT, cnt BIGINT NOT NULL] ->"
+                    + " [id INT, cnt BIGINT NOT NULL, total BIGINT]"
                     + " (GroupAggregate(groupBy=[customerid]))",
                 OldState.INCOMPATIBLE));
+  }
+
+  @Test
+  void givenTimeAttributeAndTextOutputType_whenCheck_thenBothSidesShowColumns() {
+    var oldDeduplicateOperator = withTimeAttributeOutputType(deduplicateOperator("0 ms"));
+    var newDeduplicateOperator =
+        deduplicateOperator("0 ms")
+            .put(
+                "outputType",
+                "ROW<`id` INT NOT NULL, `ts` TIMESTAMP_LTZ(3) NOT NULL, `extra` INT>");
+
+    var result = check(plan("2.3", oldDeduplicateOperator), plan("2.3", newDeduplicateOperator));
+
+    assertThat(result.breaks())
+        .singleElement()
+        .extracting(StateUpgradeBreak::message)
+        .isEqualTo(
+            "operator id=5 changed: field 'outputType' differs:"
+                + " [id INT NOT NULL, ts TIMESTAMP_LTZ(3) NOT NULL *ROWTIME*] ->"
+                + " [id INT NOT NULL, ts TIMESTAMP_LTZ(3) NOT NULL, extra INT]"
+                + " (Deduplicate(keep=[LastRow], key=[id]))");
+  }
+
+  @Test
+  void givenTimeAttributeBecomesRegularTimestamp_whenCheck_thenChangedOutputType() {
+    var oldDeduplicateOperator = withTimeAttributeOutputType(deduplicateOperator("0 ms"));
+    var newDeduplicateOperator =
+        withOutputType(
+            deduplicateOperator("0 ms"), "id INT NOT NULL", "ts TIMESTAMP_LTZ(3) NOT NULL");
+
+    var result = check(plan("2.3", oldDeduplicateOperator), plan("2.3", newDeduplicateOperator));
+
+    assertThat(result.breaks())
+        .singleElement()
+        .extracting(StateUpgradeBreak::message)
+        .asString()
+        .contains("*ROWTIME*] -> [id INT NOT NULL, ts TIMESTAMP_LTZ(3) NOT NULL]");
   }
 
   @Test
@@ -722,6 +759,24 @@ class FlinkStateUpgradeCheckTest {
   private static ObjectNode sinkOperator() {
     return operator(3, "stream-exec-sink_1", "Sink(table=[CustomerCount])")
         .put("inputChangelogMode", "INSERT, UPDATE_AFTER");
+  }
+
+  /**
+   * Sets the {@code outputType} to {@code id INT NOT NULL} and a time attribute {@code ts}, in the
+   * form that Flink writes it: an object with {@code fields}, and the time attribute as an object.
+   */
+  private static ObjectNode withTimeAttributeOutputType(ObjectNode operator) {
+    var columnFields = operator.putObject("outputType").put("type", "ROW").putArray("fields");
+    columnFields.addObject().put("name", "id").put("fieldType", "INT NOT NULL");
+    columnFields
+        .addObject()
+        .put("name", "ts")
+        .putObject("fieldType")
+        .put("type", "TIMESTAMP_WITH_LOCAL_TIME_ZONE")
+        .put("nullable", false)
+        .put("precision", 3)
+        .put("kind", "ROWTIME");
+    return operator;
   }
 
   /** Sets the {@code aggCalls} of the operator to the one aggregate call. */

@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Checks if Flink can restore the state of an old build from a new build.
@@ -103,6 +104,14 @@ final class FlinkStateUpgradeCheck {
   private static final String SUM0_FUNCTION = "SUM0";
 
   private static final String SUM_FUNCTION = "SUM";
+
+  /**
+   * The names that Flink shows for the timestamp types of the object form of an {@code outputType}.
+   */
+  private static final Map<String, String> TIMESTAMP_TYPE_NAMES =
+      Map.of(
+          "TIMESTAMP_WITH_LOCAL_TIME_ZONE", "TIMESTAMP_LTZ",
+          "TIMESTAMP_WITHOUT_TIME_ZONE", "TIMESTAMP");
 
   /** The field of a {@code state} entry that holds the TTL, for example {@code "1 h"}. */
   private static final String TTL_FIELD = "ttl";
@@ -374,13 +383,20 @@ final class FlinkStateUpgradeCheck {
   }
 
   /**
-   * Returns the columns of a {@code ROW} output type as {@code [name type, ...]}, which is shorter
-   * than the JSON. A type that is not plain text, such as a time attribute, stays compact JSON. The
-   * text form of a type is already short, so it stays as it is.
+   * Returns the columns of a {@code ROW} output type as {@code [name type, ...]}, in the same form
+   * for the text form and the object form of the plan. Returns the value as it is when it is not a
+   * {@code ROW} type. This method only builds the text of a break line: {@link #columnTypes} gives
+   * the values that the check compares.
    */
   private static String outputTypeText(JsonNode outputType) {
     if (outputType != null && outputType.isTextual()) {
-      return outputType.asText();
+      return RowTypeText.columns(outputType.asText())
+          .map(
+              columns ->
+                  columns.stream()
+                      .map(column -> column.name() + " " + column.type())
+                      .collect(Collectors.joining(", ", "[", "]")))
+          .orElse(outputType.asText());
     }
     if (outputType == null || !outputType.path("fields").isArray()) {
       return valueText(outputType);
@@ -389,14 +405,39 @@ final class FlinkStateUpgradeCheck {
     outputType
         .path("fields")
         .forEach(
-            column -> {
-              var columnType = column.path("fieldType");
-              columnTexts.add(
-                  column.path("name").asText()
-                      + " "
-                      + (columnType.isTextual() ? columnType.asText() : columnType.toString()));
-            });
+            column ->
+                columnTexts.add(
+                    column.path("name").asText() + " " + columnTypeText(column.path("fieldType"))));
     return "[" + String.join(", ", columnTexts) + "]";
+  }
+
+  /**
+   * Returns the type of a column in the object form as text. A timestamp object, for example {@code
+   * {"type":"TIMESTAMP_WITH_LOCAL_TIME_ZONE","nullable":false,"precision":3,"kind":"ROWTIME"}},
+   * gives the text that Flink shows for it, for example {@code TIMESTAMP_LTZ(3) NOT NULL
+   * *ROWTIME*}. Another object stays compact JSON.
+   */
+  private static String columnTypeText(JsonNode columnType) {
+    if (columnType.isTextual()) {
+      return columnType.asText();
+    }
+    var timestampTypeName = TIMESTAMP_TYPE_NAMES.get(columnType.path("type").asText());
+    if (timestampTypeName == null || !columnType.has("precision")) {
+      return columnType.toString();
+    }
+    var columnTypeText =
+        new StringBuilder(timestampTypeName)
+            .append('(')
+            .append(columnType.path("precision").asInt())
+            .append(')');
+    if (!columnType.path("nullable").asBoolean(true)) {
+      columnTypeText.append(" NOT NULL");
+    }
+    var timestampKind = columnType.path("kind").asText("REGULAR");
+    if (!timestampKind.equals("REGULAR")) {
+      columnTypeText.append(" *").append(timestampKind).append('*');
+    }
+    return columnTypeText.toString();
   }
 
   /**

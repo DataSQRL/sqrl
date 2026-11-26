@@ -51,6 +51,60 @@ final class RowTypeText {
   }
 
   /**
+   * A column of the text form of a {@code ROW} type.
+   *
+   * @param name the column name without its backticks, for example {@code a`b} for {@code `a``b`}
+   * @param type the column type without its description, for example {@code BIGINT NOT NULL}
+   */
+  record Column(String name, String type) {}
+
+  /**
+   * Returns the columns with their names and types, for the text of a break line. Returns empty
+   * when the text is not a {@code ROW} type. {@link #columnTypes} gives the types that the check
+   * compares.
+   */
+  static Optional<List<Column>> columns(String rowTypeText) {
+    var rowTypeEnd = rowTypeText.lastIndexOf('>');
+    if (!rowTypeText.startsWith(ROW_PREFIX) || rowTypeEnd < ROW_PREFIX.length()) {
+      return Optional.empty();
+    }
+    var columns = new ArrayList<Column>();
+    for (var columnText : topLevelColumns(rowTypeText.substring(ROW_PREFIX.length(), rowTypeEnd))) {
+      var strippedColumnText = columnText.strip();
+      var columnName = columnName(strippedColumnText);
+      var columnType = withoutColumnName(strippedColumnText);
+      if (columnName.isEmpty() || columnType.isEmpty()) {
+        return Optional.empty();
+      }
+      columns.add(new Column(columnName.get(), withoutColumnDescription(columnType.get())));
+    }
+    return Optional.of(columns);
+  }
+
+  /** Returns the quoted name at the start of a column, with each doubled backtick as one. */
+  private static Optional<String> columnName(String columnText) {
+    if (!columnText.startsWith("`")) {
+      return Optional.empty();
+    }
+    var columnName = new StringBuilder();
+    var position = 1;
+    while (position < columnText.length()) {
+      var character = columnText.charAt(position);
+      if (character == '`') {
+        if (position + 1 < columnText.length() && columnText.charAt(position + 1) == '`') {
+          columnName.append('`');
+          position += 2;
+          continue;
+        }
+        return Optional.of(columnName.toString());
+      }
+      columnName.append(character);
+      position++;
+    }
+    return Optional.empty();
+  }
+
+  /**
    * Splits the columns at each comma that is outside of {@code <...>}, {@code (...)}, a quoted name
    * and a quoted description. {@code DECIMAL(10, 2)} and a nested {@code ROW} stay one column.
    */
