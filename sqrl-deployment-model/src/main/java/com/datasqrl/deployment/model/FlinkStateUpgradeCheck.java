@@ -63,6 +63,28 @@ public final class FlinkStateUpgradeCheck {
   private static final String SINK_KIND = "stream-exec-sink";
 
   /**
+   * The operator kinds that keep no state. A local aggregate keeps its rows only in memory and
+   * sends them on before each checkpoint. Every other kind counts as a kind with state, also
+   * without a {@code state} field: Flink writes that field only for the operators with a TTL
+   * setting, so a window aggregate or an interval join has no such field. A kind that a later Flink
+   * version adds then also gets the checks for state. A source and a sink have their own rule, see
+   * {@link #canHoldState}.
+   */
+  private static final Set<String> OPERATOR_KINDS_WITHOUT_STATE =
+      Set.of(
+          "stream-exec-calc",
+          "stream-exec-correlate",
+          "stream-exec-drop-update-before",
+          "stream-exec-exchange",
+          "stream-exec-expand",
+          "stream-exec-local-group-aggregate",
+          "stream-exec-local-window-aggregate",
+          "stream-exec-mini-batch-assigner",
+          "stream-exec-union",
+          "stream-exec-values",
+          "stream-exec-watermark-assigner");
+
+  /**
    * The field with the row type of an operator. An operator with state stores rows of this type, so
    * a new, removed or changed column makes the restore fail. Flink ignores the column names.
    */
@@ -158,8 +180,8 @@ public final class FlinkStateUpgradeCheck {
    * Decides what happens to the old state of an operator, the same for each break of the operator.
    * The old state is unclaimed when the operator can hold state, and the new plan has no operator
    * with its id, an operator of another kind at its id, or no {@code state} entry with the name of
-   * an old entry. Otherwise the old state is incompatible when the plan shows state for the
-   * operator, and the operator has no state in the other cases.
+   * an old entry. Otherwise the old state is incompatible when the operator has state (see {@link
+   * #hasState}), and the operator has no state in the other cases.
    */
   private static OldState oldState(JsonNode oldOperator, JsonNode newOperator) {
     var oldStateIsUnclaimed =
@@ -174,13 +196,17 @@ public final class FlinkStateUpgradeCheck {
   }
 
   /**
-   * An operator can hold state when the plan shows state for it, and also when it is a source or a
-   * sink. A source keeps its read position, and a sink can keep the rows that it did not write yet,
-   * but the plan does not show this state.
+   * An operator can hold state when it has state (see {@link #hasState}), and also when it is a
+   * source or a sink. A source keeps its read position, and a sink can keep the rows that it did
+   * not write yet, but the plan does not show this state.
    */
   private static boolean canHoldState(JsonNode operator) {
+    return hasState(operator) || isSourceOrSink(operator);
+  }
+
+  private static boolean isSourceOrSink(JsonNode operator) {
     var operatorKind = operatorKind(type(operator));
-    return hasState(operator) || operatorKind.equals(SOURCE_KIND) || operatorKind.equals(SINK_KIND);
+    return operatorKind.equals(SOURCE_KIND) || operatorKind.equals(SINK_KIND);
   }
 
   /**
@@ -201,10 +227,19 @@ public final class FlinkStateUpgradeCheck {
     return stateNames;
   }
 
-  /** An operator has state when it has a {@code state} field or a {@code joinSpec}. */
+  /**
+   * An operator has state when it has a {@code state} field or a {@code joinSpec}. An operator
+   * without these fields has state when its kind is not in {@link #OPERATOR_KINDS_WITHOUT_STATE},
+   * and when it is not a source or a sink. A source or a sink without a {@code state} field stores
+   * no rows of its {@code outputType}, see {@link #canHoldState}.
+   */
   private static boolean hasState(JsonNode operator) {
-    return fieldValue(operator, STATE_FIELD) != null
-        || fieldValue(operator, JOIN_SPEC_FIELD) != null;
+    if (fieldValue(operator, STATE_FIELD) != null
+        || fieldValue(operator, JOIN_SPEC_FIELD) != null) {
+      return true;
+    }
+    return !OPERATOR_KINDS_WITHOUT_STATE.contains(operatorKind(type(operator)))
+        && !isSourceOrSink(operator);
   }
 
   /**

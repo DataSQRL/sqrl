@@ -1,0 +1,120 @@
+/*
+ * Copyright © 2021 DataSQRL (contact@datasqrl.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.datasqrl;
+
+import static com.datasqrl.SnapshotTestSupport.getResourcesDirectory;
+import static org.assertj.core.api.Assertions.assertThat;
+
+import com.datasqrl.cli.AssertStatusHook;
+import java.nio.file.Path;
+import org.apache.flink.table.planner.plan.nodes.exec.ExecNodeContext;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+
+/**
+ * Compiles an old and a new version of a script, and runs the state upgrade check on the two
+ * compiled Flink plans. The tests use the plans that Flink writes, so a renamed plan field or an
+ * operator kind without a {@code state} field shows up here.
+ */
+class StateUpgradeCheckCompileTest {
+
+  private static final Path PROJECT_DIR = getResourcesDirectory("state-upgrade-check");
+
+  /** The text in the package template that the test replaces with the script file. */
+  private static final String SCRIPT_FILE_TEMPLATE = "SCRIPT_FILE";
+
+  /**
+   * The {@code -b} values of the two compiles. {@code -b} resolves against the build folder, which
+   * the extension deletes after each test.
+   */
+  private static final String OLD_BUILD_FOLDER = "old";
+
+  private static final String NEW_BUILD_FOLDER = "new";
+
+  /** The old build for {@code --check-state-upgrade-from}, which resolves against the project. */
+  private static final String OLD_BUILD_FROM_PROJECT = "build/" + OLD_BUILD_FOLDER;
+
+  @RegisterExtension final CliCompileTestExtension compileExtension = new CliCompileTestExtension();
+
+  @Test
+  void givenSameScript_whenCheckStateUpgrade_thenPasses() {
+    var status = compileAndCheckUpgrade("window-count.sqrl", "window-count.sqrl");
+
+    assertThat(status.isSuccess()).as(status.getMessages()).isTrue();
+    assertThat(status.getMessages()).contains("The new Flink plan passes the state upgrade check");
+  }
+
+  @Test
+  void givenNewAggregateOnWindow_whenCheckStateUpgrade_thenIncompatibleWindowState() {
+    var status = compileAndCheckUpgrade("window-count.sqrl", "window-count-with-max.sqrl");
+
+    assertThat(status.isSuccess()).as(status.getMessages()).isFalse();
+    assertThat(status.getMessages())
+        .containsPattern(
+            "field 'outputType' differs: .*GlobalWindowAggregate.*\\[incompatible state]");
+  }
+
+  @Test
+  void givenNewColumnOnIntervalJoin_whenCheckStateUpgrade_thenIncompatibleJoinState() {
+    var status = compileAndCheckUpgrade("interval-join.sqrl", "interval-join-with-note.sqrl");
+
+    assertThat(status.isSuccess()).as(status.getMessages()).isFalse();
+    assertThat(status.getMessages())
+        .containsPattern("field 'outputType' differs: .*IntervalJoin.*\\[incompatible state]");
+  }
+
+  @Test
+  void givenNewTableMovesWindow_whenCheckStateUpgrade_thenUnclaimedWindowState() {
+    var status = compileAndCheckUpgrade("window-count.sqrl", "window-count-with-new-table.sqrl");
+
+    assertThat(status.isSuccess()).as(status.getMessages()).isFalse();
+    assertThat(status.getMessages())
+        .containsPattern(
+            "field 'type' differs: stream-exec-global-window-aggregate_\\d+ -> .*\\[unclaimed"
+                + " state]");
+  }
+
+  /**
+   * Compiles the old script into {@link #OLD_BUILD_FOLDER}. Then compiles the new script into
+   * {@link #NEW_BUILD_FOLDER} with the check against the old build, and returns that status.
+   *
+   * <p>Flink counts the operator ids in one counter for each JVM. A compile with the CLI runs in
+   * its own JVM, so its ids start at 1. Both compiles of a test run in one JVM, so the test resets
+   * the counter before each compile.
+   */
+  private AssertStatusHook compileAndCheckUpgrade(String oldScriptFile, String newScriptFile) {
+    compileExtension.writeTempPackage(PROJECT_DIR.resolve(oldScriptFile), SCRIPT_FILE_TEMPLATE);
+    ExecNodeContext.resetIdCounter();
+    var oldCompileStatus =
+        compileExtension.execute(PROJECT_DIR, "compile", "-b", OLD_BUILD_FOLDER, tempPackageFile());
+    assertThat(oldCompileStatus.isSuccess()).as(oldCompileStatus.getMessages()).isTrue();
+
+    compileExtension.writeTempPackage(PROJECT_DIR.resolve(newScriptFile), SCRIPT_FILE_TEMPLATE);
+    ExecNodeContext.resetIdCounter();
+    return compileExtension.execute(
+        PROJECT_DIR,
+        "compile",
+        "-b",
+        NEW_BUILD_FOLDER,
+        "--check-state-upgrade-from",
+        OLD_BUILD_FROM_PROJECT,
+        tempPackageFile());
+  }
+
+  private String tempPackageFile() {
+    return compileExtension.getTempPackage().getFileName().toString();
+  }
+}

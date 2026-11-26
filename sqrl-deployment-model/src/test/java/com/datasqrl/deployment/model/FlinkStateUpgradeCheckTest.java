@@ -111,7 +111,7 @@ class FlinkStateUpgradeCheckTest {
                 "missing",
                 "\"changed\"",
                 "Join(joinType=[InnerJoin])",
-                OldState.NONE));
+                OldState.INCOMPATIBLE));
   }
 
   @Test
@@ -275,6 +275,124 @@ class FlinkStateUpgradeCheckTest {
             plan("2.3", withOutputType(sourceOperator(), "id INT", "extra INT")));
 
     assertThat(result.breaks()).isEmpty();
+  }
+
+  @Test
+  void givenNewColumnOnGlobalWindowAggregate_whenCheck_thenChangedOutputType() {
+    var result =
+        check(
+            plan("2.3", withOutputType(globalWindowAggregateOperator(), "cnt BIGINT")),
+            plan(
+                "2.3",
+                withOutputType(globalWindowAggregateOperator(), "cnt BIGINT", "max_val BIGINT")));
+
+    assertThat(result.breaks())
+        .containsExactly(
+            new ChangedStateField(
+                "6",
+                "outputType",
+                "[cnt BIGINT]",
+                "[cnt BIGINT, max_val BIGINT]",
+                "GlobalWindowAggregate(window=[TUMBLE(size=[1 min])])",
+                OldState.INCOMPATIBLE));
+  }
+
+  @Test
+  void givenNewColumnOnIntervalJoin_whenCheck_thenChangedOutputType() {
+    var result =
+        check(
+            plan("2.3", withOutputType(intervalJoinOperator(), "id INT", "order_id INT")),
+            plan(
+                "2.3",
+                withOutputType(intervalJoinOperator(), "id INT", "order_id INT", "amount INT")));
+
+    assertThat(result.breaks())
+        .singleElement()
+        .extracting(StateUpgradeBreak::oldState)
+        .isEqualTo(OldState.INCOMPATIBLE);
+  }
+
+  @Test
+  void givenGlobalWindowAggregateChangesKind_whenCheck_thenUnclaimedState() {
+    var newOperatorAtSameId =
+        operator(6, "stream-exec-local-window-aggregate_1", "LocalWindowAggregate()");
+
+    var result =
+        check(plan("2.3", globalWindowAggregateOperator()), plan("2.3", newOperatorAtSameId));
+
+    assertThat(result.breaks())
+        .singleElement()
+        .extracting(StateUpgradeBreak::oldState)
+        .isEqualTo(OldState.UNCLAIMED);
+  }
+
+  @Test
+  void givenNewColumnOnUnknownOperatorKind_whenCheck_thenChangedOutputType() {
+    var unknownOperator = operator(7, "stream-exec-future-operator_1", "FutureOperator()");
+
+    var result =
+        check(
+            plan("2.3", withOutputType(unknownOperator.deepCopy(), "id INT")),
+            plan("2.3", withOutputType(unknownOperator.deepCopy(), "id INT", "extra INT")));
+
+    assertThat(result.breaks())
+        .singleElement()
+        .extracting(StateUpgradeBreak::oldState)
+        .isEqualTo(OldState.INCOMPATIBLE);
+  }
+
+  @ParameterizedTest
+  @ValueSource(
+      strings = {
+        "stream-exec-calc_1",
+        "stream-exec-exchange_1",
+        "stream-exec-local-window-aggregate_1",
+        "stream-exec-sink_1"
+      })
+  void givenNewColumnOnOperatorKindWithoutState_whenCheck_thenNoBreaks(String operatorType) {
+    var result =
+        check(
+            plan("2.3", withOutputType(operator(8, operatorType, "Operator()"), "id INT")),
+            plan(
+                "2.3",
+                withOutputType(operator(8, operatorType, "Operator()"), "id INT", "extra INT")));
+
+    assertThat(result.breaks()).isEmpty();
+  }
+
+  @Test
+  void givenNewColumnOnSinkWithMaterializeState_whenCheck_thenChangedOutputType() {
+    var result =
+        check(
+            plan("2.3", withOutputType(materializedSinkOperator(), "id INT", "total BIGINT")),
+            plan(
+                "2.3",
+                withOutputType(
+                    materializedSinkOperator(), "id INT", "total BIGINT", "extra BIGINT")));
+
+    assertThat(result.breaks())
+        .containsExactly(
+            new ChangedStateField(
+                "3",
+                "outputType",
+                "[id INT, total BIGINT]",
+                "[id INT, total BIGINT, extra BIGINT]",
+                "Sink(table=[CustomerCount], upsertMaterialize=[true])",
+                OldState.INCOMPATIBLE));
+  }
+
+  @Test
+  void givenSinkWithoutStateChangesKind_whenCheck_thenUnclaimedState() {
+    var result =
+        check(
+            plan("2.3", sinkOperator()),
+            plan("2.3", operator(3, "stream-exec-calc_1", "Calc(select=[customerid])")));
+
+    assertThat(result.breaks())
+        .filteredOn(ChangedOperatorType.class::isInstance)
+        .singleElement()
+        .extracting(StateUpgradeBreak::oldState)
+        .isEqualTo(OldState.UNCLAIMED);
   }
 
   @Test
@@ -543,6 +661,22 @@ class FlinkStateUpgradeCheckTest {
         .put("inputChangelogMode", "INSERT, UPDATE_AFTER");
   }
 
+  /**
+   * A sink with an upsert materializer, in the form that Flink writes it. The materializer stores
+   * the rows of each primary key, so the sink has a {@code state} entry.
+   */
+  private static ObjectNode materializedSinkOperator() {
+    var materializedSinkOperator =
+        operator(3, "stream-exec-sink_2", "Sink(table=[CustomerCount], upsertMaterialize=[true])");
+    materializedSinkOperator
+        .putArray("state")
+        .addObject()
+        .put("index", 0)
+        .put("ttl", "0 ms")
+        .put("name", "sinkMaterializeState");
+    return materializedSinkOperator;
+  }
+
   /** Returns the table options of a sink operator, in the place where Flink writes them. */
   private static ObjectNode sinkTableOptions(ObjectNode sinkOperator) {
     return sinkOperator
@@ -577,6 +711,24 @@ class FlinkStateUpgradeCheckTest {
       columnFields.addObject().put("name", nameAndType[0]).put("fieldType", nameAndType[1]);
     }
     return operator;
+  }
+
+  /**
+   * A window aggregate in the form that Flink writes it: it keeps state, but has no state field.
+   */
+  private static ObjectNode globalWindowAggregateOperator() {
+    return operator(
+        6,
+        "stream-exec-global-window-aggregate_1",
+        "GlobalWindowAggregate(window=[TUMBLE(size=[1 min])])");
+  }
+
+  /** An interval join in the form that Flink writes it: it keeps state, but has no state field. */
+  private static ObjectNode intervalJoinOperator() {
+    var intervalJoinOperator =
+        operator(9, "stream-exec-interval-join_1", "IntervalJoin(joinType=[InnerJoin])");
+    intervalJoinOperator.putObject("intervalJoinSpec").put("joinType", "INNER");
+    return intervalJoinOperator;
   }
 
   private static ObjectNode joinOperator() {
