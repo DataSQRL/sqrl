@@ -57,9 +57,9 @@ public class CheckStateUpgradeOption {
 
   @Option(
       names = "--check-state-upgrade-from",
-      paramLabel = "<build-folder>",
       description =
-          "Build folder of the deployed (old) version, for example \"build/shop-replay\"."
+          "Build folder of the deployed (old) version, for example"
+              + " \"build/my-project-deployed\"."
               + " After the compile, the compile fails when Flink cannot restore the state of"
               + " that build from the new compiled plan. Also accepts a target folder or a plan"
               + " folder. The path must be relative to the project root and stay inside the"
