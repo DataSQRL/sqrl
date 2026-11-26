@@ -59,6 +59,8 @@ SQRL will check backward compatibility during compile making sure that mutation 
 
 The `config` JSON object is passed to the Mustache templating engine to substitute template variable occurrences (e.g. `{{excludedTenant}}`) before the script is compiled.
 
+All file and folder paths in `script`, including those of an [API version](#api-versioning) and the `package` of an [include](#include-other-sources), are relative to the project root. The same applies to the folders of the [test runner](#test-runner-test-runner). A path may lead out of the project, for example to a sibling project with `../shared/schema.graphqls`, but it must stay inside the workspace: the folder that `sqrl` runs in, which is `/workspace` in the Docker image. Mount the folder that holds all projects that a project uses, and select the project with `--project-root` or by the path of its package file. The compilation fails on an absolute path and on a path that leads out of the workspace, and the error names the key and the value. A file outside the project is read where it is, so the `config` templating does not apply to a main script outside the project. Symbolic links count with their targets: DataSQRL follows links inside the workspace, skips links that lead outside it, and prints a warning for each link it skips, except in hidden folders such as `.claude`.
+
 ```json
 {
   "script": {
@@ -140,7 +142,7 @@ Set the optional `mcp-apps` field to a directory of MCP apps, interactive HTML U
 
 When multiple SQRL projects rely on the same logic or data catalog definitions, duplicating them would create unnecessary maintenance work.
 Instead, include and reuse other SQRL projects with the `include` config. Each `include` key is the namespace used to import the included project's modules.
-The required `package` value is the path to the included project's package JSON file, relative to the current project root.
+The required `package` value is the path to the included project's package JSON file, relative to the current project root. The included project must be inside the workspace, like every path in `script`.
 DataSQRL uses the package file's parent directory as the include root and loads the SQRL files in that directory and its subdirectories.
 Each `include` entry can define `config` overrides for the included project's `script.config` template values.
 
@@ -220,7 +222,7 @@ When the included project is deployed on its own, set `"standalone": true` on it
 That project then owns its internal Kafka tables, also when the current project imports them or exports into them.
 
 The deployment of the included project also writes what its own statements write, so the current project does not write it again.
-Which statements those are follows from the `script.main` of the included project's package file, i.e. the `package` of the include entry: its deployment plans the main script and the scripts that the main script imports, transitively.
+Which statements those are follows from the `script.main` of the included project's package file, i.e. the `package` of the include entry: its deployment plans the main script and the scripts that the main script imports, transitively. That `script.main` must be a path inside the included project.
 
 - **Subscriptions:** the deployment writes the topics of the subscriptions that it exposes, i.e. of the `SUBSCRIBE` tables, and of the tables that `SUBSCRIBE` functions read, in the main script and in the scripts that it imports inline (`IMPORT script.*`), transitively.
   The current project reads these topics for the subscriptions that it plans from these scripts, and for its own subscriptions on these tables, instead of computing the tables and writing them again.
@@ -273,6 +275,7 @@ Compiled with only `package.json`, e.g. for local tests, `reporting` owns the to
 ## Test-Runner (`test-runner`)
 
 Configures how the DataSQRL test runner executes tests.
+`snapshot-folder` and `test-folder` are relative to the project root and must stay inside the workspace, see [Source Files](#source-files-script).
 For streaming pipelines, set `delay-sec` to `-1` so the test runner waits until all Flink operators are idle and the `required-checkpoints` have completed before taking snapshots. Otherwise, `delay-sec` is a wall-clock upper bound on how long to wait for the job to finish.
 
 ```json
