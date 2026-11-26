@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.deployment.model;
+package com.datasqrl.cli;
 
 /**
  * A message of the state upgrade check that does not fail the compile. Each note sets its own

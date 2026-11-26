@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.deployment.model;
+package com.datasqrl.cli;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import java.util.Optional;

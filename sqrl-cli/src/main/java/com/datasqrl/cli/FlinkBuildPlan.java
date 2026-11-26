@@ -15,7 +15,6 @@
  */
 package com.datasqrl.cli;
 
-import com.datasqrl.deployment.model.FlinkJobPlan;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.util.ConfigLoaderUtils;
 import com.datasqrl.util.SqrlObjectMapper;

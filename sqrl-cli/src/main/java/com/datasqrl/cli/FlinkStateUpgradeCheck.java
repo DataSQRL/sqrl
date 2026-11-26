@@ -13,17 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.deployment.model;
+package com.datasqrl.cli;
 
-import com.datasqrl.deployment.model.StateUpgradeBreak.ChangedMaxParallelism;
-import com.datasqrl.deployment.model.StateUpgradeBreak.ChangedOperatorType;
-import com.datasqrl.deployment.model.StateUpgradeBreak.ChangedStateField;
-import com.datasqrl.deployment.model.StateUpgradeBreak.OldState;
-import com.datasqrl.deployment.model.StateUpgradeBreak.RemovedOperator;
-import com.datasqrl.deployment.model.StateUpgradeNote.ChangedFlinkVersion;
-import com.datasqrl.deployment.model.StateUpgradeNote.ChangedStateTtl;
-import com.datasqrl.deployment.model.StateUpgradeNote.MaxParallelismOnlyInNewBuild;
-import com.datasqrl.deployment.model.StateUpgradeNote.MaxParallelismOnlyInOldBuild;
+import com.datasqrl.cli.StateUpgradeBreak.ChangedMaxParallelism;
+import com.datasqrl.cli.StateUpgradeBreak.ChangedOperatorType;
+import com.datasqrl.cli.StateUpgradeBreak.ChangedStateField;
+import com.datasqrl.cli.StateUpgradeBreak.OldState;
+import com.datasqrl.cli.StateUpgradeBreak.RemovedOperator;
+import com.datasqrl.cli.StateUpgradeNote.ChangedFlinkVersion;
+import com.datasqrl.cli.StateUpgradeNote.ChangedStateTtl;
+import com.datasqrl.cli.StateUpgradeNote.MaxParallelismOnlyInNewBuild;
+import com.datasqrl.cli.StateUpgradeNote.MaxParallelismOnlyInOldBuild;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;

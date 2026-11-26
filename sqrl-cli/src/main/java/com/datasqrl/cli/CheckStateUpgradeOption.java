@@ -15,11 +15,8 @@
  */
 package com.datasqrl.cli;
 
+import com.datasqrl.cli.StateUpgradeBreak.OldState;
 import com.datasqrl.config.SqrlConstants;
-import com.datasqrl.deployment.model.FlinkStateUpgradeCheck;
-import com.datasqrl.deployment.model.StateUpgradeBreak;
-import com.datasqrl.deployment.model.StateUpgradeBreak.OldState;
-import com.datasqrl.deployment.model.StateUpgradeNote;
 import com.datasqrl.error.ErrorCollector;
 import java.nio.file.Files;
 import java.nio.file.Path;

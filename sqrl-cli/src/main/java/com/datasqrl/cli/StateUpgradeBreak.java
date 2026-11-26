@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.deployment.model;
+package com.datasqrl.cli;
 
 /** One reason why Flink cannot restore the state of an old build from a new build. */
 public sealed interface StateUpgradeBreak
