@@ -310,7 +310,7 @@ class CheckStateUpgradeOptionTest {
       assertThat(checkUpgradeNotices("build/shop-replay"))
           .singleElement()
           .asString()
-          .contains("has no Flink plan");
+          .endsWith("has no compiled Flink plan, so the check cannot compare the Flink state.");
     }
 
     private CheckStateUpgradeOption option(String oldBuildFolder) {
@@ -501,7 +501,9 @@ class CheckStateUpgradeOptionTest {
       assertThat(messages(errors, ErrorMessage::isNotice))
           .singleElement()
           .asString()
-          .contains("old build", "has no Flink plan");
+          .isEqualTo(
+              "The old build in build/deploy/plan has no compiled Flink plan, so the check"
+                  + " cannot compare the Flink state.");
     }
 
     @Test
@@ -518,7 +520,7 @@ class CheckStateUpgradeOptionTest {
       assertThat(messages(errors, ErrorMessage::isNotice))
           .singleElement()
           .asString()
-          .contains("has no Flink plan");
+          .endsWith("has no compiled Flink plan, so the check cannot compare the Flink state.");
     }
 
     @Test
@@ -535,7 +537,9 @@ class CheckStateUpgradeOptionTest {
       assertThat(messages(errors, ErrorMessage::isNotice))
           .singleElement()
           .asString()
-          .contains("new compile has no Flink plan");
+          .isEqualTo(
+              "The new compile has no compiled Flink plan, so the check cannot compare the Flink"
+                  + " state.");
     }
 
     @Test

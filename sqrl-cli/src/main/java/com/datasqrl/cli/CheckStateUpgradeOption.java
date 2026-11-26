@@ -157,12 +157,15 @@ public class CheckStateUpgradeOption {
       ErrorCollector errors) {
     if (oldFlinkJob.isEmpty()) {
       errors.notice(
-          "The old build in %s has no Flink plan, so there is no Flink state to check.",
+          "The old build in %s has no compiled Flink plan, so the check cannot compare the Flink"
+              + " state.",
           oldPlanDir);
       return;
     }
     if (newFlinkJob.isEmpty()) {
-      errors.notice("The new compile has no Flink plan, so Flink restores no state.");
+      errors.notice(
+          "The new compile has no compiled Flink plan, so the check cannot compare the Flink"
+              + " state.");
       return;
     }
 
