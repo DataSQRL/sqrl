@@ -361,6 +361,74 @@ class FlinkStateUpgradeCheckTest {
   }
 
   @Test
+  void givenChangedAggregateFunction_whenCheck_thenChangedAggCalls() {
+    var result =
+        check(
+            plan("2.3", withAggCall(aggregateOperator(), aggCall("total", "$SUM$1", 1))),
+            plan("2.3", withAggCall(aggregateOperator(), aggCall("total", "$MAX$1", 1))));
+
+    assertThat(result.breaks())
+        .containsExactly(
+            new ChangedStateField(
+                "2",
+                "aggCalls",
+                "[SUM]",
+                "[MAX]",
+                "GroupAggregate(groupBy=[customerid])",
+                OldState.INCOMPATIBLE));
+  }
+
+  @Test
+  void givenRenamedAggregateColumnAndMovedArgument_whenCheck_thenNoBreaks() {
+    var result =
+        check(
+            plan("2.3", withAggCall(aggregateOperator(), aggCall("total", "$SUM$1", 1))),
+            plan("2.3", withAggCall(aggregateOperator(), aggCall("value_sum", "$SUM$1", 2))));
+
+    assertThat(result.breaks()).isEmpty();
+  }
+
+  @Test
+  void givenSumChangedToSum0_whenCheck_thenNoBreaks() {
+    var result =
+        check(
+            plan("2.3", withAggCall(aggregateOperator(), aggCall("total", "$SUM$1", 1))),
+            plan("2.3", withAggCall(aggregateOperator(), aggCall("total", "$$SUM0$1", 1))));
+
+    assertThat(result.breaks()).isEmpty();
+  }
+
+  @Test
+  void givenDistinctAddedToAggregateFunction_whenCheck_thenChangedAggCalls() {
+    var distinctCount = aggCall("cnt", "$COUNT$1", 1).put("distinct", true);
+
+    var result =
+        check(
+            plan("2.3", withAggCall(aggregateOperator(), aggCall("cnt", "$COUNT$1", 1))),
+            plan("2.3", withAggCall(aggregateOperator(), distinctCount)));
+
+    assertThat(result.breaks())
+        .singleElement()
+        .extracting(stateUpgradeBreak -> stateUpgradeBreak.toMessage())
+        .asString()
+        .contains("[COUNT] -> [COUNT DISTINCT]");
+  }
+
+  @Test
+  void givenChangedFunctionInOverAggregate_whenCheck_thenChangedAggCalls() {
+    var result =
+        check(
+            plan("2.3", overAggregateOperator(aggCall("total", "$SUM$1", 1))),
+            plan("2.3", overAggregateOperator(aggCall("total", "$MIN$1", 1))));
+
+    assertThat(result.breaks())
+        .singleElement()
+        .extracting(stateUpgradeBreak -> stateUpgradeBreak.toMessage())
+        .asString()
+        .contains("field 'aggCalls' differs: [SUM] -> [MIN]");
+  }
+
+  @Test
   void givenNewColumnOnSinkWithMaterializeState_whenCheck_thenChangedOutputType() {
     var result =
         check(
@@ -659,6 +727,41 @@ class FlinkStateUpgradeCheckTest {
   private static ObjectNode sinkOperator() {
     return operator(3, "stream-exec-sink_1", "Sink(table=[CustomerCount])")
         .put("inputChangelogMode", "INSERT, UPDATE_AFTER");
+  }
+
+  /** Sets the {@code aggCalls} of the operator to the one aggregate call. */
+  private static ObjectNode withAggCall(ObjectNode operator, ObjectNode aggCall) {
+    operator.putArray("aggCalls").add(aggCall);
+    return operator;
+  }
+
+  /** An aggregate call in the form that Flink writes it, for example {@code "$SUM$1"}. */
+  private static ObjectNode aggCall(String name, String internalName, int argumentIndex) {
+    var aggCall =
+        OBJECT_MAPPER
+            .createObjectNode()
+            .put("name", name)
+            .put("internalName", internalName)
+            .put("filterArg", -1)
+            .put("distinct", false)
+            .put("approximate", false)
+            .put("ignoreNulls", false)
+            .put("type", "BIGINT NOT NULL");
+    aggCall.putArray("argList").add(argumentIndex);
+    return aggCall;
+  }
+
+  /** An over aggregate, which keeps its aggregate calls in {@code overSpec.groups[].aggCalls}. */
+  private static ObjectNode overAggregateOperator(ObjectNode aggCall) {
+    var overAggregateOperator =
+        operator(10, "stream-exec-over-aggregate_1", "OverAggregate(orderBy=[ts ASC])");
+    overAggregateOperator
+        .putObject("overSpec")
+        .putArray("groups")
+        .addObject()
+        .putArray("aggCalls")
+        .add(aggCall);
+    return overAggregateOperator;
   }
 
   /**

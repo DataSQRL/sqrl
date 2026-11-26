@@ -90,6 +90,23 @@ public final class FlinkStateUpgradeCheck {
    */
   private static final String OUTPUT_TYPE_FIELD = "outputType";
 
+  /**
+   * The field with the aggregate calls of an aggregate operator. Each function stores its own
+   * accumulator, and Flink checks only the type of the stored value. So {@code SUM} changed to
+   * {@code MAX} restores without an error, and the new function continues from the old sum. An over
+   * aggregate keeps this field one level deeper, in {@code overSpec}.
+   */
+  private static final String AGG_CALLS_FIELD = "aggCalls";
+
+  /**
+   * {@code SUM0} keeps the same running total as {@code SUM}, and returns 0 in place of {@code
+   * null} for no input. A restore from {@code SUM} into {@code SUM0} continues the old total, and
+   * the DataSQRL planner can change one into the other, so the check treats them as one function.
+   */
+  private static final String SUM0_FUNCTION = "SUM0";
+
+  private static final String SUM_FUNCTION = "SUM";
+
   /** The field of a {@code state} entry that holds the TTL, for example {@code "1 h"}. */
   private static final String TTL_FIELD = "ttl";
 
@@ -172,8 +189,69 @@ public final class FlinkStateUpgradeCheck {
                 description(oldOperator),
                 oldState));
       }
+
+      var oldAggregateFunctions = aggregateFunctions(oldOperator);
+      var newAggregateFunctions = aggregateFunctions(newOperator);
+      if (hasState(oldOperator) && !oldAggregateFunctions.equals(newAggregateFunctions)) {
+        operatorBreaks.add(
+            new ChangedStateField(
+                operatorId,
+                AGG_CALLS_FIELD,
+                oldAggregateFunctions.toString(),
+                newAggregateFunctions.toString(),
+                description(oldOperator),
+                oldState));
+      }
     }
     return operatorBreaks;
+  }
+
+  /**
+   * Returns the aggregate functions of an operator in their order, for example {@code [SUM, COUNT
+   * DISTINCT]}. The list leaves out the column name and the input column positions: a renamed
+   * column keeps the state, and the positions change when an earlier operator adds a column.
+   */
+  private static List<String> aggregateFunctions(JsonNode operator) {
+    var aggregateFunctions = new ArrayList<String>();
+    for (var aggCalls : operator.findValues(AGG_CALLS_FIELD)) {
+      aggCalls.forEach(aggCall -> aggregateFunctions.add(aggregateFunction(aggCall)));
+    }
+    return aggregateFunctions;
+  }
+
+  /**
+   * Returns the function of an aggregate call with its options, for example {@code COUNT DISTINCT}
+   * for the {@code internalName} {@code "$COUNT$1"} with {@code distinct}. A call without an {@code
+   * internalName}, for example a user-defined function, gives the call without its name and its
+   * input column positions.
+   */
+  private static String aggregateFunction(JsonNode aggCall) {
+    if (!aggCall.hasNonNull("internalName")) {
+      var aggCallWithoutPositions = ((ObjectNode) aggCall.deepCopy());
+      aggCallWithoutPositions.remove(List.of("name", "argList", "filterArg"));
+      return aggCallWithoutPositions.toString();
+    }
+    var functionName =
+        aggCall
+            .path("internalName")
+            .asText()
+            .replaceFirst("^\\$+", "")
+            .replaceFirst("\\$\\d+$", "");
+    var aggregateFunction =
+        new StringBuilder(functionName.equals(SUM0_FUNCTION) ? SUM_FUNCTION : functionName);
+    if (aggCall.path("distinct").asBoolean()) {
+      aggregateFunction.append(" DISTINCT");
+    }
+    if (aggCall.path("approximate").asBoolean()) {
+      aggregateFunction.append(" APPROXIMATE");
+    }
+    if (aggCall.path("ignoreNulls").asBoolean()) {
+      aggregateFunction.append(" IGNORE NULLS");
+    }
+    if (aggCall.path("filterArg").asInt(-1) >= 0) {
+      aggregateFunction.append(" FILTER");
+    }
+    return aggregateFunction.toString();
   }
 
   /**

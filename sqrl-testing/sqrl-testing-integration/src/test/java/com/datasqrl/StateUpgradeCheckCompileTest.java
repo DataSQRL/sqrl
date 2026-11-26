@@ -105,6 +105,17 @@ class StateUpgradeCheckCompileTest {
   }
 
   @Test
+  void givenChangedAggregateFunction_whenCheckStateUpgrade_thenIncompatibleAggregateState() {
+    var status = compileAndCheckUpgrade("latest-event-total.sqrl", "latest-event-max.sqrl");
+
+    assertThat(status.isSuccess()).as(status.getMessages()).isFalse();
+    assertThat(status.getMessages())
+        .containsPattern(
+            "field 'aggCalls' differs: \\[SUM] -> \\[MAX] .*GroupAggregate.*\\[incompatible"
+                + " state]");
+  }
+
+  @Test
   void givenRenamedColumn_whenCheckStateUpgrade_thenPasses() {
     var status =
         compileAndCheckUpgrade("latest-event-total.sqrl", "latest-event-total-renamed.sqrl");
