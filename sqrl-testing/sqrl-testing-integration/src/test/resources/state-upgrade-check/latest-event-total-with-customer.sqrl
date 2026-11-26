@@ -1,0 +1,19 @@
+-- The new script: the events get the column customer, and the sum also keeps the maximum customer.
+-- The deduplicate then stores one more column.
+
+CREATE TABLE _Events (
+  id INT NOT NULL,
+  val BIGINT NOT NULL,
+  customer INT NOT NULL,
+  ts TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR ts AS ts - INTERVAL '1' SECOND
+) WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10'
+);
+
+-- Flink keeps this deduplicate, because the next table reads it.
+_LatestEvent := DISTINCT _Events ON id ORDER BY ts DESC;
+
+EventTotal := SELECT id, SUM(val) AS total, MAX(customer) AS max_customer
+    FROM _LatestEvent GROUP BY id;

@@ -20,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datasqrl.cli.AssertStatusHook;
 import java.nio.file.Path;
+import java.util.Map;
 import org.apache.flink.table.planner.plan.nodes.exec.ExecNodeContext;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -35,6 +36,12 @@ class StateUpgradeCheckCompileTest {
 
   /** The text in the package template that the test replaces with the script file. */
   private static final String SCRIPT_FILE_TEMPLATE = "SCRIPT_FILE";
+
+  /** The text in the package template that the test replaces with the state TTL. */
+  private static final String STATE_TTL_TEMPLATE = "STATE_TTL";
+
+  /** A state TTL of 0 keeps the state without a time limit, as the Flink default. */
+  private static final String NO_STATE_TTL = "0 ms";
 
   /**
    * The {@code -b} values of the two compiles. {@code -b} resolves against the build folder, which
@@ -87,22 +94,79 @@ class StateUpgradeCheckCompileTest {
                 + " state]");
   }
 
+  @Test
+  void givenNewColumnOnDeduplicate_whenCheckStateUpgrade_thenIncompatibleDeduplicateState() {
+    var status =
+        compileAndCheckUpgrade("latest-event-total.sqrl", "latest-event-total-with-customer.sqrl");
+
+    assertThat(status.isSuccess()).as(status.getMessages()).isFalse();
+    assertThat(status.getMessages())
+        .containsPattern("field 'outputType' differs: .*Deduplicate.*\\[incompatible state]");
+  }
+
+  @Test
+  void givenRenamedColumn_whenCheckStateUpgrade_thenPasses() {
+    var status =
+        compileAndCheckUpgrade("latest-event-total.sqrl", "latest-event-total-renamed.sqrl");
+
+    assertThat(status.isSuccess()).as(status.getMessages()).isTrue();
+    assertThat(status.getMessages()).contains("The new Flink plan passes the state upgrade check");
+  }
+
+  @Test
+  void givenChangedStateTtl_whenCheckStateUpgrade_thenPassesWithTtlNotice() {
+    var status =
+        compileAndCheckUpgrade(
+            "latest-event-total.sqrl", NO_STATE_TTL, "latest-event-total.sqrl", "1 h");
+
+    assertThat(status.isSuccess()).as(status.getMessages()).isTrue();
+    assertThat(status.getMessages())
+        .contains("the TTL of state 'deduplicateState' changes: 0 ms -> ")
+        .contains("The new Flink plan passes the state upgrade check");
+  }
+
+  @Test
+  void givenRemovedTable_whenCheckStateUpgrade_thenUnclaimedState() {
+    var status =
+        compileAndCheckUpgrade("window-count-and-latest-event-total.sqrl", "window-count.sqrl");
+
+    assertThat(status.isSuccess()).as(status.getMessages()).isFalse();
+    assertThat(status.getMessages())
+        .containsPattern("removed: Deduplicate.*\\[unclaimed state]")
+        .doesNotContain("GlobalWindowAggregate");
+  }
+
+  @Test
+  void givenNewTableAfterOldTables_whenCheckStateUpgrade_thenPasses() {
+    var status = compileAndCheckUpgrade("window-count.sqrl", "window-count-with-later-table.sqrl");
+
+    assertThat(status.isSuccess()).as(status.getMessages()).isTrue();
+    assertThat(status.getMessages()).contains("The new Flink plan passes the state upgrade check");
+  }
+
+  /** Compiles both scripts without a state TTL, see {@link #compileAndCheckUpgrade}. */
+  private AssertStatusHook compileAndCheckUpgrade(String oldScriptFile, String newScriptFile) {
+    return compileAndCheckUpgrade(oldScriptFile, NO_STATE_TTL, newScriptFile, NO_STATE_TTL);
+  }
+
   /**
    * Compiles the old script into {@link #OLD_BUILD_FOLDER}. Then compiles the new script into
-   * {@link #NEW_BUILD_FOLDER} with the check against the old build, and returns that status.
+   * {@link #NEW_BUILD_FOLDER} with the check against the old build, and returns that status. Each
+   * compile sets its {@code table.exec.state.ttl}.
    *
    * <p>Flink counts the operator ids in one counter for each JVM. A compile with the CLI runs in
    * its own JVM, so its ids start at 1. Both compiles of a test run in one JVM, so the test resets
    * the counter before each compile.
    */
-  private AssertStatusHook compileAndCheckUpgrade(String oldScriptFile, String newScriptFile) {
-    compileExtension.writeTempPackage(PROJECT_DIR.resolve(oldScriptFile), SCRIPT_FILE_TEMPLATE);
+  private AssertStatusHook compileAndCheckUpgrade(
+      String oldScriptFile, String oldStateTtl, String newScriptFile, String newStateTtl) {
+    writePackage(oldScriptFile, oldStateTtl);
     ExecNodeContext.resetIdCounter();
     var oldCompileStatus =
         compileExtension.execute(PROJECT_DIR, "compile", "-b", OLD_BUILD_FOLDER, tempPackageFile());
     assertThat(oldCompileStatus.isSuccess()).as(oldCompileStatus.getMessages()).isTrue();
 
-    compileExtension.writeTempPackage(PROJECT_DIR.resolve(newScriptFile), SCRIPT_FILE_TEMPLATE);
+    writePackage(newScriptFile, newStateTtl);
     ExecNodeContext.resetIdCounter();
     return compileExtension.execute(
         PROJECT_DIR,
@@ -112,6 +176,12 @@ class StateUpgradeCheckCompileTest {
         "--check-state-upgrade-from",
         OLD_BUILD_FROM_PROJECT,
         tempPackageFile());
+  }
+
+  private void writePackage(String scriptFile, String stateTtl) {
+    compileExtension.writeTempPackage(
+        PROJECT_DIR.resolve(scriptFile),
+        Map.of(SCRIPT_FILE_TEMPLATE, scriptFile, STATE_TTL_TEMPLATE, stateTtl));
   }
 
   private String tempPackageFile() {

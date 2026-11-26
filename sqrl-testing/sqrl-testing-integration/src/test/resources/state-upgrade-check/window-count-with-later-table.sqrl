@@ -1,0 +1,18 @@
+-- The new script: adds the table TopEvents. Its name sorts after EventsPerMinute, so the old
+-- operators keep their ids.
+
+CREATE TABLE _Events (
+  id INT NOT NULL,
+  val BIGINT NOT NULL,
+  ts TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR ts AS ts - INTERVAL '1' SECOND
+) WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10'
+);
+
+EventsPerMinute := SELECT window_start, window_end, COUNT(*) AS cnt
+    FROM TABLE(TUMBLE(TABLE _Events, DESCRIPTOR(ts), INTERVAL '1' MINUTE))
+    GROUP BY window_start, window_end;
+
+TopEvents := SELECT id, val FROM _Events WHERE val > 100;
