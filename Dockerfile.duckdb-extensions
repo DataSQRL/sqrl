@@ -1,4 +1,6 @@
-FROM eclipse-temurin:17.0.21_9-jdk-noble@sha256:f7f22e46d0f60856d74d602d6b61db29ece3d011e85183a718bea8341734cd52
+# Floating 17-jdk-noble tag pinned by digest: on 2026-11-26 the exact 17.0.21.1_2-jdk-noble tag had no
+# arm64 image, and this digest ships the CVE-2026-114938 fix (17.0.21.1+2) on amd64.
+FROM eclipse-temurin:17-jdk-noble@sha256:bdd7eeee8f2259194d39a9525f09abfddcb97a7bdc6fcd97de6f83652e80f772
 
 ENV DUCKDB_EXTENSIONS_DIR=/opt/duckdb_extensions
 
