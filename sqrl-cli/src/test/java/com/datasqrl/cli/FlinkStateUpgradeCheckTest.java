@@ -17,6 +17,7 @@ package com.datasqrl.cli;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.datasqrl.cli.FlinkStateUpgradeCheck.FlinkJob;
 import com.datasqrl.cli.StateUpgradeBreak.OldState;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorMessage;
@@ -624,7 +625,7 @@ class FlinkStateUpgradeCheckTest {
   @Test
   void givenDifferentMaxParallelism_whenCheck_thenChangedMaxParallelism() {
     var result =
-        check(jobPlan(plan("2.3"), Optional.of(128)), jobPlan(plan("2.3"), Optional.of(144)));
+        check(flinkJob(plan("2.3"), Optional.of(128)), flinkJob(plan("2.3"), Optional.of(144)));
 
     assertThat(result.breaks())
         .containsExactly(
@@ -635,7 +636,7 @@ class FlinkStateUpgradeCheckTest {
   @Test
   void givenSameMaxParallelism_whenCheck_thenNoBreaksAndNoNotes() {
     var result =
-        check(jobPlan(plan("2.3"), Optional.of(128)), jobPlan(plan("2.3"), Optional.of(128)));
+        check(flinkJob(plan("2.3"), Optional.of(128)), flinkJob(plan("2.3"), Optional.of(128)));
 
     assertThat(result.breaks()).isEmpty();
     assertThat(result.noticesAndWarnings()).isEmpty();
@@ -644,7 +645,7 @@ class FlinkStateUpgradeCheckTest {
   @Test
   void givenOnlyOldMaxParallelism_whenCheck_thenMaxParallelismOnlyInOldBuild() {
     var result =
-        check(jobPlan(plan("2.3"), Optional.of(128)), jobPlan(plan("2.3"), Optional.empty()));
+        check(flinkJob(plan("2.3"), Optional.of(128)), flinkJob(plan("2.3"), Optional.empty()));
 
     assertThat(result.breaks()).isEmpty();
     assertThat(result.notices()).isEmpty();
@@ -658,7 +659,7 @@ class FlinkStateUpgradeCheckTest {
   @Test
   void givenOnlyNewMaxParallelism_whenCheck_thenMaxParallelismOnlyInNewBuild() {
     var result =
-        check(jobPlan(plan("2.3"), Optional.empty()), jobPlan(plan("2.3"), Optional.of(144)));
+        check(flinkJob(plan("2.3"), Optional.empty()), flinkJob(plan("2.3"), Optional.of(144)));
 
     assertThat(result.breaks()).isEmpty();
     assertThat(result.notices()).isEmpty();
@@ -683,13 +684,13 @@ class FlinkStateUpgradeCheckTest {
   /** Checks two plans that do not set {@code pipeline.max-parallelism}. */
   private static CheckResult check(JsonNode oldCompiledPlan, JsonNode newCompiledPlan) {
     return check(
-        jobPlan(oldCompiledPlan, Optional.empty()), jobPlan(newCompiledPlan, Optional.empty()));
+        flinkJob(oldCompiledPlan, Optional.empty()), flinkJob(newCompiledPlan, Optional.empty()));
   }
 
   /** Runs the check. The check reports no errors, because the caller reports each break. */
-  private static CheckResult check(FlinkJobPlan oldJobPlan, FlinkJobPlan newJobPlan) {
+  private static CheckResult check(FlinkJob oldFlinkJob, FlinkJob newFlinkJob) {
     var errors = ErrorCollector.root();
-    var stateUpgradeBreaks = FlinkStateUpgradeCheck.check(oldJobPlan, newJobPlan, errors);
+    var stateUpgradeBreaks = FlinkStateUpgradeCheck.check(oldFlinkJob, newFlinkJob, errors);
     assertThat(errors.hasErrors()).isFalse();
     return new CheckResult(
         stateUpgradeBreaks,
@@ -705,8 +706,8 @@ class FlinkStateUpgradeCheckTest {
         .toList();
   }
 
-  private static FlinkJobPlan jobPlan(JsonNode compiledPlan, Optional<Integer> maxParallelism) {
-    return new FlinkJobPlan(compiledPlan, maxParallelism);
+  private static FlinkJob flinkJob(JsonNode compiledPlan, Optional<Integer> maxParallelism) {
+    return new FlinkJob(compiledPlan, maxParallelism);
   }
 
   private static ObjectNode sourceOperator() {

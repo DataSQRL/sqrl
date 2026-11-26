@@ -320,6 +320,54 @@ class ConfigLoaderUtilsTest {
   }
 
   @Test
+  void givenCompiledPlan_whenLoadFlinkCompiledPlan_thenReturnsPlan() throws IOException {
+    var planDir = flinkPlanDir("{\"flinkVersion\": \"2.3\", \"nodes\": []}");
+
+    var compiledPlan = ConfigLoaderUtils.loadFlinkCompiledPlan(planDir, ErrorCollector.root());
+
+    assertThat(compiledPlan)
+        .hasValueSatisfying(
+            plan -> assertThat(plan.path("flinkVersion").asText()).isEqualTo("2.3"));
+  }
+
+  @Test
+  void givenPlanDirWithoutCompiledPlan_whenLoadFlinkCompiledPlan_thenReturnsEmpty()
+      throws IOException {
+    var planDir = Files.createDirectories(tempDir.resolve("plan"));
+
+    assertThat(ConfigLoaderUtils.loadFlinkCompiledPlan(planDir, ErrorCollector.root())).isEmpty();
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"", "{\"flinkVersion\": \"2.3\"}"})
+  void givenCompiledPlanWithoutNodes_whenLoadFlinkCompiledPlan_thenFatalNotACompiledPlan(
+      String compiledPlanContent) throws IOException {
+    var planDir = flinkPlanDir(compiledPlanContent);
+
+    assertThatThrownBy(
+            () -> ConfigLoaderUtils.loadFlinkCompiledPlan(planDir, ErrorCollector.root()))
+        .isInstanceOf(CollectedException.class)
+        .hasMessageContaining("is not a compiled Flink plan");
+  }
+
+  @Test
+  void givenInvalidJson_whenLoadFlinkCompiledPlan_thenFatalWithFilePath() throws IOException {
+    var planDir = flinkPlanDir("{\"nodes\": [");
+
+    assertThatThrownBy(
+            () -> ConfigLoaderUtils.loadFlinkCompiledPlan(planDir, ErrorCollector.root()))
+        .isInstanceOf(CollectedException.class)
+        .hasMessageContaining("Cannot read " + planDir.resolve("flink-compiled-plan.json"));
+  }
+
+  /** Writes a plan folder with a {@code flink-compiled-plan.json} of the given content. */
+  private Path flinkPlanDir(String compiledPlanContent) throws IOException {
+    var planDir = Files.createDirectories(tempDir.resolve("plan"));
+    Files.writeString(planDir.resolve("flink-compiled-plan.json"), compiledPlanContent);
+    return planDir;
+  }
+
+  @Test
   void givenNonExistentPlanDir_whenLoadKafkaPhysicalPlan_thenThrowsIllegalArgumentException() {
     // Given
     Path nonExistentDir = tempDir.resolve("nonexistent");

@@ -551,6 +551,13 @@ class CompileCmdTest {
                   ConfigLoaderUtils.loadUnresolvedConfig(
                       any(ErrorCollector.class), eq(packageFilePaths)))
           .thenReturn(sqrlConfig);
+      // The state upgrade check reads the compiled plans that the test writes to disk.
+      configLoader
+          .when(
+              () ->
+                  ConfigLoaderUtils.loadFlinkCompiledPlan(
+                      any(Path.class), any(ErrorCollector.class)))
+          .thenCallRealMethod();
 
       compileCmd.runInternal(errors);
       return errors;

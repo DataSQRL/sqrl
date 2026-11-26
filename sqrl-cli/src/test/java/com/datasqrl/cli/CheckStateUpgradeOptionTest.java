@@ -18,6 +18,7 @@ package com.datasqrl.cli;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.datasqrl.cli.FlinkStateUpgradeCheck.FlinkJob;
 import com.datasqrl.error.CollectedException;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorMessage;
@@ -322,15 +323,18 @@ class CheckStateUpgradeOptionTest {
   }
 
   @Nested
-  class CompareBuildPlans {
+  class CompareFlinkJobs {
+
+    private static final Path OLD_PLAN_DIR = Path.of("build/deploy/plan");
 
     @Test
-    void givenCompatiblePlans_whenCompareBuildPlans_thenNoticeAndNoErrors() {
+    void givenCompatiblePlans_whenCompareFlinkJobs_thenNoticeAndNoErrors() {
       var errors = ErrorCollector.root();
 
-      CheckStateUpgradeOption.compareBuildPlans(
-          buildPlan(plan("2.3", SOURCE_OPERATOR), Optional.of(128)),
-          buildPlan(plan("2.3", SOURCE_OPERATOR, SINK_OPERATOR), Optional.of(128)),
+      CheckStateUpgradeOption.compareFlinkJobs(
+          OLD_PLAN_DIR,
+          flinkJob(plan("2.3", SOURCE_OPERATOR), Optional.of(128)),
+          flinkJob(plan("2.3", SOURCE_OPERATOR, SINK_OPERATOR), Optional.of(128)),
           errors);
 
       assertThat(errors.hasErrors()).isFalse();
@@ -341,15 +345,15 @@ class CheckStateUpgradeOptionTest {
     }
 
     @Test
-    void givenRemovedOperatorWithState_whenCompareBuildPlans_thenMarkedLineAndUnclaimedStateNote() {
-      var oldBuildPlan =
-          buildPlan(plan("2.3", SOURCE_OPERATOR, deduplicateOperator("0 ms")), Optional.empty());
-      var newBuildPlan = buildPlan(plan("2.3", SOURCE_OPERATOR), Optional.empty());
+    void givenRemovedOperatorWithState_whenCompareFlinkJobs_thenMarkedLineAndUnclaimedStateNote() {
+      var oldFlinkJob =
+          flinkJob(plan("2.3", SOURCE_OPERATOR, deduplicateOperator("0 ms")), Optional.empty());
+      var newFlinkJob = flinkJob(plan("2.3", SOURCE_OPERATOR), Optional.empty());
 
       assertThatThrownBy(
               () ->
-                  CheckStateUpgradeOption.compareBuildPlans(
-                      oldBuildPlan, newBuildPlan, ErrorCollector.root()))
+                  CheckStateUpgradeOption.compareFlinkJobs(
+                      OLD_PLAN_DIR, oldFlinkJob, newFlinkJob, ErrorCollector.root()))
           .isInstanceOf(CollectedException.class)
           .hasMessageContaining("cannot restore the state")
           .hasMessageContaining(
@@ -362,16 +366,16 @@ class CheckStateUpgradeOptionTest {
     }
 
     @Test
-    void givenRemovedOperatorWithoutState_whenCompareBuildPlans_thenNoMarkAndNoNote() {
+    void givenRemovedOperatorWithoutState_whenCompareFlinkJobs_thenNoMarkAndNoNote() {
       var calcOperator =
           "{\"id\": 2, \"type\": \"stream-exec-calc_1\", \"description\": \"Calc(select=[id])\"}";
-      var oldBuildPlan = buildPlan(plan("2.3", SOURCE_OPERATOR, calcOperator), Optional.empty());
-      var newBuildPlan = buildPlan(plan("2.3", SOURCE_OPERATOR), Optional.empty());
+      var oldFlinkJob = flinkJob(plan("2.3", SOURCE_OPERATOR, calcOperator), Optional.empty());
+      var newFlinkJob = flinkJob(plan("2.3", SOURCE_OPERATOR), Optional.empty());
 
       assertThatThrownBy(
               () ->
-                  CheckStateUpgradeOption.compareBuildPlans(
-                      oldBuildPlan, newBuildPlan, ErrorCollector.root()))
+                  CheckStateUpgradeOption.compareFlinkJobs(
+                      OLD_PLAN_DIR, oldFlinkJob, newFlinkJob, ErrorCollector.root()))
           .isInstanceOf(CollectedException.class)
           .hasMessageContaining("operator id=2 removed: Calc(select=[id])")
           .hasMessageNotContaining("[unclaimed state]")
@@ -380,22 +384,22 @@ class CheckStateUpgradeOptionTest {
     }
 
     @Test
-    void givenUnclaimedAndIncompatibleState_whenCompareBuildPlans_thenBothMarksAndBothNotes() {
+    void givenUnclaimedAndIncompatibleState_whenCompareFlinkJobs_thenBothMarksAndBothNotes() {
       var oldDeduplicateOperator =
           "{\"id\": 4, \"type\": \"stream-exec-deduplicate_1\", \"description\": \"Deduplicate\","
               + " \"state\": [{\"index\": 0, \"name\": \"deduplicateState\"}], \"outputType\":"
               + " \"ROW<`id` INT>\"}";
       var newDeduplicateOperator =
           oldDeduplicateOperator.replace("ROW<`id` INT>", "ROW<`id` INT, `extra` INT>");
-      var oldBuildPlan =
-          buildPlan(
+      var oldFlinkJob =
+          flinkJob(
               plan("2.3", oldDeduplicateOperator, deduplicateOperator("0 ms")), Optional.empty());
-      var newBuildPlan = buildPlan(plan("2.3", newDeduplicateOperator), Optional.empty());
+      var newFlinkJob = flinkJob(plan("2.3", newDeduplicateOperator), Optional.empty());
 
       assertThatThrownBy(
               () ->
-                  CheckStateUpgradeOption.compareBuildPlans(
-                      oldBuildPlan, newBuildPlan, ErrorCollector.root()))
+                  CheckStateUpgradeOption.compareFlinkJobs(
+                      OLD_PLAN_DIR, oldFlinkJob, newFlinkJob, ErrorCollector.root()))
           .isInstanceOf(CollectedException.class)
           .hasMessageContaining(
               "operator id=4 changed: field 'outputType' differs: ROW<`id` INT> -> ROW<`id` INT,"
@@ -409,27 +413,28 @@ class CheckStateUpgradeOptionTest {
     }
 
     @Test
-    void givenDescriptionWithPercentSign_whenCompareBuildPlans_thenMessageKeepsIt() {
+    void givenDescriptionWithPercentSign_whenCompareFlinkJobs_thenMessageKeepsIt() {
       var operatorWithPercentSign =
           "{\"id\": 2, \"type\": \"stream-exec-calc_1\", \"description\": \"Calc(where=[LIKE(name, '%a%')])\"}";
-      var oldBuildPlan = buildPlan(plan("2.3", operatorWithPercentSign), Optional.empty());
-      var newBuildPlan = buildPlan(plan("2.3"), Optional.empty());
+      var oldFlinkJob = flinkJob(plan("2.3", operatorWithPercentSign), Optional.empty());
+      var newFlinkJob = flinkJob(plan("2.3"), Optional.empty());
 
       assertThatThrownBy(
               () ->
-                  CheckStateUpgradeOption.compareBuildPlans(
-                      oldBuildPlan, newBuildPlan, ErrorCollector.root()))
+                  CheckStateUpgradeOption.compareFlinkJobs(
+                      OLD_PLAN_DIR, oldFlinkJob, newFlinkJob, ErrorCollector.root()))
           .isInstanceOf(CollectedException.class)
           .hasMessageContaining("LIKE(name, '%a%')");
     }
 
     @Test
-    void givenOldBuildWithoutFlinkPlan_whenCompareBuildPlans_thenNoticeAndNoErrors() {
+    void givenOldBuildWithoutFlinkPlan_whenCompareFlinkJobs_thenNoticeAndNoErrors() {
       var errors = ErrorCollector.root();
 
-      CheckStateUpgradeOption.compareBuildPlans(
-          buildPlan(null, Optional.empty()),
-          buildPlan(plan("2.3", SOURCE_OPERATOR), Optional.empty()),
+      CheckStateUpgradeOption.compareFlinkJobs(
+          OLD_PLAN_DIR,
+          flinkJob(null, Optional.empty()),
+          flinkJob(plan("2.3", SOURCE_OPERATOR), Optional.empty()),
           errors);
 
       assertThat(errors.hasErrors()).isFalse();
@@ -440,12 +445,13 @@ class CheckStateUpgradeOptionTest {
     }
 
     @Test
-    void givenOldBuildWithoutFlinkPlanAndNewMaxParallelism_whenCompareBuildPlans_thenNoWarning() {
+    void givenOldBuildWithoutFlinkPlanAndNewMaxParallelism_whenCompareFlinkJobs_thenNoWarning() {
       var errors = ErrorCollector.root();
 
-      CheckStateUpgradeOption.compareBuildPlans(
-          buildPlan(null, Optional.empty()),
-          buildPlan(plan("2.3", SOURCE_OPERATOR), Optional.of(144)),
+      CheckStateUpgradeOption.compareFlinkJobs(
+          OLD_PLAN_DIR,
+          flinkJob(null, Optional.empty()),
+          flinkJob(plan("2.3", SOURCE_OPERATOR), Optional.of(144)),
           errors);
 
       assertThat(messages(errors, ErrorMessage::isWarning)).isEmpty();
@@ -456,12 +462,13 @@ class CheckStateUpgradeOptionTest {
     }
 
     @Test
-    void givenNewBuildWithoutFlinkPlan_whenCompareBuildPlans_thenNoticeAndNoErrors() {
+    void givenNewBuildWithoutFlinkPlan_whenCompareFlinkJobs_thenNoticeAndNoErrors() {
       var errors = ErrorCollector.root();
 
-      CheckStateUpgradeOption.compareBuildPlans(
-          buildPlan(plan("2.3", SOURCE_OPERATOR), Optional.empty()),
-          buildPlan(null, Optional.empty()),
+      CheckStateUpgradeOption.compareFlinkJobs(
+          OLD_PLAN_DIR,
+          flinkJob(plan("2.3", SOURCE_OPERATOR), Optional.empty()),
+          flinkJob(null, Optional.empty()),
           errors);
 
       assertThat(errors.hasErrors()).isFalse();
@@ -472,12 +479,13 @@ class CheckStateUpgradeOptionTest {
     }
 
     @Test
-    void givenOnlyStateTtlChanged_whenCompareBuildPlans_thenNoticeAndNoWarning() {
+    void givenOnlyStateTtlChanged_whenCompareFlinkJobs_thenNoticeAndNoWarning() {
       var errors = ErrorCollector.root();
 
-      CheckStateUpgradeOption.compareBuildPlans(
-          buildPlan(plan("2.3", deduplicateOperator("0 ms")), Optional.empty()),
-          buildPlan(plan("2.3", deduplicateOperator("1 h")), Optional.empty()),
+      CheckStateUpgradeOption.compareFlinkJobs(
+          OLD_PLAN_DIR,
+          flinkJob(plan("2.3", deduplicateOperator("0 ms")), Optional.empty()),
+          flinkJob(plan("2.3", deduplicateOperator("1 h")), Optional.empty()),
           errors);
 
       assertThat(errors.hasErrors()).isFalse();
@@ -497,12 +505,13 @@ class CheckStateUpgradeOptionTest {
     }
 
     @Test
-    void givenDifferentFlinkVersion_whenCompareBuildPlans_thenFlinkVersionNotice() {
+    void givenDifferentFlinkVersion_whenCompareFlinkJobs_thenFlinkVersionNotice() {
       var errors = ErrorCollector.root();
 
-      CheckStateUpgradeOption.compareBuildPlans(
-          buildPlan(plan("2.2", SOURCE_OPERATOR), Optional.empty()),
-          buildPlan(plan("2.3", SOURCE_OPERATOR), Optional.empty()),
+      CheckStateUpgradeOption.compareFlinkJobs(
+          OLD_PLAN_DIR,
+          flinkJob(plan("2.2", SOURCE_OPERATOR), Optional.empty()),
+          flinkJob(plan("2.3", SOURCE_OPERATOR), Optional.empty()),
           errors);
 
       assertThat(errors.hasErrors()).isFalse();
@@ -511,25 +520,26 @@ class CheckStateUpgradeOptionTest {
     }
 
     @Test
-    void givenDifferentMaxParallelism_whenCompareBuildPlans_thenFatal() {
-      var oldBuildPlan = buildPlan(plan("2.3", SOURCE_OPERATOR), Optional.of(128));
-      var newBuildPlan = buildPlan(plan("2.3", SOURCE_OPERATOR), Optional.of(144));
+    void givenDifferentMaxParallelism_whenCompareFlinkJobs_thenFatal() {
+      var oldFlinkJob = flinkJob(plan("2.3", SOURCE_OPERATOR), Optional.of(128));
+      var newFlinkJob = flinkJob(plan("2.3", SOURCE_OPERATOR), Optional.of(144));
 
       assertThatThrownBy(
               () ->
-                  CheckStateUpgradeOption.compareBuildPlans(
-                      oldBuildPlan, newBuildPlan, ErrorCollector.root()))
+                  CheckStateUpgradeOption.compareFlinkJobs(
+                      OLD_PLAN_DIR, oldFlinkJob, newFlinkJob, ErrorCollector.root()))
           .isInstanceOf(CollectedException.class)
           .hasMessageContaining("pipeline.max-parallelism differs: 128 -> 144");
     }
 
     @Test
-    void givenOnlyOldMaxParallelism_whenCompareBuildPlans_thenWarning() {
+    void givenOnlyOldMaxParallelism_whenCompareFlinkJobs_thenWarning() {
       var errors = ErrorCollector.root();
 
-      CheckStateUpgradeOption.compareBuildPlans(
-          buildPlan(plan("2.3", SOURCE_OPERATOR), Optional.of(128)),
-          buildPlan(plan("2.3", SOURCE_OPERATOR), Optional.empty()),
+      CheckStateUpgradeOption.compareFlinkJobs(
+          OLD_PLAN_DIR,
+          flinkJob(plan("2.3", SOURCE_OPERATOR), Optional.of(128)),
+          flinkJob(plan("2.3", SOURCE_OPERATOR), Optional.empty()),
           errors);
 
       assertThat(errors.hasErrors()).isFalse();
@@ -541,12 +551,13 @@ class CheckStateUpgradeOptionTest {
     }
 
     @Test
-    void givenOnlyNewMaxParallelism_whenCompareBuildPlans_thenWarning() {
+    void givenOnlyNewMaxParallelism_whenCompareFlinkJobs_thenWarning() {
       var errors = ErrorCollector.root();
 
-      CheckStateUpgradeOption.compareBuildPlans(
-          buildPlan(plan("2.3", SOURCE_OPERATOR), Optional.empty()),
-          buildPlan(plan("2.3", SOURCE_OPERATOR), Optional.of(144)),
+      CheckStateUpgradeOption.compareFlinkJobs(
+          OLD_PLAN_DIR,
+          flinkJob(plan("2.3", SOURCE_OPERATOR), Optional.empty()),
+          flinkJob(plan("2.3", SOURCE_OPERATOR), Optional.of(144)),
           errors);
 
       assertThat(errors.hasErrors()).isFalse();
@@ -556,12 +567,99 @@ class CheckStateUpgradeOptionTest {
           .contains("Only the new build sets pipeline.max-parallelism (144)");
     }
 
-    /** A build plan, or a build without a Flink job when {@code compiledPlan} is null. */
-    private static FlinkBuildPlan buildPlan(String compiledPlan, Optional<Integer> maxParallelism) {
-      return new FlinkBuildPlan(
-          Path.of("build/deploy/plan"),
-          Optional.ofNullable(compiledPlan)
-              .map(plan -> new FlinkJobPlan(json(plan), maxParallelism)));
+    /**
+     * The Flink job of a build, or a build without a Flink job when {@code compiledPlan} is null.
+     */
+    private static Optional<FlinkJob> flinkJob(
+        String compiledPlan, Optional<Integer> maxParallelism) {
+      return Optional.ofNullable(compiledPlan)
+          .map(plan -> new FlinkJob(json(plan), maxParallelism));
+    }
+  }
+
+  @Nested
+  class ReadFlinkJob {
+
+    private static final String EMPTY_COMPILED_PLAN = "{\"flinkVersion\": \"2.3\", \"nodes\": []}";
+
+    @TempDir private Path planDir;
+
+    @Test
+    void givenCompiledPlanAndMaxParallelism_whenReadFlinkJob_thenReadsBoth() throws IOException {
+      writeCompiledPlan(EMPTY_COMPILED_PLAN);
+      writeFlinkConfig("pipeline.max-parallelism: 144\n");
+
+      assertThat(CheckStateUpgradeOption.readFlinkJob(planDir, ErrorCollector.root()))
+          .hasValueSatisfying(
+              flinkJob -> {
+                assertThat(flinkJob.compiledPlan().path("flinkVersion").asText()).isEqualTo("2.3");
+                assertThat(flinkJob.maxParallelism()).contains(144);
+              });
+    }
+
+    @Test
+    void givenFlinkConfigWithoutMaxParallelism_whenReadFlinkJob_thenMaxParallelismEmpty()
+        throws IOException {
+      writeCompiledPlan(EMPTY_COMPILED_PLAN);
+      writeFlinkConfig("parallelism.default: 2\n");
+
+      assertThat(CheckStateUpgradeOption.readFlinkJob(planDir, ErrorCollector.root()))
+          .hasValueSatisfying(flinkJob -> assertThat(flinkJob.maxParallelism()).isEmpty());
+    }
+
+    @Test
+    void givenPlanDirWithoutFlinkFiles_whenReadFlinkJob_thenNoFlinkJob() throws IOException {
+      Files.writeString(planDir.resolve("postgres.json"), "{}");
+
+      assertThat(CheckStateUpgradeOption.readFlinkJob(planDir, ErrorCollector.root())).isEmpty();
+    }
+
+    @Test
+    void givenFlinkConfigWithoutCompiledPlan_whenReadFlinkJob_thenNoFlinkJob() throws IOException {
+      writeFlinkConfig("pipeline.max-parallelism: 144\n");
+
+      assertThat(CheckStateUpgradeOption.readFlinkJob(planDir, ErrorCollector.root())).isEmpty();
+    }
+
+    @Test
+    void givenInvalidYaml_whenReadFlinkJob_thenFatalWithFilePath() throws IOException {
+      writeCompiledPlan(EMPTY_COMPILED_PLAN);
+      writeFlinkConfig("pipeline.max-parallelism: [unclosed\n");
+
+      assertThatThrownBy(() -> CheckStateUpgradeOption.readFlinkJob(planDir, ErrorCollector.root()))
+          .isInstanceOf(CollectedException.class)
+          .hasMessageContaining("Cannot read " + planDir.resolve("flink-config.yaml"));
+    }
+
+    @Test
+    void givenInvalidMaxParallelism_whenReadFlinkJob_thenFatalWithFilePath() throws IOException {
+      writeCompiledPlan(EMPTY_COMPILED_PLAN);
+      writeFlinkConfig("pipeline.max-parallelism: abc\n");
+
+      assertThatThrownBy(() -> CheckStateUpgradeOption.readFlinkJob(planDir, ErrorCollector.root()))
+          .isInstanceOf(CollectedException.class)
+          .hasMessageContaining("Cannot read " + planDir.resolve("flink-config.yaml"))
+          .hasMessageContaining("abc");
+    }
+
+    @Test
+    void givenFolderWithCompiledPlan_whenHasFlinkFiles_thenTrue() throws IOException {
+      writeCompiledPlan("{}");
+
+      assertThat(CheckStateUpgradeOption.hasFlinkFiles(planDir)).isTrue();
+    }
+
+    @Test
+    void givenFolderWithoutFlinkFiles_whenHasFlinkFiles_thenFalse() {
+      assertThat(CheckStateUpgradeOption.hasFlinkFiles(planDir)).isFalse();
+    }
+
+    private void writeCompiledPlan(String content) throws IOException {
+      Files.writeString(planDir.resolve("flink-compiled-plan.json"), content);
+    }
+
+    private void writeFlinkConfig(String content) throws IOException {
+      Files.writeString(planDir.resolve("flink-config.yaml"), content);
     }
   }
 

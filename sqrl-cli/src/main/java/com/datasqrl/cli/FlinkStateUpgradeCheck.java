@@ -112,20 +112,29 @@ final class FlinkStateUpgradeCheck {
   private FlinkStateUpgradeCheck() {}
 
   /**
+   * The parts of a build that decide if Flink can restore the state of its job.
+   *
+   * @param compiledPlan the content of {@code flink-compiled-plan.json}
+   * @param maxParallelism the {@code pipeline.max-parallelism} of {@code flink-config.yaml}, empty
+   *     when the project does not set it
+   */
+  record FlinkJob(JsonNode compiledPlan, Optional<Integer> maxParallelism) {}
+
+  /**
    * Returns all breaks for an upgrade from the old build to the new build, and reports the notices
    * and the warnings to the {@link ErrorCollector}.
    */
   static List<StateUpgradeBreak> check(
-      FlinkJobPlan oldJobPlan, FlinkJobPlan newJobPlan, ErrorCollector errors) {
+      FlinkJob oldFlinkJob, FlinkJob newFlinkJob, ErrorCollector errors) {
     var stateUpgradeBreaks =
-        new ArrayList<>(operatorBreaks(oldJobPlan.compiledPlan(), newJobPlan.compiledPlan()));
-    maxParallelismBreak(oldJobPlan.maxParallelism(), newJobPlan.maxParallelism())
+        new ArrayList<>(operatorBreaks(oldFlinkJob.compiledPlan(), newFlinkJob.compiledPlan()));
+    maxParallelismBreak(oldFlinkJob.maxParallelism(), newFlinkJob.maxParallelism())
         .ifPresent(stateUpgradeBreaks::add);
 
-    reportChangedFlinkVersion(oldJobPlan.compiledPlan(), newJobPlan.compiledPlan(), errors);
-    reportChangedStateTtls(oldJobPlan.compiledPlan(), newJobPlan.compiledPlan(), errors);
+    reportChangedFlinkVersion(oldFlinkJob.compiledPlan(), newFlinkJob.compiledPlan(), errors);
+    reportChangedStateTtls(oldFlinkJob.compiledPlan(), newFlinkJob.compiledPlan(), errors);
     reportMaxParallelismOnlyInOneBuild(
-        oldJobPlan.maxParallelism(), newJobPlan.maxParallelism(), errors);
+        oldFlinkJob.maxParallelism(), newFlinkJob.maxParallelism(), errors);
 
     return List.copyOf(stateUpgradeBreaks);
   }

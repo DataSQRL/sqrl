@@ -15,9 +15,12 @@
  */
 package com.datasqrl.cli;
 
+import com.datasqrl.cli.FlinkStateUpgradeCheck.FlinkJob;
 import com.datasqrl.cli.StateUpgradeBreak.OldState;
 import com.datasqrl.config.SqrlConstants;
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.util.ConfigLoaderUtils;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -25,6 +28,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 import lombok.SneakyThrows;
+import org.apache.flink.configuration.PipelineOptions;
 import picocli.CommandLine.Option;
 
 /**
@@ -100,39 +104,69 @@ public class CheckStateUpgradeOption {
     var checkedOldPlanDir =
         oldPlanDir.orElseThrow(
             () -> new IllegalStateException("Call checkOldBuildFolder before checkUpgrade"));
-    compareBuildPlans(
-        FlinkBuildPlan.read(checkedOldPlanDir, errors),
-        FlinkBuildPlan.read(targetDir.resolve(SqrlConstants.PLAN_DIR), errors),
+    var newPlanDir = targetDir.resolve(SqrlConstants.PLAN_DIR);
+    compareFlinkJobs(
+        checkedOldPlanDir,
+        readFlinkJob(checkedOldPlanDir, errors),
+        readFlinkJob(newPlanDir, errors),
         errors);
+  }
+
+  /**
+   * Reads the Flink job of a plan folder: the compiled plan and its {@code
+   * pipeline.max-parallelism}. Returns empty when the folder has no compiled Flink plan. A Flink
+   * file that exists but cannot be read is a fatal error.
+   */
+  static Optional<FlinkJob> readFlinkJob(Path planDir, ErrorCollector errors) {
+    return ConfigLoaderUtils.loadFlinkCompiledPlan(planDir, errors)
+        .map(compiledPlan -> new FlinkJob(compiledPlan, readMaxParallelism(planDir, errors)));
+  }
+
+  private static Optional<Integer> readMaxParallelism(Path planDir, ErrorCollector errors) {
+    var flinkConfigFile = planDir.resolve(SqrlConstants.FLINK_CONFIG_FILE);
+    if (!Files.isRegularFile(flinkConfigFile)) {
+      return Optional.empty();
+    }
+
+    try {
+      return ConfigLoaderUtils.loadFlinkConfig(planDir)
+          .getOptional(PipelineOptions.MAX_PARALLELISM);
+    } catch (IOException | RuntimeException exception) {
+      // Flink reports an invalid YAML file with a plain RuntimeException, and an invalid value
+      // with an IllegalArgumentException.
+      throw errors.exception("Cannot read %s: %s", flinkConfigFile, exception.getMessage());
+    }
   }
 
   /**
    * Reports if Flink can restore the state of the old build from the new build. A break is a fatal
    * error. A Flink version change is a notice, and a risk that the check cannot decide is a
-   * warning.
+   * warning. Each message names the plan folder of the old build.
    */
-  static void compareBuildPlans(
-      FlinkBuildPlan oldBuildPlan, FlinkBuildPlan newBuildPlan, ErrorCollector errors) {
-    if (oldBuildPlan.flinkJobPlan().isEmpty()) {
+  static void compareFlinkJobs(
+      Path oldPlanDir,
+      Optional<FlinkJob> oldFlinkJob,
+      Optional<FlinkJob> newFlinkJob,
+      ErrorCollector errors) {
+    if (oldFlinkJob.isEmpty()) {
       errors.notice(
           "The old build in %s has no Flink plan, so there is no Flink state to check.",
-          oldBuildPlan.planDir());
+          oldPlanDir);
       return;
     }
-    if (newBuildPlan.flinkJobPlan().isEmpty()) {
+    if (newFlinkJob.isEmpty()) {
       errors.notice("The new compile has no Flink plan, so Flink restores no state.");
       return;
     }
 
     var stateUpgradeBreaks =
-        FlinkStateUpgradeCheck.check(
-            oldBuildPlan.flinkJobPlan().get(), newBuildPlan.flinkJobPlan().get(), errors);
+        FlinkStateUpgradeCheck.check(oldFlinkJob.get(), newFlinkJob.get(), errors);
     if (stateUpgradeBreaks.isEmpty()) {
       errors.notice(
           "The new Flink plan passes the state upgrade check against the old build in %s. The"
               + " check does not prove that the results match a fresh run, for example after a"
               + " new table.",
-          oldBuildPlan.planDir());
+          oldPlanDir);
       return;
     }
 
@@ -147,7 +181,7 @@ public class CheckStateUpgradeOption {
     }
     errors.fatal(
         "The new Flink plan cannot restore the state of the old build in %s:\n- %s",
-        oldBuildPlan.planDir(), String.join("\n- ", breakMessages));
+        oldPlanDir, String.join("\n- ", breakMessages));
   }
 
   /**
@@ -227,7 +261,7 @@ public class CheckStateUpgradeOption {
     return Stream.of(buildPlanDir, targetPlanDir)
         .filter(Files::isDirectory)
         .findFirst()
-        .or(() -> Optional.of(oldBuildFolderPath).filter(FlinkBuildPlan::hasFlinkFiles))
+        .or(() -> Optional.of(oldBuildFolderPath).filter(CheckStateUpgradeOption::hasFlinkFiles))
         .orElseThrow(
             () ->
                 errors.exception(
@@ -235,5 +269,11 @@ public class CheckStateUpgradeOption {
                         + " target folder (with plan), or a plan folder (with"
                         + " flink-compiled-plan.json or flink-config.yaml).",
                     oldBuildFolderPath));
+  }
+
+  /** Returns true when the folder holds a Flink file, so the folder is itself a plan folder. */
+  static boolean hasFlinkFiles(Path folder) {
+    return Files.isRegularFile(folder.resolve(SqrlConstants.FLINK_COMPILED_PLAN_FILE))
+        || Files.isRegularFile(folder.resolve(SqrlConstants.FLINK_CONFIG_FILE));
   }
 }

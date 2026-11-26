@@ -16,6 +16,7 @@
 package com.datasqrl.cli;
 
 import com.datasqrl.config.PackageJson;
+import com.datasqrl.config.SqrlConstants;
 import com.datasqrl.engine.server.VertxEngineFactory;
 import com.datasqrl.flinkrunner.SqrlRunner;
 import com.datasqrl.flinkrunner.utils.EnvUtils;
@@ -218,7 +219,8 @@ public class DatasqrlRun {
     String sqlFile = null;
     String planFile = null;
     if (execMode == RuntimeExecutionMode.STREAMING && isCompiledPlan) {
-      planFile = planDir.resolve("flink-compiled-plan.json").toAbsolutePath().toString();
+      planFile =
+          planDir.resolve(SqrlConstants.FLINK_COMPILED_PLAN_FILE).toAbsolutePath().toString();
     } else {
       sqlFile = planDir.resolve("flink-sql.sql").toAbsolutePath().toString();
     }
