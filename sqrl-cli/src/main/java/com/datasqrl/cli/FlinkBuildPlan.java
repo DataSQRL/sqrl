@@ -62,8 +62,8 @@ record FlinkBuildPlan(Path planDir, Optional<FlinkJobPlan> flinkJobPlan) {
     // An empty file gives a missing node, so this also rejects an empty file.
     errors.checkFatal(
         compiledPlan.path("nodes").isArray(),
-        "%s",
-        "%s is not a compiled Flink plan: it has no \"nodes\" list".formatted(compiledPlanFile));
+        "%s is not a compiled Flink plan: it has no \"nodes\" list",
+        compiledPlanFile);
     return Optional.of(compiledPlan);
   }
 
@@ -85,7 +85,7 @@ record FlinkBuildPlan(Path planDir, Optional<FlinkJobPlan> flinkJobPlan) {
 
   private static RuntimeException cannotRead(
       Path file, Exception exception, ErrorCollector errors) {
-    return errors.exception("%s", "Cannot read %s: %s".formatted(file, exception.getMessage()));
+    return errors.exception("Cannot read %s: %s", file, exception.getMessage());
   }
 
   /** Returns true when the folder holds a Flink file, so the folder is itself a plan folder. */

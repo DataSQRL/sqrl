@@ -17,21 +17,17 @@ package com.datasqrl.cli;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.datasqrl.cli.StateUpgradeBreak.ChangedMaxParallelism;
-import com.datasqrl.cli.StateUpgradeBreak.ChangedOperatorType;
-import com.datasqrl.cli.StateUpgradeBreak.ChangedStateField;
 import com.datasqrl.cli.StateUpgradeBreak.OldState;
-import com.datasqrl.cli.StateUpgradeBreak.RemovedOperator;
-import com.datasqrl.cli.StateUpgradeNote.ChangedFlinkVersion;
-import com.datasqrl.cli.StateUpgradeNote.ChangedStateTtl;
-import com.datasqrl.cli.StateUpgradeNote.Level;
-import com.datasqrl.cli.StateUpgradeNote.MaxParallelismOnlyInNewBuild;
-import com.datasqrl.cli.StateUpgradeNote.MaxParallelismOnlyInOldBuild;
+import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.error.ErrorMessage;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Predicate;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -48,7 +44,7 @@ class FlinkStateUpgradeCheckTest {
             plan("2.3", sourceOperator(), aggregateOperator(), sinkOperator()));
 
     assertThat(result.breaks()).isEmpty();
-    assertThat(result.notes()).isEmpty();
+    assertThat(result.noticesAndWarnings()).isEmpty();
   }
 
   @Test
@@ -70,9 +66,8 @@ class FlinkStateUpgradeCheckTest {
 
     assertThat(result.breaks())
         .containsExactly(
-            new RemovedOperator("2", "GroupAggregate(groupBy=[customerid])", OldState.UNCLAIMED));
-    assertThat(result.breaks().get(0).toMessage())
-        .isEqualTo("operator id=2 removed: GroupAggregate(groupBy=[customerid])");
+            new StateUpgradeBreak(
+                "operator id=2 removed: GroupAggregate(groupBy=[customerid])", OldState.UNCLAIMED));
   }
 
   @Test
@@ -84,16 +79,10 @@ class FlinkStateUpgradeCheckTest {
 
     assertThat(result.breaks())
         .containsExactly(
-            new ChangedOperatorType(
-                "3",
-                "stream-exec-sink_1",
-                "stream-exec-sink_2",
-                "Sink(table=[CustomerCount])",
+            new StateUpgradeBreak(
+                "operator id=3 changed: field 'type' differs:"
+                    + " stream-exec-sink_1 -> stream-exec-sink_2 (Sink(table=[CustomerCount]))",
                 OldState.NONE));
-    assertThat(result.breaks().get(0).toMessage())
-        .isEqualTo(
-            "operator id=3 changed: field 'type' differs:"
-                + " stream-exec-sink_1 -> stream-exec-sink_2 (Sink(table=[CustomerCount]))");
   }
 
   @ParameterizedTest
@@ -105,12 +94,10 @@ class FlinkStateUpgradeCheckTest {
 
     assertThat(result.breaks())
         .containsExactly(
-            new ChangedStateField(
-                "4",
-                fieldName,
-                "missing",
-                "\"changed\"",
-                "Join(joinType=[InnerJoin])",
+            new StateUpgradeBreak(
+                "operator id=4 changed: field '%s' differs: missing -> \"changed\""
+                        .formatted(fieldName)
+                    + " (Join(joinType=[InnerJoin]))",
                 OldState.INCOMPATIBLE));
   }
 
@@ -121,8 +108,9 @@ class FlinkStateUpgradeCheckTest {
             plan("2.3", aggregateOperator()),
             plan("2.3", aggregateOperator().put("state", "otherState")));
 
-    assertThat(result.breaks()).hasSize(1);
-    assertThat(result.breaks().get(0).toMessage())
+    assertThat(result.breaks())
+        .singleElement()
+        .extracting(StateUpgradeBreak::message)
         .isEqualTo(
             "operator id=2 changed: field 'state' differs:"
                 + " \"groupAggregateState\" -> \"otherState\""
@@ -135,13 +123,9 @@ class FlinkStateUpgradeCheckTest {
         check(plan("2.3", deduplicateOperator("0 ms")), plan("2.3", deduplicateOperator("1 h")));
 
     assertThat(result.breaks()).isEmpty();
-    assertThat(result.notes())
+    assertThat(result.warnings()).isEmpty();
+    assertThat(result.notices())
         .containsExactly(
-            new ChangedStateTtl(
-                "5", "deduplicateState", "0 ms", "1 h", "Deduplicate(keep=[LastRow], key=[id])"));
-    assertThat(result.notes().get(0).level()).isEqualTo(Level.NOTICE);
-    assertThat(result.notes().get(0).toMessage())
-        .isEqualTo(
             "operator id=5: the TTL of state 'deduplicateState' changes: 0 ms -> 1 h"
                 + " (Deduplicate(keep=[LastRow], key=[id])). The check does not report a TTL"
                 + " change as a break.");
@@ -158,17 +142,10 @@ class FlinkStateUpgradeCheckTest {
 
     assertThat(result.breaks())
         .containsExactly(
-            new ChangedStateField(
-                "5",
-                "outputType",
-                "[id INT, val BIGINT]",
-                "[id INT, val BIGINT, extra INT]",
-                "Deduplicate(keep=[LastRow], key=[id])",
+            new StateUpgradeBreak(
+                "operator id=5 changed: field 'outputType' differs: [id INT, val BIGINT] ->"
+                    + " [id INT, val BIGINT, extra INT] (Deduplicate(keep=[LastRow], key=[id]))",
                 OldState.INCOMPATIBLE));
-    assertThat(result.breaks().get(0).toMessage())
-        .isEqualTo(
-            "operator id=5 changed: field 'outputType' differs: [id INT, val BIGINT] ->"
-                + " [id INT, val BIGINT, extra INT] (Deduplicate(keep=[LastRow], key=[id]))");
   }
 
   @ParameterizedTest
@@ -185,12 +162,10 @@ class FlinkStateUpgradeCheckTest {
     assertThat(result.breaks())
         .singleElement()
         .isEqualTo(
-            new ChangedStateField(
-                "5",
-                "outputType",
-                "[id INT, val BIGINT]",
-                "[id INT, val " + newColumnType + "]",
-                "Deduplicate(keep=[LastRow], key=[id])",
+            new StateUpgradeBreak(
+                "operator id=5 changed: field 'outputType' differs: [id INT, val BIGINT] ->"
+                    + " [id INT, val %s] (Deduplicate(keep=[LastRow], key=[id]))"
+                        .formatted(newColumnType),
                 OldState.INCOMPATIBLE));
   }
 
@@ -215,8 +190,9 @@ class FlinkStateUpgradeCheckTest {
 
     assertThat(result.breaks())
         .singleElement()
-        .extracting(stateUpgradeBreak -> ((ChangedStateField) stateUpgradeBreak).fieldName())
-        .isEqualTo("outputType");
+        .extracting(StateUpgradeBreak::message)
+        .asString()
+        .contains("field 'outputType' differs");
   }
 
   @Test
@@ -243,12 +219,11 @@ class FlinkStateUpgradeCheckTest {
 
     assertThat(result.breaks())
         .containsExactly(
-            new ChangedStateField(
-                "2",
-                "outputType",
-                "ROW<`id` INT, `cnt` BIGINT NOT NULL>",
-                "ROW<`id` INT, `cnt` BIGINT NOT NULL, `total` BIGINT>",
-                "GroupAggregate(groupBy=[customerid])",
+            new StateUpgradeBreak(
+                "operator id=2 changed: field 'outputType' differs:"
+                    + " ROW<`id` INT, `cnt` BIGINT NOT NULL> ->"
+                    + " ROW<`id` INT, `cnt` BIGINT NOT NULL, `total` BIGINT>"
+                    + " (GroupAggregate(groupBy=[customerid]))",
                 OldState.INCOMPATIBLE));
   }
 
@@ -263,8 +238,9 @@ class FlinkStateUpgradeCheckTest {
 
     assertThat(result.breaks())
         .singleElement()
-        .extracting(stateUpgradeBreak -> ((ChangedStateField) stateUpgradeBreak).fieldName())
-        .isEqualTo("outputType");
+        .extracting(StateUpgradeBreak::message)
+        .asString()
+        .contains("field 'outputType' differs");
   }
 
   @Test
@@ -288,12 +264,10 @@ class FlinkStateUpgradeCheckTest {
 
     assertThat(result.breaks())
         .containsExactly(
-            new ChangedStateField(
-                "6",
-                "outputType",
-                "[cnt BIGINT]",
-                "[cnt BIGINT, max_val BIGINT]",
-                "GlobalWindowAggregate(window=[TUMBLE(size=[1 min])])",
+            new StateUpgradeBreak(
+                "operator id=6 changed: field 'outputType' differs: [cnt BIGINT] ->"
+                    + " [cnt BIGINT, max_val BIGINT]"
+                    + " (GlobalWindowAggregate(window=[TUMBLE(size=[1 min])]))",
                 OldState.INCOMPATIBLE));
   }
 
@@ -369,12 +343,9 @@ class FlinkStateUpgradeCheckTest {
 
     assertThat(result.breaks())
         .containsExactly(
-            new ChangedStateField(
-                "2",
-                "aggCalls",
-                "[SUM]",
-                "[MAX]",
-                "GroupAggregate(groupBy=[customerid])",
+            new StateUpgradeBreak(
+                "operator id=2 changed: field 'aggCalls' differs: [SUM] -> [MAX]"
+                    + " (GroupAggregate(groupBy=[customerid]))",
                 OldState.INCOMPATIBLE));
   }
 
@@ -409,7 +380,7 @@ class FlinkStateUpgradeCheckTest {
 
     assertThat(result.breaks())
         .singleElement()
-        .extracting(stateUpgradeBreak -> stateUpgradeBreak.toMessage())
+        .extracting(StateUpgradeBreak::message)
         .asString()
         .contains("[COUNT] -> [COUNT DISTINCT]");
   }
@@ -423,7 +394,7 @@ class FlinkStateUpgradeCheckTest {
 
     assertThat(result.breaks())
         .singleElement()
-        .extracting(stateUpgradeBreak -> stateUpgradeBreak.toMessage())
+        .extracting(StateUpgradeBreak::message)
         .asString()
         .contains("field 'aggCalls' differs: [SUM] -> [MIN]");
   }
@@ -440,12 +411,10 @@ class FlinkStateUpgradeCheckTest {
 
     assertThat(result.breaks())
         .containsExactly(
-            new ChangedStateField(
-                "3",
-                "outputType",
-                "[id INT, total BIGINT]",
-                "[id INT, total BIGINT, extra BIGINT]",
-                "Sink(table=[CustomerCount], upsertMaterialize=[true])",
+            new StateUpgradeBreak(
+                "operator id=3 changed: field 'outputType' differs: [id INT, total BIGINT] ->"
+                    + " [id INT, total BIGINT, extra BIGINT]"
+                    + " (Sink(table=[CustomerCount], upsertMaterialize=[true]))",
                 OldState.INCOMPATIBLE));
   }
 
@@ -457,7 +426,8 @@ class FlinkStateUpgradeCheckTest {
             plan("2.3", operator(3, "stream-exec-calc_1", "Calc(select=[customerid])")));
 
     assertThat(result.breaks())
-        .filteredOn(ChangedOperatorType.class::isInstance)
+        .filteredOn(
+            stateUpgradeBreak -> stateUpgradeBreak.message().contains("field 'type' differs"))
         .singleElement()
         .extracting(StateUpgradeBreak::oldState)
         .isEqualTo(OldState.UNCLAIMED);
@@ -471,15 +441,14 @@ class FlinkStateUpgradeCheckTest {
     var result =
         check(plan("2.3", deduplicateOperator("0 ms")), plan("2.3", newDeduplicateOperator));
 
-    assertThat(result.notes()).isEmpty();
+    assertThat(result.noticesAndWarnings()).isEmpty();
     assertThat(result.breaks())
         .containsExactly(
-            new ChangedStateField(
-                "5",
-                "state",
-                "[{\"index\":0,\"ttl\":\"0 ms\",\"name\":\"deduplicateState\"}]",
-                "[{\"index\":0,\"ttl\":\"1 h\",\"name\":\"otherState\"}]",
-                "Deduplicate(keep=[LastRow], key=[id])",
+            new StateUpgradeBreak(
+                "operator id=5 changed: field 'state' differs:"
+                    + " [{\"index\":0,\"ttl\":\"0 ms\",\"name\":\"deduplicateState\"}] ->"
+                    + " [{\"index\":0,\"ttl\":\"1 h\",\"name\":\"otherState\"}]"
+                    + " (Deduplicate(keep=[LastRow], key=[id]))",
                 OldState.UNCLAIMED));
   }
 
@@ -494,21 +463,15 @@ class FlinkStateUpgradeCheckTest {
                     .put("type", "stream-exec-group-aggregate_2")
                     .put("state", "otherState")));
 
-    var aggregateDescription = "GroupAggregate(groupBy=[customerid])";
     assertThat(result.breaks())
         .containsExactly(
-            new ChangedOperatorType(
-                "2",
-                "stream-exec-group-aggregate_1",
-                "stream-exec-group-aggregate_2",
-                aggregateDescription,
+            new StateUpgradeBreak(
+                "operator id=2 changed: field 'type' differs: stream-exec-group-aggregate_1 ->"
+                    + " stream-exec-group-aggregate_2 (GroupAggregate(groupBy=[customerid]))",
                 OldState.INCOMPATIBLE),
-            new ChangedStateField(
-                "2",
-                "state",
-                "\"groupAggregateState\"",
-                "\"otherState\"",
-                aggregateDescription,
+            new StateUpgradeBreak(
+                "operator id=2 changed: field 'state' differs: \"groupAggregateState\" ->"
+                    + " \"otherState\" (GroupAggregate(groupBy=[customerid]))",
                 OldState.INCOMPATIBLE));
   }
 
@@ -519,7 +482,8 @@ class FlinkStateUpgradeCheckTest {
     var result = check(plan("2.3", aggregateOperator()), plan("2.3", newOperatorAtSameId));
 
     assertThat(result.breaks())
-        .filteredOn(ChangedOperatorType.class::isInstance)
+        .filteredOn(
+            stateUpgradeBreak -> stateUpgradeBreak.message().contains("field 'type' differs"))
         .singleElement()
         .extracting(StateUpgradeBreak::oldState)
         .isEqualTo(OldState.UNCLAIMED);
@@ -626,68 +590,67 @@ class FlinkStateUpgradeCheckTest {
 
     assertThat(result.breaks())
         .containsExactly(
-            new RemovedOperator("1", "TableSourceScan(table=[Orders])", OldState.UNCLAIMED),
-            new RemovedOperator("2", "GroupAggregate(groupBy=[customerid])", OldState.UNCLAIMED),
-            new RemovedOperator("3", "Sink(table=[CustomerCount])", OldState.UNCLAIMED));
+            new StateUpgradeBreak(
+                "operator id=1 removed: TableSourceScan(table=[Orders])", OldState.UNCLAIMED),
+            new StateUpgradeBreak(
+                "operator id=2 removed: GroupAggregate(groupBy=[customerid])", OldState.UNCLAIMED),
+            new StateUpgradeBreak(
+                "operator id=3 removed: Sink(table=[CustomerCount])", OldState.UNCLAIMED));
   }
 
   @Test
   void givenDifferentFlinkVersion_whenCheck_thenChangedFlinkVersion() {
     var result = check(plan("2.2"), plan("2.3"));
 
-    assertThat(result.notes()).containsExactly(new ChangedFlinkVersion("2.2", "2.3"));
-    assertThat(result.notes().get(0).level()).isEqualTo(Level.NOTICE);
-    assertThat(result.notes().get(0).toMessage())
-        .isEqualTo("The Flink version changes: 2.2 -> 2.3");
+    assertThat(result.warnings()).isEmpty();
+    assertThat(result.notices()).containsExactly("The Flink version changes: 2.2 -> 2.3");
   }
 
   @Test
   void givenSameFlinkVersion_whenCheck_thenNoChangedFlinkVersion() {
-    assertThat(check(plan("2.3"), plan("2.3")).notes()).isEmpty();
+    assertThat(check(plan("2.3"), plan("2.3")).noticesAndWarnings()).isEmpty();
   }
 
   @Test
   void givenNewPlanWithoutFlinkVersion_whenCheck_thenNoChangedFlinkVersion() {
-    assertThat(check(plan("2.3"), OBJECT_MAPPER.createObjectNode()).notes()).isEmpty();
+    assertThat(check(plan("2.3"), OBJECT_MAPPER.createObjectNode()).noticesAndWarnings()).isEmpty();
   }
 
   @Test
   void givenOldPlanWithoutFlinkVersion_whenCheck_thenNoChangedFlinkVersion() {
-    assertThat(check(OBJECT_MAPPER.createObjectNode(), plan("2.3")).notes()).isEmpty();
+    assertThat(check(OBJECT_MAPPER.createObjectNode(), plan("2.3")).noticesAndWarnings()).isEmpty();
   }
 
   @Test
   void givenDifferentMaxParallelism_whenCheck_thenChangedMaxParallelism() {
     var result =
-        FlinkStateUpgradeCheck.check(
-            jobPlan(plan("2.3"), Optional.of(128)), jobPlan(plan("2.3"), Optional.of(144)));
+        check(jobPlan(plan("2.3"), Optional.of(128)), jobPlan(plan("2.3"), Optional.of(144)));
 
-    assertThat(result.breaks()).containsExactly(new ChangedMaxParallelism(128, 144));
-    assertThat(result.breaks().get(0).toMessage())
-        .isEqualTo("pipeline.max-parallelism differs: 128 -> 144");
-    assertThat(result.notes()).isEmpty();
+    assertThat(result.breaks())
+        .containsExactly(
+            new StateUpgradeBreak("pipeline.max-parallelism differs: 128 -> 144", OldState.NONE));
+    assertThat(result.noticesAndWarnings()).isEmpty();
   }
 
   @Test
   void givenSameMaxParallelism_whenCheck_thenNoBreaksAndNoNotes() {
     var result =
-        FlinkStateUpgradeCheck.check(
-            jobPlan(plan("2.3"), Optional.of(128)), jobPlan(plan("2.3"), Optional.of(128)));
+        check(jobPlan(plan("2.3"), Optional.of(128)), jobPlan(plan("2.3"), Optional.of(128)));
 
     assertThat(result.breaks()).isEmpty();
-    assertThat(result.notes()).isEmpty();
+    assertThat(result.noticesAndWarnings()).isEmpty();
   }
 
   @Test
   void givenOnlyOldMaxParallelism_whenCheck_thenMaxParallelismOnlyInOldBuild() {
     var result =
-        FlinkStateUpgradeCheck.check(
-            jobPlan(plan("2.3"), Optional.of(128)), jobPlan(plan("2.3"), Optional.empty()));
+        check(jobPlan(plan("2.3"), Optional.of(128)), jobPlan(plan("2.3"), Optional.empty()));
 
     assertThat(result.breaks()).isEmpty();
-    assertThat(result.notes()).containsExactly(new MaxParallelismOnlyInOldBuild(128));
-    assertThat(result.notes().get(0).level()).isEqualTo(Level.WARN);
-    assertThat(result.notes().get(0).toMessage())
+    assertThat(result.notices()).isEmpty();
+    assertThat(result.warnings())
+        .singleElement()
+        .asString()
         .startsWith("Only the old build sets pipeline.max-parallelism (128).")
         .contains("Flink takes this value from the savepoint.");
   }
@@ -695,20 +658,51 @@ class FlinkStateUpgradeCheckTest {
   @Test
   void givenOnlyNewMaxParallelism_whenCheck_thenMaxParallelismOnlyInNewBuild() {
     var result =
-        FlinkStateUpgradeCheck.check(
-            jobPlan(plan("2.3"), Optional.empty()), jobPlan(plan("2.3"), Optional.of(144)));
+        check(jobPlan(plan("2.3"), Optional.empty()), jobPlan(plan("2.3"), Optional.of(144)));
 
     assertThat(result.breaks()).isEmpty();
-    assertThat(result.notes()).containsExactly(new MaxParallelismOnlyInNewBuild(144));
-    assertThat(result.notes().get(0).level()).isEqualTo(Level.WARN);
-    assertThat(result.notes().get(0).toMessage())
+    assertThat(result.notices()).isEmpty();
+    assertThat(result.warnings())
+        .singleElement()
+        .asString()
         .startsWith("Only the new build sets pipeline.max-parallelism (144).");
   }
 
+  /**
+   * The breaks of one check, and the texts of the notices and the warnings that the check reports
+   * to its {@link ErrorCollector}.
+   */
+  private record CheckResult(
+      List<StateUpgradeBreak> breaks, List<String> notices, List<String> warnings) {
+
+    List<String> noticesAndWarnings() {
+      return Stream.concat(notices.stream(), warnings.stream()).toList();
+    }
+  }
+
   /** Checks two plans that do not set {@code pipeline.max-parallelism}. */
-  private static StateUpgradeResult check(JsonNode oldCompiledPlan, JsonNode newCompiledPlan) {
-    return FlinkStateUpgradeCheck.check(
+  private static CheckResult check(JsonNode oldCompiledPlan, JsonNode newCompiledPlan) {
+    return check(
         jobPlan(oldCompiledPlan, Optional.empty()), jobPlan(newCompiledPlan, Optional.empty()));
+  }
+
+  /** Runs the check. The check reports no errors, because the caller reports each break. */
+  private static CheckResult check(FlinkJobPlan oldJobPlan, FlinkJobPlan newJobPlan) {
+    var errors = ErrorCollector.root();
+    var stateUpgradeBreaks = FlinkStateUpgradeCheck.check(oldJobPlan, newJobPlan, errors);
+    assertThat(errors.hasErrors()).isFalse();
+    return new CheckResult(
+        stateUpgradeBreaks,
+        messages(errors, ErrorMessage::isNotice),
+        messages(errors, ErrorMessage::isWarning));
+  }
+
+  private static List<String> messages(
+      ErrorCollector errors, Predicate<ErrorMessage> severityFilter) {
+    return StreamSupport.stream(errors.spliterator(), false)
+        .filter(severityFilter)
+        .map(ErrorMessage::getMessage)
+        .toList();
   }
 
   private static FlinkJobPlan jobPlan(JsonNode compiledPlan, Optional<Integer> maxParallelism) {

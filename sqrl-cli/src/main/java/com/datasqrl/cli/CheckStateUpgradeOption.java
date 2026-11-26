@@ -30,9 +30,6 @@ import picocli.CommandLine.Option;
 /**
  * The {@code --check-state-upgrade-from} option of the {@code compile} command. It fails the
  * compile when Flink cannot restore the state of the old build from the new compiled plan.
- *
- * <p>Each message goes to the {@link ErrorCollector} as the argument of {@code "%s"}, because the
- * collector formats its message text, and an operator description can contain a {@code %} sign.
  */
 public class CheckStateUpgradeOption {
 
@@ -82,9 +79,8 @@ public class CheckStateUpgradeOption {
           var oldBuildFolderPath = resolveOldBuildFolder(projectRoot, givenOldBuildFolder);
           errors.checkFatal(
               Files.exists(oldBuildFolderPath),
-              "%s",
-              "The --check-state-upgrade-from folder %s does not exist"
-                  .formatted(oldBuildFolderPath));
+              "The --check-state-upgrade-from folder %s does not exist",
+              oldBuildFolderPath);
 
           var foundOldPlanDir = findPlanDir(oldBuildFolderPath, errors);
           checkPlanDirOutside(foundOldPlanDir, "build folder", "-b", buildDir, errors);
@@ -119,29 +115,24 @@ public class CheckStateUpgradeOption {
       FlinkBuildPlan oldBuildPlan, FlinkBuildPlan newBuildPlan, ErrorCollector errors) {
     if (oldBuildPlan.flinkJobPlan().isEmpty()) {
       errors.notice(
-          "%s",
-          "The old build in %s has no Flink plan, so there is no Flink state to check."
-              .formatted(oldBuildPlan.planDir()));
+          "The old build in %s has no Flink plan, so there is no Flink state to check.",
+          oldBuildPlan.planDir());
       return;
     }
     if (newBuildPlan.flinkJobPlan().isEmpty()) {
-      errors.notice("%s", "The new compile has no Flink plan, so Flink restores no state.");
+      errors.notice("The new compile has no Flink plan, so Flink restores no state.");
       return;
     }
 
-    var stateUpgradeResult =
+    var stateUpgradeBreaks =
         FlinkStateUpgradeCheck.check(
-            oldBuildPlan.flinkJobPlan().get(), newBuildPlan.flinkJobPlan().get());
-    stateUpgradeResult.notes().forEach(stateUpgradeNote -> report(stateUpgradeNote, errors));
-
-    var stateUpgradeBreaks = stateUpgradeResult.breaks();
+            oldBuildPlan.flinkJobPlan().get(), newBuildPlan.flinkJobPlan().get(), errors);
     if (stateUpgradeBreaks.isEmpty()) {
       errors.notice(
-          "%s",
-          ("The new Flink plan passes the state upgrade check against the old build in %s. The"
-                  + " check does not prove that the results match a fresh run, for example after a"
-                  + " new table.")
-              .formatted(oldBuildPlan.planDir()));
+          "The new Flink plan passes the state upgrade check against the old build in %s. The"
+              + " check does not prove that the results match a fresh run, for example after a"
+              + " new table.",
+          oldBuildPlan.planDir());
       return;
     }
 
@@ -155,9 +146,8 @@ public class CheckStateUpgradeOption {
       breakMessages.add(INCOMPATIBLE_STATE_NOTE);
     }
     errors.fatal(
-        "%s",
-        "The new Flink plan cannot restore the state of the old build in %s:\n- %s"
-            .formatted(oldBuildPlan.planDir(), String.join("\n- ", breakMessages)));
+        "The new Flink plan cannot restore the state of the old build in %s:\n- %s",
+        oldBuildPlan.planDir(), String.join("\n- ", breakMessages));
   }
 
   /**
@@ -166,9 +156,9 @@ public class CheckStateUpgradeOption {
    */
   private static String breakLine(StateUpgradeBreak stateUpgradeBreak) {
     return switch (stateUpgradeBreak.oldState()) {
-      case UNCLAIMED -> stateUpgradeBreak.toMessage() + " " + UNCLAIMED_STATE_MARKER;
-      case INCOMPATIBLE -> stateUpgradeBreak.toMessage() + " " + INCOMPATIBLE_STATE_MARKER;
-      case NONE -> stateUpgradeBreak.toMessage();
+      case UNCLAIMED -> stateUpgradeBreak.message() + " " + UNCLAIMED_STATE_MARKER;
+      case INCOMPATIBLE -> stateUpgradeBreak.message() + " " + INCOMPATIBLE_STATE_MARKER;
+      case NONE -> stateUpgradeBreak.message();
     };
   }
 
@@ -176,14 +166,6 @@ public class CheckStateUpgradeOption {
       List<StateUpgradeBreak> stateUpgradeBreaks, OldState oldState) {
     return stateUpgradeBreaks.stream()
         .anyMatch(stateUpgradeBreak -> stateUpgradeBreak.oldState() == oldState);
-  }
-
-  /** Reports the note at the level that the check sets for it. */
-  private static void report(StateUpgradeNote stateUpgradeNote, ErrorCollector errors) {
-    switch (stateUpgradeNote.level()) {
-      case NOTICE -> errors.notice("%s", stateUpgradeNote.toMessage());
-      case WARN -> errors.warn("%s", stateUpgradeNote.toMessage());
-    }
   }
 
   private static Path resolveOldBuildFolder(Path projectRoot, Path givenOldBuildFolder) {
@@ -203,12 +185,14 @@ public class CheckStateUpgradeOption {
     var absoluteCompileFolder = compileFolder.toAbsolutePath().normalize();
     errors.checkFatal(
         !isInsideFolder(oldPlanDir, absoluteCompileFolder),
-        "%s",
-        ("The old plan folder %s of --check-state-upgrade-from is inside the %s %s of this compile."
-                + " The compile empties its build folder and its target folder, so it would delete"
-                + " the old build or the symbolic link to it. Give this compile a %s value that is"
-                + " outside the old build.")
-            .formatted(oldPlanDir, compileFolderName, absoluteCompileFolder, compileFolderOption));
+        "The old plan folder %s of --check-state-upgrade-from is inside the %s %s of this compile."
+            + " The compile empties its build folder and its target folder, so it would delete the"
+            + " old build or the symbolic link to it. Give this compile a %s value that is outside"
+            + " the old build.",
+        oldPlanDir,
+        compileFolderName,
+        absoluteCompileFolder,
+        compileFolderOption);
   }
 
   /**
@@ -247,10 +231,9 @@ public class CheckStateUpgradeOption {
         .orElseThrow(
             () ->
                 errors.exception(
-                    "%s",
-                    ("Cannot find the plan folder in %s. Give a build folder (with deploy/plan), a"
-                            + " target folder (with plan), or a plan folder (with"
-                            + " flink-compiled-plan.json or flink-config.yaml).")
-                        .formatted(oldBuildFolderPath)));
+                    "Cannot find the plan folder in %s. Give a build folder (with deploy/plan), a"
+                        + " target folder (with plan), or a plan folder (with"
+                        + " flink-compiled-plan.json or flink-config.yaml).",
+                    oldBuildFolderPath));
   }
 }

@@ -15,15 +15,8 @@
  */
 package com.datasqrl.cli;
 
-import com.datasqrl.cli.StateUpgradeBreak.ChangedMaxParallelism;
-import com.datasqrl.cli.StateUpgradeBreak.ChangedOperatorType;
-import com.datasqrl.cli.StateUpgradeBreak.ChangedStateField;
 import com.datasqrl.cli.StateUpgradeBreak.OldState;
-import com.datasqrl.cli.StateUpgradeBreak.RemovedOperator;
-import com.datasqrl.cli.StateUpgradeNote.ChangedFlinkVersion;
-import com.datasqrl.cli.StateUpgradeNote.ChangedStateTtl;
-import com.datasqrl.cli.StateUpgradeNote.MaxParallelismOnlyInNewBuild;
-import com.datasqrl.cli.StateUpgradeNote.MaxParallelismOnlyInOldBuild;
+import com.datasqrl.error.ErrorCollector;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -44,8 +37,12 @@ import java.util.Set;
  * also needs the same column types in its {@code outputType}. An operator that only the new plan
  * has starts with empty state, so it is accepted. Both builds also need the same {@code
  * pipeline.max-parallelism}.
+ *
+ * <p>A change that does not stop the restore goes to the {@link ErrorCollector} as a notice or a
+ * warning: a new Flink version, a new TTL, and a {@code pipeline.max-parallelism} that only one
+ * build sets.
  */
-public final class FlinkStateUpgradeCheck {
+final class FlinkStateUpgradeCheck {
 
   /**
    * The operator fields that hold or shape the state, so they must stay the same. {@code joinSpec}
@@ -114,22 +111,23 @@ public final class FlinkStateUpgradeCheck {
 
   private FlinkStateUpgradeCheck() {}
 
-  /** Returns all breaks and notes for an upgrade from the old build to the new build. */
-  public static StateUpgradeResult check(FlinkJobPlan oldJobPlan, FlinkJobPlan newJobPlan) {
+  /**
+   * Returns all breaks for an upgrade from the old build to the new build, and reports the notices
+   * and the warnings to the {@link ErrorCollector}.
+   */
+  static List<StateUpgradeBreak> check(
+      FlinkJobPlan oldJobPlan, FlinkJobPlan newJobPlan, ErrorCollector errors) {
     var stateUpgradeBreaks =
         new ArrayList<>(operatorBreaks(oldJobPlan.compiledPlan(), newJobPlan.compiledPlan()));
     maxParallelismBreak(oldJobPlan.maxParallelism(), newJobPlan.maxParallelism())
         .ifPresent(stateUpgradeBreaks::add);
 
-    var stateUpgradeNotes = new ArrayList<StateUpgradeNote>();
-    changedFlinkVersion(oldJobPlan.compiledPlan(), newJobPlan.compiledPlan())
-        .ifPresent(stateUpgradeNotes::add);
-    stateUpgradeNotes.addAll(
-        changedStateTtls(oldJobPlan.compiledPlan(), newJobPlan.compiledPlan()));
-    maxParallelismOnlyInOneBuild(oldJobPlan.maxParallelism(), newJobPlan.maxParallelism())
-        .ifPresent(stateUpgradeNotes::add);
+    reportChangedFlinkVersion(oldJobPlan.compiledPlan(), newJobPlan.compiledPlan(), errors);
+    reportChangedStateTtls(oldJobPlan.compiledPlan(), newJobPlan.compiledPlan(), errors);
+    reportMaxParallelismOnlyInOneBuild(
+        oldJobPlan.maxParallelism(), newJobPlan.maxParallelism(), errors);
 
-    return new StateUpgradeResult(List.copyOf(stateUpgradeBreaks), List.copyOf(stateUpgradeNotes));
+    return List.copyOf(stateUpgradeBreaks);
   }
 
   /**
@@ -147,8 +145,11 @@ public final class FlinkStateUpgradeCheck {
       var newOperator = newOperatorsById.get(operatorId);
 
       var oldState = oldState(oldOperator, newOperator);
+      var description = description(oldOperator);
       if (newOperator == null) {
-        operatorBreaks.add(new RemovedOperator(operatorId, description(oldOperator), oldState));
+        operatorBreaks.add(
+            new StateUpgradeBreak(
+                "operator id=%s removed: %s".formatted(operatorId, description), oldState));
         continue;
       }
 
@@ -156,8 +157,7 @@ public final class FlinkStateUpgradeCheck {
       var newType = type(newOperator);
       if (!oldType.equals(newType)) {
         operatorBreaks.add(
-            new ChangedOperatorType(
-                operatorId, oldType, newType, description(oldOperator), oldState));
+            changedField(operatorId, "type", oldType, newType, description, oldState));
       }
 
       for (var fieldName : STATE_FIELDS) {
@@ -166,12 +166,12 @@ public final class FlinkStateUpgradeCheck {
         if (!Objects.equals(
             comparableValue(fieldName, oldValue), comparableValue(fieldName, newValue))) {
           operatorBreaks.add(
-              new ChangedStateField(
+              changedField(
                   operatorId,
                   fieldName,
                   valueText(oldValue),
                   valueText(newValue),
-                  description(oldOperator),
+                  description,
                   oldState));
         }
       }
@@ -181,12 +181,12 @@ public final class FlinkStateUpgradeCheck {
       if (hasState(oldOperator)
           && !Objects.equals(columnTypes(oldOutputType), columnTypes(newOutputType))) {
         operatorBreaks.add(
-            new ChangedStateField(
+            changedField(
                 operatorId,
                 OUTPUT_TYPE_FIELD,
                 outputTypeText(oldOutputType),
                 outputTypeText(newOutputType),
-                description(oldOperator),
+                description,
                 oldState));
       }
 
@@ -194,16 +194,35 @@ public final class FlinkStateUpgradeCheck {
       var newAggregateFunctions = aggregateFunctions(newOperator);
       if (hasState(oldOperator) && !oldAggregateFunctions.equals(newAggregateFunctions)) {
         operatorBreaks.add(
-            new ChangedStateField(
+            changedField(
                 operatorId,
                 AGG_CALLS_FIELD,
                 oldAggregateFunctions.toString(),
                 newAggregateFunctions.toString(),
-                description(oldOperator),
+                description,
                 oldState));
       }
     }
     return operatorBreaks;
+  }
+
+  /**
+   * Returns the break of a field that differs in the operator with this id. A different {@code
+   * type} keeps the uid when only the ExecNode version changes, for example {@code
+   * stream-exec-sink_1} to {@code stream-exec-sink_2}. The values are compact JSON, or {@code
+   * missing} for a missing field. The description is the one of the old operator.
+   */
+  private static StateUpgradeBreak changedField(
+      String operatorId,
+      String fieldName,
+      String oldValue,
+      String newValue,
+      String description,
+      OldState oldState) {
+    return new StateUpgradeBreak(
+        "operator id=%s changed: field '%s' differs: %s -> %s (%s)"
+            .formatted(operatorId, fieldName, oldValue, newValue, description),
+        oldState);
   }
 
   /**
@@ -372,14 +391,14 @@ public final class FlinkStateUpgradeCheck {
   }
 
   /**
-   * Returns one note for each state entry whose {@code ttl} is the only change. Flink restores the
-   * state after a TTL change, so {@link #operatorBreaks} ignores the {@code ttl}. When other parts
-   * of the {@code state} field change too, the break shows the full values instead.
+   * Reports one notice for each state entry whose {@code ttl} is the only change. Flink restores
+   * the state after a TTL change, so {@link #operatorBreaks} ignores the {@code ttl}. When other
+   * parts of the {@code state} field change too, the break shows the full values instead. The level
+   * is a notice, because a warning makes the agent change a good TTL back.
    */
-  private static List<ChangedStateTtl> changedStateTtls(
-      JsonNode oldCompiledPlan, JsonNode newCompiledPlan) {
+  private static void reportChangedStateTtls(
+      JsonNode oldCompiledPlan, JsonNode newCompiledPlan, ErrorCollector errors) {
     var newOperatorsById = operatorsById(newCompiledPlan);
-    var changedStateTtls = new ArrayList<ChangedStateTtl>();
 
     for (var oldOperator : oldCompiledPlan.path("nodes")) {
       var newOperator = newOperatorsById.get(operatorId(oldOperator));
@@ -398,17 +417,17 @@ public final class FlinkStateUpgradeCheck {
         var oldTtl = oldStateEntries.get(entryIndex).path(TTL_FIELD).asText(MISSING_VALUE);
         var newTtl = newStateEntries.get(entryIndex).path(TTL_FIELD).asText(MISSING_VALUE);
         if (!oldTtl.equals(newTtl)) {
-          changedStateTtls.add(
-              new ChangedStateTtl(
-                  operatorId(oldOperator),
-                  oldStateEntries.get(entryIndex).path("name").asText(),
-                  oldTtl,
-                  newTtl,
-                  description(oldOperator)));
+          errors.notice(
+              "operator id=%s: the TTL of state '%s' changes: %s -> %s (%s). The check does not"
+                  + " report a TTL change as a break.",
+              operatorId(oldOperator),
+              oldStateEntries.get(entryIndex).path("name").asText(),
+              oldTtl,
+              newTtl,
+              description(oldOperator));
         }
       }
     }
-    return changedStateTtls;
   }
 
   /** Returns the value to compare: the {@code state} field without the {@code ttl} entries. */
@@ -436,41 +455,64 @@ public final class FlinkStateUpgradeCheck {
     return value == null ? MISSING_VALUE : value.toString();
   }
 
+  /**
+   * Returns a break when the two builds set different values for {@code pipeline.max-parallelism}.
+   * Flink divides the state into this number of key groups, so a restore needs the same value.
+   */
   private static Optional<StateUpgradeBreak> maxParallelismBreak(
       Optional<Integer> oldMaxParallelism, Optional<Integer> newMaxParallelism) {
     if (oldMaxParallelism.isPresent()
         && newMaxParallelism.isPresent()
         && !oldMaxParallelism.equals(newMaxParallelism)) {
       return Optional.of(
-          new ChangedMaxParallelism(oldMaxParallelism.get(), newMaxParallelism.get()));
+          new StateUpgradeBreak(
+              "pipeline.max-parallelism differs: %d -> %d"
+                  .formatted(oldMaxParallelism.get(), newMaxParallelism.get()),
+              OldState.NONE));
     }
     return Optional.empty();
   }
 
-  /** Returns a note when only one build sets {@code pipeline.max-parallelism}. */
-  private static Optional<StateUpgradeNote> maxParallelismOnlyInOneBuild(
-      Optional<Integer> oldMaxParallelism, Optional<Integer> newMaxParallelism) {
+  /**
+   * Reports a warning when only one build sets {@code pipeline.max-parallelism}. When only the old
+   * build sets it, Flink takes the value from the savepoint, so the restore fails only when the new
+   * job gets a different value from outside the build. When only the new build sets it, the check
+   * cannot see the value of the running job.
+   */
+  private static void reportMaxParallelismOnlyInOneBuild(
+      Optional<Integer> oldMaxParallelism,
+      Optional<Integer> newMaxParallelism,
+      ErrorCollector errors) {
     if (oldMaxParallelism.isPresent() && newMaxParallelism.isEmpty()) {
-      return Optional.of(new MaxParallelismOnlyInOldBuild(oldMaxParallelism.get()));
+      errors.warn(
+          "Only the old build sets pipeline.max-parallelism (%d). Flink takes this value from the"
+              + " savepoint. The restore fails only when the new job gets a different value from"
+              + " outside the build, for example from the Flink cluster configuration.",
+          oldMaxParallelism.get());
     }
     if (oldMaxParallelism.isEmpty() && newMaxParallelism.isPresent()) {
-      return Optional.of(new MaxParallelismOnlyInNewBuild(newMaxParallelism.get()));
+      errors.warn(
+          "Only the new build sets pipeline.max-parallelism (%d). Make sure that the running job"
+              + " uses the same value, because a different value makes the restore fail.",
+          newMaxParallelism.get());
     }
-    return Optional.empty();
   }
 
-  /** Returns a note when both plans have a {@code flinkVersion} and the versions are different. */
-  private static Optional<ChangedFlinkVersion> changedFlinkVersion(
-      JsonNode oldCompiledPlan, JsonNode newCompiledPlan) {
+  /**
+   * Reports a notice when both plans have a {@code flinkVersion} and the versions are different.
+   * This is information only: a Flink upgrade that changes an operator also changes its {@code
+   * type}, which the check reports as a break.
+   */
+  private static void reportChangedFlinkVersion(
+      JsonNode oldCompiledPlan, JsonNode newCompiledPlan, ErrorCollector errors) {
     var oldFlinkVersion = oldCompiledPlan.path("flinkVersion").asText();
     var newFlinkVersion = newCompiledPlan.path("flinkVersion").asText();
 
-    if (oldFlinkVersion.isEmpty()
-        || newFlinkVersion.isEmpty()
-        || oldFlinkVersion.equals(newFlinkVersion)) {
-      return Optional.empty();
+    if (!oldFlinkVersion.isEmpty()
+        && !newFlinkVersion.isEmpty()
+        && !oldFlinkVersion.equals(newFlinkVersion)) {
+      errors.notice("The Flink version changes: %s -> %s", oldFlinkVersion, newFlinkVersion);
     }
-    return Optional.of(new ChangedFlinkVersion(oldFlinkVersion, newFlinkVersion));
   }
 
   private static Map<String, JsonNode> operatorsById(JsonNode plan) {
