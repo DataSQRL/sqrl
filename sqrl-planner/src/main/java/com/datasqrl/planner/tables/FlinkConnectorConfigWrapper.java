@@ -31,6 +31,11 @@ import org.apache.flink.table.catalog.GenericInMemoryCatalog;
 /**
  * A wrapper around Flink table options for analysis and access to specific options that we need to
  * evaluate during planning.
+ *
+ * <p>This class is the one place for what the compiler knows about a connector by its name: {@link
+ * #CONNECTORS}, {@link #CATALOG_CONNECTOR_MAP} and {@link #SINK_ONLY_CONNECTORS}. Add a connector,
+ * or a new fact about connectors, here and not in a map of another class, so that the mappings
+ * cannot drift apart.
  */
 @Slf4j
 public record FlinkConnectorConfigWrapper(Map<String, String> options, Optional<Catalog> catalog) {

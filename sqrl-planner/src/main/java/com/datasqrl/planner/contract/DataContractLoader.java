@@ -136,18 +136,23 @@ public class DataContractLoader {
     if (names.contains(expected)) {
       return Optional.of(definingFile.resolveSibling(expected));
     }
+
     names.stream()
         .filter(name -> name.equalsIgnoreCase(expected))
         .forEach(
-            name ->
-                // Such a pair works on a case-insensitive file system and not on others
-                errors.fatal(
-                    ErrorCode.INVALID_DATA_CONTRACT,
-                    "Contract file [%s] differs from the name of [%s] only in case and is not"
-                        + " read. Rename it to [%s]",
-                    name,
-                    definingFile.getFileName(),
-                    expected));
+            name -> {
+              // Such a pair works on a case-insensitive file system and not on others
+              errors.fatal(
+                  ErrorCode.INVALID_DATA_CONTRACT,
+                  "Contract file [%s] differs from the name of [%s] only in case and is not"
+                      + " read. Rename it to [%s]",
+                  name,
+                  definingFile.getFileName(),
+                  expected);
+              // The file is reported, so it is not also one that no script uses
+              contractFiles.put(definingFile.resolveSibling(name), Optional.empty());
+            });
+
     return Optional.empty();
   }
 

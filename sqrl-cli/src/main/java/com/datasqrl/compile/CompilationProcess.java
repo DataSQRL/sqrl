@@ -86,7 +86,7 @@ public class CompilationProcess {
     planner.planMain(mainScript, Optional.empty(), environment);
     // The differences between the tables and their data contracts are recorded like tag
     // violations, so that both are reported together
-    var contractFiles = dataContractStage.check(environment);
+    dataContractStage.check(environment);
     // Tag violations, including those in the tag configuration, are recorded without aborting so
     // that all of them are reported. Don't optimize or assemble a plan with known errors.
     errors.abortOnErrors();
@@ -96,8 +96,7 @@ public class CompilationProcess {
     // The contracts are generated from the plan, which has the public tables as the engines
     // store them
     physicalPlan =
-        physicalPlan.withDataContracts(
-            dataContractStage.generate(dag, physicalPlan, environment, contractFiles));
+        physicalPlan.withDataContracts(dataContractStage.generate(dag, physicalPlan, environment));
     var mutationDatabase = physicalPlan.getMutationDatabase(environment);
 
     TestPlan testPlan = null;

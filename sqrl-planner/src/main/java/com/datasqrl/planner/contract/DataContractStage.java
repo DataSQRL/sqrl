@@ -25,7 +25,6 @@ import com.datasqrl.planner.Sqrl2FlinkSQLTranslator;
 import com.datasqrl.planner.analyzer.TableAnalysis;
 import com.datasqrl.planner.contract.DataContractFormat.Difference;
 import com.datasqrl.planner.contract.DataContractFormat.GeneratedEntry;
-import com.datasqrl.planner.contract.DataContracts.ContractFileUsage;
 import com.datasqrl.planner.contract.DataContracts.Document;
 import com.datasqrl.planner.contract.TableContracts.AttachedContract;
 import com.datasqrl.planner.contract.TableContracts.ContractTable;
@@ -50,6 +49,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.flink.table.catalog.ObjectIdentifier;
 import org.apache.flink.table.catalog.ResolvedCatalogTable;
 import org.springframework.context.annotation.Lazy;
@@ -105,14 +105,12 @@ public class DataContractStage {
    * aborting, like tag violations, so that a compilation reports all of them together.
    *
    * <p>This only needs the planned tables, so it runs before the DAG is optimized.
-   *
-   * @return how the contract files of the project were used
    */
-  public List<ContractFileUsage> check(Sqrl2FlinkSQLTranslator environment) {
+  public void check(Sqrl2FlinkSQLTranslator environment) {
     var collector = errors.abortOnFatal(false);
     var definitions = environment.getTagAnalyzer().getDefinitions();
     checkProvidedContracts(environment, definitions, collector);
-    return checkContractFiles(definitions, collector);
+    checkContractFiles(definitions, collector);
   }
 
   /**
@@ -121,13 +119,9 @@ public class DataContractStage {
    *
    * @param dag the optimized DAG, which only has the tables that are deployed or tested
    * @param plan the physical plan, which has the public tables as the engines store them
-   * @param files the result of {@link #check}
    */
   public DataContracts generate(
-      PipelineDAG dag,
-      PhysicalPlan plan,
-      Sqrl2FlinkSQLTranslator environment,
-      List<ContractFileUsage> files) {
+      PipelineDAG dag, PhysicalPlan plan, Sqrl2FlinkSQLTranslator environment) {
     var deployed = deployedNodes(dag);
     var deployedTables =
         deployed.stream().filter(TableNode.class::isInstance).map(TableNode.class::cast).toList();
@@ -157,6 +151,9 @@ public class DataContractStage {
     groups.computeIfAbsent(mainScriptName(), name -> new ArrayList<>()).add(publicTables);
 
     var definitions = environment.getTagAnalyzer().getDefinitions();
+    // Only a project that has contract files gets messages about data contracts
+    var hasContractFiles =
+        !loader.getFoundFiles().isEmpty() || !contractFilesInBuildDir().isEmpty();
     var documents = new ArrayList<Document>();
     for (var format : loader.getFormats()) {
       groups.forEach(
@@ -168,14 +165,13 @@ public class DataContractStage {
             if (entries.isEmpty()) {
               return;
             }
-            if (!files.isEmpty()) {
-              // Only a project that has contract files gets messages about data contracts
+            if (hasContractFiles) {
               warnSameNames(name, entries, format);
             }
             documents.add(new Document(format.fileName(name), format.write(name, entries)));
           });
     }
-    return new DataContracts(List.copyOf(documents), files);
+    return new DataContracts(List.copyOf(documents));
   }
 
   /**
@@ -226,22 +222,40 @@ public class DataContractStage {
   }
 
   /**
-   * Reports the loaded contract files that were not applied, and collects how the contract files of
-   * the project were used.
+   * Reports the contract files and the entries that are not applied to a table:
+   *
+   * <ul>
+   *   <li>an error for a file of which no entry matches a table, since the names are most likely
+   *       wrong,
+   *   <li>a notice for an entry without a table in a file that is applied, since a contract may
+   *       describe more tables than its script defines,
+   *   <li>a warning for a file that is skipped because this compilation does not plan the script
+   *       next to it, such as the connectors of another environment.
+   * </ul>
    */
-  List<ContractFileUsage> checkContractFiles(TagDefinitions definitions, ErrorCollector collector) {
-    var usages = new ArrayList<ContractFileUsage>();
+  void checkContractFiles(TagDefinitions definitions, ErrorCollector collector) {
     for (var file : loader.getLoadedFiles()) {
       var name = file.getPath().getFileName();
+      var label = file.getFormat().getEntryLabel();
+
       if (file.getAppliedTableNames().isEmpty()) {
         file.errorsAtEntries(collector)
             .fatal(
                 ErrorCode.INVALID_DATA_CONTRACT,
                 "Contract file [%s] was not applied: none of its %ss %s matches a table",
                 name,
-                file.getFormat().getEntryLabel(),
+                label,
                 file.getUnappliedEntryNames());
+      } else {
+        file.getUnappliedEntries()
+            .forEach(
+                entry ->
+                    file.errorsAt(collector, entry.location())
+                        .notice(
+                            "%s [%s] matches no table and is not checked",
+                            StringUtils.capitalize(label), entry.name()));
       }
+
       if (!definitions.isEnabled() && file.declaresTags()) {
         file.errorsAtEntries(collector)
             .warn(
@@ -249,20 +263,22 @@ public class DataContractStage {
                     + " the tables since compiler.tags is not configured",
                 name);
       }
-      usages.add(
-          new ContractFileUsage(
-              file.getPath(), true, file.getAppliedTableNames(), file.getUnappliedEntryNames()));
     }
 
     // The other contract files of the project sit next to scripts that this compilation does not
-    // plan, such as the connectors of another environment
+    // plan. They are reported in the order of their paths, whatever order the folder is walked in
+    var buildDir = workspacePaths.buildDir().toAbsolutePath().normalize();
     var found = loader.getFoundFiles();
     contractFilesInBuildDir().stream()
         .filter(file -> !found.contains(file))
-        .forEach(file -> usages.add(new ContractFileUsage(file, false, List.of(), List.of())));
-
-    usages.sort(Comparator.comparing(ContractFileUsage::file));
-    return List.copyOf(usages);
+        .map(buildDir::relativize)
+        .sorted()
+        .forEach(
+            file ->
+                collector.warn(
+                    "Contract file [%s] is skipped: the script next to it is not part of this"
+                        + " compile",
+                    file));
   }
 
   /** The contract files of the project and its includes, which preprocessing copied. */

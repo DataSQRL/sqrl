@@ -230,6 +230,14 @@ class OdcsCompatibilityCheckerTest {
             "Field [labels[]] is not described in the contract");
   }
 
+  private static final String ID_PROPERTY =
+      """
+            properties:
+              - name: id
+                logicalType: integer
+                required: true
+        """;
+
   @Test
   void givenMetadataWatermarkColumnInContract_whenCheck_thenCompatible() {
     var subject =
@@ -256,7 +264,25 @@ class OdcsCompatibilityCheckerTest {
   }
 
   @Test
-  void givenPhysicalWatermarkColumnMissingFromContract_whenCheck_thenCompatible() {
+  void givenWatermarkColumnThatTheTableAddsMissingFromContract_whenCheck_thenCompatible() {
+    // A connector table that takes the columns of the data over with LIKE and adds the event time
+    var subject =
+        subject("Customers")
+            .columns(
+                List.of(
+                    new Column("id", BIGINT_NOT_NULL, ColumnKind.PHYSICAL),
+                    new Column("received_at", TIMESTAMP_NOT_NULL, ColumnKind.PHYSICAL)))
+            .watermarkColumn(Optional.of("received_at"))
+            .addsWatermarkColumn(true)
+            .build();
+
+    assertThat(check(HEADER + ID_PROPERTY, subject, DEFINITIONS)).isTrue();
+    assertThat(messages()).isEmpty();
+  }
+
+  @Test
+  void givenWatermarkColumnThatTheTableDoesNotAddMissingFromContract_whenCheck_thenReportsIt() {
+    // The table takes the column over with LIKE, or it has no LIKE clause: the column is data
     var subject =
         subject("Customers")
             .columns(
@@ -265,17 +291,15 @@ class OdcsCompatibilityCheckerTest {
                     new Column("received_at", TIMESTAMP_NOT_NULL, ColumnKind.PHYSICAL)))
             .watermarkColumn(Optional.of("received_at"))
             .build();
-    var contract =
-        HEADER
-            + """
-                  properties:
-                    - name: id
-                      logicalType: integer
-                      required: true
-              """;
 
-    assertThat(check(contract, subject, DEFINITIONS)).isTrue();
-    assertThat(messages()).isEmpty();
+    assertThat(check(HEADER + ID_PROPERTY, subject, DEFINITIONS)).isFalse();
+    assertThat(messages())
+        .extracting(ErrorMessage::getMessage)
+        .containsExactly(
+            "Column [received_at] (TIMESTAMP_LTZ(3) NOT NULL) of table [Customers] is missing from"
+                + " the contract."
+                + " It has the watermark, and a contract may only leave out a watermark column"
+                + " that the table adds itself to the columns it takes over with LIKE");
   }
 
   @Test

@@ -141,7 +141,7 @@ connectors/
 * `<name>.odcs.yaml` belongs to `<name>.sqrl`, or to `<name>.table.sql`, in the same folder. This holds for every script that defines tables: the main script, imported scripts, and the scripts of `EXPORT` targets.
 * A schema object describes the `CREATE TABLE` of the same name. Names are matched ignoring case. The name is the one in the statement, not the alias of an `IMPORT … AS`.
 * A contract can cover some tables of a script. The other tables get a generated schema object.
-* A contract can describe more tables than the script defines, so a contract from a data catalog can be used unchanged. The compile summary lists the schema objects that were not applied.
+* A contract can describe more tables than the script defines, so a contract from a data catalog can be used unchanged. The compiler prints a notice for each schema object that matches no table.
 * The public tables that the pipeline computes cannot have a provided contract, since no `CREATE TABLE` defines them. To control the contract of such data, define a `CREATE TABLE` and `EXPORT` to it.
 
 A good way to start is to compile without a contract, copy the schema objects you need from `build/deploy/contracts` into `<name>.odcs.yaml` next to the script, add the top-level fields (`apiVersion`, `kind`, `id`, `version`, `status`), and edit from there. A contract must have an `apiVersion` of ODCS v3.2, such as `v3.2.0`.
@@ -176,7 +176,7 @@ The compiler compares a provided schema object with the `CREATE TABLE` on the fi
 
 Further rules:
 
-* **The watermark column is outside the column match.** The column that the `WATERMARK` of a table is declared on often differs between environments: test data carries it as a physical column, and production reads it from the metadata of the record. A contract may leave out a physical watermark column, and it may list the watermark column when the table reads it from metadata or computes it. Any other physical column must be in the contract.
+* **A watermark column that the connector table adds is outside the column match.** The column that the `WATERMARK` of a table is declared on often differs between environments: test data carries it as a physical column, and production reads it from the metadata of the record. So a contract may leave out a physical watermark column that the table adds itself to the columns it takes over with `LIKE`, and it may list the watermark column when the table reads it from metadata or computes it. A watermark column that comes through `LIKE` is data and must be in the contract, and so must the watermark column of a table without `LIKE`. Any other physical column must be in the contract.
 * **A table with a contract is checked even if the pipeline doesn't use it**, so a contract cannot drift unnoticed.
 * **A sink with a contract declares the tags of the data written into it.** The contract lists the tags of its table, so the table has to declare them, see [tags](configuration#propagation-and-validation).
 * Without `compiler.tags`, tags and classification are not compared. The compiler warns once for each contract file that declares any.
@@ -195,17 +195,16 @@ A contract is found by its file name, so a misnamed file would be ignored silent
 | None of the schema objects of the file matches a table.                                                     | Error                                                         |
 | A schema object matches more than one table, or a table has a schema object in two contract files.          | Error                                                         |
 | The file has more than one YAML document, or is not valid ODCS v3.2.                                        | Error                                                         |
-| The script next to the file is not part of this compilation, e.g. the connectors of another environment.    | No error. The compile summary lists the file as not used.     |
-| Some schema objects of the file match no table.                                                             | No error. The compile summary lists them as not applied.      |
+| The script next to the file is not part of this compilation, e.g. the connectors of another environment.    | Warning. The file is skipped.                                 |
+| Some schema objects of the file match no table.                                                             | Notice for each of them. The other schema objects are checked. |
 
 These checks only concern contract files. A script without a contract file is never reported, so a project can add contracts one script at a time. The files in the `contracts` folder of a deployment folder are output of the compiler, not contract files of the project, also when an earlier compilation wrote them into a folder of the project.
 
-The compile summary lists each contract file with the tables it was applied to:
+The warning and the notice look like this:
 
 ```
-Data contracts:       build/deploy/contracts
-  connectors/crm.odcs.yaml: Customers, Orders (not applied: Invoices)
-  sinks/archive-prod.odcs.yaml: not used in this compile
+[NOTICE] Schema object [Invoices] matches no table and is not checked
+[WARN] Contract file [sinks/archive-prod.odcs.yaml] is skipped: the script next to it is not part of this compile
 ```
 
 ## APIs

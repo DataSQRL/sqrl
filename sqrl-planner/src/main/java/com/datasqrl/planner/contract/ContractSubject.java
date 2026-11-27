@@ -39,6 +39,8 @@ import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
  * @param name the name of the table in its statement
  * @param columns all columns of the table, of which only the physical ones are part of a contract
  * @param watermarkColumn the top-level column that the watermark of the table is declared on
+ * @param addsWatermarkColumn whether the statement of the table adds the watermark column itself to
+ *     the columns that it takes over from another table with {@code LIKE}
  * @param primaryKey the declared primary key columns, in order
  * @param partitionKeys the declared partition columns, in order
  * @param tags the tags of the table
@@ -50,6 +52,7 @@ public record ContractSubject(
     String name,
     List<Column> columns,
     Optional<String> watermarkColumn,
+    boolean addsWatermarkColumn,
     List<String> primaryKey,
     List<String> partitionKeys,
     Documentation documentation,
@@ -101,14 +104,21 @@ public record ContractSubject(
                         kindOf(column)))
             .toList();
 
+    var watermarkColumn =
+        schema.getWatermarkSpecs().stream()
+            .map(WatermarkSpec::getRowtimeAttribute)
+            .filter(column -> !column.contains("."))
+            .findFirst();
+
     return ContractSubject.builder()
         .name(created.name())
         .columns(columns)
-        .watermarkColumn(
-            schema.getWatermarkSpecs().stream()
-                .map(WatermarkSpec::getRowtimeAttribute)
-                .filter(column -> !column.contains("."))
-                .findFirst())
+        .watermarkColumn(watermarkColumn)
+        .addsWatermarkColumn(
+            watermarkColumn
+                .filter(
+                    column -> created.addedColumns().stream().anyMatch(column::equalsIgnoreCase))
+                .isPresent())
         .primaryKey(schema.getPrimaryKey().map(UniqueConstraint::getColumns).orElse(List.of()))
         .partitionKeys(partitionKeys)
         .documentation(created.documentation())
@@ -154,5 +164,14 @@ public record ContractSubject(
 
   public boolean isWatermarkColumn(String name) {
     return watermarkColumn.filter(column -> column.equalsIgnoreCase(name)).isPresent();
+  }
+
+  /**
+   * A contract may leave out the watermark column if the table adds it itself to the columns of the
+   * table it extends: those columns are the data, and how an environment provides the event time is
+   * up to its connector table. A watermark column that the table takes over is data.
+   */
+  public boolean mayOmitColumn(String name) {
+    return addsWatermarkColumn && isWatermarkColumn(name);
   }
 }

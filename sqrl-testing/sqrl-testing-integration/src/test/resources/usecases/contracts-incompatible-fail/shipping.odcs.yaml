@@ -11,3 +11,9 @@ schema:
         required: true
       - name: carrier
         logicalType: string
+  # refunded_at is missing: the table takes its watermark column over from the schema table
+  - name: Refunds
+    properties:
+      - name: id
+        logicalType: integer
+        required: true

@@ -49,9 +49,10 @@ import org.apache.commons.lang3.StringUtils;
  *
  * <ul>
  *   <li>The properties must be the physical columns of the table, as a set that ignores case and
- *       order. The column that the watermark is declared on is exempt: it may be missing from the
- *       contract, and the contract may list it when the table reads it from metadata or computes
- *       it, since environments differ in how they provide it.
+ *       order. The column that the watermark is declared on is exempt in two cases, since
+ *       environments differ in how they provide it: it may be missing from the contract if the
+ *       table adds it itself to the columns that it takes over with {@code LIKE}, and the contract
+ *       may list it when the table reads it from metadata or computes it.
  *   <li>{@code logicalType} and {@code required} must be equal, also in nested properties, array
  *       items, and map keys and values.
  *   <li>A primary key or partition key that the contract declares must be the key of the table.
@@ -150,13 +151,17 @@ public class OdcsCompatibilityChecker {
           });
 
       for (var column : matching.missing) {
-        if (!subject.isWatermarkColumn(column.name())) {
+        if (!subject.mayOmitColumn(column.name())) {
           report(
               pointer,
-              "Column [%s] (%s) of table [%s] is missing from the contract",
+              "Column [%s] (%s) of table [%s] is missing from the contract%s",
               column.name(),
               describeType(column),
-              subject.name());
+              subject.name(),
+              subject.isWatermarkColumn(column.name())
+                  ? ". It has the watermark, and a contract may only leave out a watermark column"
+                      + " that the table adds itself to the columns it takes over with LIKE"
+                  : "");
         }
       }
       for (var property : matching.unmatched) {

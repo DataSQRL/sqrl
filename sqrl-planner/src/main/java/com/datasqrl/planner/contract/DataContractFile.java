@@ -92,12 +92,17 @@ public final class DataContractFile {
     return appliedTables.values().stream().map(AppliedTable::tableName).toList();
   }
 
-  /** The names of the entries that were not applied to a table, in file order. */
-  public List<String> getUnappliedEntryNames() {
+  /** The entries that were not applied to a table, in file order. */
+  public List<Entry> getUnappliedEntries() {
     return entries.entrySet().stream()
         .filter(entry -> !appliedTables.containsKey(entry.getKey()))
-        .map(entry -> entry.getValue().name())
+        .map(Map.Entry::getValue)
         .toList();
+  }
+
+  /** The names of the entries that were not applied to a table, in file order. */
+  public List<String> getUnappliedEntryNames() {
+    return getUnappliedEntries().stream().map(Entry::name).toList();
   }
 
   /** Whether an entry declares tags or a classification, for the table or for a column. */

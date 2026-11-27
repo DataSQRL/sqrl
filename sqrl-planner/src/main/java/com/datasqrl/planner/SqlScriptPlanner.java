@@ -62,6 +62,7 @@ import com.datasqrl.planner.analyzer.TableAnalysis;
 import com.datasqrl.planner.analyzer.TableOrFunctionAnalysis;
 import com.datasqrl.planner.analyzer.cost.CostModel;
 import com.datasqrl.planner.contract.TableContracts;
+import com.datasqrl.planner.contract.TableContracts.ExtendedTable;
 import com.datasqrl.planner.dag.DAGBuilder;
 import com.datasqrl.planner.dag.nodes.ExportNode;
 import com.datasqrl.planner.dag.nodes.PipelineNode;
@@ -134,6 +135,7 @@ import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.schema.FunctionParameter;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.commons.lang3.Strings;
+import org.apache.flink.sql.parser.ddl.SqlTableColumn;
 import org.apache.flink.sql.parser.ddl.catalog.SqlCreateCatalog;
 import org.apache.flink.sql.parser.ddl.table.SqlAlterTable;
 import org.apache.flink.sql.parser.ddl.table.SqlCreateTable;
@@ -932,6 +934,7 @@ public class SqlScriptPlanner {
       HintsAndDoc hintsAndDocs,
       Sqrl2FlinkSQLTranslator sqrlEnv,
       ErrorCollector errors) {
+
     var created =
         sqrlEnv.createTable(
             createTableSql,
@@ -951,11 +954,20 @@ public class SqlScriptPlanner {
    */
   private void registerCreatedTable(
       AddTableResult created, Optional<Path> definingFile, Sqrl2FlinkSQLTranslator sqrlEnv) {
-    var extendedTable =
-        created.createdTable() instanceof SqlCreateTableLike likeTable
-            ? Optional.of(sqrlEnv.qualifyIdentifier(likeTable.getTableLike().getSourceTable()))
-            : Optional.<ObjectIdentifier>empty();
-    tableContracts.register(created, definingFile, extendedTable);
+
+    var extended = Optional.<ExtendedTable>empty();
+
+    if (created.createdTable() instanceof SqlCreateTableLike likeTable) {
+      var id = sqrlEnv.qualifyIdentifier(likeTable.getTableLike().getSourceTable());
+      var addedCols =
+          likeTable.getColumnList().stream()
+              .map(column -> ((SqlTableColumn) column).getName().getSimple())
+              .toList();
+
+      extended = Optional.of(new ExtendedTable(id, addedCols));
+    }
+
+    tableContracts.register(created, definingFile, extended);
   }
 
   /**

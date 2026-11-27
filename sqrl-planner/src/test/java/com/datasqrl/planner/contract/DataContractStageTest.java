@@ -23,7 +23,6 @@ import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorMessage;
 import com.datasqrl.planner.Sqrl2FlinkSQLTranslator.AddTableResult;
-import com.datasqrl.planner.contract.DataContracts.ContractFileUsage;
 import com.datasqrl.planner.hint.HintsAndDoc;
 import com.datasqrl.planner.tags.TagDefinition;
 import com.datasqrl.planner.tags.TagDefinitions;
@@ -85,33 +84,54 @@ class DataContractStageTest {
   }
 
   @Test
-  void givenAppliedAndUnusedContractFiles_whenCheck_thenListsHowEachWasUsed() {
+  void givenEntryWithoutTableAndSkippedFile_whenCheck_thenNoticesTheEntryAndWarnsAboutTheFile() {
     file("connectors/crm.odcs.yaml", CONTRACT);
     register("Customers", file("connectors/crm.sqrl", ""));
     // The script next to this contract file is not part of the compilation
     file("sinks/archive-prod.odcs.yaml", CONTRACT);
     file("sinks/archive-prod.sqrl", "");
 
-    var usages = stage.checkContractFiles(DEFINITIONS, errors.abortOnFatal(false));
+    stage.checkContractFiles(DEFINITIONS, errors.abortOnFatal(false));
 
-    assertThat(usages)
-        .extracting(usage -> usage.describe(buildDir.relativize(usage.file())))
+    assertThat(messages())
+        .extracting(ErrorMessage::getMessage, DataContractStageTest::severity)
         .containsExactly(
-            "connectors/crm.odcs.yaml: Customers (not applied: Invoices)",
-            "sinks/archive-prod.odcs.yaml: not used in this compile");
-    assertThat(errors.hasErrorsWarningsOrNotices()).isFalse();
+            tuple("Schema object [Invoices] matches no table and is not checked", "notice"),
+            tuple(
+                "Contract file [sinks/archive-prod.odcs.yaml] is skipped: the script next to it"
+                    + " is not part of this compile",
+                "warning"));
+    // The notice points at the schema object in its file
+    assertThat(messages().get(0).getLocation().getFileLocation().line()).isEqualTo(11);
   }
 
   @Test
-  void givenLoadedContractFileWithoutAppliedObject_whenCheck_thenReportsIt() {
+  void givenSkippedFilesInSeveralFolders_whenCheck_thenWarnsInTheOrderOfTheirPaths() {
+    for (var name : List.of("sinks/b", "a", "sinks/a", "connectors/z")) {
+      file(name + ".odcs.yaml", CONTRACT);
+      file(name + ".sqrl", "");
+    }
+
+    stage.checkContractFiles(DEFINITIONS, errors.abortOnFatal(false));
+
+    assertThat(messages())
+        .extracting(ErrorMessage::getMessage)
+        .extracting(message -> message.substring(0, message.indexOf(']') + 1))
+        .containsExactly(
+            "Contract file [a.odcs.yaml]",
+            "Contract file [connectors/z.odcs.yaml]",
+            "Contract file [sinks/a.odcs.yaml]",
+            "Contract file [sinks/b.odcs.yaml]");
+  }
+
+  @Test
+  void givenLoadedContractFileWithoutAppliedObject_whenCheck_thenReportsItOnce() {
     file("crm.odcs.yaml", CONTRACT);
     register("Custmers", file("crm.sqrl", ""));
 
-    var usages = stage.checkContractFiles(DEFINITIONS, errors.abortOnFatal(false));
+    stage.checkContractFiles(DEFINITIONS, errors.abortOnFatal(false));
 
-    assertThat(usages)
-        .extracting(ContractFileUsage::used, ContractFileUsage::unappliedEntries)
-        .containsExactly(tuple(true, List.of("Customers", "Invoices")));
+    // An error for the file, and no notice for each of its schema objects
     assertThat(messages())
         .extracting(
             ErrorMessage::getMessage,
@@ -135,6 +155,7 @@ class DataContractStageTest {
     stage.checkContractFiles(TagDefinitions.DISABLED, errors.abortOnFatal(false));
 
     assertThat(messages())
+        .filteredOn(ErrorMessage::isWarning)
         .extracting(ErrorMessage::getMessage, ErrorMessage::isWarning)
         .containsExactly(
             tuple(
@@ -144,14 +165,14 @@ class DataContractStageTest {
   }
 
   @Test
-  void givenInvalidContractFile_whenCheck_thenItIsNotListedAndNotReportedAgain() {
+  void givenInvalidContractFile_whenCheck_thenItIsNotReportedAgain() {
     file("crm.odcs.yaml", "apiVersion: [v3.2.0");
     register("Customers", file("crm.sqrl", ""));
     var reported = messages().size();
 
-    var usages = stage.checkContractFiles(DEFINITIONS, errors.abortOnFatal(false));
+    stage.checkContractFiles(DEFINITIONS, errors.abortOnFatal(false));
 
-    assertThat(usages).isEmpty();
+    // The file was found, so it is not skipped either
     assertThat(messages()).hasSize(reported);
   }
 
@@ -171,6 +192,10 @@ class DataContractStageTest {
             Optional.empty()),
         Optional.of(script),
         Optional.empty());
+  }
+
+  private static String severity(ErrorMessage message) {
+    return message.isNotice() ? "notice" : message.isWarning() ? "warning" : "fatal";
   }
 
   @SneakyThrows

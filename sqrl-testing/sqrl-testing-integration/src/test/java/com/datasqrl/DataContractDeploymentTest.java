@@ -82,9 +82,16 @@ class DataContractDeploymentTest {
   void givenContractsUseCase_whenCompiled_thenAllFilesValidateAgainstOdcsSchema() throws Exception {
     var hook = compile(USE_CASE, "compile", "package.json");
 
-    // Scripts without a contract file, and a contract file of a script that is not imported,
-    // cause no message
-    assertThat(hook.getMessages()).doesNotContain("[WARN]", "[FATAL]", "odcs.yaml");
+    // A schema object without a table is a notice, and a contract file next to a script that is
+    // not imported is a warning. Scripts without a contract file cause no message
+    assertThat(hook.getMessages())
+        .doesNotContain("[FATAL]")
+        .containsOnlyOnce("[WARN]")
+        .contains(
+            "[NOTICE] Schema object [Invoices] matches no table and is not checked",
+            "[NOTICE] Schema object [CustomerCounts] matches no table and is not checked",
+            "[WARN] Contract file [unused.odcs.yaml] is skipped: the script next to it is not part"
+                + " of this compile");
 
     try (var files = Files.list(compiler.getContractsDir())) {
       var contracts = files.sorted().toList();

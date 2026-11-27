@@ -55,6 +55,14 @@ public class TableContracts {
   public record AttachedContract(DataContractFile file, Entry entry) {}
 
   /**
+   * The table that a statement extends with {@code LIKE}.
+   *
+   * @param id the table whose columns the statement takes over
+   * @param addedColumns the columns that the statement declares itself
+   */
+  public record ExtendedTable(ObjectIdentifier id, List<String> addedColumns) {}
+
+  /**
    * A created table, with what its statement declares besides its schema and its tags, which the
    * table analysis has.
    *
@@ -66,6 +74,8 @@ public class TableContracts {
    * @param isTest whether the statement has the test hint
    * @param lookupFiles the files next to which the contract of the table is looked up: the file
    *     that defines it, then the files of the tables that it extends with {@code LIKE}
+   * @param addedColumns the columns that the statement adds to those of the table it extends with
+   *     {@code LIKE}; empty for a table that extends none
    */
   public record ContractTable(
       ObjectIdentifier id,
@@ -75,6 +85,7 @@ public class TableContracts {
       Documentation documentation,
       boolean isTest,
       List<Path> lookupFiles,
+      List<String> addedColumns,
       Optional<AttachedContract> contract) {
 
     /**
@@ -104,17 +115,19 @@ public class TableContracts {
    * @param created a table that the planner created
    * @param definingFile the file whose statement defines the table, a script or a {@code
    *     .table.sql} file; a table of an unknown file has no contract
-   * @param extendedTable the table whose columns the statement takes over with {@code LIKE}
+   * @param extended the table whose columns the statement takes over with {@code LIKE}
    */
   public ContractTable register(
-      AddTableResult created,
-      Optional<Path> definingFile,
-      Optional<ObjectIdentifier> extendedTable) {
+      AddTableResult created, Optional<Path> definingFile, Optional<ExtendedTable> extended) {
     var file = definingFile.map(path -> path.toAbsolutePath().normalize());
     var lookupFiles =
         Stream.concat(
                 file.stream(),
-                extendedTable.map(tables::get).map(ContractTable::lookupFiles).stream()
+                extended
+                    .map(ExtendedTable::id)
+                    .map(tables::get)
+                    .map(ContractTable::lookupFiles)
+                    .stream()
                     .flatMap(List::stream))
             .distinct()
             .toList();
@@ -139,8 +152,11 @@ public class TableContracts {
             created.documentation(),
             created.hintsAndDoc().hints().isTest(),
             lookupFiles,
+            extended.map(ExtendedTable::addedColumns).orElse(List.of()),
             contract);
+
     tables.put(table.id(), table);
+
     return table;
   }
 
@@ -160,9 +176,11 @@ public class TableContracts {
             .filter(file -> !file.equals(table.definingFile()))
             .flatMap(file -> attach(file, table).stream())
             .findFirst();
+
     if (own.isPresent() && inherited.isPresent()) {
       reportTwoContracts(own.get(), inherited.get());
     }
+
     return own.or(() -> inherited);
   }
 
@@ -179,6 +197,7 @@ public class TableContracts {
 
   private Optional<AttachedContract> apply(DataContractFile file, Entry entry, AppliedTable table) {
     var applied = file.markApplied(entry, table);
+
     if (!applied.equals(table)) {
       var label = file.getFormat().getEntryLabel();
       // The match is ambiguous, so neither the check nor the output can pick a table
@@ -194,8 +213,10 @@ public class TableContracts {
               table.tableName(),
               table.definingFile().getFileName(),
               label);
+
       return Optional.empty();
     }
+
     return Optional.of(new AttachedContract(file, entry));
   }
 
