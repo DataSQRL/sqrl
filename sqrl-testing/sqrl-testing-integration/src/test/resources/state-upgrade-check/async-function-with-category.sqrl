@@ -1,0 +1,18 @@
+-- The new script: the products of async-function.sqrl have a new column category.
+
+IMPORT stdlib.openai_async.*;
+
+CREATE TABLE _Products (
+  id INT NOT NULL,
+  name STRING NOT NULL,
+  category STRING NOT NULL,
+  ts TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR ts AS ts - INTERVAL '1' SECOND
+) WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10'
+);
+
+-- Flink runs the async function in an async-calc operator, which stores its input rows.
+/*+engine(flink) */
+ProductSummaries := SELECT id, name, category, completions(name, 'gpt-4.1-2025-04-14') AS summary FROM _Products;

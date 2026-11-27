@@ -1,0 +1,17 @@
+-- The new script: the summary of async-function.sqrl becomes an embedding, so the function returns a vector in place of a string.
+
+IMPORT stdlib.openai_async.*;
+
+CREATE TABLE _Products (
+  id INT NOT NULL,
+  name STRING NOT NULL,
+  ts TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR ts AS ts - INTERVAL '1' SECOND
+) WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10'
+);
+
+-- Flink runs the async function in an async-calc operator, which stores its input rows.
+/*+engine(flink) */
+ProductSummaries := SELECT id, name, vector_embed(name, 'text-embedding-3-small') AS summary FROM _Products;

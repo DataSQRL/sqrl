@@ -108,6 +108,15 @@ final class FlinkStateUpgradeCheck {
   private static final String OUTPUT_TYPE_FIELD = "outputType";
 
   /**
+   * The operator kinds that run a function asynchronously. Flink stores the input rows that wait
+   * for the answer of the function, not the rows of the {@code outputType}: {@code
+   * AsyncWaitOperator} writes its queue with the serializer of its input. So a new return type of
+   * the function keeps the stored rows, and a new input column makes the restore fail.
+   */
+  private static final Set<String> ASYNC_OPERATOR_KINDS =
+      Set.of("stream-exec-async-calc", "stream-exec-async-correlate");
+
+  /**
    * The field with the aggregate calls of an aggregate operator. Each function stores its own
    * accumulator, and Flink checks only the type of the stored value. So {@code SUM} changed to
    * {@code MAX} restores without an error, and the new function continues from the old sum. An over
@@ -215,18 +224,10 @@ final class FlinkStateUpgradeCheck {
         }
       }
 
-      var oldOutputType = fieldValue(oldOperator, OUTPUT_TYPE_FIELD);
-      var newOutputType = fieldValue(newOperator, OUTPUT_TYPE_FIELD);
-      if (hasState(oldOperator)
-          && !Objects.equals(columnTypes(oldOutputType), columnTypes(newOutputType))) {
-        operatorBreaks.add(
-            changedField(
-                operatorId,
-                OUTPUT_TYPE_FIELD,
-                outputTypeText(oldOutputType),
-                outputTypeText(newOutputType),
-                description,
-                oldState));
+      if (hasState(oldOperator)) {
+        storedRowTypeBreak(
+                oldCompiledPlan, oldOperator, newCompiledPlan, newOperator, description, oldState)
+            .ifPresent(operatorBreaks::add);
       }
 
       var oldAggregateFunctions = aggregateFunctions(oldOperator);
@@ -243,6 +244,76 @@ final class FlinkStateUpgradeCheck {
       }
     }
     return operatorBreaks;
+  }
+
+  /**
+   * Returns the break when the column types of the rows that an operator with state stores differ.
+   * An async operator stores its input rows, see {@link #ASYNC_OPERATOR_KINDS}, so the check
+   * compares the {@code outputType} of the operator that feeds it. Each other operator stores rows
+   * of its own {@code outputType}. When the plan has no edge to the input of an async operator, the
+   * check compares its {@code outputType}, so that a change of the rows still gives a break.
+   */
+  private static Optional<StateUpgradeBreak> storedRowTypeBreak(
+      JsonNode oldCompiledPlan,
+      JsonNode oldOperator,
+      JsonNode newCompiledPlan,
+      JsonNode newOperator,
+      String description,
+      OldState oldState) {
+    var operatorId = operatorId(oldOperator);
+    var oldInputType = asyncInputType(oldCompiledPlan, oldOperator);
+    var newInputType = asyncInputType(newCompiledPlan, newOperator);
+    if (oldInputType.isPresent() && newInputType.isPresent()) {
+      if (Objects.equals(columnTypes(oldInputType.get()), columnTypes(newInputType.get()))) {
+        return Optional.empty();
+      }
+      return Optional.of(
+          new StateUpgradeBreak(
+              "operator id=%s changed: the input rows that the operator stores differ: %s -> %s (%s)"
+                  .formatted(
+                      operatorId,
+                      outputTypeText(oldInputType.get()),
+                      outputTypeText(newInputType.get()),
+                      description),
+              oldState));
+    }
+
+    var oldOutputType = fieldValue(oldOperator, OUTPUT_TYPE_FIELD);
+    var newOutputType = fieldValue(newOperator, OUTPUT_TYPE_FIELD);
+    if (Objects.equals(columnTypes(oldOutputType), columnTypes(newOutputType))) {
+      return Optional.empty();
+    }
+    return Optional.of(
+        changedField(
+            operatorId,
+            OUTPUT_TYPE_FIELD,
+            outputTypeText(oldOutputType),
+            outputTypeText(newOutputType),
+            description,
+            oldState));
+  }
+
+  /**
+   * Returns the {@code outputType} of the operator that feeds an async operator, from the {@code
+   * edges} of the compiled plan. Returns empty for another kind of operator, and when the plan has
+   * no single edge to the operator or no {@code outputType} at its source.
+   */
+  private static Optional<JsonNode> asyncInputType(JsonNode compiledPlan, JsonNode operator) {
+    if (!ASYNC_OPERATOR_KINDS.contains(operatorKind(type(operator)))) {
+      return Optional.empty();
+    }
+    var operatorId = operatorId(operator);
+    var inputOperatorIds = new ArrayList<String>();
+    for (var edge : compiledPlan.path("edges")) {
+      if (edge.path("target").asText().equals(operatorId)) {
+        inputOperatorIds.add(edge.path("source").asText());
+      }
+    }
+    if (inputOperatorIds.size() != 1) {
+      return Optional.empty();
+    }
+    return Optional.ofNullable(operatorsById(compiledPlan).get(inputOperatorIds.get(0)))
+        .map(inputOperator -> fieldValue(inputOperator, OUTPUT_TYPE_FIELD));
   }
 
   /**

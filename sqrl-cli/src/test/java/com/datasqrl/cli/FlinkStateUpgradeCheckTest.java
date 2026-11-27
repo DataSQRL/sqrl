@@ -25,6 +25,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
@@ -435,6 +436,64 @@ class FlinkStateUpgradeCheckTest {
               assertThat(stateUpgradeBreak.message()).contains("field 'outputType' differs");
               assertThat(stateUpgradeBreak.oldState()).isEqualTo(OldState.INCOMPATIBLE);
             });
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"stream-exec-async-calc_1", "stream-exec-async-correlate_1"})
+  void givenAsyncOperatorWithOtherReturnType_whenCheck_thenNoBreaks(String asyncOperatorType) {
+    // Flink stores the input rows of an async operator, which wait for their answer, so a new
+    // return type of the function keeps the stored rows.
+    var result =
+        check(
+            asyncPlan(asyncOperatorType, List.of("id INT", "name STRING"), "summary INT"),
+            asyncPlan(asyncOperatorType, List.of("id INT", "name STRING"), "summary STRING"));
+
+    assertThat(result.breaks()).isEmpty();
+  }
+
+  @Test
+  void givenNewInputColumnOfAsyncOperator_whenCheck_thenIncompatibleInputRows() {
+    var result =
+        check(
+            asyncPlan("stream-exec-async-calc_1", List.of("id INT", "name STRING"), "summary INT"),
+            asyncPlan(
+                "stream-exec-async-calc_1",
+                List.of("id INT", "name STRING", "note STRING"),
+                "summary INT"));
+
+    assertThat(result.breaks())
+        .singleElement()
+        .satisfies(
+            stateUpgradeBreak -> {
+              assertThat(stateUpgradeBreak.message())
+                  .contains(
+                      "operator id=2 changed: the input rows that the operator stores differ:"
+                          + " [id INT, name STRING] -> [id INT, name STRING, note STRING]");
+              assertThat(stateUpgradeBreak.oldState()).isEqualTo(OldState.INCOMPATIBLE);
+            });
+  }
+
+  @Test
+  void givenAsyncOperatorWithoutInputEdge_whenCheck_thenChangedOutputType() {
+    // Without an edge to its input, the check cannot read the input rows, so it compares the
+    // outputType, as for each other operator with state.
+    var oldAsyncPlan =
+        (ObjectNode)
+            asyncPlan("stream-exec-async-calc_1", List.of("id INT", "name STRING"), "summary INT");
+    var newAsyncPlan =
+        (ObjectNode)
+            asyncPlan(
+                "stream-exec-async-calc_1", List.of("id INT", "name STRING"), "summary STRING");
+    oldAsyncPlan.remove("edges");
+    newAsyncPlan.remove("edges");
+
+    var result = check(oldAsyncPlan, newAsyncPlan);
+
+    assertThat(result.breaks())
+        .singleElement()
+        .extracting(StateUpgradeBreak::message)
+        .asString()
+        .contains("operator id=2 changed: field 'outputType' differs");
   }
 
   @Test
@@ -1050,6 +1109,28 @@ class FlinkStateUpgradeCheckTest {
         operator(4, "stream-exec-window-table-function_1", "WindowTableFunction(window=[...])");
     windowTableFunctionOperator.putObject("windowing").putObject("window").put("type", windowType);
     return windowTableFunctionOperator;
+  }
+
+  /**
+   * A plan where a source feeds an async operator, in the form that Flink writes it. The columns of
+   * the source are the input rows of the async operator, and the async operator adds the column of
+   * the function to them.
+   */
+  private static JsonNode asyncPlan(
+      String asyncOperatorType, List<String> inputColumns, String functionColumn) {
+    var sourceOperator =
+        withOutputType(
+            operator(1, "stream-exec-table-source-scan_2", "TableSourceScan(table=[[Products]])"),
+            inputColumns.toArray(String[]::new));
+    var outputColumns = new ArrayList<>(inputColumns);
+    outputColumns.add(functionColumn);
+    var asyncOperator =
+        withOutputType(
+            operator(2, asyncOperatorType, "AsyncCalc(select=[id, name, summarize(name)])"),
+            outputColumns.toArray(String[]::new));
+    var asyncPlan = (ObjectNode) plan("2.3", sourceOperator, asyncOperator);
+    asyncPlan.putArray("edges").addObject().put("source", 1).put("target", 2);
+    return asyncPlan;
   }
 
   /** An interval join in the form that Flink writes it: it keeps state, but has no state field. */

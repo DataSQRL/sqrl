@@ -208,6 +208,29 @@ class StateUpgradeCheckCompileTest {
     assertThat(rankColumnType(NEW_BUILD_FOLDER, "ts2").path("kind").asText()).isEqualTo("ROWTIME");
   }
 
+  @Test
+  void givenOtherReturnTypeOfAsyncFunction_whenCheckStateUpgrade_thenPasses() throws IOException {
+    var status =
+        compileAndCheckUpgrade("async-function.sqrl", "async-function-other-return-type.sqrl");
+
+    assertThat(status.isSuccess()).as(status.getMessages()).isTrue();
+    assertThat(status.getMessages()).contains("The new Flink plan passes the state upgrade check");
+    // The output rows of the async-calc operator change, and its stored input rows do not.
+    assertThat(asyncCalcOutputType(NEW_BUILD_FOLDER))
+        .isNotEqualTo(asyncCalcOutputType(OLD_BUILD_FOLDER));
+  }
+
+  @Test
+  void givenNewInputColumnOfAsyncFunction_whenCheckStateUpgrade_thenIncompatibleInputRows() {
+    var status = compileAndCheckUpgrade("async-function.sqrl", "async-function-with-category.sqrl");
+
+    assertThat(status.isSuccess()).as(status.getMessages()).isFalse();
+    assertThat(status.getMessages())
+        .containsPattern(
+            "the input rows that the operator stores differ: .*category.*\\(AsyncCalc.*"
+                + "\\[incompatible state]");
+  }
+
   /** The values that a test writes into the package template for one compile. */
   private record PackageSettings(String scriptFile, String stateTtl, String uidFormat) {}
 
@@ -267,13 +290,7 @@ class StateUpgradeCheckCompileTest {
 
   /** Returns the type of a column of the Rank operator in the compiled plan of a build folder. */
   private static JsonNode rankColumnType(String buildFolder, String columnName) throws IOException {
-    var compiledPlan =
-        new ObjectMapper()
-            .readTree(
-                PROJECT_DIR
-                    .resolve("build/" + buildFolder + "/deploy/plan/flink-compiled-plan.json")
-                    .toFile());
-    for (var operator : compiledPlan.path("nodes")) {
+    for (var operator : compiledPlan(buildFolder).path("nodes")) {
       if (!operator.path("type").asText().startsWith("stream-exec-rank")) {
         continue;
       }
@@ -285,6 +302,24 @@ class StateUpgradeCheckCompileTest {
     }
     throw new AssertionError(
         "The plan in " + buildFolder + " has no Rank operator with the column " + columnName);
+  }
+
+  /** Returns the {@code outputType} of the async-calc operator in the plan of a build folder. */
+  private static JsonNode asyncCalcOutputType(String buildFolder) throws IOException {
+    for (var operator : compiledPlan(buildFolder).path("nodes")) {
+      if (operator.path("type").asText().startsWith("stream-exec-async-calc")) {
+        return operator.path("outputType");
+      }
+    }
+    throw new AssertionError("The plan in " + buildFolder + " has no async-calc operator");
+  }
+
+  private static JsonNode compiledPlan(String buildFolder) throws IOException {
+    return new ObjectMapper()
+        .readTree(
+            PROJECT_DIR
+                .resolve("build/" + buildFolder + "/deploy/plan/flink-compiled-plan.json")
+                .toFile());
   }
 
   private String tempPackageFile() {
