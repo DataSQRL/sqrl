@@ -15,8 +15,12 @@
  */
 package com.datasqrl.cli;
 
+import com.datasqrl.config.ProjectPaths;
+import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.plan.validate.ExecutionGoal;
+import java.util.List;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
 
 @Command(
     name = "compile",
@@ -25,8 +29,22 @@ import picocli.CommandLine.Command;
     versionProvider = CliVersionProvider.class)
 public class CompileCmd extends AbstractCompileCmd {
 
+  @Mixin CheckStateUpgradeOption checkStateUpgradeOption = new CheckStateUpgradeOption();
+
   @Override
   public ExecutionGoal getGoal() {
     return ExecutionGoal.COMPILE;
+  }
+
+  @Override
+  protected List<BuildCheck> prepareBuildChecks(ErrorCollector errors) {
+    return checkStateUpgradeOption
+        .prepare(
+            new ProjectPaths(cli.workspaceDir, getProjectRoot()),
+            getBuildDir(),
+            getTargetDir(),
+            errors)
+        .stream()
+        .toList();
   }
 }

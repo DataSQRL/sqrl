@@ -223,7 +223,7 @@ public final class ConfigLoaderUtils {
   public static Configuration loadFlinkConfig(Path planDir) throws IOException {
     validatePlanDir(planDir);
 
-    var confFile = planDir.resolve("flink-config.yaml");
+    var confFile = planDir.resolve(SqrlConstants.FLINK_CONFIG_FILE);
     checkArgument(
         confFile.toFile().exists() && confFile.toFile().isFile(),
         "Failed to load Flink config, 'flink-config.yaml' does not found.");
@@ -237,6 +237,36 @@ public final class ConfigLoaderUtils {
     } finally {
       FileUtils.forceDelete(tempDir.toFile());
     }
+  }
+
+  /**
+   * Loads the compiled Flink plan from the {@code flink-compiled-plan.json} file of the plan
+   * directory. A file that exists but cannot be read, or that has no {@code nodes} list, is a fatal
+   * error.
+   *
+   * @param planDir the plan directory, for example {@code build/deploy/plan}
+   * @param errors the collector of the fatal errors
+   * @return the compiled plan, or empty when the plan directory has no {@code
+   *     flink-compiled-plan.json}
+   */
+  public static Optional<JsonNode> loadFlinkCompiledPlan(Path planDir, ErrorCollector errors) {
+    var compiledPlanFile = planDir.resolve(SqrlConstants.FLINK_COMPILED_PLAN_FILE);
+    if (!Files.isRegularFile(compiledPlanFile)) {
+      return Optional.empty();
+    }
+
+    JsonNode compiledPlan;
+    try {
+      compiledPlan = SqrlObjectMapper.INSTANCE.readTree(compiledPlanFile.toFile());
+    } catch (IOException exception) {
+      throw errors.exception("Cannot read %s: %s", compiledPlanFile, exception.getMessage());
+    }
+    // An empty file gives a missing node, so this also rejects an empty file.
+    errors.checkFatal(
+        compiledPlan.path("nodes").isArray(),
+        "%s is not a compiled Flink plan: it has no \"nodes\" list",
+        compiledPlanFile);
+    return Optional.of(compiledPlan);
   }
 
   /**

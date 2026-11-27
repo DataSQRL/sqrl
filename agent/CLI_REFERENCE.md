@@ -51,6 +51,12 @@ Compiles the project and writes `build/pipeline_explain.txt`, `build/pipeline_vi
 /opt/agent/cmd.sh compile -r myproject myproject-shared-package.json myproject-prod-package.json
 ```
 
+`--check-state-upgrade-from <oldBuildFolder>` checks that Flink can restore the state of an older build. The folder is the build folder of the running version. The path must be relative to the project root and stay inside the workspace. The compile fails with one line for each removed operator and for each changed field of an operator, for example `operator id=7 changed: field 'state' differs: <old value> -> <new value> (<operator description>)`. The ids follow the plan order, so one new operator can move the ids of the operators after it. Give the new compile its own `-b` folder. Each compile empties its build folder first, and the default build folder `build` holds every other build folder:
+
+```bash
+/opt/agent/cmd.sh compile -r myproject myproject-shared-package.json myproject-prod-package.json -b myproject --check-state-upgrade-from build/myproject-deployed
+```
+
 ### test
 
 Compiles and runs the pipeline in simulation, drains the Flink job, executes the GraphQL tests and `/*+ test */` tables, and compares the results against the snapshots. New tests create a snapshot; if no other test failed, the pipeline is reset and re-run in the same invocation to verify the new snapshots, and the test passes if the results match.

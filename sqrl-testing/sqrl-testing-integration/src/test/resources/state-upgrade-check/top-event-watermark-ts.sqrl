@@ -1,0 +1,16 @@
+-- The old script: keeps the event with the highest value of each id, with the watermark on ts.
+
+CREATE TABLE _Events (
+  id INT NOT NULL,
+  val BIGINT NOT NULL,
+  ts TIMESTAMP_LTZ(3) NOT NULL,
+  ts2 TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR ts AS ts - INTERVAL '1' SECOND
+) WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10'
+);
+
+-- A Rank, because the order is not by time. It stores the full rows, with ts and ts2.
+/*+engine(flink) */
+TopEvent := DISTINCT _Events ON id ORDER BY val DESC;

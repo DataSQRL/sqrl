@@ -1,0 +1,16 @@
+-- The new script: renames the column total to value_sum. Flink ignores the column names of the state.
+
+CREATE TABLE _Events (
+  id INT NOT NULL,
+  val BIGINT NOT NULL,
+  ts TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR ts AS ts - INTERVAL '1' SECOND
+) WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10'
+);
+
+-- Flink keeps this deduplicate, because the next table reads it.
+_LatestEvent := DISTINCT _Events ON id ORDER BY ts DESC;
+
+EventTotal := SELECT id, SUM(val) AS value_sum FROM _LatestEvent GROUP BY id;

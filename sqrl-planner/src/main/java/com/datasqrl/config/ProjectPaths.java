@@ -126,8 +126,12 @@ public record ProjectPaths(Path workspaceDir, Path projectRoot) {
     return isRelative(path) && !Path.of(path).normalize().startsWith("..");
   }
 
-  /** Resolves the path the way the OS does, so a {@code ..} after a link applies to its target. */
-  private static Path realPath(Path path) {
+  /**
+   * Resolves the path the way the OS does, so a {@code ..} after a link applies to its target. For
+   * a path that does not exist, the nearest directory above it that exists is resolved, and the
+   * rest of the path stays as it is.
+   */
+  public static Path realPath(Path path) {
     var absolute = path.toAbsolutePath();
     var existing = absolute;
     while (existing != null && !Files.exists(existing)) {
