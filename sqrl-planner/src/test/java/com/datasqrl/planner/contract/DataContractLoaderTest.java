@@ -17,6 +17,7 @@ package com.datasqrl.planner.contract;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.datasqrl.config.WorkspacePaths;
 import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorMessage;
@@ -52,7 +53,8 @@ class DataContractLoaderTest {
 
   @BeforeEach
   void setUp() {
-    loader = new DataContractLoader(errors);
+    // The folder of the test is the build folder of the project
+    loader = new DataContractLoader(errors, new WorkspacePaths(folder, folder, folder, folder));
   }
 
   @Test
@@ -61,7 +63,7 @@ class DataContractLoaderTest {
 
     assertThat(contractFile).isEmpty();
     assertThat(errors.hasErrorsWarningsOrNotices()).isFalse();
-    assertThat(loader.getFoundFiles()).isEmpty();
+    assertThat(loader.hasContractFiles()).isFalse();
   }
 
   @Test
@@ -103,7 +105,9 @@ class DataContractLoaderTest {
             "apiVersion [v3.1.0] is not supported: convert the contract to ODCS v3.2.0",
             "Contract file [crm.odcs.yaml] is not a valid data contract and is not applied");
     assertThat(messages().get(1).getErrorLabel()).isEqualTo(ErrorCode.INVALID_DATA_CONTRACT);
-    assertThat(loader.getFoundFiles()).hasSize(1);
+    // The file was found, so it is not one that no script uses
+    assertThat(loader.hasContractFiles()).isTrue();
+    assertThat(loader.getSkippedFiles()).isEmpty();
     assertThat(loader.getLoadedFiles()).isEmpty();
   }
 

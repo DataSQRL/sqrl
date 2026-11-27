@@ -26,12 +26,19 @@ public final class OdcsConstants {
   /** The extension of a data contract file, which sits next to the script of the same name */
   public static final String FILE_EXTENSION = "odcs.yaml";
 
-  public static final String FILE_SUFFIX = "." + FILE_EXTENSION;
-
   /** Extensions that look like a data contract file but are not read */
   public static final List<String> UNSUPPORTED_FILE_EXTENSIONS = List.of("odcs.yml", "odcs.json");
 
   public static final String KIND = "DataContract";
+
+  /**
+   * The {@code apiVersion} of the contracts that the compiler writes. It reads the v3.2 releases:
+   * older v3 versions write timestamp, time and map types differently, so a contract of such a
+   * version has to be converted first.
+   */
+  public static final String API_VERSION = "v3.2.0";
+
+  public static final String SUPPORTED_VERSION_PREFIX = "v3.2.";
 
   /** The contract version of the documents that the compiler generates */
   public static final String GENERATED_VERSION = "1.0.0";
@@ -40,9 +47,9 @@ public final class OdcsConstants {
   public static final String CLASSIFICATION_TAG = "classification";
 
   /**
-   * The JSON schema of ODCS v3.2.0, which validates all v3 contracts. Copied from {@code
-   * schema/odcs-json-schema-v3.2.0.json} at tag {@code v3.2.0} of {@code
-   * github.com/bitol-io/open-data-contract-standard} (Apache-2.0) on 2026-11-20.
+   * The JSON schema of ODCS v3.2.0. Copied from {@code schema/odcs-json-schema-v3.2.0.json} at tag
+   * {@code v3.2.0} of {@code github.com/bitol-io/open-data-contract-standard} (Apache-2.0) on
+   * 2026-11-20.
    */
   public static final String JSON_SCHEMA_RESOURCE = "/jsonSchema/odcs-json-schema-v3.2.0.json";
 
@@ -54,12 +61,4 @@ public final class OdcsConstants {
   public static final String PROPERTIES_FIELD = "properties";
   public static final String TAGS_FIELD = "tags";
   public static final String CLASSIFICATION_FIELD = "classification";
-
-  /**
-   * @param name the name of a script without its extension, or of a generated document
-   * @return the name of the contract file
-   */
-  public static String fileName(String name) {
-    return name + FILE_SUFFIX;
-  }
 }

@@ -16,16 +16,13 @@
 package com.datasqrl.planner.contract;
 
 import com.datasqrl.config.SystemBuiltInConnectors;
-import com.datasqrl.config.WorkspacePaths;
 import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.plan.MainScript;
 import com.datasqrl.planner.Sqrl2FlinkSQLTranslator;
 import com.datasqrl.planner.analyzer.TableAnalysis;
-import com.datasqrl.planner.contract.DataContractFormat.Difference;
 import com.datasqrl.planner.contract.DataContractFormat.GeneratedEntry;
-import com.datasqrl.planner.contract.DataContracts.Document;
 import com.datasqrl.planner.contract.TableContracts.AttachedContract;
 import com.datasqrl.planner.contract.TableContracts.ContractTable;
 import com.datasqrl.planner.dag.PipelineDAG;
@@ -33,25 +30,23 @@ import com.datasqrl.planner.dag.nodes.ExportNode;
 import com.datasqrl.planner.dag.nodes.PipelineNode;
 import com.datasqrl.planner.dag.nodes.TableFunctionNode;
 import com.datasqrl.planner.dag.nodes.TableNode;
-import com.datasqrl.planner.tables.SourceSinkTableAnalysis;
 import com.datasqrl.planner.tables.StorageType;
 import com.datasqrl.planner.tags.TagDefinitions;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import com.datasqrl.util.StreamUtil;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.flink.table.catalog.ObjectIdentifier;
-import org.apache.flink.table.catalog.ResolvedCatalogTable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
@@ -84,7 +79,6 @@ public class DataContractStage {
 
   private final DataContractLoader loader;
   private final TableContracts tableContracts;
-  private final WorkspacePaths workspacePaths;
   private final MainScript mainScript;
   private final ErrorCollector errors;
 
@@ -107,10 +101,14 @@ public class DataContractStage {
    * <p>This only needs the planned tables, so it runs before the DAG is optimized.
    */
   public void check(Sqrl2FlinkSQLTranslator environment) {
-    var collector = errors.abortOnFatal(false);
     var definitions = environment.getTagAnalyzer().getDefinitions();
-    checkProvidedContracts(environment, definitions, collector);
-    checkContractFiles(definitions, collector);
+    // The same statement can be planned more than once, e.g. imported under two names
+    tableContracts.getTables().stream()
+        .filter(table -> table.contract().isPresent())
+        .map(table -> described(table, environment))
+        .distinct()
+        .forEach(table -> compare(table, definitions));
+    checkContractFiles(definitions);
   }
 
   /**
@@ -119,12 +117,13 @@ public class DataContractStage {
    *
    * @param dag the optimized DAG, which only has the tables that are deployed or tested
    * @param plan the physical plan, which has the public tables as the engines store them
+   * @return the content of each contract file, by its name
    */
-  public DataContracts generate(
+  public Map<String, String> generate(
       PipelineDAG dag, PhysicalPlan plan, Sqrl2FlinkSQLTranslator environment) {
+
     var deployed = deployedNodes(dag);
-    var deployedTables =
-        deployed.stream().filter(TableNode.class::isInstance).map(TableNode.class::cast).toList();
+    var deployedTables = StreamUtil.filterByClass(deployed, TableNode.class).toList();
 
     var sources =
         deployedTables.stream()
@@ -133,9 +132,7 @@ public class DataContractStage {
             .flatMap(table -> createdTable(table.getObjectIdentifier(), environment).stream())
             .toList();
     var sinks =
-        deployed.stream()
-            .filter(ExportNode.class::isInstance)
-            .map(ExportNode.class::cast)
+        StreamUtil.filterByClass(deployed, ExportNode.class)
             .flatMap(export -> exportedTable(export, dag, environment).stream())
             .toList();
     var publicTables =
@@ -151,10 +148,7 @@ public class DataContractStage {
     groups.computeIfAbsent(mainScriptName(), name -> new ArrayList<>()).add(publicTables);
 
     var definitions = environment.getTagAnalyzer().getDefinitions();
-    // Only a project that has contract files gets messages about data contracts
-    var hasContractFiles =
-        !loader.getFoundFiles().isEmpty() || !contractFilesInBuildDir().isEmpty();
-    var documents = new ArrayList<Document>();
+    var documents = new LinkedHashMap<String, String>();
     for (var format : loader.getFormats()) {
       groups.forEach(
           (name, tables) -> {
@@ -165,59 +159,38 @@ public class DataContractStage {
             if (entries.isEmpty()) {
               return;
             }
-            if (hasContractFiles) {
+            if (loader.hasContractFiles()) {
+              // Only a project that has contract files gets messages about data contracts
               warnSameNames(name, entries, format);
             }
-            documents.add(new Document(format.fileName(name), format.write(name, entries)));
+            documents.put(format.fileName(name), format.write(name, entries));
           });
     }
-    return new DataContracts(List.copyOf(documents));
+
+    return documents;
   }
 
   /**
-   * Compares every created table that has a contract with its contract, whether or not the pipeline
-   * deploys the table, so that a contract cannot drift unnoticed.
+   * Compares a created table with its contract, whether or not the pipeline deploys the table, so
+   * that a contract cannot drift unnoticed.
    */
-  private void checkProvidedContracts(
-      Sqrl2FlinkSQLTranslator environment, TagDefinitions definitions, ErrorCollector collector) {
-    // The same statement can be planned more than once, e.g. imported under two names
-    var checked = new HashSet<Described>();
-    for (var table : tableContracts.getTables()) {
-      if (table.contract().isEmpty()) {
-        continue;
-      }
-      var attached = table.contract().get();
-      var subject = subject(table, environment);
-      if (checked.add(new Described(table.definition(), subject, table.contract()))) {
-        var differences =
-            attached.file().getFormat().compare(attached.entry(), subject, definitions);
-        report(differences, attached, subject, collector);
-      }
-    }
-  }
-
-  private static void report(
-      List<Difference> differences,
-      AttachedContract contract,
-      ContractSubject subject,
-      ErrorCollector collector) {
+  private static void compare(Described table, TagDefinitions definitions) {
+    var contract = table.provided().orElseThrow();
+    var file = contract.file();
+    var differences = file.getFormat().compare(contract.entry(), table.subject(), definitions);
     if (differences.isEmpty()) {
       return;
     }
+
     differences.forEach(
-        difference ->
-            contract
-                .file()
-                .errorsAt(collector, difference.location())
-                .fatal("%s", difference.message()));
+        difference -> file.errorsAt(difference.location()).fatal("%s", difference.message()));
+
     // The error code, with its description, is given once per table
-    contract
-        .file()
-        .errorsAt(collector, contract.entry().location())
+    file.errorsAt(contract.entry().location())
         .fatal(
             ErrorCode.INCOMPATIBLE_DATA_CONTRACT,
             "Table [%s] differs from its data contract in %s",
-            subject.name(),
+            table.subject().name(),
             differences.size() == 1 ? "one place" : differences.size() + " places");
   }
 
@@ -233,13 +206,13 @@ public class DataContractStage {
    *       next to it, such as the connectors of another environment.
    * </ul>
    */
-  void checkContractFiles(TagDefinitions definitions, ErrorCollector collector) {
+  void checkContractFiles(TagDefinitions definitions) {
     for (var file : loader.getLoadedFiles()) {
       var name = file.getPath().getFileName();
       var label = file.getFormat().getEntryLabel();
 
       if (file.getAppliedTableNames().isEmpty()) {
-        file.errorsAtEntries(collector)
+        file.errorsAtEntries()
             .fatal(
                 ErrorCode.INVALID_DATA_CONTRACT,
                 "Contract file [%s] was not applied: none of its %ss %s matches a table",
@@ -250,14 +223,14 @@ public class DataContractStage {
         file.getUnappliedEntries()
             .forEach(
                 entry ->
-                    file.errorsAt(collector, entry.location())
+                    file.errorsAt(entry.location())
                         .notice(
                             "%s [%s] matches no table and is not checked",
                             StringUtils.capitalize(label), entry.name()));
       }
 
       if (!definitions.isEnabled() && file.declaresTags()) {
-        file.errorsAtEntries(collector)
+        file.errorsAtEntries()
             .warn(
                 "Contract file [%s] declares tags or a classification, which are not compared with"
                     + " the tables since compiler.tags is not configured",
@@ -265,38 +238,14 @@ public class DataContractStage {
       }
     }
 
-    // The other contract files of the project sit next to scripts that this compilation does not
-    // plan. They are reported in the order of their paths, whatever order the folder is walked in
-    var buildDir = workspacePaths.buildDir().toAbsolutePath().normalize();
-    var found = loader.getFoundFiles();
-    contractFilesInBuildDir().stream()
-        .filter(file -> !found.contains(file))
-        .map(buildDir::relativize)
-        .sorted()
+    loader
+        .getSkippedFiles()
         .forEach(
             file ->
-                collector.warn(
+                errors.warn(
                     "Contract file [%s] is skipped: the script next to it is not part of this"
                         + " compile",
                     file));
-  }
-
-  /** The contract files of the project and its includes, which preprocessing copied. */
-  private List<Path> contractFilesInBuildDir() {
-    var buildDir = workspacePaths.buildDir().toAbsolutePath().normalize();
-    if (!Files.isDirectory(buildDir)) {
-      return List.of();
-    }
-    var suffixes =
-        loader.getFormats().stream().map(format -> "." + format.getFileExtension()).toList();
-    try (var files = Files.walk(buildDir)) {
-      return files
-          .filter(file -> suffixes.stream().anyMatch(file.getFileName().toString()::endsWith))
-          .filter(Files::isRegularFile)
-          .toList();
-    } catch (IOException e) {
-      throw new IllegalStateException("Could not list the files in " + buildDir, e);
-    }
   }
 
   /**
@@ -319,19 +268,25 @@ public class DataContractStage {
       ObjectIdentifier tableId, Sqrl2FlinkSQLTranslator environment) {
     return tableContracts
         .get(tableId)
-        .filter(table -> !table.isTest())
-        .map(
-            table ->
-                new Described(table.definition(), subject(table, environment), table.contract()));
+        .filter(table -> !table.created().hintsAndDoc().hints().isTest())
+        .map(table -> described(table, environment));
+  }
+
+  private static Described described(ContractTable table, Sqrl2FlinkSQLTranslator environment) {
+    return new Described(
+        table.definition(),
+        ContractSubject.ofCreatedTable(table.created(), environment),
+        table.contract());
   }
 
   private Optional<Described> exportedTable(
       ExportNode export, PipelineDAG dag, Sqrl2FlinkSQLTranslator environment) {
+
     var exported =
-        dag.getInputs(export).stream()
-            .filter(TableNode.class::isInstance)
-            .map(input -> ((TableNode) input).getTableAnalysis())
+        StreamUtil.filterByClass(dag.getInputs(export), TableNode.class)
+            .map(TableNode::getTableAnalysis)
             .findFirst();
+
     if (exported.isEmpty() || exported.get().getHints().isTest()) {
       return Optional.empty();
     }
@@ -339,6 +294,7 @@ public class DataContractStage {
     if (export.getCreatedSinkTable().isPresent()) {
       return createdTable(export.getCreatedSinkTable().get(), environment);
     }
+
     if (isLogExport(export)) {
       // The log engine creates the topic for the exported table
       var table = exported.get();
@@ -349,6 +305,7 @@ public class DataContractStage {
               .build();
       return Optional.of(new Described(export.getSinkPath(), topic, Optional.empty()));
     }
+
     return Optional.empty();
   }
 
@@ -359,29 +316,6 @@ public class DataContractStage {
         && SystemBuiltInConnectors.forExport(export.getSinkPath().getFirst())
             .filter(connector -> connector == SystemBuiltInConnectors.LOG_ENGINE)
             .isPresent();
-  }
-
-  private static ContractSubject subject(ContractTable table, Sqrl2FlinkSQLTranslator environment) {
-    return ContractSubject.ofCreatedTable(
-        table, partitionKeys(table, environment), environment.getTypeFactory());
-  }
-
-  /**
-   * The partition columns as the statement declares them. An engine may remove them from the table
-   * and keep them in the mutation, e.g. Kafka uses them as the message key.
-   */
-  private static List<String> partitionKeys(
-      ContractTable table, Sqrl2FlinkSQLTranslator environment) {
-    var mutation =
-        table.table().getSourceSinkTable().map(SourceSinkTableAnalysis::mutationDefinition);
-    if (mutation.isPresent() && !mutation.get().getPartitionKey().isEmpty()) {
-      return mutation.get().getPartitionKey();
-    }
-    return environment
-        .getCatalogManager()
-        .getTable(table.id())
-        .map(resolved -> resolved.<ResolvedCatalogTable>getResolvedTable().getPartitionKeys())
-        .orElse(List.of());
   }
 
   /** The name of the main script without its extension. */

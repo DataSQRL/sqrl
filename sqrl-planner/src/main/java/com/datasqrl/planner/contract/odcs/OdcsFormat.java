@@ -17,7 +17,6 @@ package com.datasqrl.planner.contract.odcs;
 
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.planner.contract.ContractSubject;
-import com.datasqrl.planner.contract.DataContractFile;
 import com.datasqrl.planner.contract.DataContractFormat;
 import com.datasqrl.planner.contract.odcs.OdcsReader.OdcsEntry;
 import com.datasqrl.planner.contract.odcs.model.OdcsContract;
@@ -26,7 +25,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.google.auto.service.AutoService;
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 
@@ -67,26 +65,14 @@ public class OdcsFormat implements DataContractFormat {
   }
 
   @Override
-  public Optional<DataContractFile> read(Path path, String content, ErrorCollector errors) {
-    return OdcsReader.read(path, content, this, errors);
+  public Optional<Entries> read(String content, ErrorCollector errors) {
+    return OdcsReader.read(content, errors);
   }
 
   @Override
   public List<Difference> compare(
       Entry entry, ContractSubject table, TagDefinitions tagDefinitions) {
-    var schemaObject = (OdcsEntry) entry;
-    return new OdcsCompatibilityChecker(tagDefinitions)
-            .compare(
-                OdcsYaml.toSchemaObject(schemaObject.schemaObject()),
-                schemaObject.pointer(),
-                new OdcsGenerator(tagDefinitions).generate(table),
-                table)
-            .stream()
-            .map(
-                difference ->
-                    new Difference(
-                        schemaObject.document().locate(difference.pointer()), difference.message()))
-            .toList();
+    return new OdcsCompatibilityChecker((OdcsEntry) entry, table, tagDefinitions).compare();
   }
 
   @Override
@@ -102,7 +88,7 @@ public class OdcsFormat implements DataContractFormat {
   public String write(String name, List<GeneratedEntry> entries) {
     var contract =
         new OdcsContract(
-            OdcsVersion.API_VERSION,
+            OdcsConstants.API_VERSION,
             OdcsConstants.KIND,
             name,
             name,

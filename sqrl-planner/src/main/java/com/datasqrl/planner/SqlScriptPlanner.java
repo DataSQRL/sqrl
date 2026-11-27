@@ -62,7 +62,6 @@ import com.datasqrl.planner.analyzer.TableAnalysis;
 import com.datasqrl.planner.analyzer.TableOrFunctionAnalysis;
 import com.datasqrl.planner.analyzer.cost.CostModel;
 import com.datasqrl.planner.contract.TableContracts;
-import com.datasqrl.planner.contract.TableContracts.ExtendedTable;
 import com.datasqrl.planner.dag.DAGBuilder;
 import com.datasqrl.planner.dag.nodes.ExportNode;
 import com.datasqrl.planner.dag.nodes.PipelineNode;
@@ -130,12 +129,12 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import lombok.Getter;
+import lombok.With;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.schema.FunctionParameter;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.commons.lang3.Strings;
-import org.apache.flink.sql.parser.ddl.SqlTableColumn;
 import org.apache.flink.sql.parser.ddl.catalog.SqlCreateCatalog;
 import org.apache.flink.sql.parser.ddl.table.SqlAlterTable;
 import org.apache.flink.sql.parser.ddl.table.SqlCreateTable;
@@ -955,19 +954,12 @@ public class SqlScriptPlanner {
   private void registerCreatedTable(
       AddTableResult created, Optional<Path> definingFile, Sqrl2FlinkSQLTranslator sqrlEnv) {
 
-    var extended = Optional.<ExtendedTable>empty();
+    var extendedTable =
+        created.createdTable() instanceof SqlCreateTableLike likeTable
+            ? Optional.of(sqrlEnv.qualifyIdentifier(likeTable.getTableLike().getSourceTable()))
+            : Optional.<ObjectIdentifier>empty();
 
-    if (created.createdTable() instanceof SqlCreateTableLike likeTable) {
-      var id = sqrlEnv.qualifyIdentifier(likeTable.getTableLike().getSourceTable());
-      var addedCols =
-          likeTable.getColumnList().stream()
-              .map(column -> ((SqlTableColumn) column).getName().getSimple())
-              .toList();
-
-      extended = Optional.of(new ExtendedTable(id, addedCols));
-    }
-
-    tableContracts.register(created, definingFile, extended);
+    tableContracts.register(created, definingFile, extendedTable);
   }
 
   /**
@@ -980,11 +972,15 @@ public class SqlScriptPlanner {
       List<? extends TableOrFunctionAnalysis> inputs,
       Sqrl2FlinkSQLTranslator sqrlEnv,
       ErrorCollector errors) {
+
     var contractTable =
         tableContracts.get(sinkTableId).filter(table -> table.contract().isPresent());
+
     if (contractTable.isPresent()) {
       var table = contractTable.get();
-      sqrlEnv.getTagAnalyzer().checkWrite(table.name(), table.table().getTags(), inputs, errors);
+      sqrlEnv
+          .getTagAnalyzer()
+          .checkWrite(table.name(), table.created().tableAnalysis().getTags(), inputs, errors);
     } else {
       sqrlEnv.checkWriteTags(sinkTableId, inputs, errors);
     }
@@ -1663,13 +1659,7 @@ public class SqlScriptPlanner {
       boolean isRootContext,
       Optional<IncludedScript> includedScript,
       FailedObjects failures,
-      Optional<Path> scriptPath) {
-
-    /** The context with the file of the script that is planned in it. */
-    ScriptContext withScriptPath(Optional<Path> scriptPath) {
-      return new ScriptContext(
-          moduleLoaders, databaseName, isRootContext, includedScript, failures, scriptPath);
-    }
+      @With Optional<Path> scriptPath) {
 
     ScriptContext fromImport(
         ModuleLoader moduleLoader, boolean inline, String databaseName, Optional<Path> scriptPath) {

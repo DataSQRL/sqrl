@@ -248,7 +248,7 @@ class OdcsGeneratorTest {
   static void assertValidOdcs(OdcsSchemaObject schemaObject) {
     var contract =
         new OdcsContract(
-            OdcsVersion.API_VERSION,
+            OdcsConstants.API_VERSION,
             OdcsConstants.KIND,
             "test",
             "test",

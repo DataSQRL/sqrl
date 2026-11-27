@@ -17,6 +17,7 @@ package com.datasqrl.planner.contract;
 
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorLocation.FileLocation;
+import com.datasqrl.planner.contract.DataContractFormat.Entries;
 import com.datasqrl.planner.contract.DataContractFormat.Entry;
 import java.nio.file.Path;
 import java.util.LinkedHashMap;
@@ -36,8 +37,10 @@ public final class DataContractFile {
   public record AppliedTable(Path definingFile, String tableName) {}
 
   @Getter private final Path path;
-  private final String content;
   @Getter private final DataContractFormat format;
+
+  /** Reports about this file, without aborting */
+  private final ErrorCollector errors;
 
   /** Where the entries of the file start, for errors about the entries as a whole */
   private final FileLocation entriesLocation;
@@ -51,22 +54,16 @@ public final class DataContractFile {
   private final Map<String, AppliedTable> appliedTables = new LinkedHashMap<>();
 
   /**
-   * @param entries the entries of the file, whose names differ in more than their case
-   * @param declaresTags whether an entry declares tags or a classification
+   * @param entries what the format read from the file
+   * @param errors reports about the file, without aborting
    */
-  public DataContractFile(
-      Path path,
-      String content,
-      DataContractFormat format,
-      FileLocation entriesLocation,
-      List<? extends Entry> entries,
-      boolean declaresTags) {
+  DataContractFile(Path path, DataContractFormat format, Entries entries, ErrorCollector errors) {
     this.path = path;
-    this.content = content;
     this.format = format;
-    this.entriesLocation = entriesLocation;
-    this.declaresTags = declaresTags;
-    entries.forEach(entry -> this.entries.put(key(entry.name()), entry));
+    this.errors = errors;
+    this.entriesLocation = entries.location();
+    this.declaresTags = entries.declaresTags();
+    entries.entries().forEach(entry -> this.entries.put(key(entry.name()), entry));
   }
 
   /** The entry of the table with the given name, ignoring case. */
@@ -111,13 +108,13 @@ public final class DataContractFile {
   }
 
   /** The error collector that reports at the given location of this file. */
-  public ErrorCollector errorsAt(ErrorCollector errors, FileLocation location) {
-    return errors.withScript(path, content).atFile(location);
+  public ErrorCollector errorsAt(FileLocation location) {
+    return errors.atFile(location);
   }
 
   /** The error collector that reports about the entries of this file as a whole. */
-  public ErrorCollector errorsAtEntries(ErrorCollector errors) {
-    return errorsAt(errors, entriesLocation);
+  public ErrorCollector errorsAtEntries() {
+    return errorsAt(entriesLocation);
   }
 
   private static String key(String name) {

@@ -21,7 +21,6 @@ import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.plan.global.PhysicalPlanRewriter;
 import com.datasqrl.planner.Sqrl2FlinkSQLTranslator;
-import com.datasqrl.planner.contract.DataContracts;
 import com.datasqrl.planner.dag.plan.MutationDatabase;
 import com.datasqrl.planner.dag.plan.MutationTable;
 import com.datasqrl.util.StreamUtil;
@@ -32,6 +31,7 @@ import java.util.stream.Stream;
 import lombok.Builder;
 import lombok.Singular;
 import lombok.Value;
+import lombok.With;
 
 @Value
 @Builder
@@ -42,14 +42,10 @@ public class PhysicalPlan {
   @Singular Map<Name, MutationTable> mutationTables;
 
   /**
-   * The data contracts of the tables that the pipeline reads, writes and publishes. They are
-   * derived from the plan and no engine executes them.
+   * The data contracts of the tables that the pipeline reads, writes and publishes: the content of
+   * each contract file by its name. They are derived from the plan and no engine executes them.
    */
-  @Builder.Default DataContracts dataContracts = DataContracts.EMPTY;
-
-  public PhysicalPlan withDataContracts(DataContracts dataContracts) {
-    return new PhysicalPlan(stagePlans, mutationTables, dataContracts);
-  }
+  @With @Builder.Default Map<String, String> dataContracts = Map.of();
 
   public <T extends EnginePhysicalPlan> Stream<T> getPlans(Class<T> clazz) {
     return StreamUtil.filterByClass(stagePlans.stream().map(PhysicalStagePlan::plan), clazz);

@@ -82,9 +82,11 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import javax.annotation.Nullable;
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.SneakyThrows;
+import lombok.With;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelShuttleImpl;
 import org.apache.calcite.rel.core.Sort;
@@ -892,7 +894,7 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
     var result =
         addTable(
             tableNameModifier, tableDefinition, schemaLoader, mutationBuilder, hintsAndDoc, errors);
-    return result.withSourceView(addSourceTable(result, errors));
+    return result.withSourceView(Optional.of(addSourceTable(result, errors)));
   }
 
   public AddTableResult addExternalExport(
@@ -926,7 +928,7 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
             hintsAndDoc,
             errors);
     if (result.isSourceTable()) {
-      return result.withSourceView(addSourceTable(result, errors));
+      return result.withSourceView(Optional.of(addSourceTable(result, errors)));
     }
     checkRequiredColumns(result, errors);
     return result;
@@ -1037,22 +1039,7 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
       String completeCreateTableSql,
       HintsAndDoc hintsAndDoc,
       Documentation documentation,
-      Optional<TableAnalysis> sourceView) {
-
-    private AddTableResult withSourceView(TableAnalysis sourceView) {
-      return new AddTableResult(
-          tableName,
-          statementName,
-          baseTableIdentifier,
-          isSourceTable,
-          tableAnalysis,
-          createdTable,
-          completeCreateTableSql,
-          hintsAndDoc,
-          documentation,
-          Optional.of(sourceView));
-    }
-  }
+      @With(AccessLevel.PRIVATE) Optional<TableAnalysis> sourceView) {}
 
   /**
    * Adds a table to Flink and analyzes the table for schema and primary key definition. If the

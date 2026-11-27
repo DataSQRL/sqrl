@@ -49,8 +49,6 @@ public record OdcsSchemaObject(
     List<String> tags,
     List<OdcsProperty> properties) {
 
-  public static final String LOGICAL_TYPE = "object";
-
   public OdcsSchemaObject {
     tags = tags == null ? List.of() : tags;
     properties = properties == null ? List.of() : properties;

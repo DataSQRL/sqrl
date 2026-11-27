@@ -72,15 +72,11 @@ class DataContractStageTest {
   @BeforeEach
   void setUp() throws Exception {
     buildDir = Files.createDirectories(workspace.resolve("build")).toRealPath();
-    loader = new DataContractLoader(errors);
-    tableContracts = new TableContracts(loader, errors);
-    stage =
-        new DataContractStage(
-            loader,
-            tableContracts,
-            new WorkspacePaths(workspace, buildDir, buildDir.resolve("deploy"), workspace),
-            null,
-            errors);
+    loader =
+        new DataContractLoader(
+            errors, new WorkspacePaths(workspace, buildDir, buildDir.resolve("deploy"), workspace));
+    tableContracts = new TableContracts(loader);
+    stage = new DataContractStage(loader, tableContracts, null, errors);
   }
 
   @Test
@@ -91,7 +87,7 @@ class DataContractStageTest {
     file("sinks/archive-prod.odcs.yaml", CONTRACT);
     file("sinks/archive-prod.sqrl", "");
 
-    stage.checkContractFiles(DEFINITIONS, errors.abortOnFatal(false));
+    stage.checkContractFiles(DEFINITIONS);
 
     assertThat(messages())
         .extracting(ErrorMessage::getMessage, DataContractStageTest::severity)
@@ -112,7 +108,7 @@ class DataContractStageTest {
       file(name + ".sqrl", "");
     }
 
-    stage.checkContractFiles(DEFINITIONS, errors.abortOnFatal(false));
+    stage.checkContractFiles(DEFINITIONS);
 
     assertThat(messages())
         .extracting(ErrorMessage::getMessage)
@@ -129,7 +125,7 @@ class DataContractStageTest {
     file("crm.odcs.yaml", CONTRACT);
     register("Custmers", file("crm.sqrl", ""));
 
-    stage.checkContractFiles(DEFINITIONS, errors.abortOnFatal(false));
+    stage.checkContractFiles(DEFINITIONS);
 
     // An error for the file, and no notice for each of its schema objects
     assertThat(messages())
@@ -152,7 +148,7 @@ class DataContractStageTest {
     file("plain.odcs.yaml", CONTRACT.replace("    tags: [pii=raw]\n", ""));
     register("Customers", file("plain.sqrl", ""));
 
-    stage.checkContractFiles(TagDefinitions.DISABLED, errors.abortOnFatal(false));
+    stage.checkContractFiles(TagDefinitions.DISABLED);
 
     assertThat(messages())
         .filteredOn(ErrorMessage::isWarning)
@@ -170,7 +166,7 @@ class DataContractStageTest {
     register("Customers", file("crm.sqrl", ""));
     var reported = messages().size();
 
-    stage.checkContractFiles(DEFINITIONS, errors.abortOnFatal(false));
+    stage.checkContractFiles(DEFINITIONS);
 
     // The file was found, so it is not skipped either
     assertThat(messages()).hasSize(reported);

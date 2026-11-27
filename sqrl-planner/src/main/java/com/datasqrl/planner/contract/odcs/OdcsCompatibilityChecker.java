@@ -17,11 +17,12 @@ package com.datasqrl.planner.contract.odcs;
 
 import com.datasqrl.planner.contract.ContractSubject;
 import com.datasqrl.planner.contract.ContractSubject.ColumnKind;
+import com.datasqrl.planner.contract.DataContractFormat.Difference;
+import com.datasqrl.planner.contract.odcs.OdcsReader.OdcsEntry;
 import com.datasqrl.planner.contract.odcs.model.OdcsMap;
 import com.datasqrl.planner.contract.odcs.model.OdcsProperty;
 import com.datasqrl.planner.contract.odcs.model.OdcsSchemaObject;
 import com.datasqrl.planner.tags.TableTags;
-import com.datasqrl.planner.tags.TagDefinition;
 import com.datasqrl.planner.tags.TagDefinitions;
 import com.datasqrl.planner.tags.TagValue;
 import java.util.ArrayList;
@@ -38,7 +39,6 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 
 /**
@@ -66,46 +66,54 @@ import org.apache.commons.lang3.StringUtils;
  * Everything else is ignored, e.g. {@code physicalType}, descriptions and {@code
  * logicalTypeOptions}.
  */
-@RequiredArgsConstructor
-public class OdcsCompatibilityChecker {
+final class OdcsCompatibilityChecker {
 
-  /**
-   * @param pointer the JSON pointer of the element of the contract file that differs
-   */
-  public record Difference(String pointer, String message) {}
-
+  private final OdcsEntry entry;
+  private final ContractSubject subject;
   private final TagDefinitions tagDefinitions;
 
+  private final OdcsSchemaObject provided;
+
+  /** The top-level properties of the contract */
+  private final List<Located> properties;
+
+  private final List<Difference> differences = new ArrayList<>();
+  private final TagComparison tags = new TagComparison();
+
   /**
-   * @param provided the schema object of a contract file
-   * @param pointer the JSON pointer of the schema object in its file
-   * @param generated the schema object generated for the table
-   * @param subject the table
-   * @return every difference between the provided schema object and the table
+   * @param entry the schema object of a contract file
+   * @param subject the table that it describes
    */
-  public List<Difference> compare(
-      OdcsSchemaObject provided,
-      String pointer,
-      OdcsSchemaObject generated,
-      ContractSubject subject) {
-    var comparison = new Comparison(subject, locate(provided.properties(), pointer));
-    comparison.columns(generated.properties(), pointer);
-    comparison.key(
+  OdcsCompatibilityChecker(
+      OdcsEntry entry, ContractSubject subject, TagDefinitions tagDefinitions) {
+    this.entry = entry;
+    this.subject = subject;
+    this.tagDefinitions = tagDefinitions;
+    this.provided = OdcsYaml.toSchemaObject(entry.schemaObject());
+    this.properties = locate(provided.properties(), entry.pointer());
+  }
+
+  /**
+   * @return every difference between the schema object and the table
+   */
+  List<Difference> compare() {
+    columns(new OdcsGenerator(tagDefinitions).generate(subject).properties());
+    key(
         "primary key",
         OdcsProperty::primaryKey,
         OdcsProperty::primaryKeyPosition,
         "primaryKey",
         subject.primaryKey());
-    comparison.key(
+    key(
         "partition key",
         OdcsProperty::partitioned,
         OdcsProperty::partitionKeyPosition,
         "partitioned",
         subject.partitionKeys());
     if (tagDefinitions.isEnabled()) {
-      comparison.tags.table(provided.tags(), pointer);
+      tags.table();
     }
-    return comparison.differences;
+    return differences;
   }
 
   /** A property of the contract with its JSON pointer in the contract file. */
@@ -125,481 +133,445 @@ public class OdcsCompatibilityChecker {
         .toList();
   }
 
-  private class Comparison {
+  private void columns(List<OdcsProperty> columns) {
+    var matching = new Matching(properties, columns);
+    matching.forEachMatch(
+        (column, property) -> {
+          element(property.property(), property.pointer(), column, column.name(), true);
+          if (tagDefinitions.isEnabled()) {
+            tags.column(property, column);
+          }
+        });
 
-    private final ContractSubject subject;
-
-    /** The top-level properties of the contract */
-    private final List<Located> properties;
-
-    private final List<Difference> differences = new ArrayList<>();
-
-    private final TagComparison tags = new TagComparison();
-
-    Comparison(ContractSubject subject, List<Located> properties) {
-      this.subject = subject;
-      this.properties = properties;
-    }
-
-    void columns(List<OdcsProperty> columns, String pointer) {
-      var matching = new Matching(properties, columns);
-      matching.forEachMatch(
-          (column, property) -> {
-            element(property.property(), property.pointer(), column, column.name(), true);
-            if (tagDefinitions.isEnabled()) {
-              tags.column(property, column);
-            }
-          });
-
-      for (var column : matching.missing) {
-        if (!subject.mayOmitColumn(column.name())) {
-          report(
-              pointer,
-              "Column [%s] (%s) of table [%s] is missing from the contract%s",
-              column.name(),
-              describeType(column),
-              subject.name(),
-              subject.isWatermarkColumn(column.name())
-                  ? ". It has the watermark, and a contract may only leave out a watermark column"
-                      + " that the table adds itself to the columns it takes over with LIKE"
-                  : "");
-        }
-      }
-      for (var property : matching.unmatched) {
-        unmatchedProperty(property, columns);
-      }
-    }
-
-    private void unmatchedProperty(Located property, List<OdcsProperty> columns) {
-      var column = subject.getColumn(property.name());
-      if (column.isEmpty()) {
+    for (var column : matching.missing) {
+      if (!subject.mayOmitColumn(column.name())) {
         report(
-            property.pointer(),
-            "Contract property [%s] does not match a column of table [%s]; columns are: %s",
-            property.name(),
+            entry.pointer(),
+            "Column [%s] (%s) of table [%s] is missing from the contract%s",
+            column.name(),
+            describeType(column),
             subject.name(),
-            names(columns));
-      } else if (column.get().kind() == ColumnKind.PHYSICAL) {
-        report(
-            property.pointer(),
-            "Contract property [%s] names column [%s] of table [%s], which another property of"
-                + " the contract names too",
-            property.name(),
-            column.get().name(),
-            subject.name());
-      } else if (!subject.isWatermarkColumn(property.name())) {
-        report(
-            property.pointer(),
-            "Contract property [%s] is a %s column of table [%s]. A contract contains physical"
-                + " columns only",
-            property.name(),
-            column.get().kind() == ColumnKind.COMPUTED ? "computed" : "metadata",
-            subject.name());
-      } else if (tagDefinitions.isEnabled()) {
-        tags.withoutColumn(property);
+            subject.isWatermarkColumn(column.name())
+                ? ". It has the watermark, and a contract may only leave out a watermark column"
+                    + " that the table adds itself to the columns it takes over with LIKE"
+                : "");
       }
     }
+    for (var property : matching.unmatched) {
+      unmatchedProperty(property, columns);
+    }
+  }
+
+  private void unmatchedProperty(Located property, List<OdcsProperty> columns) {
+    var column = subject.getColumn(property.name());
+    if (column.isEmpty()) {
+      report(
+          property.pointer(),
+          "Contract property [%s] does not match a column of table [%s]; columns are: %s",
+          property.name(),
+          subject.name(),
+          names(columns));
+    } else if (column.get().kind() == ColumnKind.PHYSICAL) {
+      report(
+          property.pointer(),
+          "Contract property [%s] names column [%s] of table [%s], which another property of"
+              + " the contract names too",
+          property.name(),
+          column.get().name(),
+          subject.name());
+    } else if (!subject.isWatermarkColumn(property.name())) {
+      report(
+          property.pointer(),
+          "Contract property [%s] is a %s column of table [%s]. A contract contains physical"
+              + " columns only",
+          property.name(),
+          column.get().kind() == ColumnKind.COMPUTED ? "computed" : "metadata",
+          subject.name());
+    } else if (tagDefinitions.isEnabled()) {
+      // A property that the table has no physical column for declares its tags for the table
+      tags.ofTable.addProperty(property.property(), property.pointer());
+    }
+  }
+
+  /**
+   * Compares a property, the items of an array, or the key or value of a map.
+   *
+   * @param path the path of the element in the table, e.g. {@code address.city}
+   */
+  private void element(
+      OdcsProperty provided,
+      String pointer,
+      OdcsProperty generated,
+      String path,
+      boolean isColumn) {
+    var label = (isColumn ? "column [" : "field [") + path + "]";
+    if (provided.mustBeSet() != generated.mustBeSet()) {
+      report(
+          pointer + "/required",
+          "required is %s in the contract, but %s is %s",
+          provided.mustBeSet(),
+          label,
+          generated.mustBeSet() ? "NOT NULL" : "nullable");
+    }
+
+    var logicalType = generated.logicalType();
+    if (logicalType == null) {
+      return; // a type that has no logical type cannot be compared
+    }
+    if (provided.logicalType() == null) {
+      report(
+          pointer,
+          "%s has no logicalType in the contract, expected [%s]",
+          StringUtils.capitalize(label),
+          logicalType);
+      return;
+    }
+    if (!provided.logicalType().equalsIgnoreCase(logicalType)) {
+      report(
+          pointer + "/logicalType",
+          "%s has logicalType [%s] in the contract, but the table has [%s]",
+          StringUtils.capitalize(label),
+          provided.logicalType(),
+          logicalType);
+      return; // nested differences would only repeat this one
+    }
+
+    switch (logicalType) {
+      case OdcsPropertyWalker.OBJECT -> fields(provided, pointer, generated, path);
+      case OdcsPropertyWalker.ARRAY ->
+          nested(provided.items(), pointer + "/items", generated.items(), path + "[]");
+      case OdcsPropertyWalker.MAP -> {
+        var map = Optional.ofNullable(provided.map());
+        nested(
+            map.map(OdcsMap::key).orElse(null),
+            pointer + "/map/key",
+            generated.map().key(),
+            path + ".key");
+        nested(
+            map.map(OdcsMap::value).orElse(null),
+            pointer + "/map/value",
+            generated.map().value(),
+            path + ".value");
+      }
+      default -> {
+        // a scalar has nothing nested
+      }
+    }
+  }
+
+  private void nested(OdcsProperty provided, String pointer, OdcsProperty generated, String path) {
+    if (generated == null) {
+      return;
+    }
+    if (provided == null) {
+      report(pointer, "Field [%s] is not described in the contract", path);
+      return;
+    }
+    element(provided, pointer, generated, path, false);
+  }
+
+  /** Compares the fields of a nested row, which must be the same set. */
+  private void fields(OdcsProperty provided, String pointer, OdcsProperty generated, String path) {
+    if (generated.properties().isEmpty()) {
+      return; // a type without fixed fields, such as JSON
+    }
+    var matching = new Matching(locate(provided.properties(), pointer), generated.properties());
+    matching.forEachMatch(
+        (field, property) ->
+            element(
+                property.property(), property.pointer(), field, path + "." + field.name(), false));
+
+    for (var field : matching.missing) {
+      report(
+          pointer,
+          "Field [%s.%s] (%s) of table [%s] is missing from the contract",
+          path,
+          field.name(),
+          describeType(field),
+          subject.name());
+    }
+    for (var property : matching.unmatched) {
+      report(
+          property.pointer(),
+          "Contract property [%s.%s] does not match a field of [%s]; fields are: %s",
+          path,
+          property.name(),
+          path,
+          names(generated.properties()));
+    }
+  }
+
+  /**
+   * A contract may leave out a key. A key that it declares must be the key of the table: the same
+   * columns, and the same order if the contract gives the position of every key column.
+   *
+   * @param field the name of the field that marks a key column in the contract
+   */
+  private void key(
+      String keyName,
+      Function<OdcsProperty, Boolean> isKeyColumn,
+      Function<OdcsProperty, Integer> position,
+      String field,
+      List<String> tableKey) {
+    var keyProperties =
+        properties.stream()
+            .filter(property -> Boolean.TRUE.equals(isKeyColumn.apply(property.property())))
+            .collect(Collectors.toCollection(ArrayList::new));
+    if (keyProperties.isEmpty()) {
+      return;
+    }
+
+    var hasPositions =
+        keyProperties.stream().allMatch(property -> position.apply(property.property()) != null);
+    if (hasPositions) {
+      keyProperties.sort(Comparator.comparing(property -> position.apply(property.property())));
+    }
+    var contractKey = keyProperties.stream().map(Located::name).toList();
+    var contractColumns = contractKey.stream().map(OdcsCompatibilityChecker::key).toList();
+    var tableColumns = tableKey.stream().map(OdcsCompatibilityChecker::key).toList();
+
+    var matches =
+        hasPositions
+            ? contractColumns.equals(tableColumns)
+            : contractColumns.size() == tableColumns.size()
+                && tableColumns.containsAll(contractColumns);
+    if (!matches) {
+      report(
+          keyProperties.get(0).pointer() + "/" + field,
+          "The contract declares %s (%s) but table [%s] has %s",
+          keyName,
+          String.join(", ", contractKey),
+          subject.name(),
+          tableKey.isEmpty()
+              ? "no " + keyName
+              : keyName + " (" + String.join(", ", tableKey) + ")");
+    }
+  }
+
+  /**
+   * Compares the tags of the contract that are defined in {@code compiler.tags} with the tags of
+   * the table: for each column, and for the table as a whole. Other tags of the contract are labels
+   * of the catalog.
+   */
+  private class TagComparison {
 
     /**
-     * Compares a property, the items of an array, or the key or value of a map.
+     * The tags of the columns that the contract has a property for: a tag that the property lists,
+     * or one that is reported as missing from it
+     */
+    private final Set<TagValue> ofColumns = new HashSet<>();
+
+    /**
+     * The tags that the contract declares for the table as a whole: on the schema object, and on a
+     * property whose column has no tags to compare them with
+     */
+    private final DeclaredTags ofTable = new DeclaredTags();
+
+    /**
+     * A property must list the tags of its column. Its classification is the tag of that name.
      *
-     * @param path the path of the element in the table, e.g. {@code address.city}
+     * @param column the property generated for the column
      */
-    private void element(
-        OdcsProperty provided,
-        String pointer,
-        OdcsProperty generated,
-        String path,
-        boolean isColumn) {
-      var label = (isColumn ? "column [" : "field [") + path + "]";
-      if (provided.mustBeSet() != generated.mustBeSet()) {
-        report(
-            pointer + "/required",
-            "required is %s in the contract, but %s is %s",
-            provided.mustBeSet(),
-            label,
-            generated.mustBeSet() ? "NOT NULL" : "nullable");
-      }
+    void column(Located property, OdcsProperty column) {
+      var declared = new DeclaredTags();
+      declared.addProperty(property.property(), property.pointer());
+      var contractTags = declared.toTags();
+      var tagsOfColumn = subject.columnTags(column.name(), tagDefinitions);
 
-      var logicalType = generated.logicalType();
-      if (logicalType == null) {
-        return; // a type that has no logical type cannot be compared
-      }
-      if (provided.logicalType() == null) {
-        report(
-            pointer,
-            "%s has no logicalType in the contract, expected [%s]",
-            StringUtils.capitalize(label),
-            logicalType);
-        return;
-      }
-      if (!provided.logicalType().equalsIgnoreCase(logicalType)) {
-        report(
-            pointer + "/logicalType",
-            "%s has logicalType [%s] in the contract, but the table has [%s]",
-            StringUtils.capitalize(label),
-            provided.logicalType(),
-            logicalType);
-        return; // nested differences would only repeat this one
-      }
-
-      switch (logicalType) {
-        case OdcsPropertyWalker.OBJECT -> fields(provided, pointer, generated, path);
-        case OdcsPropertyWalker.ARRAY ->
-            nested(provided.items(), pointer + "/items", generated.items(), path + "[]");
-        case OdcsPropertyWalker.MAP -> {
-          var map = Optional.ofNullable(provided.map());
-          nested(
-              map.map(OdcsMap::key).orElse(null),
-              pointer + "/map/key",
-              generated.map().key(),
-              path + ".key");
-          nested(
-              map.map(OdcsMap::value).orElse(null),
-              pointer + "/map/value",
-              generated.map().value(),
-              path + ".value");
-        }
-        default -> {
-          // a scalar has nothing nested
-        }
-      }
-    }
-
-    private void nested(
-        OdcsProperty provided, String pointer, OdcsProperty generated, String path) {
-      if (generated == null) {
-        return;
-      }
-      if (provided == null) {
-        report(pointer, "Field [%s] is not described in the contract", path);
-        return;
-      }
-      element(provided, pointer, generated, path, false);
-    }
-
-    /** Compares the fields of a nested row, which must be the same set. */
-    private void fields(
-        OdcsProperty provided, String pointer, OdcsProperty generated, String path) {
-      if (generated.properties().isEmpty()) {
-        return; // a type without fixed fields, such as JSON
-      }
-      var matching = new Matching(locate(provided.properties(), pointer), generated.properties());
-      matching.forEachMatch(
-          (field, property) ->
-              element(
-                  property.property(),
-                  property.pointer(),
-                  field,
-                  path + "." + field.name(),
-                  false));
-
-      for (var field : matching.missing) {
-        report(
-            pointer,
-            "Field [%s.%s] (%s) of table [%s] is missing from the contract",
-            path,
-            field.name(),
-            describeType(field),
-            subject.name());
-      }
-      for (var property : matching.unmatched) {
-        report(
-            property.pointer(),
-            "Contract property [%s.%s] does not match a field of [%s]; fields are: %s",
-            path,
-            property.name(),
-            path,
-            names(generated.properties()));
-      }
-    }
-
-    /**
-     * A contract may leave out a key. A key that it declares must be the key of the table: the same
-     * columns, and the same order if the contract gives the position of every key column.
-     *
-     * @param field the name of the field that marks a key column in the contract
-     */
-    void key(
-        String keyName,
-        Function<OdcsProperty, Boolean> isKeyColumn,
-        Function<OdcsProperty, Integer> position,
-        String field,
-        List<String> tableKey) {
-      var keyProperties =
-          properties.stream()
-              .filter(property -> Boolean.TRUE.equals(isKeyColumn.apply(property.property())))
-              .collect(Collectors.toCollection(ArrayList::new));
-      if (keyProperties.isEmpty()) {
-        return;
-      }
-
-      var hasPositions =
-          keyProperties.stream().allMatch(property -> position.apply(property.property()) != null);
-      if (hasPositions) {
-        keyProperties.sort(Comparator.comparing(property -> position.apply(property.property())));
-      }
-      var contractKey = keyProperties.stream().map(Located::name).toList();
-      var contractColumns = contractKey.stream().map(OdcsCompatibilityChecker::key).toList();
-      var tableColumns = tableKey.stream().map(OdcsCompatibilityChecker::key).toList();
-
-      var matches =
-          hasPositions
-              ? contractColumns.equals(tableColumns)
-              : contractColumns.size() == tableColumns.size()
-                  && tableColumns.containsAll(contractColumns);
-      if (!matches) {
-        report(
-            keyProperties.get(0).pointer() + "/" + field,
-            "The contract declares %s (%s) but table [%s] has %s",
-            keyName,
-            String.join(", ", contractKey),
-            subject.name(),
-            tableKey.isEmpty()
-                ? "no " + keyName
-                : keyName + " (" + String.join(", ", tableKey) + ")");
-      }
-    }
-
-    /**
-     * Compares the tags of the contract that are defined in {@code compiler.tags} with the tags of
-     * the table: for each column, and for the table as a whole. Other tags of the contract are
-     * labels of the catalog.
-     */
-    private class TagComparison {
-
-      /**
-       * The tags of the columns that the contract has a property for: a tag that the property
-       * lists, or one that is reported as missing from it
-       */
-      private final Set<TagValue> ofColumns = new HashSet<>();
-
-      /**
-       * The tags that the contract declares for the table as a whole: on the schema object, and on
-       * a property whose column has no tags to compare them with
-       */
-      private final DeclaredTags ofTable = new DeclaredTags();
-
-      /**
-       * A property must list the tags of its column. Its classification is the tag of that name.
-       *
-       * @param column the property generated for the column, with the tags and the classification
-       *     that the column declares
-       */
-      void column(Located property, OdcsProperty column) {
-        var declared = new DeclaredTags();
-        declared.addProperty(property.property(), property.pointer());
-        var contractTags = declared.toTags();
-        var columnTags = new DeclaredTags();
-        columnTags.addProperty(column, "");
-        var tagsOfColumn = columnTags.toTags();
-
-        for (var tag : contractTags.values()) {
-          var ofColumn = tagsOfColumn.get(tag.name());
-          if (ofColumn.filter(tag::equals).isPresent()) {
-            ofColumns.add(tag);
-          } else if (subject.tags().get(tag.name()).isEmpty()) {
-            // The table does not have the tag at all, which is reported once for the table
-            ofTable.add(tag, declared.pointerOf(tag));
-          } else {
-            // The difference is reported here, and not again for the table
-            subject.tags().get(tag.name()).ifPresent(ofColumns::add);
-            ofColumn.ifPresent(ofColumns::add);
-            reportOtherTag(tag, ofColumn, declared.pointerOf(tag), property, column);
-          }
-        }
-        for (var tag : tagsOfColumn.values()) {
-          if (contractTags.get(tag.name()).isEmpty()) {
-            ofColumns.add(tag);
-            var classification = isClassification(tag);
-            report(
-                property.pointer()
-                    + "/"
-                    + (classification
-                        ? OdcsConstants.CLASSIFICATION_FIELD
-                        : OdcsConstants.TAGS_FIELD),
-                "%s [%s] of column [%s] of table [%s] is missing from property [%s]",
-                classification ? "classification" : "Tag",
-                classification ? tag.value() : OdcsTags.write(tag),
-                column.name(),
-                subject.name(),
-                property.name());
-          }
-        }
-      }
-
-      /** A property that the table has no physical column for declares its tags for the table. */
-      void withoutColumn(Located property) {
-        ofTable.addProperty(property.property(), property.pointer());
-      }
-
-      /**
-       * The tags of the schema object, together with the tags of its properties, must be the tags
-       * of the table.
-       */
-      void table(List<String> schemaObjectTags, String pointer) {
-        var tagsPointer = pointer + "/" + OdcsConstants.TAGS_FIELD;
-        ofTable.addAll(schemaObjectTags, tagsPointer);
-        var declared = ofTable.toTags();
-
-        for (var tag : declared.values()) {
-          var tableTag = subject.tags().get(tag.name());
-          if (tableTag.isEmpty()) {
-            report(
-                ofTable.pointerOf(tag),
-                "The contract declares tag [%s] that table [%s] does not have",
-                OdcsTags.write(tag),
-                subject.name());
-          } else if (!tableTag.get().equals(tag)) {
-            report(
-                ofTable.pointerOf(tag),
-                "The contract declares tag [%s] but table [%s] has [%s]",
-                OdcsTags.write(tag),
-                subject.name(),
-                OdcsTags.write(tableTag.get()));
-          }
-        }
-        for (var tag : subject.tags().values()) {
-          if (declared.get(tag.name()).isEmpty() && !ofColumns.contains(tag)) {
-            report(
-                tagsPointer,
-                "Tag [%s] of table [%s] is missing from the contract",
-                OdcsTags.write(tag),
-                subject.name());
-          }
-        }
-      }
-
-      private void reportOtherTag(
-          TagValue tag,
-          Optional<TagValue> ofColumn,
-          String pointer,
-          Located property,
-          OdcsProperty column) {
-        var classification = isClassification(tag);
-        if (ofColumn.isPresent() && classification) {
-          report(
-              pointer,
-              "classification is [%s] in the contract, but column [%s] of table [%s] has [%s]",
-              tag.value(),
-              column.name(),
-              subject.name(),
-              ofColumn.get().value());
-        } else if (ofColumn.isPresent()) {
-          report(
-              pointer,
-              "Property [%s] declares tag [%s], but column [%s] of table [%s] has [%s]",
-              property.name(),
-              OdcsTags.write(tag),
-              column.name(),
-              subject.name(),
-              OdcsTags.write(ofColumn.get()));
+      for (var tag : contractTags.values()) {
+        var ofColumn = tagsOfColumn.get(tag.name());
+        if (ofColumn.filter(tag::equals).isPresent()) {
+          ofColumns.add(tag);
+        } else if (subject.tags().get(tag.name()).isEmpty()) {
+          // The table does not have the tag at all, which is reported once for the table
+          ofTable.add(tag, declared.pointerOf(tag));
         } else {
-          // The table has the tag, and the column does not declare it
-          var tableTag = subject.tags().get(tag.name()).filter(ofTable -> !ofTable.equals(tag));
+          // The difference is reported here, and not again for the table
+          subject.tags().get(tag.name()).ifPresent(ofColumns::add);
+          ofColumn.ifPresent(ofColumns::add);
+          reportOtherTag(tag, ofColumn, declared.pointerOf(tag), property, column);
+        }
+      }
+      for (var tag : tagsOfColumn.values()) {
+        if (contractTags.get(tag.name()).isEmpty()) {
+          ofColumns.add(tag);
+          var classification = isClassification(tag);
           report(
-              pointer,
-              "Property [%s] declares %s, but column [%s] of table [%s] does not declare it%s."
-                  + " Declare it in the comment of the column, or list %s on the schema object",
-              property.name(),
-              classification
-                  ? "classification [%s]".formatted(tag.value())
-                  : "tag [%s]".formatted(OdcsTags.write(tag)),
+              property.pointer()
+                  + "/"
+                  + (classification
+                      ? OdcsConstants.CLASSIFICATION_FIELD
+                      : OdcsConstants.TAGS_FIELD),
+              "%s [%s] of column [%s] of table [%s] is missing from property [%s]",
+              classification ? "classification" : "Tag",
+              classification ? tag.value() : OdcsTags.write(tag),
               column.name(),
               subject.name(),
-              tableTag
-                  .map(ofTable -> " and the table has [%s]".formatted(OdcsTags.write(ofTable)))
-                  .orElse(""),
-              classification ? "the classification of the table as a tag" : "the tag of the table");
+              property.name());
         }
-      }
-
-      private static boolean isClassification(TagValue tag) {
-        return tag.name().equalsIgnoreCase(OdcsConstants.CLASSIFICATION_TAG);
       }
     }
 
-    /** Tags of a contract that are defined in {@code compiler.tags}, with where they are listed. */
-    private class DeclaredTags {
+    /**
+     * The tags of the schema object, together with the tags of its properties, must be the tags of
+     * the table.
+     */
+    void table() {
+      var tagsPointer = entry.pointer() + "/" + OdcsConstants.TAGS_FIELD;
+      ofTable.addAll(provided.tags(), tagsPointer);
+      var declared = ofTable.toTags();
 
-      /** The pointer of the first declaration of each tag value */
-      private final Map<TagValue, String> pointers = new LinkedHashMap<>();
-
-      void addAll(List<String> tags, String pointer) {
-        IntStream.range(0, tags.size()).forEach(i -> add(tags.get(i), pointer + "/" + i));
-      }
-
-      /** Adds the tags of a property, of the properties nested in it, and its classification. */
-      void addProperty(OdcsProperty property, String pointer) {
-        addAll(property.tags(), pointer + "/" + OdcsConstants.TAGS_FIELD);
-        if (property.classification() != null) {
-          add(
-              new OdcsTags.ContractTag(OdcsConstants.CLASSIFICATION_TAG, property.classification()),
-              pointer + "/" + OdcsConstants.CLASSIFICATION_FIELD);
-        }
-        var nested = property.properties();
-        IntStream.range(0, nested.size())
-            .forEach(
-                i ->
-                    addProperty(
-                        nested.get(i), pointer + "/" + OdcsConstants.PROPERTIES_FIELD + "/" + i));
-        if (property.items() != null) {
-          addProperty(property.items(), pointer + "/items");
-        }
-        if (property.map() != null) {
-          addProperty(property.map().key(), pointer + "/map/key");
-          addProperty(property.map().value(), pointer + "/map/value");
+      for (var tag : declared.values()) {
+        var tableTag = subject.tags().get(tag.name());
+        if (tableTag.isEmpty()) {
+          report(
+              ofTable.pointerOf(tag),
+              "The contract declares tag [%s] that table [%s] does not have",
+              OdcsTags.write(tag),
+              subject.name());
+        } else if (!tableTag.get().equals(tag)) {
+          report(
+              ofTable.pointerOf(tag),
+              "The contract declares tag [%s] but table [%s] has [%s]",
+              OdcsTags.write(tag),
+              subject.name(),
+              OdcsTags.write(tableTag.get()));
         }
       }
-
-      /**
-       * @param tag a tag as a contract writes it: {@code name} or {@code name=value}
-       */
-      void add(String tag, String pointer) {
-        add(OdcsTags.parse(tag), pointer);
-      }
-
-      void add(OdcsTags.ContractTag tag, String pointer) {
-        var definition = tagDefinitions.get(tag.name());
-        if (definition.isEmpty()) {
-          return; // a label of the catalog
+      for (var tag : subject.tags().values()) {
+        if (declared.get(tag.name()).isEmpty() && !ofColumns.contains(tag)) {
+          report(
+              tagsPointer,
+              "Tag [%s] of table [%s] is missing from the contract",
+              OdcsTags.write(tag),
+              subject.name());
         }
-        definition
-            .get()
-            .valueOf(tag.value())
-            .ifPresentOrElse(
-                tagValue -> add(tagValue, pointer),
-                () -> reportInvalidValue(tag.toString(), definition.get(), pointer));
       }
+    }
 
-      void add(TagValue tag, String pointer) {
-        pointers.putIfAbsent(tag, pointer);
-      }
-
-      private void reportInvalidValue(String tag, TagDefinition definition, String pointer) {
+    private void reportOtherTag(
+        TagValue tag,
+        Optional<TagValue> ofColumn,
+        String pointer,
+        Located property,
+        OdcsProperty column) {
+      var classification = isClassification(tag);
+      if (ofColumn.isPresent() && classification) {
         report(
             pointer,
-            "Contract tag [%s] is not a valid value of tag [%s]: %s",
-            tag,
-            definition.name(),
-            definition.isBoolean()
-                ? "it has no value"
-                : "allowed values are " + definition.values());
-      }
-
-      /** The declared tags, with the highest value of a tag that is declared more than once. */
-      TableTags toTags() {
-        return TableTags.of(pointers.keySet());
-      }
-
-      String pointerOf(TagValue tag) {
-        return pointers.get(tag);
+            "classification is [%s] in the contract, but column [%s] of table [%s] has [%s]",
+            tag.value(),
+            column.name(),
+            subject.name(),
+            ofColumn.get().value());
+      } else if (ofColumn.isPresent()) {
+        report(
+            pointer,
+            "Property [%s] declares tag [%s], but column [%s] of table [%s] has [%s]",
+            property.name(),
+            OdcsTags.write(tag),
+            column.name(),
+            subject.name(),
+            OdcsTags.write(ofColumn.get()));
+      } else {
+        // The table has the tag, and the column does not declare it
+        var tableTag = subject.tags().get(tag.name()).filter(ofTable -> !ofTable.equals(tag));
+        report(
+            pointer,
+            "Property [%s] declares %s, but column [%s] of table [%s] does not declare it%s."
+                + " Declare it in the comment of the column, or list %s on the schema object",
+            property.name(),
+            classification
+                ? "classification [%s]".formatted(tag.value())
+                : "tag [%s]".formatted(OdcsTags.write(tag)),
+            column.name(),
+            subject.name(),
+            tableTag
+                .map(ofTable -> " and the table has [%s]".formatted(OdcsTags.write(ofTable)))
+                .orElse(""),
+            classification ? "the classification of the table as a tag" : "the tag of the table");
       }
     }
 
-    private void report(String pointer, String message, Object... args) {
-      differences.add(new Difference(pointer, message.formatted(args)));
+    private static boolean isClassification(TagValue tag) {
+      return tag.name().equalsIgnoreCase(OdcsConstants.CLASSIFICATION_TAG);
     }
+  }
+
+  /** Tags of a contract that are defined in {@code compiler.tags}, with where they are listed. */
+  private class DeclaredTags {
+
+    /** The pointer of the first declaration of each tag value */
+    private final Map<TagValue, String> pointers = new LinkedHashMap<>();
+
+    /**
+     * @param tags tags as a contract writes them: {@code name} or {@code name=value}
+     */
+    void addAll(List<String> tags, String pointer) {
+      IntStream.range(0, tags.size())
+          .forEach(i -> add(OdcsTags.parse(tags.get(i)), pointer + "/" + i));
+    }
+
+    /** Adds the tags of a property, of the properties nested in it, and its classification. */
+    void addProperty(OdcsProperty property, String pointer) {
+      addAll(property.tags(), pointer + "/" + OdcsConstants.TAGS_FIELD);
+      if (property.classification() != null) {
+        add(
+            new OdcsTags.ContractTag(OdcsConstants.CLASSIFICATION_TAG, property.classification()),
+            pointer + "/" + OdcsConstants.CLASSIFICATION_FIELD);
+      }
+      var nested = property.properties();
+      IntStream.range(0, nested.size())
+          .forEach(
+              i ->
+                  addProperty(
+                      nested.get(i), pointer + "/" + OdcsConstants.PROPERTIES_FIELD + "/" + i));
+      if (property.items() != null) {
+        addProperty(property.items(), pointer + "/items");
+      }
+      if (property.map() != null) {
+        addProperty(property.map().key(), pointer + "/map/key");
+        addProperty(property.map().value(), pointer + "/map/value");
+      }
+    }
+
+    void add(OdcsTags.ContractTag tag, String pointer) {
+      var definition = tagDefinitions.get(tag.name());
+      if (definition.isEmpty()) {
+        return; // a label of the catalog
+      }
+      definition
+          .get()
+          .valueOf(tag.value())
+          .ifPresentOrElse(
+              tagValue -> add(tagValue, pointer),
+              () ->
+                  report(
+                      pointer,
+                      "Contract tag [%s] is not a valid value of tag [%s]: %s",
+                      tag,
+                      definition.get().name(),
+                      definition.get().isBoolean()
+                          ? "it has no value"
+                          : "allowed values are " + definition.get().values()));
+    }
+
+    void add(TagValue tag, String pointer) {
+      pointers.putIfAbsent(tag, pointer);
+    }
+
+    /** The declared tags, with the highest value of a tag that is declared more than once. */
+    TableTags toTags() {
+      return TableTags.of(pointers.keySet());
+    }
+
+    String pointerOf(TagValue tag) {
+      return pointers.get(tag);
+    }
+  }
+
+  private void report(String pointer, String message, Object... args) {
+    differences.add(new Difference(entry.document().locate(pointer), message.formatted(args)));
   }
 
   /**

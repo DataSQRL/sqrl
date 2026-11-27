@@ -17,15 +17,13 @@ package com.datasqrl.planner.contract.odcs;
 
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorLocation.FileLocation;
-import com.datasqrl.planner.contract.DataContractFile;
-import com.datasqrl.planner.contract.DataContractFormat;
+import com.datasqrl.planner.contract.DataContractFormat.Entries;
 import com.datasqrl.planner.contract.DataContractFormat.Entry;
 import com.datasqrl.util.JsonSchemaValidator;
 import com.datasqrl.util.JsonSchemaValidator.Violation;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -62,12 +60,11 @@ final class OdcsReader {
 
   /**
    * @param fileErrors reports errors in the file
-   * @return the contract file, or empty if it has errors
+   * @return the schema objects of the file, or empty if it has errors
    */
-  static Optional<DataContractFile> read(
-      Path path, String content, DataContractFormat format, ErrorCollector fileErrors) {
+  static Optional<Entries> read(String content, ErrorCollector fileErrors) {
     try {
-      return parse(path, content, format, fileErrors);
+      return parse(content, fileErrors);
     } catch (JsonProcessingException e) {
       var location = e.getLocation();
       (location == null
@@ -80,9 +77,9 @@ final class OdcsReader {
     return Optional.empty();
   }
 
-  private static Optional<DataContractFile> parse(
-      Path path, String content, DataContractFormat format, ErrorCollector fileErrors)
+  private static Optional<Entries> parse(String content, ErrorCollector fileErrors)
       throws IOException {
+
     var documents = OdcsYaml.readDocuments(content);
     if (documents.size() > 1) {
       // A YAML parser reads the first document and drops the others
@@ -91,6 +88,7 @@ final class OdcsReader {
           documents.size());
       return Optional.empty();
     }
+
     if (documents.isEmpty() || !documents.get(0).isObject()) {
       fileErrors.fatal(
           documents.isEmpty()
@@ -106,28 +104,33 @@ final class OdcsReader {
     var entries = new ArrayList<OdcsEntry>();
     valid &= readEntries(document, fileErrors, entries);
 
-    return valid && validVersion
-        ? Optional.of(
-            new DataContractFile(
-                path,
-                content,
-                format,
-                document.locate("/" + OdcsConstants.SCHEMA_FIELD),
-                entries,
-                declaresTags(document.root())))
-        : Optional.empty();
+    if (!valid || !validVersion) {
+      return Optional.empty();
+    }
+
+    return Optional.of(
+        new Entries(
+            entries,
+            document.locate("/" + OdcsConstants.SCHEMA_FIELD),
+            declaresTags(document.root())));
   }
 
   private static boolean checkVersion(OdcsDocument document, ErrorCollector fileErrors) {
-    try {
-      OdcsVersion.check(document.root().path(OdcsConstants.API_VERSION_FIELD).asText(null));
+    var apiVersion = document.root().path(OdcsConstants.API_VERSION_FIELD).asText("").trim();
+    if (apiVersion.startsWith(OdcsConstants.SUPPORTED_VERSION_PREFIX)) {
       return true;
-    } catch (IllegalArgumentException e) {
-      fileErrors
-          .atFile(document.locate("/" + OdcsConstants.API_VERSION_FIELD))
-          .fatal("%s", e.getMessage());
-      return false;
     }
+
+    fileErrors
+        .atFile(document.locate("/" + OdcsConstants.API_VERSION_FIELD))
+        .fatal(
+            apiVersion.isEmpty()
+                ? "The contract has no apiVersion: set it to %2$s"
+                : "apiVersion [%s] is not supported: convert the contract to ODCS %s",
+            apiVersion,
+            OdcsConstants.API_VERSION);
+
+    return false;
   }
 
   /**

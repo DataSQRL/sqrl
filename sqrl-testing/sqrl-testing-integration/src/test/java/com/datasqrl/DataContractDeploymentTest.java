@@ -307,7 +307,7 @@ class DataContractDeploymentTest {
 
   /** The names of the sink tables, which have no contract file if there are none. */
   private List<String> sinkNames() {
-    return Files.exists(compiler.getContractsDir().resolve(OdcsConstants.fileName("sinks")))
+    return Files.exists(compiler.getContractsDir().resolve("sinks." + OdcsConstants.FILE_EXTENSION))
         ? schemaObjectNames(contract("sinks"))
         : List.of();
   }
@@ -379,12 +379,14 @@ class DataContractDeploymentTest {
   }
 
   private JsonNode contract(String name) {
-    return readContract(compiler.getContractsDir().resolve(OdcsConstants.fileName(name)));
+    return readContract(
+        compiler.getContractsDir().resolve(name + "." + OdcsConstants.FILE_EXTENSION));
   }
 
   @SneakyThrows
   private String readFile(String name) {
-    return Files.readString(compiler.getContractsDir().resolve(OdcsConstants.fileName(name)));
+    return Files.readString(
+        compiler.getContractsDir().resolve(name + "." + OdcsConstants.FILE_EXTENSION));
   }
 
   @SneakyThrows

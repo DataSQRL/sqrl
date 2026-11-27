@@ -20,8 +20,8 @@ import static org.assertj.core.api.Assertions.tuple;
 
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorMessage;
-import com.datasqrl.planner.contract.DataContractFile;
 import com.datasqrl.planner.contract.DataContractFormat;
+import com.datasqrl.planner.contract.DataContractFormat.Entries;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -62,16 +62,13 @@ class OdcsFormatTest {
 
   @Test
   void givenContract_whenRead_thenItsSchemaObjectsAreTheEntries() {
-    var contractFile = read(CONTRACT).orElseThrow();
+    var entries = read(CONTRACT).orElseThrow();
 
-    assertThat(contractFile.getPath()).isEqualTo(PATH);
-    assertThat(contractFile.getFormat()).isSameAs(underTest);
-    assertThat(contractFile.getUnappliedEntryNames()).containsExactly("Customers", "Orders");
-    assertThat(contractFile.getEntry("ORDERS").orElseThrow())
+    assertThat(entries.entries())
         .extracting(DataContractFormat.Entry::name, entry -> entry.location().line())
-        .containsExactly("Orders", 10);
-    assertThat(contractFile.getEntry("Unknown")).isEmpty();
-    assertThat(contractFile.declaresTags()).isFalse();
+        .containsExactly(tuple("Customers", 6), tuple("Orders", 10));
+    assertThat(entries.location().line()).isEqualTo(6);
+    assertThat(entries.declaresTags()).isFalse();
     assertThat(messages()).isEmpty();
   }
 
@@ -249,8 +246,8 @@ class OdcsFormatTest {
             "The contract file has 2 YAML documents. A contract file holds one document");
   }
 
-  private Optional<DataContractFile> read(String content) {
-    return underTest.read(PATH, content, errors.withScript(PATH, content));
+  private Optional<Entries> read(String content) {
+    return underTest.read(content, errors.withScript(PATH, content));
   }
 
   private List<ErrorMessage> messages() {

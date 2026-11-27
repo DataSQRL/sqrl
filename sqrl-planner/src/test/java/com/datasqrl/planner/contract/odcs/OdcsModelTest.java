@@ -57,7 +57,7 @@ class OdcsModelTest {
         OdcsSchemaObject.builder()
             .name("Customers")
             .physicalType("topic")
-            .logicalType(OdcsSchemaObject.LOGICAL_TYPE)
+            .logicalType(OdcsPropertyWalker.OBJECT)
             .tags(List.of("gdpr", "pii=raw"))
             .properties(List.of(id, attributes))
             .build();

@@ -19,7 +19,6 @@ import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorLocation.FileLocation;
 import com.datasqrl.planner.tags.TagDefinitions;
 import com.datasqrl.util.ServiceLoaderDiscovery;
-import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -43,6 +42,15 @@ public interface DataContractFormat {
     /** Where the entry starts in its file */
     FileLocation location();
   }
+
+  /**
+   * The entries of a contract file.
+   *
+   * @param entries the entries, whose names differ in more than their case
+   * @param location where the entries start in the file, for errors about the entries as a whole
+   * @param declaresTags whether an entry declares tags or a classification
+   */
+  record Entries(List<? extends Entry> entries, FileLocation location, boolean declaresTags) {}
 
   /**
    * A difference between an entry and its table.
@@ -72,9 +80,9 @@ public interface DataContractFormat {
   /**
    * Reads a contract file. Every error of the file is reported, at its line where it has one.
    *
-   * @return the contract file, or empty if it has errors
+   * @return the entries of the file, or empty if it has errors
    */
-  Optional<DataContractFile> read(Path path, String content, ErrorCollector errors);
+  Optional<Entries> read(String content, ErrorCollector errors);
 
   /**
    * @param entry an entry of a file that this format read

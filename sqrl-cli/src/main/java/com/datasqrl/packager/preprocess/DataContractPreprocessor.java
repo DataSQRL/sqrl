@@ -24,8 +24,6 @@ import com.datasqrl.planner.contract.DataContractFormat;
 import com.datasqrl.planner.contract.DataContractLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -33,6 +31,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.Strings;
 import org.springframework.stereotype.Component;
@@ -61,10 +60,11 @@ public class DataContractPreprocessor implements Preprocessor {
   /** The names, without extension and in lower case, of the files that define tables, by folder */
   private final Map<Path, Set<String>> scriptNames = new HashMap<>();
 
-  /** What the current run reports about a file */
-  private record Report(Path file, String message) {}
-
-  private final List<Report> reports = new ArrayList<>();
+  /**
+   * What the current run reports about a file, by the path of the file as it is shown, which is the
+   * order of the reports
+   */
+  private final Map<String, String> reports = new TreeMap<>();
 
   @Override
   public void process(Path file, FilePreprocessingPipeline.Context ctx) {
@@ -117,10 +117,9 @@ public class DataContractPreprocessor implements Preprocessor {
           });
       if (!reports.isEmpty()) {
         var collector = errors.abortOnFatal(false);
-        reports.stream()
-            .sorted(Comparator.comparing(report -> shownPath(report.file()).toString()))
-            .forEach(
-                report -> collector.fatal(ErrorCode.INVALID_DATA_CONTRACT, "%s", report.message()));
+        reports
+            .values()
+            .forEach(message -> collector.fatal(ErrorCode.INVALID_DATA_CONTRACT, "%s", message));
         errors.abortOnErrors();
       }
     } finally {
@@ -160,7 +159,7 @@ public class DataContractPreprocessor implements Preprocessor {
   }
 
   private void report(Path file, String message, Object... args) {
-    reports.add(new Report(file, message.formatted(args)));
+    reports.put(shownPath(file).toString(), message.formatted(args));
   }
 
   /** The path from the project root, or the path as it is for a file of an included project. */

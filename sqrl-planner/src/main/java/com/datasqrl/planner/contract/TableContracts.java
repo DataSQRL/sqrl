@@ -16,12 +16,9 @@
 package com.datasqrl.planner.contract;
 
 import com.datasqrl.error.ErrorCode;
-import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.planner.Sqrl2FlinkSQLTranslator.AddTableResult;
-import com.datasqrl.planner.analyzer.TableAnalysis;
 import com.datasqrl.planner.contract.DataContractFile.AppliedTable;
 import com.datasqrl.planner.contract.DataContractFormat.Entry;
-import com.datasqrl.planner.util.Documented.Documentation;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
@@ -31,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
+import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.flink.table.catalog.ObjectIdentifier;
 import org.springframework.context.annotation.Lazy;
@@ -49,56 +47,45 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @Lazy
+@RequiredArgsConstructor
 public class TableContracts {
 
   /** The entry that a contract file provides for a table. */
   public record AttachedContract(DataContractFile file, Entry entry) {}
 
   /**
-   * The table that a statement extends with {@code LIKE}.
+   * A created table with its contract.
    *
-   * @param id the table whose columns the statement takes over
-   * @param addedColumns the columns that the statement declares itself
-   */
-  public record ExtendedTable(ObjectIdentifier id, List<String> addedColumns) {}
-
-  /**
-   * A created table, with what its statement declares besides its schema and its tags, which the
-   * table analysis has.
-   *
-   * @param name the name of the table in its statement, without the suffix of an export and not an
-   *     import alias
+   * @param created the table as the planner created it
    * @param definingFile the file whose statement defines the table, if it is known
-   * @param documentation the doc string of the table, with the comments of the columns that the doc
-   *     string doesn't document
-   * @param isTest whether the statement has the test hint
    * @param lookupFiles the files next to which the contract of the table is looked up: the file
    *     that defines it, then the files of the tables that it extends with {@code LIKE}
-   * @param addedColumns the columns that the statement adds to those of the table it extends with
-   *     {@code LIKE}; empty for a table that extends none
    */
   public record ContractTable(
-      ObjectIdentifier id,
-      TableAnalysis table,
-      String name,
+      AddTableResult created,
       Optional<Path> definingFile,
-      Documentation documentation,
-      boolean isTest,
       List<Path> lookupFiles,
-      List<String> addedColumns,
       Optional<AttachedContract> contract) {
+
+    public ObjectIdentifier id() {
+      return created.baseTableIdentifier();
+    }
+
+    /** The name of the table in its statement, without an export suffix or an import alias */
+    public String name() {
+      return created.statementName();
+    }
 
     /**
      * Identifies the statement: the same statement that is planned more than once, e.g. imported
      * under two names, is one definition.
      */
     public Object definition() {
-      return definingFile.<Object>map(file -> new AppliedTable(file, name)).orElse(id);
+      return definingFile.<Object>map(file -> new AppliedTable(file, name())).orElse(id());
     }
   }
 
   private final DataContractLoader loader;
-  private final ErrorCollector errors;
 
   /** The created tables in the order they were planned */
   private final Map<ObjectIdentifier, ContractTable> tables = new LinkedHashMap<>();
@@ -106,55 +93,33 @@ public class TableContracts {
   /** The contract of each definition, which is resolved, and reported on, once */
   private final Map<AppliedTable, Optional<AttachedContract>> resolved = new HashMap<>();
 
-  public TableContracts(DataContractLoader loader, ErrorCollector errors) {
-    this.loader = loader;
-    this.errors = errors.abortOnFatal(false);
-  }
-
   /**
    * @param created a table that the planner created
    * @param definingFile the file whose statement defines the table, a script or a {@code
    *     .table.sql} file; a table of an unknown file has no contract
-   * @param extended the table whose columns the statement takes over with {@code LIKE}
+   * @param extendedTable the table whose columns the statement takes over with {@code LIKE}
    */
   public ContractTable register(
-      AddTableResult created, Optional<Path> definingFile, Optional<ExtendedTable> extended) {
+      AddTableResult created,
+      Optional<Path> definingFile,
+      Optional<ObjectIdentifier> extendedTable) {
+
     var file = definingFile.map(path -> path.toAbsolutePath().normalize());
     var lookupFiles =
         Stream.concat(
                 file.stream(),
-                extended
-                    .map(ExtendedTable::id)
-                    .map(tables::get)
-                    .map(ContractTable::lookupFiles)
-                    .stream()
+                extendedTable.map(tables::get).map(ContractTable::lookupFiles).stream()
                     .flatMap(List::stream))
             .distinct()
             .toList();
     var contract =
         file.flatMap(
-            path -> {
-              var definition = new AppliedTable(path, created.statementName());
-              var known = resolved.get(definition);
-              if (known == null) {
-                known = resolve(definition, lookupFiles);
-                resolved.put(definition, known);
-              }
-              return known;
-            });
+            path ->
+                resolved.computeIfAbsent(
+                    new AppliedTable(path, created.statementName()),
+                    definition -> resolve(definition, lookupFiles)));
 
-    var table =
-        new ContractTable(
-            created.baseTableIdentifier(),
-            created.tableAnalysis(),
-            created.statementName(),
-            file,
-            created.documentation(),
-            created.hintsAndDoc().hints().isTest(),
-            lookupFiles,
-            extended.map(ExtendedTable::addedColumns).orElse(List.of()),
-            contract);
-
+    var table = new ContractTable(created, file, lookupFiles, contract);
     tables.put(table.id(), table);
 
     return table;
@@ -184,6 +149,18 @@ public class TableContracts {
     return own.or(() -> inherited);
   }
 
+  private static void reportTwoContracts(AttachedContract own, AttachedContract inherited) {
+    own.file()
+        .errorsAt(own.entry().location())
+        .fatal(
+            ErrorCode.INVALID_DATA_CONTRACT,
+            "Table [%s] has a %s in two contract files: here, next to its script, and in [%s]"
+                + " next to the script of a table it extends. Keep one of them",
+            own.entry().name(),
+            own.file().getFormat().getEntryLabel(),
+            inherited.file().getPath().getFileName());
+  }
+
   /**
    * @param script a file that defines tables
    * @return the entry for the table in the contract file next to the script, if it has one
@@ -201,7 +178,7 @@ public class TableContracts {
     if (!applied.equals(table)) {
       var label = file.getFormat().getEntryLabel();
       // The match is ambiguous, so neither the check nor the output can pick a table
-      file.errorsAt(errors, entry.location())
+      file.errorsAt(entry.location())
           .fatal(
               ErrorCode.INVALID_DATA_CONTRACT,
               "%s [%s] matches more than one table: [%s] in %s and [%s] in %s. A %s describes one"
@@ -218,17 +195,5 @@ public class TableContracts {
     }
 
     return Optional.of(new AttachedContract(file, entry));
-  }
-
-  private void reportTwoContracts(AttachedContract own, AttachedContract inherited) {
-    own.file()
-        .errorsAt(errors, own.entry().location())
-        .fatal(
-            ErrorCode.INVALID_DATA_CONTRACT,
-            "Table [%s] has a %s in two contract files: here, next to its script, and in [%s]"
-                + " next to the script of a table it extends. Keep one of them",
-            own.entry().name(),
-            own.file().getFormat().getEntryLabel(),
-            inherited.file().getPath().getFileName());
   }
 }

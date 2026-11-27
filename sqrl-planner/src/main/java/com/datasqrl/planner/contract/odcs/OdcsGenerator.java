@@ -53,7 +53,7 @@ public class OdcsGenerator {
         .name(subject.name())
         .physicalName(subject.storageName().orElse(null))
         .physicalType(subject.storageType().map(StorageType::getDisplayName).orElse(null))
-        .logicalType(OdcsSchemaObject.LOGICAL_TYPE)
+        .logicalType(OdcsPropertyWalker.OBJECT)
         .description(subject.documentation().docString())
         .tags(OdcsTags.write(subject.tags()))
         .properties(properties)
@@ -63,8 +63,7 @@ public class OdcsGenerator {
   /** Adds what the table declares for the column to the property of its type. */
   private OdcsProperty describe(OdcsProperty property, Column column, ContractSubject subject) {
     var description = subject.documentation().getColumnOpt(column.name());
-    // The tags of a column are the tags in its own documentation
-    var columnTags = tagDefinitions.parse(description.orElse(null), invalidTag -> {});
+    var columnTags = subject.columnTags(column.name(), tagDefinitions);
     var primaryKeyPosition = position(subject.primaryKey(), column.name());
     var partitionKeyPosition = position(subject.partitionKeys(), column.name());
 

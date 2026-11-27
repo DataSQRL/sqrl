@@ -27,7 +27,6 @@ import com.datasqrl.engine.PhysicalPlan.PhysicalStagePlan;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.packager.preprocess.JBangJars;
 import com.datasqrl.plan.MainScript;
-import com.datasqrl.planner.contract.DataContracts;
 import com.datasqrl.util.FlinkCompileException;
 import com.datasqrl.util.SqrlObjectMapper;
 import com.fasterxml.jackson.core.util.DefaultIndenter;
@@ -41,6 +40,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.SneakyThrows;
@@ -131,13 +131,14 @@ public class Packager {
   }
 
   /** Writes one file per data contract. A compilation without tables writes none. */
-  private void writeDataContracts(Path contractsDir, DataContracts contracts) throws IOException {
-    if (contracts.documents().isEmpty()) {
+  private void writeDataContracts(Path contractsDir, Map<String, String> contracts)
+      throws IOException {
+    if (contracts.isEmpty()) {
       return;
     }
     Files.createDirectories(contractsDir);
-    for (var document : contracts.documents()) {
-      writeTextToFile(contractsDir.resolve(document.fileName()), document.content());
+    for (var contract : contracts.entrySet()) {
+      writeTextToFile(contractsDir.resolve(contract.getKey()), contract.getValue());
     }
   }
 

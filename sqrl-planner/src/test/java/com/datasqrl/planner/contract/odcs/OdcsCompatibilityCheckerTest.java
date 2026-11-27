@@ -18,6 +18,7 @@ package com.datasqrl.planner.contract.odcs;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 
+import com.datasqrl.config.WorkspacePaths;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorMessage;
 import com.datasqrl.planner.contract.ContractSubject;
@@ -875,10 +876,8 @@ class OdcsCompatibilityCheckerTest {
     var entry = file.getEntry(subject.name()).orElseThrow();
     var differences = file.getFormat().compare(entry, subject, definitions);
 
-    var collector = errors.abortOnFatal(false);
     differences.forEach(
-        difference ->
-            file.errorsAt(collector, difference.location()).fatal("%s", difference.message()));
+        difference -> file.errorsAt(difference.location()).fatal("%s", difference.message()));
     return differences.isEmpty();
   }
 
@@ -891,7 +890,7 @@ class OdcsCompatibilityCheckerTest {
     var script = folder.resolve(name + ".sqrl");
     Files.writeString(script, "");
 
-    return new DataContractLoader(errors)
+    return new DataContractLoader(errors, new WorkspacePaths(folder, folder, folder, folder))
         .forScript(script)
         .orElseThrow(() -> new AssertionError("Invalid contract: " + messages()));
   }

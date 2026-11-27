@@ -18,11 +18,11 @@ package com.datasqrl.planner.contract;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 
+import com.datasqrl.config.WorkspacePaths;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorMessage;
 import com.datasqrl.planner.Sqrl2FlinkSQLTranslator.AddTableResult;
 import com.datasqrl.planner.contract.TableContracts.ContractTable;
-import com.datasqrl.planner.contract.TableContracts.ExtendedTable;
 import com.datasqrl.planner.hint.HintsAndDoc;
 import com.datasqrl.planner.util.Documented;
 import java.nio.file.Files;
@@ -61,8 +61,8 @@ class TableContractsTest {
 
   @BeforeEach
   void setUp() {
-    loader = new DataContractLoader(errors);
-    underTest = new TableContracts(loader, errors);
+    loader = new DataContractLoader(errors, new WorkspacePaths(folder, folder, folder, folder));
+    underTest = new TableContracts(loader);
   }
 
   @Test
@@ -103,7 +103,7 @@ class TableContractsTest {
 
     assertThat(table.contract()).isEmpty();
     assertThat(table.definition()).isEqualTo(table.id());
-    assertThat(loader.getFoundFiles()).isEmpty();
+    assertThat(loader.getLoadedFiles()).isEmpty();
   }
 
   @Test
@@ -115,10 +115,8 @@ class TableContractsTest {
     var table = register("Customers", environmentFile, schemaTable);
 
     assertThat(schemaTable.contract()).isEmpty();
-    assertThat(schemaTable.addedColumns()).isEmpty();
     assertThat(table.contract()).isPresent();
     assertThat(table.definingFile()).contains(environmentFile);
-    assertThat(table.addedColumns()).containsExactly("event_time");
     assertThat(errors.hasErrors()).isFalse();
   }
 
@@ -201,12 +199,9 @@ class TableContractsTest {
     return underTest.register(created(name), Optional.of(definingFile), Optional.empty());
   }
 
-  /** Registers a table that extends another one with LIKE and adds an event time column. */
+  /** Registers a table that extends another one with LIKE. */
   private ContractTable register(String name, Path definingFile, ContractTable extended) {
-    return underTest.register(
-        created(name),
-        Optional.of(definingFile),
-        Optional.of(new ExtendedTable(extended.id(), List.of("event_time"))));
+    return underTest.register(created(name), Optional.of(definingFile), Optional.of(extended.id()));
   }
 
   /** A created table as the translator returns it, with what the registration reads. */
