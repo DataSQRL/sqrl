@@ -52,15 +52,39 @@ public abstract class AbstractCompileCmd extends BasePackageConfCmd {
 
   @Override
   protected void runInternal(ErrorCollector errors) throws Exception {
+    var buildChecks = prepareBuildChecks(errors);
     compile(errors);
 
     if (!errors.hasErrors()) {
+      buildChecks.forEach(buildCheck -> buildCheck.verify(getTargetDir(), errors));
+    }
+    if (!errors.hasErrors()) {
       execute(errors);
     }
-    // Print the results after execute, because a check in execute can still fail the compile.
+    // Print the results after the build checks, because a check can still fail the compile.
     if (!errors.hasErrors() && getGoal() == ExecutionGoal.COMPILE) {
       printCompilationResults(getOutputFormatter());
     }
+  }
+
+  /**
+   * A check of the build that a compile writes to the target folder. A command prepares its checks
+   * before the compile, because the compile empties the build folder and the target folder, and
+   * runs them after the compile wrote the build. A failed check fails the command.
+   */
+  @FunctionalInterface
+  protected interface BuildCheck {
+
+    /** Checks the build in the target folder and reports to the {@link ErrorCollector}. */
+    void verify(Path targetDir, ErrorCollector errors);
+  }
+
+  /**
+   * Returns the checks of the build that this command runs after the compile. {@link #runInternal}
+   * calls it before the compile changes any folder. By default, a command runs no checks.
+   */
+  protected List<BuildCheck> prepareBuildChecks(ErrorCollector errors) {
+    return List.of();
   }
 
   @Override

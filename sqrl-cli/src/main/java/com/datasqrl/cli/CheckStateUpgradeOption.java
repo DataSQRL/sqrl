@@ -15,6 +15,7 @@
  */
 package com.datasqrl.cli;
 
+import com.datasqrl.cli.AbstractCompileCmd.BuildCheck;
 import com.datasqrl.cli.FlinkStateUpgradeCheck.FlinkJob;
 import com.datasqrl.cli.StateUpgradeBreak.OldState;
 import com.datasqrl.config.ProjectPaths;
@@ -35,8 +36,10 @@ import org.apache.flink.table.api.config.ExecutionConfigOptions;
 import picocli.CommandLine.Option;
 
 /**
- * The {@code --check-state-upgrade-from} option of the {@code compile} command. It fails the
- * compile when Flink cannot restore the state of the old build from the new compiled plan.
+ * The {@code --check-state-upgrade-from} option, as a picocli mixin of a command that compiles. It
+ * turns the folder of the option into a {@link BuildCheck} that fails the command when Flink cannot
+ * restore the state of the old build from the new compiled plan. The mixin keeps no state between
+ * calls, and the rules of the check are in {@link FlinkStateUpgradeCheck}.
  */
 public class CheckStateUpgradeOption {
 
@@ -70,56 +73,41 @@ public class CheckStateUpgradeOption {
   Optional<Path> oldBuildFolder = Optional.empty();
 
   /**
-   * The plan folder that {@link #checkOldBuildFolder} finds before the compile. {@link
-   * #checkUpgrade} reads this folder and does not search again, because the compile can create a
-   * folder that the search finds first.
+   * Reads the old build of the option and returns the check of the new build against it. Call it
+   * before the compile, because the compile empties the build folder and the target folder, and can
+   * write a new plan into the old build. The check holds the old plan in memory. Returns empty when
+   * the option is not set.
+   *
+   * <p>Fails when the path breaks the rule of {@link ProjectPaths}, when the folder does not exist
+   * or has no plan folder, or when its plan folder is inside the build folder or the target folder
+   * of this compile.
    */
-  private Optional<Path> oldPlanDir = Optional.empty();
-
-  /**
-   * Fails when the path of the option breaks the rule of {@link ProjectPaths}, when the folder does
-   * not exist or has no plan folder, or when its plan folder is inside the build folder or the
-   * target folder of this compile. Call it before the compile, because the compile empties both
-   * folders.
-   */
-  void checkOldBuildFolder(
+  Optional<BuildCheck> prepare(
       ProjectPaths projectPaths, Path buildDir, Path targetDir, ErrorCollector errors) {
-    oldBuildFolder.ifPresent(
-        givenOldBuildFolder -> {
-          var oldBuildDir =
-              projectPaths
-                  .resolve("--check-state-upgrade-from", givenOldBuildFolder.toString(), errors)
-                  .toAbsolutePath()
-                  .normalize();
-          errors.checkFatal(
-              Files.exists(oldBuildDir),
-              "The --check-state-upgrade-from folder %s does not exist",
-              oldBuildDir);
-
-          var foundOldPlanDir = findPlanDir(oldBuildDir, errors);
-          checkPlanDirOutside(foundOldPlanDir, "build folder", "-b", buildDir, errors);
-          checkPlanDirOutside(foundOldPlanDir, "target folder", "-t", targetDir, errors);
-          oldPlanDir = Optional.of(foundOldPlanDir);
-        });
-  }
-
-  /**
-   * Compares the old plan folder that {@link #checkOldBuildFolder} found with the new build in the
-   * target folder. Call it after a compile without errors.
-   */
-  void checkUpgrade(Path targetDir, ErrorCollector errors) {
     if (oldBuildFolder.isEmpty()) {
-      return;
+      return Optional.empty();
     }
-    var checkedOldPlanDir =
-        oldPlanDir.orElseThrow(
-            () -> new IllegalStateException("Call checkOldBuildFolder before checkUpgrade"));
-    var newPlanDir = targetDir.resolve(SqrlConstants.PLAN_DIR);
-    compareFlinkJobs(
-        checkedOldPlanDir,
-        readFlinkJob(checkedOldPlanDir, errors),
-        readFlinkJob(newPlanDir, errors),
-        errors);
+    var oldBuildDir =
+        projectPaths
+            .resolve("--check-state-upgrade-from", oldBuildFolder.get().toString(), errors)
+            .toAbsolutePath()
+            .normalize();
+    errors.checkFatal(
+        Files.exists(oldBuildDir),
+        "The --check-state-upgrade-from folder %s does not exist",
+        oldBuildDir);
+
+    var oldPlanDir = findPlanDir(oldBuildDir, errors);
+    checkPlanDirOutside(oldPlanDir, "build folder", "-b", buildDir, errors);
+    checkPlanDirOutside(oldPlanDir, "target folder", "-t", targetDir, errors);
+    var oldFlinkJob = readFlinkJob(oldPlanDir, errors);
+    return Optional.of(
+        (newTargetDir, checkErrors) ->
+            compareFlinkJobs(
+                oldPlanDir,
+                oldFlinkJob,
+                readFlinkJob(newTargetDir.resolve(SqrlConstants.PLAN_DIR), checkErrors),
+                checkErrors));
   }
 
   /**

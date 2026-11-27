@@ -18,6 +18,7 @@ package com.datasqrl.cli;
 import com.datasqrl.config.ProjectPaths;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.plan.validate.ExecutionGoal;
+import java.util.List;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
@@ -36,19 +37,14 @@ public class CompileCmd extends AbstractCompileCmd {
   }
 
   @Override
-  protected void runInternal(ErrorCollector errors) throws Exception {
-    // Check the folder first, because the compile empties its build folder and its target folder.
-    checkStateUpgradeOption.checkOldBuildFolder(
-        new ProjectPaths(cli.workspaceDir, getProjectRoot()),
-        getBuildDir(),
-        getTargetDir(),
-        errors);
-    super.runInternal(errors);
-  }
-
-  /** Runs after a compile without errors. */
-  @Override
-  protected void execute(ErrorCollector errors) {
-    checkStateUpgradeOption.checkUpgrade(getTargetDir(), errors);
+  protected List<BuildCheck> prepareBuildChecks(ErrorCollector errors) {
+    return checkStateUpgradeOption
+        .prepare(
+            new ProjectPaths(cli.workspaceDir, getProjectRoot()),
+            getBuildDir(),
+            getTargetDir(),
+            errors)
+        .stream()
+        .toList();
   }
 }

@@ -98,7 +98,7 @@ class CheckStateUpgradeOptionTest {
       var errors = ErrorCollector.root();
 
       option("../other-project/build")
-          .checkOldBuildFolder(
+          .prepare(
               new ProjectPaths(projectRoot, projectRoot.resolve("shop")),
               buildDir(),
               targetDir(),
@@ -114,13 +114,11 @@ class CheckStateUpgradeOptionTest {
     }
 
     @Test
-    void givenOptionNotSet_whenCheckOldBuildFolderAndCheckUpgrade_thenNoMessages() {
+    void givenOptionNotSet_whenPrepare_thenNoCheckAndNoMessages() {
       var option = new CheckStateUpgradeOption();
       var errors = ErrorCollector.root();
 
-      option.checkOldBuildFolder(projectPaths(), buildDir(), targetDir(), errors);
-      option.checkUpgrade(targetDir(), errors);
-
+      assertThat(option.prepare(projectPaths(), buildDir(), targetDir(), errors)).isEmpty();
       assertThat(errors.hasErrorsWarningsOrNotices()).isFalse();
     }
 
@@ -195,7 +193,7 @@ class CheckStateUpgradeOptionTest {
       assertThatThrownBy(
               () ->
                   option("build/shop-replay")
-                      .checkOldBuildFolder(
+                      .prepare(
                           projectPaths(),
                           defaultBuildDir,
                           defaultBuildDir.resolve("deploy"),
@@ -240,7 +238,7 @@ class CheckStateUpgradeOptionTest {
       assertThatThrownBy(
               () ->
                   option("artifacts")
-                      .checkOldBuildFolder(
+                      .prepare(
                           projectPaths(), buildDir(), targetFolderOption, ErrorCollector.root()))
           .isInstanceOf(CollectedException.class)
           .hasMessageContaining("is inside the target folder");
@@ -296,15 +294,6 @@ class CheckStateUpgradeOptionTest {
     }
 
     @Test
-    void givenOptionSetWithoutCheckOldBuildFolder_whenCheckUpgrade_thenIllegalState() {
-      var option = option("build/shop-replay");
-
-      assertThatThrownBy(() -> option.checkUpgrade(targetDir(), ErrorCollector.root()))
-          .isInstanceOf(IllegalStateException.class)
-          .hasMessage("Call checkOldBuildFolder before checkUpgrade");
-    }
-
-    @Test
     void givenBuildFolderWithoutFlinkPlan_whenCheckUpgrade_thenNoticeNoFlinkPlan()
         throws IOException {
       Files.createDirectories(projectRoot.resolve("build/shop-replay/deploy/plan"));
@@ -324,7 +313,7 @@ class CheckStateUpgradeOptionTest {
     /** Checks the folder for a compile with {@code -b shop}. */
     private ErrorCollector checkOldBuildFolder(String oldBuildFolder) {
       var errors = ErrorCollector.root();
-      option(oldBuildFolder).checkOldBuildFolder(projectPaths(), buildDir(), targetDir(), errors);
+      option(oldBuildFolder).prepare(projectPaths(), buildDir(), targetDir(), errors);
       return errors;
     }
 
@@ -335,10 +324,10 @@ class CheckStateUpgradeOptionTest {
     private List<String> checkUpgradeNotices(String oldBuildFolder) throws IOException {
       var option = option(oldBuildFolder);
       var errors = ErrorCollector.root();
-      option.checkOldBuildFolder(projectPaths(), buildDir(), targetDir(), errors);
+      var buildCheck = option.prepare(projectPaths(), buildDir(), targetDir(), errors);
       writeCompiledPlan(targetDir().resolve("plan"));
 
-      option.checkUpgrade(targetDir(), errors);
+      buildCheck.orElseThrow().verify(targetDir(), errors);
 
       assertThat(errors.hasErrors()).isFalse();
       return messages(errors, ErrorMessage::isNotice);
@@ -357,12 +346,13 @@ class CheckStateUpgradeOptionTest {
       var option = option(oldBuildFolder);
       var errors = ErrorCollector.root();
 
-      option.checkOldBuildFolder(projectPaths(), buildDir(), targetFolderOption, errors);
-      // The compile writes the new plan to <target folder>/plan. A new search in the old build
-      // finds this folder first, because it is <old build>/deploy/plan.
+      var buildCheck =
+          option.prepare(projectPaths(), buildDir(), targetFolderOption, errors).orElseThrow();
+      // The compile writes the new plan to <target folder>/plan, inside the old build. The check
+      // compares with the old plan that prepare read before the compile.
       writeCompiledPlan(targetFolderOption.resolve("plan"));
 
-      assertThatThrownBy(() -> option.checkUpgrade(targetFolderOption, errors))
+      assertThatThrownBy(() -> buildCheck.verify(targetFolderOption, errors))
           .isInstanceOf(CollectedException.class)
           .hasMessageContaining("cannot restore the state of the old build in " + oldPlanDir)
           .hasMessageContaining("operator id=2 removed: Sink(CustomerCount)");
