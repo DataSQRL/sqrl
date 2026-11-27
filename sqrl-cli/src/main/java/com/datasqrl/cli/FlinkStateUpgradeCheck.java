@@ -91,6 +91,17 @@ final class FlinkStateUpgradeCheck {
           "stream-exec-watermark-assigner");
 
   /**
+   * The window table function of a {@code TUMBLE}, {@code HOP} or {@code CUMULATE} window without
+   * an aggregate only adds the window columns to each row, and keeps no state. A {@code SESSION}
+   * window merges the windows of a key, so it keeps state.
+   */
+  private static final String WINDOW_TABLE_FUNCTION_KIND = "stream-exec-window-table-function";
+
+  /** The {@code windowing.window.type} values of the windows that keep no state. */
+  private static final Set<String> ALIGNED_WINDOW_TYPES =
+      Set.of("TumblingWindow", "HoppingWindow", "CumulativeWindow");
+
+  /**
    * The field with the row type of an operator. An operator with state stores rows of this type, so
    * a new, removed or changed column makes the restore fail. Flink ignores the column names.
    */
@@ -356,15 +367,20 @@ final class FlinkStateUpgradeCheck {
    * An operator has state when it has a {@code state} field or a {@code joinSpec}. An operator
    * without these fields has state when its kind is not in {@link #OPERATOR_KINDS_WITHOUT_STATE},
    * and when it is not a source or a sink. A source or a sink without a {@code state} field stores
-   * no rows of its {@code outputType}, see {@link #canHoldState}.
+   * no rows of its {@code outputType}, see {@link #canHoldState}. A window table function has state
+   * only for a window that is not in {@link #ALIGNED_WINDOW_TYPES}, such as a session window.
    */
   private static boolean hasState(JsonNode operator) {
     if (fieldValue(operator, STATE_FIELD) != null
         || fieldValue(operator, JOIN_SPEC_FIELD) != null) {
       return true;
     }
-    return !OPERATOR_KINDS_WITHOUT_STATE.contains(operatorKind(type(operator)))
-        && !isSourceOrSink(operator);
+    var operatorKind = operatorKind(type(operator));
+    if (operatorKind.equals(WINDOW_TABLE_FUNCTION_KIND)) {
+      return !ALIGNED_WINDOW_TYPES.contains(
+          operator.path("windowing").path("window").path("type").asText());
+    }
+    return !OPERATOR_KINDS_WITHOUT_STATE.contains(operatorKind) && !isSourceOrSink(operator);
   }
 
   /**

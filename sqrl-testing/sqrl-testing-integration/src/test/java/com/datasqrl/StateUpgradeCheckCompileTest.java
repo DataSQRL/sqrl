@@ -166,6 +166,19 @@ class StateUpgradeCheckCompileTest {
   }
 
   @Test
+  void givenNewColumnOnTumbleTableWithoutAggregate_whenCheckStateUpgrade_thenPasses() {
+    var status = compileAndCheckUpgrade("window-table.sqrl", "window-table-with-note.sqrl");
+
+    assertThat(status.isSuccess()).as(status.getMessages()).isTrue();
+    assertThat(status.getMessages()).contains("The new Flink plan passes the state upgrade check");
+    assertThat(
+            PROJECT_DIR.resolve(
+                "build/" + NEW_BUILD_FOLDER + "/deploy/plan/flink-compiled-plan.json"))
+        .content()
+        .contains("stream-exec-window-table-function");
+  }
+
+  @Test
   void givenChangedUidFormat_whenCheckStateUpgrade_thenUnclaimedState() {
     var status =
         compileAndCheckUpgrade(

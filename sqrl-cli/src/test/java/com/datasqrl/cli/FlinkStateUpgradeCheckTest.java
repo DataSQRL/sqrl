@@ -406,6 +406,38 @@ class FlinkStateUpgradeCheckTest {
   }
 
   @Test
+  void givenNewColumnOnTumblingWindowTableFunction_whenCheck_thenNoBreaks() {
+    var result =
+        check(
+            plan("2.3", withOutputType(windowTableFunctionOperator("TumblingWindow"), "id INT")),
+            plan(
+                "2.3",
+                withOutputType(
+                    windowTableFunctionOperator("TumblingWindow"), "id INT", "extra INT")));
+
+    assertThat(result.breaks()).isEmpty();
+  }
+
+  @Test
+  void givenNewColumnOnSessionWindowTableFunction_whenCheck_thenIncompatibleState() {
+    var result =
+        check(
+            plan("2.3", withOutputType(windowTableFunctionOperator("SessionWindow"), "id INT")),
+            plan(
+                "2.3",
+                withOutputType(
+                    windowTableFunctionOperator("SessionWindow"), "id INT", "extra INT")));
+
+    assertThat(result.breaks())
+        .singleElement()
+        .satisfies(
+            stateUpgradeBreak -> {
+              assertThat(stateUpgradeBreak.message()).contains("field 'outputType' differs");
+              assertThat(stateUpgradeBreak.oldState()).isEqualTo(OldState.INCOMPATIBLE);
+            });
+  }
+
+  @Test
   void givenNewColumnOnUnknownOperatorKind_whenCheck_thenChangedOutputType() {
     var unknownOperator = operator(7, "stream-exec-future-operator_1", "FutureOperator()");
 
@@ -1007,6 +1039,17 @@ class FlinkStateUpgradeCheckTest {
         6,
         "stream-exec-global-window-aggregate_1",
         "GlobalWindowAggregate(window=[TUMBLE(size=[1 min])])");
+  }
+
+  /**
+   * A window table function of a window without an aggregate, in the form that Flink writes it,
+   * with the {@code windowing.window.type} of the window, for example {@code TumblingWindow}.
+   */
+  private static ObjectNode windowTableFunctionOperator(String windowType) {
+    var windowTableFunctionOperator =
+        operator(4, "stream-exec-window-table-function_1", "WindowTableFunction(window=[...])");
+    windowTableFunctionOperator.putObject("windowing").putObject("window").put("type", windowType);
+    return windowTableFunctionOperator;
   }
 
   /** An interval join in the form that Flink writes it: it keeps state, but has no state field. */

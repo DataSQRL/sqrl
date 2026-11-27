@@ -1,0 +1,15 @@
+-- The old script: adds the window of each minute to the events, without an aggregate.
+
+CREATE TABLE _Events (
+  id INT NOT NULL,
+  val BIGINT NOT NULL,
+  ts TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR ts AS ts - INTERVAL '1' SECOND
+) WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10'
+);
+
+/*+engine(flink) */
+WindowedEvents := SELECT id, val, window_start, window_end
+    FROM TABLE(TUMBLE(TABLE _Events, DESCRIPTOR(ts), INTERVAL '1' MINUTE));
