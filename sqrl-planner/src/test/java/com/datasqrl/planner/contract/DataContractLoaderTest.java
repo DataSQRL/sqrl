@@ -126,6 +126,25 @@ class DataContractLoaderTest {
   }
 
   @Test
+  void givenContractExtensionInAnotherCase_whenForScript_thenReportsItAndDoesNotSkipIt() {
+    file("crm.ODCS.YAML", CONTRACT);
+    // The script next to this one is not planned
+    file("orders.Odcs.Yaml", CONTRACT);
+
+    var contractFile = loader.forScript(file("crm.sqrl", ""));
+
+    assertThat(contractFile).isEmpty();
+    assertThat(messages())
+        .extracting(ErrorMessage::getMessage)
+        .containsExactly(
+            "Contract file [crm.ODCS.YAML] differs from the name of [crm.sqrl] only in case and is"
+                + " not read. Rename it to [crm.odcs.yaml]");
+    assertThat(loader.getSkippedFiles())
+        .extracting(Path::toString)
+        .containsExactly("orders.Odcs.Yaml");
+  }
+
+  @Test
   void givenScriptAndTableFileOfOneName_whenForScript_thenTheyShareTheContractFile() {
     file("orders.odcs.yaml", CONTRACT);
 

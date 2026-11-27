@@ -189,7 +189,7 @@ A contract is found by its file name, so a misnamed file would be ignored silent
 |-------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------|
 | The contract file has no `<name>.sqrl` or `<name>.table.sql` next to it.                                    | Error                                                         |
 | The file is named `<name>.odcs.yml` or `<name>.odcs.json`.                                                  | Error                                                         |
-| The names of the contract file and the script differ only in case, e.g. `Crm.odcs.yaml` next to `crm.sqrl`. | Error                                                         |
+| The name of the contract file differs from the expected one only in case, e.g. `Crm.odcs.yaml` or `crm.ODCS.YAML` next to `crm.sqrl`. | Error                                                         |
 | None of the schema objects of the file matches a table.                                                     | Error                                                         |
 | A schema object matches more than one table, or a table has a schema object in two contract files.          | Error                                                         |
 | The file has more than one YAML document, or is not valid ODCS v3.2.                                        | Error                                                         |

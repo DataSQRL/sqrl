@@ -85,6 +85,44 @@ class OdcsFormatTest {
   }
 
   @Test
+  void givenTagsOnlyOnNestedElements_whenRead_thenTheFileDeclaresTags() {
+    var idType = "        logicalType: integer\n";
+    var nestedProperty =
+        """
+                logicalType: object
+                properties:
+                  - name: street
+                    logicalType: string
+                    tags: [gdpr]
+        """;
+    var arrayItems =
+        """
+                logicalType: array
+                items:
+                  logicalType: string
+                  classification: public
+        """;
+    var mapValue =
+        """
+                logicalType: map
+                map:
+                  key:
+                    logicalType: string
+                  value:
+                    logicalType: string
+                    tags: [gdpr]
+        """;
+
+    assertThat(List.of(nestedProperty, arrayItems, mapValue))
+        .allSatisfy(
+            type -> {
+              var entries = read(CONTRACT.replace(idType, type));
+              assertThat(messages()).isEmpty();
+              assertThat(entries.orElseThrow().declaresTags()).isTrue();
+            });
+  }
+
+  @Test
   void givenYamlSyntaxError_whenRead_thenReportsItOnceWithItsLine() {
     var contractFile = read("apiVersion: v3.2.0\nschema:\n  - name: [unclosed\n");
 

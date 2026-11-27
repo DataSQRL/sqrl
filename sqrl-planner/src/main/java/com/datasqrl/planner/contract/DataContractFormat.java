@@ -21,6 +21,7 @@ import com.datasqrl.planner.tags.TagDefinitions;
 import com.datasqrl.util.ServiceLoaderDiscovery;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
 /**
@@ -106,6 +107,14 @@ public interface DataContractFormat {
   /** The name of the contract file of a script, or of a contract of the deployment. */
   default String fileName(String name) {
     return name + "." + getFileExtension();
+  }
+
+  /**
+   * Whether a file has the extension of this format, in any case. A file that writes the extension
+   * in another case is not read, but it must not be ignored silently.
+   */
+  default boolean hasFileExtension(String fileName) {
+    return fileName.toLowerCase(Locale.ROOT).endsWith("." + getFileExtension());
   }
 
   /** All formats, in the order of their file extensions. */

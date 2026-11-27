@@ -205,10 +205,12 @@ public class DataContractLoader {
       return List.of();
     }
 
-    var suffixes = formats.stream().map(format -> "." + format.getFileExtension()).toList();
     try (var files = Files.walk(buildDir)) {
       return files
-          .filter(file -> suffixes.stream().anyMatch(file.getFileName().toString()::endsWith))
+          .filter(
+              file ->
+                  formats.stream()
+                      .anyMatch(format -> format.hasFileExtension(file.getFileName().toString())))
           .filter(Files::isRegularFile)
           .toList();
     } catch (IOException e) {

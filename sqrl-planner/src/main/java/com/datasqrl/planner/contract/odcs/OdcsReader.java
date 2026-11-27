@@ -31,6 +31,7 @@ import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
@@ -112,7 +113,8 @@ final class OdcsReader {
         new Entries(
             entries,
             document.locate("/" + OdcsConstants.SCHEMA_FIELD),
-            declaresTags(document.root())));
+            elements(document.root().path(OdcsConstants.SCHEMA_FIELD))
+                .anyMatch(OdcsReader::declaresTags)));
   }
 
   private static boolean checkVersion(OdcsDocument document, ErrorCollector fileErrors) {
@@ -249,19 +251,27 @@ final class OdcsReader {
     return pointer.equals(parent) || pointer.startsWith(parent + "/");
   }
 
-  /** Whether a schema object declares tags or a classification, on itself or on a property. */
-  private static boolean declaresTags(JsonNode root) {
-    for (var schemaObject : root.path(OdcsConstants.SCHEMA_FIELD)) {
-      if (!schemaObject.path(OdcsConstants.TAGS_FIELD).isEmpty()) {
-        return true;
-      }
-      for (var property : schemaObject.path(OdcsConstants.PROPERTIES_FIELD)) {
-        if (!property.path(OdcsConstants.TAGS_FIELD).isEmpty()
-            || property.hasNonNull(OdcsConstants.CLASSIFICATION_FIELD)) {
-          return true;
-        }
-      }
+  /**
+   * Whether a schema object or a property declares tags or a classification, on itself or on what
+   * is nested in it: its properties, the items of an array, and the key and value of a map. These
+   * are the places whose tags are compared with the table.
+   */
+  private static boolean declaresTags(JsonNode element) {
+    if (element.isMissingNode()) {
+      return false;
     }
-    return false;
+    if (!element.path(OdcsConstants.TAGS_FIELD).isEmpty()
+        || element.hasNonNull(OdcsConstants.CLASSIFICATION_FIELD)) {
+      return true;
+    }
+    var map = element.path("map");
+    return Stream.concat(
+            elements(element.path(OdcsConstants.PROPERTIES_FIELD)),
+            Stream.of(element.path("items"), map.path("key"), map.path("value")))
+        .anyMatch(OdcsReader::declaresTags);
+  }
+
+  private static Stream<JsonNode> elements(JsonNode array) {
+    return StreamSupport.stream(array.spliterator(), false);
   }
 }

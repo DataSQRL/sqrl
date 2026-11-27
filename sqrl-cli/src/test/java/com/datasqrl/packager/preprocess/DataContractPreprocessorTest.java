@@ -75,6 +75,25 @@ class DataContractPreprocessorTest {
   }
 
   @Test
+  void givenContractExtensionInAnotherCase_whenProcess_thenTheFileIsNotIgnored() {
+    // With a script the file is copied, and the planner reports that its name differs in case
+    process(file("orders.ODCS.YAML"));
+    process(file("orders.sqrl"));
+    // Without a script it is reported here, like any contract file
+    process(file("connectors/crm.Odcs.Yaml"));
+
+    assertThatThrownBy(underTest::complete).isInstanceOf(CollectedException.class);
+
+    assertThat(buildDir.resolve("orders.ODCS.YAML")).isRegularFile();
+    assertThat(messages())
+        .extracting(ErrorMessage::getMessage)
+        .containsExactly(
+            "Contract file [connectors/crm.Odcs.Yaml] has no SQRL file next to it. A contract"
+                + " applies to the tables of the script with the same name: expected crm.sqrl or"
+                + " crm.table.sql in the same folder");
+  }
+
+  @Test
   void givenContractWithoutScript_whenComplete_thenReportsItWithItsFolderAndFails() {
     process(file("connectors/crm.odcs.yaml"));
     process(file("connectors/crm.graphqls"));

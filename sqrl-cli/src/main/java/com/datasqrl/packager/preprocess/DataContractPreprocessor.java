@@ -33,7 +33,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import lombok.RequiredArgsConstructor;
-import org.apache.commons.lang3.Strings;
 import org.springframework.stereotype.Component;
 
 /**
@@ -77,11 +76,12 @@ public class DataContractPreprocessor implements Preprocessor {
                     .add(name.toLowerCase(Locale.ROOT)));
 
     for (var format : formats) {
-      var suffix = "." + format.getFileExtension();
-      if (fileName.endsWith(suffix)) {
+      // A file that writes the extension in another case is copied too, so that it is reported
+      if (format.hasFileExtension(fileName)) {
         if (!isCompilerOutput(file)) {
           ctx.copyToBuild(file);
-          contractFiles.put(file, Strings.CS.removeEnd(fileName, suffix));
+          var stemLength = fileName.length() - format.getFileExtension().length() - 1;
+          contractFiles.put(file, fileName.substring(0, stemLength));
         }
         return;
       }
