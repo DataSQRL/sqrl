@@ -13,11 +13,12 @@ The `index-selection` object sets the limits of the automatic index selection. T
 
 | Key                     | Type        | Default | Description                                                                                      |
 |-------------------------|-------------|--------:|--------------------------------------------------------------------------------------------------|
-| `max-indexes`           | **integer** |     `8` | The most indexes per table.                                                                      |
+| `max-indexes`           | **integer** |     `8` | The most indexes per table that the compiler selects by query cost. Above it, each filtered column gets its own index when that gives fewer indexes. |
 | `max-index-columns`     | **integer** |     `3` | The most columns per index.                                                                      |
 | `max-filter-patterns`   | **integer** |    `50` | Above this many distinct filter patterns on a table, each filtered column gets its own index.    |
 | `min-cost-reduction`    | **number**  |  `0.05` | How much an index must at least cut the cost of the queries it serves (`0.05` is 5%).            |
 | `small-table-row-limit` | **integer** |   `100` | A table with at most this many rows (by definition or `row_count` hint) gets no automatic index. |
+| `min-distinct-count`    | **integer** |    `20` | An equality column with fewer distinct values than this (by `row_count` hint) gets no place in an index. `0` turns this off. |
 
 Change them only when a requirement names one. To fix the indexes of a slow query, read the implement-sqrl guide `guides/api-query-indexes.md`.
 

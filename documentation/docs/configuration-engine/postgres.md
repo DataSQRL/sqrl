@@ -48,11 +48,12 @@ The compiler selects the indexes of each table from the filters of the API queri
 
 | Key                     | Type        | Default | Description                                                                                                                                                         |
 |-------------------------|-------------|---------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `max-indexes`           | **integer** | `8`     | The most indexes to create for one table. When it is reached, the compiler warns about the filter patterns that no index serves.                                   |
+| `max-indexes`           | **integer** | `8`     | The most indexes that the compiler selects by query cost for one table. See [When a table needs more indexes](#when-a-table-needs-more-indexes) for what happens above it. |
 | `max-index-columns`     | **integer** | `3`     | The most columns of one index. PostgreSQL hash indexes always have one column.                                                                                      |
 | `max-filter-patterns`   | **integer** | `50`    | The most distinct filter patterns on one table. Above it, the compiler creates a single-column index for each filtered column instead of composite indexes, and warns. |
 | `min-cost-reduction`    | **number**  | `0.05`  | How much an index must at least cut the cost of the queries it serves, as a fraction: `0.05` is 5%. Must be at least `0` and less than `1`.                         |
 | `small-table-row-limit` | **integer** | `100`   | A table that holds at most this many rows, by its definition or a `row_count` hint, gets no automatic index. `0` turns this off.                                    |
+| `min-distinct-count`    | **integer** | `20`    | An equality column gets no place in an index when a `row_count` hint gives it fewer distinct values than this, or shows that it multiplies the distinct values of the other equality columns by less than this. `0` turns this off. |
 
 An `index` hint on a table replaces the automatic selection for that table, so these limits do not apply to it.
 
@@ -70,6 +71,24 @@ An `index` hint on a table replaces the automatic selection for that table, so t
 ```
 
 The keys that you leave out keep their defaults.
+
+### When a table needs more indexes
+
+The compiler first selects the indexes that the filter patterns of a table need, without a limit. When they are more than `max-indexes`, it does one of two things and warns:
+
+- When one index for each filtered column gives fewer indexes, it creates those single-column indexes and none of the selected ones. PostgreSQL combines single-column indexes at query time. A column gets a hash index when the queries only compare it by `=`, and a btree index otherwise. In this scenario, the result can have more indexes than `max-indexes`.
+- Otherwise it creates the `max-indexes` indexes that cut the query cost the most. The warning lists the indexes that the limit omits, in the form of the `index` hint, and the filter patterns that are left with a full table scan:
+
+```text
+Created the maximum of 8 indexes for table `Orders_1`. Its query filter patterns need 9 indexes.
+The limit omits these indexes: index(HASH, `currency`). These query filter patterns have no supporting index and require a full table scan: (currency). 
+The query results are not affected.
+See the indexes of the table in `pipeline_explain.txt`. To select different indexes, either specify them explicitly with an `index` hint or reduce the number of distinct filter patterns on this table.
+```
+
+A table with more than `max-filter-patterns` filter patterns gets the single-column indexes directly, with a warning.
+
+These warnings are about query speed only. The queries return the same rows with any set of indexes. [`pipeline_explain.txt`](../compilation-output) lists the indexes that the compiler created for each table.
 
 ## Conflict Handling
 

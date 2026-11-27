@@ -21,6 +21,10 @@ import com.datasqrl.planner.parser.SqrlHint;
 import com.datasqrl.planner.parser.StatementParserException;
 import com.google.auto.service.AutoService;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import lombok.Getter;
 
 /**
@@ -38,6 +42,25 @@ public class RowCountHint extends ColumnNamesHint {
   protected RowCountHint(ParsedObject<SqrlHint> source, List<String> columns, double rowCount) {
     super(source, Type.DAG, columns);
     this.rowCount = rowCount;
+  }
+
+  /** Whether the count is the row count of the table, and not a distinct count of columns. */
+  public boolean isTableRowCount() {
+    return getColumnNames().isEmpty();
+  }
+
+  /**
+   * The distinct counts of the hints that name columns, by the indexes of those columns. The first
+   * hint counts when several hints name the same columns, like for the row count of the table.
+   */
+  public static Map<Set<Integer>, Double> distinctCounts(Stream<RowCountHint> rowCountHints) {
+    return rowCountHints
+        .filter(hint -> !hint.isTableRowCount())
+        .collect(
+            Collectors.toUnmodifiableMap(
+                hint -> Set.copyOf(hint.getColumnIndexes()),
+                RowCountHint::getRowCount,
+                (firstCount, laterCount) -> firstCount));
   }
 
   @AutoService(Factory.class)

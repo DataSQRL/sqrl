@@ -18,6 +18,7 @@ package com.datasqrl.plan.index;
 import java.util.EnumSet;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 
 public interface IndexSelectorConfig {
 
@@ -40,6 +41,14 @@ public interface IndexSelectorConfig {
    */
   int getSmallTableRowLimit();
 
+  /**
+   * A filtered column with fewer distinct values than this gets no place in an index. One of its
+   * values matches so many rows that the database reads them faster without the index. The distinct
+   * values come from a {@code row_count} hint on the column, so a column without that hint always
+   * keeps its place.
+   */
+  int getMinDistinctCount();
+
   /** The maximum number of indexes to create per table */
   int maxIndexes();
 
@@ -61,6 +70,11 @@ public interface IndexSelectorConfig {
   /** The relative cost of creating this index against some fixed baseline. */
   double relativeIndexCost(IndexDefinition index);
 
+  /** Whether the database has an index type for a column that is no partition column. */
+  default boolean hasGenericIndexType() {
+    return Stream.of(PREFERRED_GENERIC_INDEX).anyMatch(supportedIndexTypes()::contains);
+  }
+
   default IndexType getPreferredGenericIndexType() {
     for (IndexType type : PREFERRED_GENERIC_INDEX) {
       if (supportedIndexTypes().contains(type)) {
@@ -68,6 +82,13 @@ public interface IndexSelectorConfig {
       }
     }
     throw new IllegalStateException("Does not support any preferred generic indexes");
+  }
+
+  /** The index type for a column that the queries only compare for equality. */
+  default IndexType getPreferredEqualityIndexType() {
+    return supportedIndexTypes().contains(IndexType.HASH)
+        ? IndexType.HASH
+        : getPreferredGenericIndexType();
   }
 
   default Optional<IndexType> getPreferredSpecialIndexType(Set<IndexType> options) {

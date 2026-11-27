@@ -1,0 +1,30 @@
+/* The 12 filter patterns of Orders each need their own composite index, which is more than
+   `max-indexes`. Orders has 4 filtered columns, so it gets one btree index for each column instead
+   of the composite indexes. */
+/*+row_count(1e6) */
+CREATE TABLE Orders (customerId STRING NOT NULL, storeId STRING NOT NULL, productId STRING NOT NULL, category STRING NOT NULL, ts TIMESTAMP_LTZ(3) NOT NULL, WATERMARK FOR ts AS ts) WITH ('connector' = 'datagen', 'number-of-rows' = '10');
+
+ByCustomerIdAfterStoreId(customerId STRING NOT NULL, storeId STRING NOT NULL) := SELECT * FROM Orders
+  WHERE customerId = :customerId AND storeId > :storeId;
+ByCustomerIdAfterProductId(customerId STRING NOT NULL, productId STRING NOT NULL) := SELECT * FROM Orders
+  WHERE customerId = :customerId AND productId > :productId;
+ByCustomerIdAfterCategory(customerId STRING NOT NULL, category STRING NOT NULL) := SELECT * FROM Orders
+  WHERE customerId = :customerId AND category > :category;
+ByStoreIdAfterCustomerId(storeId STRING NOT NULL, customerId STRING NOT NULL) := SELECT * FROM Orders
+  WHERE storeId = :storeId AND customerId > :customerId;
+ByStoreIdAfterProductId(storeId STRING NOT NULL, productId STRING NOT NULL) := SELECT * FROM Orders
+  WHERE storeId = :storeId AND productId > :productId;
+ByStoreIdAfterCategory(storeId STRING NOT NULL, category STRING NOT NULL) := SELECT * FROM Orders
+  WHERE storeId = :storeId AND category > :category;
+ByProductIdAfterCustomerId(productId STRING NOT NULL, customerId STRING NOT NULL) := SELECT * FROM Orders
+  WHERE productId = :productId AND customerId > :customerId;
+ByProductIdAfterStoreId(productId STRING NOT NULL, storeId STRING NOT NULL) := SELECT * FROM Orders
+  WHERE productId = :productId AND storeId > :storeId;
+ByProductIdAfterCategory(productId STRING NOT NULL, category STRING NOT NULL) := SELECT * FROM Orders
+  WHERE productId = :productId AND category > :category;
+ByCategoryAfterCustomerId(category STRING NOT NULL, customerId STRING NOT NULL) := SELECT * FROM Orders
+  WHERE category = :category AND customerId > :customerId;
+ByCategoryAfterStoreId(category STRING NOT NULL, storeId STRING NOT NULL) := SELECT * FROM Orders
+  WHERE category = :category AND storeId > :storeId;
+ByCategoryAfterProductId(category STRING NOT NULL, productId STRING NOT NULL) := SELECT * FROM Orders
+  WHERE category = :category AND productId > :productId;

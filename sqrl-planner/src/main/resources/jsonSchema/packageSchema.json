@@ -416,6 +416,11 @@
                   "description": "A table that holds at most this many rows, by its definition or a row_count hint, gets no automatic index.",
                   "type": "integer",
                   "minimum": 0
+                },
+                "min-distinct-count": {
+                  "description": "A filtered column with fewer distinct values than this, by a row_count hint, gets no place in an automatic index.",
+                  "type": "integer",
+                  "minimum": 0
                 }
               },
               "additionalProperties": false

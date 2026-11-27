@@ -52,7 +52,8 @@ The following is the [default configuration file](https://raw.githubusercontent.
         "max-index-columns": 3,
         "max-filter-patterns": 50,
         "min-cost-reduction": 0.05,
-        "small-table-row-limit": 100
+        "small-table-row-limit": 100,
+        "min-distinct-count": 20
       }
     },
     "kafka": {

@@ -27,6 +27,7 @@ public class IndexSelectionConfigImpl implements PackageJson.IndexSelectionConfi
   public static final String MAX_FILTER_PATTERNS_KEY = "max-filter-patterns";
   public static final String MIN_COST_REDUCTION_KEY = "min-cost-reduction";
   public static final String SMALL_TABLE_ROW_LIMIT_KEY = "small-table-row-limit";
+  public static final String MIN_DISTINCT_COUNT_KEY = "min-distinct-count";
 
   private final SqrlConfig sqrlConfig;
 
@@ -63,6 +64,14 @@ public class IndexSelectionConfigImpl implements PackageJson.IndexSelectionConfi
   public int getSmallTableRowLimit() {
     return sqrlConfig
         .asInt(SMALL_TABLE_ROW_LIMIT_KEY)
+        .validate(v -> v >= 0, "Must be at least 0.")
+        .get();
+  }
+
+  @Override
+  public int getMinDistinctCount() {
+    return sqrlConfig
+        .asInt(MIN_DISTINCT_COUNT_KEY)
         .validate(v -> v >= 0, "Must be at least 0.")
         .get();
   }

@@ -43,6 +43,7 @@ class IndexSelectionConfigImplTest {
     assertThat(indexSelection.getMaxFilterPatterns()).isEqualTo(50);
     assertThat(indexSelection.getMinCostReduction()).isEqualTo(0.05);
     assertThat(indexSelection.getSmallTableRowLimit()).isEqualTo(100);
+    assertThat(indexSelection.getMinDistinctCount()).isEqualTo(20);
     assertThat(errors).isEmpty();
   }
 
@@ -97,6 +98,26 @@ class IndexSelectionConfigImplTest {
     assertThatThrownBy(indexSelection::getMinCostReduction)
         .isInstanceOf(CollectedException.class)
         .hasMessageContaining("Must be at least 0 and less than 1.");
+  }
+
+  @Test
+  void givenMinDistinctCountInPackage_whenGetIndexSelection_thenReturnsIt() {
+    var indexSelection = loadIndexSelection(List.of(writePackage("{\"min-distinct-count\": 5}")));
+
+    assertThat(indexSelection.getMinDistinctCount()).isEqualTo(5);
+    assertThat(errors).isEmpty();
+  }
+
+  @Test
+  void givenNegativeMinDistinctCount_whenGetMinDistinctCount_thenThrowsError() {
+    var config = SqrlConfig.createCurrentVersion();
+    config.setProperty(IndexSelectionConfigImpl.MIN_DISTINCT_COUNT_KEY, -1);
+
+    var indexSelection = new IndexSelectionConfigImpl(config);
+
+    assertThatThrownBy(indexSelection::getMinDistinctCount)
+        .isInstanceOf(CollectedException.class)
+        .hasMessageContaining("Must be at least 0.");
   }
 
   private PackageJson.IndexSelectionConfig loadIndexSelection(List<Path> packageFiles) {

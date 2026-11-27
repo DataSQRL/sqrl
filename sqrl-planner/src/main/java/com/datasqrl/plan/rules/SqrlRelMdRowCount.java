@@ -580,12 +580,17 @@ public class SqrlRelMdRowCount extends RelMdRowCount implements BuiltInMetadata.
 
   // ==================== Static Utility Methods ====================
 
+  /**
+   * The number of rows of the table that match the constraints. A lookup reads at least one row, so
+   * the estimate is never lower, however selective the constraints are.
+   */
   public static Double getRowCount(TableAnalysis table, QueryIndexSummary constraints) {
     var equalCols = constraints.getEqualityColumns();
     if (table.getPrimaryKey().isDefined() && table.getPrimaryKey().coveredBy(equalCols)) {
       return 1.0;
     }
-    return getRowCount(table) * SqrlRelMdSelectivity.getSelectivity(table, constraints);
+    return Math.max(
+        1.0, getRowCount(table) * SqrlRelMdSelectivity.getSelectivity(table, constraints));
   }
 
   public static Double getRowCount(TableAnalysis table) {

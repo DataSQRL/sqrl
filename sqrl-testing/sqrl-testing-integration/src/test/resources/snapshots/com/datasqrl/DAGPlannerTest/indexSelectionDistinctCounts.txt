@@ -1,0 +1,3284 @@
+>>>pipeline_explain.txt
+=== AddressesFewCities
+ID:          default_catalog.default_database.AddressesFewCities
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   ts
+Row count:   1e6
+--- definition ---
+Schema:
+ - country: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - city: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - ts: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.AddressesFewCities__base
+Plan:
+LogicalWatermarkAssigner(rowtime=[ts], watermark=[$2])
+  LogicalTableScan(table=[[default_catalog, default_database, AddressesFewCities]])
+SQL:
+CREATE TABLE `AddressesFewCities` (
+  `country` STRING NOT NULL,
+  `city` STRING NOT NULL,
+  `ts` TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR `ts` AS `ts`
+)
+WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10'
+)
+--- physical ---
+Table AddressesFewCities_1 (postgres):
+ - primary key: __pk_hash (generated hash key)
+ - index AddressesFewCities_1_hash_c0 (hash): country
+
+=== AddressesFewCitiesByCity
+ID:          default_catalog.default_database.AddressesFewCitiesByCity
+Type:        query
+Stage:       postgres
+--- definition ---
+Inputs:
+ - default_catalog.default_database.AddressesFewCities
+Annotations:
+ - parameters: country, city
+ - base-table: AddressesFewCities
+Plan:
+LogicalProject(country=[$0], city=[$1], ts=[$2])
+  LogicalFilter(condition=[AND(=($0, ?0), =($1, ?1))])
+    LogicalTableScan(table=[[default_catalog, default_database, AddressesFewCities]])
+SQL:
+CREATE VIEW `AddressesFewCitiesByCity` AS  SELECT * FROM AddressesFewCities
+  WHERE country = ?        AND city = ?    ;
+
+=== AddressesPair
+ID:          default_catalog.default_database.AddressesPair
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   ts
+Row count:   1e6
+--- definition ---
+Schema:
+ - country: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - city: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - zip: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - ts: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.AddressesPair__base
+Plan:
+LogicalWatermarkAssigner(rowtime=[ts], watermark=[$3])
+  LogicalTableScan(table=[[default_catalog, default_database, AddressesPair]])
+SQL:
+CREATE TABLE `AddressesPair` (
+  `country` STRING NOT NULL,
+  `city` STRING NOT NULL,
+  `zip` STRING NOT NULL,
+  `ts` TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR `ts` AS `ts`
+)
+WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10'
+)
+--- physical ---
+Table AddressesPair_2 (postgres):
+ - primary key: __pk_hash (generated hash key)
+ - index AddressesPair_2_btree_c0c1 (btree): country, city
+
+=== AddressesPairByCity
+ID:          default_catalog.default_database.AddressesPairByCity
+Type:        query
+Stage:       postgres
+--- definition ---
+Inputs:
+ - default_catalog.default_database.AddressesPair
+Annotations:
+ - parameters: country, city
+ - base-table: AddressesPair
+Plan:
+LogicalProject(country=[$0], city=[$1], zip=[$2], ts=[$3])
+  LogicalFilter(condition=[AND(=($0, ?0), =($1, ?1))])
+    LogicalTableScan(table=[[default_catalog, default_database, AddressesPair]])
+SQL:
+CREATE VIEW `AddressesPairByCity` AS  SELECT * FROM AddressesPair
+  WHERE country = ?        AND city = ?    ;
+
+=== AddressesPairByZip
+ID:          default_catalog.default_database.AddressesPairByZip
+Type:        query
+Stage:       postgres
+--- definition ---
+Inputs:
+ - default_catalog.default_database.AddressesPair
+Annotations:
+ - parameters: country, city, zip
+ - base-table: AddressesPair
+Plan:
+LogicalProject(country=[$0], city=[$1], zip=[$2], ts=[$3])
+  LogicalFilter(condition=[AND(=($0, ?0), =($1, ?1), =($2, ?2))])
+    LogicalTableScan(table=[[default_catalog, default_database, AddressesPair]])
+SQL:
+CREATE VIEW `AddressesPairByZip` AS  SELECT * FROM AddressesPair
+  WHERE country = ?        AND city = ?     AND zip = ?   ;
+
+=== AddressesPartial
+ID:          default_catalog.default_database.AddressesPartial
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   ts
+Row count:   1e6
+--- definition ---
+Schema:
+ - country: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - city: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - zip: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - ts: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.AddressesPartial__base
+Plan:
+LogicalWatermarkAssigner(rowtime=[ts], watermark=[$3])
+  LogicalTableScan(table=[[default_catalog, default_database, AddressesPartial]])
+SQL:
+CREATE TABLE `AddressesPartial` (
+  `country` STRING NOT NULL,
+  `city` STRING NOT NULL,
+  `zip` STRING NOT NULL,
+  `ts` TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR `ts` AS `ts`
+)
+WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10'
+)
+--- physical ---
+Table AddressesPartial_3 (postgres):
+ - primary key: __pk_hash (generated hash key)
+ - index AddressesPartial_3_btree_c0c2 (btree): country, zip
+
+=== AddressesPartialByZip
+ID:          default_catalog.default_database.AddressesPartialByZip
+Type:        query
+Stage:       postgres
+--- definition ---
+Inputs:
+ - default_catalog.default_database.AddressesPartial
+Annotations:
+ - parameters: country, zip
+ - base-table: AddressesPartial
+Plan:
+LogicalProject(country=[$0], city=[$1], zip=[$2], ts=[$3])
+  LogicalFilter(condition=[AND(=($0, ?0), =($2, ?1))])
+    LogicalTableScan(table=[[default_catalog, default_database, AddressesPartial]])
+SQL:
+CREATE VIEW `AddressesPartialByZip` AS  SELECT * FROM AddressesPartial
+  WHERE country = ?        AND zip = ?   ;
+
+=== CustomerEvents
+ID:          default_catalog.default_database.CustomerEvents
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   ts
+Row count:   ~1e8
+--- definition ---
+Schema:
+ - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - country: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - ts: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.CustomerEvents__base
+Plan:
+LogicalWatermarkAssigner(rowtime=[ts], watermark=[$2])
+  LogicalTableScan(table=[[default_catalog, default_database, CustomerEvents]])
+SQL:
+CREATE TABLE `CustomerEvents` (
+  `email` STRING NOT NULL,
+  `country` STRING NOT NULL,
+  `ts` TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR `ts` AS `ts`
+)
+WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10'
+)
+--- physical ---
+Table CustomerEvents_4 (postgres):
+ - primary key: __pk_hash (generated hash key)
+
+=== CustomerTotals
+ID:          default_catalog.default_database.CustomerTotals
+Type:        state
+Stage:       flink
+Primary key: country, email
+Timestamp:   -
+Row count:   1e6
+--- definition ---
+Schema:
+ - country: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - total: BIGINT NOT NULL
+Inputs:
+ - default_catalog.default_database.CustomerEvents
+Plan:
+LogicalAggregate(group=[{0, 1}], total=[COUNT()])
+  LogicalProject(country=[$1], email=[$0])
+    LogicalTableScan(table=[[default_catalog, default_database, CustomerEvents]])
+SQL:
+CREATE VIEW `CustomerTotals` AS  SELECT country, email, COUNT(*) AS total FROM CustomerEvents GROUP BY country, email;
+--- physical ---
+Table CustomerTotals_5 (postgres):
+ - primary key: country, email
+
+=== CustomerTotalsByEmail
+ID:          default_catalog.default_database.CustomerTotalsByEmail
+Type:        query
+Stage:       postgres
+--- definition ---
+Inputs:
+ - default_catalog.default_database.CustomerTotals
+Annotations:
+ - parameters: country, email
+ - base-table: CustomerTotals
+Plan:
+LogicalProject(country=[$0], email=[$1], total=[$2])
+  LogicalFilter(condition=[AND(=($0, ?0), =($1, ?1))])
+    LogicalTableScan(table=[[default_catalog, default_database, CustomerTotals]])
+SQL:
+CREATE VIEW `CustomerTotalsByEmail` AS  SELECT * FROM CustomerTotals
+  WHERE country = ?        AND email = ?     ;
+
+=== CustomersFewValues
+ID:          default_catalog.default_database.CustomersFewValues
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   ts
+Row count:   1e6
+--- definition ---
+Schema:
+ - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - gender: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - ts: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.CustomersFewValues__base
+Plan:
+LogicalWatermarkAssigner(rowtime=[ts], watermark=[$2])
+  LogicalTableScan(table=[[default_catalog, default_database, CustomersFewValues]])
+SQL:
+CREATE TABLE `CustomersFewValues` (
+  `email` STRING NOT NULL,
+  `gender` STRING NOT NULL,
+  `ts` TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR `ts` AS `ts`
+)
+WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10'
+)
+--- physical ---
+Table CustomersFewValues_6 (postgres):
+ - primary key: __pk_hash (generated hash key)
+ - index CustomersFewValues_6_hash_c0 (hash): email
+
+=== CustomersFewValuesByEmail
+ID:          default_catalog.default_database.CustomersFewValuesByEmail
+Type:        query
+Stage:       postgres
+--- definition ---
+Inputs:
+ - default_catalog.default_database.CustomersFewValues
+Annotations:
+ - parameters: email, gender
+ - base-table: CustomersFewValues
+Plan:
+LogicalProject(email=[$0], gender=[$1], ts=[$2])
+  LogicalFilter(condition=[AND(=($0, ?0), =($1, ?1))])
+    LogicalTableScan(table=[[default_catalog, default_database, CustomersFewValues]])
+SQL:
+CREATE VIEW `CustomersFewValuesByEmail` AS  SELECT * FROM CustomersFewValues
+  WHERE email = ?      AND gender = ?      ;
+
+=== CustomersOnlyFewValues
+ID:          default_catalog.default_database.CustomersOnlyFewValues
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   ts
+Row count:   1e6
+--- definition ---
+Schema:
+ - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - gender: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - ts: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.CustomersOnlyFewValues__base
+Plan:
+LogicalWatermarkAssigner(rowtime=[ts], watermark=[$2])
+  LogicalTableScan(table=[[default_catalog, default_database, CustomersOnlyFewValues]])
+SQL:
+CREATE TABLE `CustomersOnlyFewValues` (
+  `email` STRING NOT NULL,
+  `gender` STRING NOT NULL,
+  `ts` TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR `ts` AS `ts`
+)
+WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10'
+)
+--- physical ---
+Table CustomersOnlyFewValues_7 (postgres):
+ - primary key: __pk_hash (generated hash key)
+
+=== CustomersOnlyFewValuesByGender
+ID:          default_catalog.default_database.CustomersOnlyFewValuesByGender
+Type:        query
+Stage:       postgres
+--- definition ---
+Inputs:
+ - default_catalog.default_database.CustomersOnlyFewValues
+Annotations:
+ - parameters: gender
+ - base-table: CustomersOnlyFewValues
+Plan:
+LogicalProject(email=[$0], gender=[$1], ts=[$2])
+  LogicalFilter(condition=[=($1, ?0)])
+    LogicalTableScan(table=[[default_catalog, default_database, CustomersOnlyFewValues]])
+SQL:
+CREATE VIEW `CustomersOnlyFewValuesByGender` AS  SELECT * FROM CustomersOnlyFewValues
+  WHERE gender = ?      ;
+
+=== CustomersPlain
+ID:          default_catalog.default_database.CustomersPlain
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   ts
+Row count:   1e6
+--- definition ---
+Schema:
+ - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - country: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - ts: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.CustomersPlain__base
+Plan:
+LogicalWatermarkAssigner(rowtime=[ts], watermark=[$2])
+  LogicalTableScan(table=[[default_catalog, default_database, CustomersPlain]])
+SQL:
+CREATE TABLE `CustomersPlain` (
+  `email` STRING NOT NULL,
+  `country` STRING NOT NULL,
+  `ts` TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR `ts` AS `ts`
+)
+WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10'
+)
+--- physical ---
+Table CustomersPlain_8 (postgres):
+ - primary key: __pk_hash (generated hash key)
+ - index CustomersPlain_8_btree_c0c1 (btree): email, country
+
+=== CustomersPlainByEmail
+ID:          default_catalog.default_database.CustomersPlainByEmail
+Type:        query
+Stage:       postgres
+--- definition ---
+Inputs:
+ - default_catalog.default_database.CustomersPlain
+Annotations:
+ - parameters: email, country
+ - base-table: CustomersPlain
+Plan:
+LogicalProject(email=[$0], country=[$1], ts=[$2])
+  LogicalFilter(condition=[AND(=($0, ?0), =($1, ?1))])
+    LogicalTableScan(table=[[default_catalog, default_database, CustomersPlain]])
+SQL:
+CREATE VIEW `CustomersPlainByEmail` AS  SELECT * FROM CustomersPlain
+  WHERE email = ?      AND country = ?       ;
+
+=== CustomersUnique
+ID:          default_catalog.default_database.CustomersUnique
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   ts
+Row count:   1e6
+--- definition ---
+Schema:
+ - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - country: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - ts: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.CustomersUnique__base
+Plan:
+LogicalWatermarkAssigner(rowtime=[ts], watermark=[$2])
+  LogicalTableScan(table=[[default_catalog, default_database, CustomersUnique]])
+SQL:
+CREATE TABLE `CustomersUnique` (
+  `email` STRING NOT NULL,
+  `country` STRING NOT NULL,
+  `ts` TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR `ts` AS `ts`
+)
+WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10'
+)
+--- physical ---
+Table CustomersUnique_9 (postgres):
+ - primary key: __pk_hash (generated hash key)
+ - index CustomersUnique_9_hash_c0 (hash): email
+ - index CustomersUnique_9_hash_c1 (hash): country
+
+=== CustomersUniqueByCountry
+ID:          default_catalog.default_database.CustomersUniqueByCountry
+Type:        query
+Stage:       postgres
+--- definition ---
+Inputs:
+ - default_catalog.default_database.CustomersUnique
+Annotations:
+ - parameters: country
+ - base-table: CustomersUnique
+Plan:
+LogicalProject(email=[$0], country=[$1], ts=[$2])
+  LogicalFilter(condition=[=($1, ?0)])
+    LogicalTableScan(table=[[default_catalog, default_database, CustomersUnique]])
+SQL:
+CREATE VIEW `CustomersUniqueByCountry` AS  SELECT * FROM CustomersUnique
+  WHERE country = ?       ;
+
+=== CustomersUniqueByEmail
+ID:          default_catalog.default_database.CustomersUniqueByEmail
+Type:        query
+Stage:       postgres
+--- definition ---
+Inputs:
+ - default_catalog.default_database.CustomersUnique
+Annotations:
+ - parameters: email, country
+ - base-table: CustomersUnique
+Plan:
+LogicalProject(email=[$0], country=[$1], ts=[$2])
+  LogicalFilter(condition=[AND(=($0, ?0), =($1, ?1))])
+    LogicalTableScan(table=[[default_catalog, default_database, CustomersUnique]])
+SQL:
+CREATE VIEW `CustomersUniqueByEmail` AS  SELECT * FROM CustomersUnique
+  WHERE email = ?      AND country = ?       ;
+
+=== CustomersUniqueRange
+ID:          default_catalog.default_database.CustomersUniqueRange
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   ts
+Row count:   1e6
+--- definition ---
+Schema:
+ - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - age: INTEGER NOT NULL
+ - ts: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.CustomersUniqueRange__base
+Plan:
+LogicalWatermarkAssigner(rowtime=[ts], watermark=[$2])
+  LogicalTableScan(table=[[default_catalog, default_database, CustomersUniqueRange]])
+SQL:
+CREATE TABLE `CustomersUniqueRange` (
+  `email` STRING NOT NULL,
+  `age` INTEGER NOT NULL,
+  `ts` TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR `ts` AS `ts`
+)
+WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10'
+)
+--- physical ---
+Table CustomersUniqueRange_10 (postgres):
+ - primary key: __pk_hash (generated hash key)
+ - index CustomersUniqueRange_10_hash_c0 (hash): email
+
+=== CustomersUniqueRangeByEmail
+ID:          default_catalog.default_database.CustomersUniqueRangeByEmail
+Type:        query
+Stage:       postgres
+--- definition ---
+Inputs:
+ - default_catalog.default_database.CustomersUniqueRange
+Annotations:
+ - parameters: email, minAge
+ - base-table: CustomersUniqueRange
+Plan:
+LogicalProject(email=[$0], age=[$1], ts=[$2])
+  LogicalFilter(condition=[AND(=($0, ?0), >($1, ?1))])
+    LogicalTableScan(table=[[default_catalog, default_database, CustomersUniqueRange]])
+SQL:
+CREATE VIEW `CustomersUniqueRangeByEmail` AS  SELECT * FROM CustomersUniqueRange
+  WHERE email = ?      AND age > ?      ;
+
+>>>flink-sql-no-functions.sql
+CREATE TABLE `CustomersPlain` (
+  `email` STRING NOT NULL,
+  `country` STRING NOT NULL,
+  `ts` TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR `ts` AS `ts`
+)
+WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10'
+);
+CREATE TABLE `CustomersUnique` (
+  `email` STRING NOT NULL,
+  `country` STRING NOT NULL,
+  `ts` TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR `ts` AS `ts`
+)
+WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10'
+);
+CREATE TABLE `AddressesPair` (
+  `country` STRING NOT NULL,
+  `city` STRING NOT NULL,
+  `zip` STRING NOT NULL,
+  `ts` TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR `ts` AS `ts`
+)
+WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10'
+);
+CREATE TABLE `AddressesPartial` (
+  `country` STRING NOT NULL,
+  `city` STRING NOT NULL,
+  `zip` STRING NOT NULL,
+  `ts` TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR `ts` AS `ts`
+)
+WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10'
+);
+CREATE TABLE `CustomersFewValues` (
+  `email` STRING NOT NULL,
+  `gender` STRING NOT NULL,
+  `ts` TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR `ts` AS `ts`
+)
+WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10'
+);
+CREATE TABLE `CustomersOnlyFewValues` (
+  `email` STRING NOT NULL,
+  `gender` STRING NOT NULL,
+  `ts` TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR `ts` AS `ts`
+)
+WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10'
+);
+CREATE TABLE `CustomersUniqueRange` (
+  `email` STRING NOT NULL,
+  `age` INTEGER NOT NULL,
+  `ts` TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR `ts` AS `ts`
+)
+WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10'
+);
+CREATE TABLE `AddressesFewCities` (
+  `country` STRING NOT NULL,
+  `city` STRING NOT NULL,
+  `ts` TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR `ts` AS `ts`
+)
+WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10'
+);
+CREATE TABLE `CustomerEvents` (
+  `email` STRING NOT NULL,
+  `country` STRING NOT NULL,
+  `ts` TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR `ts` AS `ts`
+)
+WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10'
+);
+CREATE VIEW `CustomerTotals`
+AS
+SELECT `country`, `email`, COUNT(*) AS `total`
+FROM `CustomerEvents`
+GROUP BY `country`, `email`;
+CREATE TABLE `AddressesFewCities_1` (
+  `country` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `city` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `ts` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'AddressesFewCities_1',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `AddressesPair_2` (
+  `country` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `city` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `zip` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `ts` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'AddressesPair_2',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `AddressesPartial_3` (
+  `country` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `city` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `zip` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `ts` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'AddressesPartial_3',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `CustomerEvents_4` (
+  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `country` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `ts` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'CustomerEvents_4',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `CustomerTotals_5` (
+  `country` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `total` BIGINT NOT NULL,
+  PRIMARY KEY (`country`, `email`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'table-name' = 'CustomerTotals_5',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `CustomersFewValues_6` (
+  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `gender` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `ts` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'CustomersFewValues_6',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `CustomersOnlyFewValues_7` (
+  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `gender` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `ts` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'CustomersOnlyFewValues_7',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `CustomersPlain_8` (
+  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `country` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `ts` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'CustomersPlain_8',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `CustomersUnique_9` (
+  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `country` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `ts` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'CustomersUnique_9',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `CustomersUniqueRange_10` (
+  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `age` INTEGER NOT NULL,
+  `ts` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'CustomersUniqueRange_10',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+EXECUTE STATEMENT SET BEGIN
+INSERT INTO `default_catalog`.`default_database`.`AddressesFewCities_1`
+SELECT `country`, `city`, `ts`, `hash_key`(`country`, `city`, `ts`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`AddressesFewCities`
+ON CONFLICT DO DEDUPLICATE
+;
+INSERT INTO `default_catalog`.`default_database`.`AddressesPair_2`
+SELECT `country`, `city`, `zip`, `ts`, `hash_key`(`country`, `city`, `zip`, `ts`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`AddressesPair`
+ON CONFLICT DO DEDUPLICATE
+;
+INSERT INTO `default_catalog`.`default_database`.`AddressesPartial_3`
+SELECT `country`, `city`, `zip`, `ts`, `hash_key`(`country`, `city`, `zip`, `ts`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`AddressesPartial`
+ON CONFLICT DO DEDUPLICATE
+;
+INSERT INTO `default_catalog`.`default_database`.`CustomerEvents_4`
+SELECT `email`, `country`, `ts`, `hash_key`(`email`, `country`, `ts`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`CustomerEvents`
+ON CONFLICT DO DEDUPLICATE
+;
+INSERT INTO `default_catalog`.`default_database`.`CustomerTotals_5`
+SELECT *
+FROM `default_catalog`.`default_database`.`CustomerTotals`
+ON CONFLICT DO DEDUPLICATE
+;
+INSERT INTO `default_catalog`.`default_database`.`CustomersFewValues_6`
+SELECT `email`, `gender`, `ts`, `hash_key`(`email`, `gender`, `ts`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`CustomersFewValues`
+ON CONFLICT DO DEDUPLICATE
+;
+INSERT INTO `default_catalog`.`default_database`.`CustomersOnlyFewValues_7`
+SELECT `email`, `gender`, `ts`, `hash_key`(`email`, `gender`, `ts`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`CustomersOnlyFewValues`
+ON CONFLICT DO DEDUPLICATE
+;
+INSERT INTO `default_catalog`.`default_database`.`CustomersPlain_8`
+SELECT `email`, `country`, `ts`, `hash_key`(`email`, `country`, `ts`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`CustomersPlain`
+ON CONFLICT DO DEDUPLICATE
+;
+INSERT INTO `default_catalog`.`default_database`.`CustomersUnique_9`
+SELECT `email`, `country`, `ts`, `hash_key`(`email`, `country`, `ts`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`CustomersUnique`
+ON CONFLICT DO DEDUPLICATE
+;
+INSERT INTO `default_catalog`.`default_database`.`CustomersUniqueRange_10`
+SELECT `email`, `age`, `ts`, `hash_key`(`email`, `age`, `ts`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`CustomersUniqueRange`
+ON CONFLICT DO DEDUPLICATE
+;
+END
+>>>kafka.json
+{
+  "topics" : [ ],
+  "testRunnerTopics" : [ ]
+}
+>>>postgres.json
+{
+  "statements" : [
+    {
+      "name" : "AddressesFewCities_1",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"AddressesFewCities_1\" (\"country\" TEXT NOT NULL, \"city\" TEXT NOT NULL, \"ts\" TIMESTAMP WITH TIME ZONE NOT NULL, \"__pk_hash\" TEXT, PRIMARY KEY (\"__pk_hash\"))",
+      "fields" : [
+        {
+          "name" : "country",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "city",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "ts",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "__pk_hash",
+          "type" : "TEXT",
+          "nullable" : true
+        }
+      ],
+      "primaryKey" : [
+        "__pk_hash"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0,
+      "logicalName" : "AddressesFewCities",
+      "role" : "MATERIALIZATION"
+    },
+    {
+      "name" : "AddressesPair_2",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"AddressesPair_2\" (\"country\" TEXT NOT NULL, \"city\" TEXT NOT NULL, \"zip\" TEXT NOT NULL, \"ts\" TIMESTAMP WITH TIME ZONE NOT NULL, \"__pk_hash\" TEXT, PRIMARY KEY (\"__pk_hash\"))",
+      "fields" : [
+        {
+          "name" : "country",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "city",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "zip",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "ts",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "__pk_hash",
+          "type" : "TEXT",
+          "nullable" : true
+        }
+      ],
+      "primaryKey" : [
+        "__pk_hash"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0,
+      "logicalName" : "AddressesPair",
+      "role" : "MATERIALIZATION"
+    },
+    {
+      "name" : "AddressesPartial_3",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"AddressesPartial_3\" (\"country\" TEXT NOT NULL, \"city\" TEXT NOT NULL, \"zip\" TEXT NOT NULL, \"ts\" TIMESTAMP WITH TIME ZONE NOT NULL, \"__pk_hash\" TEXT, PRIMARY KEY (\"__pk_hash\"))",
+      "fields" : [
+        {
+          "name" : "country",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "city",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "zip",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "ts",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "__pk_hash",
+          "type" : "TEXT",
+          "nullable" : true
+        }
+      ],
+      "primaryKey" : [
+        "__pk_hash"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0,
+      "logicalName" : "AddressesPartial",
+      "role" : "MATERIALIZATION"
+    },
+    {
+      "name" : "CustomerEvents_4",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"CustomerEvents_4\" (\"email\" TEXT NOT NULL, \"country\" TEXT NOT NULL, \"ts\" TIMESTAMP WITH TIME ZONE NOT NULL, \"__pk_hash\" TEXT, PRIMARY KEY (\"__pk_hash\"))",
+      "fields" : [
+        {
+          "name" : "email",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "country",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "ts",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "__pk_hash",
+          "type" : "TEXT",
+          "nullable" : true
+        }
+      ],
+      "primaryKey" : [
+        "__pk_hash"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0,
+      "logicalName" : "CustomerEvents",
+      "role" : "MATERIALIZATION"
+    },
+    {
+      "name" : "CustomerTotals_5",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"CustomerTotals_5\" (\"country\" TEXT NOT NULL, \"email\" TEXT NOT NULL, \"total\" BIGINT NOT NULL, PRIMARY KEY (\"country\",\"email\"))",
+      "fields" : [
+        {
+          "name" : "country",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "email",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "total",
+          "type" : "BIGINT",
+          "nullable" : false
+        }
+      ],
+      "primaryKey" : [
+        "country",
+        "email"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0,
+      "logicalName" : "CustomerTotals",
+      "role" : "MATERIALIZATION"
+    },
+    {
+      "name" : "CustomersFewValues_6",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"CustomersFewValues_6\" (\"email\" TEXT NOT NULL, \"gender\" TEXT NOT NULL, \"ts\" TIMESTAMP WITH TIME ZONE NOT NULL, \"__pk_hash\" TEXT, PRIMARY KEY (\"__pk_hash\"))",
+      "fields" : [
+        {
+          "name" : "email",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "gender",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "ts",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "__pk_hash",
+          "type" : "TEXT",
+          "nullable" : true
+        }
+      ],
+      "primaryKey" : [
+        "__pk_hash"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0,
+      "logicalName" : "CustomersFewValues",
+      "role" : "MATERIALIZATION"
+    },
+    {
+      "name" : "CustomersOnlyFewValues_7",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"CustomersOnlyFewValues_7\" (\"email\" TEXT NOT NULL, \"gender\" TEXT NOT NULL, \"ts\" TIMESTAMP WITH TIME ZONE NOT NULL, \"__pk_hash\" TEXT, PRIMARY KEY (\"__pk_hash\"))",
+      "fields" : [
+        {
+          "name" : "email",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "gender",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "ts",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "__pk_hash",
+          "type" : "TEXT",
+          "nullable" : true
+        }
+      ],
+      "primaryKey" : [
+        "__pk_hash"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0,
+      "logicalName" : "CustomersOnlyFewValues",
+      "role" : "MATERIALIZATION"
+    },
+    {
+      "name" : "CustomersPlain_8",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"CustomersPlain_8\" (\"email\" TEXT NOT NULL, \"country\" TEXT NOT NULL, \"ts\" TIMESTAMP WITH TIME ZONE NOT NULL, \"__pk_hash\" TEXT, PRIMARY KEY (\"__pk_hash\"))",
+      "fields" : [
+        {
+          "name" : "email",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "country",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "ts",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "__pk_hash",
+          "type" : "TEXT",
+          "nullable" : true
+        }
+      ],
+      "primaryKey" : [
+        "__pk_hash"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0,
+      "logicalName" : "CustomersPlain",
+      "role" : "MATERIALIZATION"
+    },
+    {
+      "name" : "CustomersUnique_9",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"CustomersUnique_9\" (\"email\" TEXT NOT NULL, \"country\" TEXT NOT NULL, \"ts\" TIMESTAMP WITH TIME ZONE NOT NULL, \"__pk_hash\" TEXT, PRIMARY KEY (\"__pk_hash\"))",
+      "fields" : [
+        {
+          "name" : "email",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "country",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "ts",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "__pk_hash",
+          "type" : "TEXT",
+          "nullable" : true
+        }
+      ],
+      "primaryKey" : [
+        "__pk_hash"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0,
+      "logicalName" : "CustomersUnique",
+      "role" : "MATERIALIZATION"
+    },
+    {
+      "name" : "CustomersUniqueRange_10",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"CustomersUniqueRange_10\" (\"email\" TEXT NOT NULL, \"age\" INTEGER NOT NULL, \"ts\" TIMESTAMP WITH TIME ZONE NOT NULL, \"__pk_hash\" TEXT, PRIMARY KEY (\"__pk_hash\"))",
+      "fields" : [
+        {
+          "name" : "email",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "age",
+          "type" : "INTEGER",
+          "nullable" : false
+        },
+        {
+          "name" : "ts",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "__pk_hash",
+          "type" : "TEXT",
+          "nullable" : true
+        }
+      ],
+      "primaryKey" : [
+        "__pk_hash"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0,
+      "logicalName" : "CustomersUniqueRange",
+      "role" : "MATERIALIZATION"
+    },
+    {
+      "name" : "AddressesFewCities",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"AddressesFewCities\"(\"country\", \"city\", \"ts\") AS SELECT \"country\", \"city\", \"ts\"\nFROM \"AddressesFewCities_1\"",
+      "fields" : [
+        {
+          "name" : "country",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "city",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "ts",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ],
+      "referencedTables" : [
+        "AddressesFewCities_1"
+      ]
+    },
+    {
+      "name" : "AddressesPair",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"AddressesPair\"(\"country\", \"city\", \"zip\", \"ts\") AS SELECT \"country\", \"city\", \"zip\", \"ts\"\nFROM \"AddressesPair_2\"",
+      "fields" : [
+        {
+          "name" : "country",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "city",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "zip",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "ts",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ],
+      "referencedTables" : [
+        "AddressesPair_2"
+      ]
+    },
+    {
+      "name" : "AddressesPartial",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"AddressesPartial\"(\"country\", \"city\", \"zip\", \"ts\") AS SELECT \"country\", \"city\", \"zip\", \"ts\"\nFROM \"AddressesPartial_3\"",
+      "fields" : [
+        {
+          "name" : "country",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "city",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "zip",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "ts",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ],
+      "referencedTables" : [
+        "AddressesPartial_3"
+      ]
+    },
+    {
+      "name" : "CustomerEvents",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"CustomerEvents\"(\"email\", \"country\", \"ts\") AS SELECT \"email\", \"country\", \"ts\"\nFROM \"CustomerEvents_4\"",
+      "fields" : [
+        {
+          "name" : "email",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "country",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "ts",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ],
+      "referencedTables" : [
+        "CustomerEvents_4"
+      ]
+    },
+    {
+      "name" : "CustomerTotals",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"CustomerTotals\"(\"country\", \"email\", \"total\") AS SELECT *\nFROM \"CustomerTotals_5\"",
+      "fields" : [
+        {
+          "name" : "country",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "email",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "total",
+          "type" : "BIGINT",
+          "nullable" : false
+        }
+      ],
+      "referencedTables" : [
+        "CustomerTotals_5"
+      ]
+    },
+    {
+      "name" : "CustomersFewValues",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"CustomersFewValues\"(\"email\", \"gender\", \"ts\") AS SELECT \"email\", \"gender\", \"ts\"\nFROM \"CustomersFewValues_6\"",
+      "fields" : [
+        {
+          "name" : "email",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "gender",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "ts",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ],
+      "referencedTables" : [
+        "CustomersFewValues_6"
+      ]
+    },
+    {
+      "name" : "CustomersOnlyFewValues",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"CustomersOnlyFewValues\"(\"email\", \"gender\", \"ts\") AS SELECT \"email\", \"gender\", \"ts\"\nFROM \"CustomersOnlyFewValues_7\"",
+      "fields" : [
+        {
+          "name" : "email",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "gender",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "ts",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ],
+      "referencedTables" : [
+        "CustomersOnlyFewValues_7"
+      ]
+    },
+    {
+      "name" : "CustomersPlain",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"CustomersPlain\"(\"email\", \"country\", \"ts\") AS SELECT \"email\", \"country\", \"ts\"\nFROM \"CustomersPlain_8\"",
+      "fields" : [
+        {
+          "name" : "email",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "country",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "ts",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ],
+      "referencedTables" : [
+        "CustomersPlain_8"
+      ]
+    },
+    {
+      "name" : "CustomersUnique",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"CustomersUnique\"(\"email\", \"country\", \"ts\") AS SELECT \"email\", \"country\", \"ts\"\nFROM \"CustomersUnique_9\"",
+      "fields" : [
+        {
+          "name" : "email",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "country",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "ts",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ],
+      "referencedTables" : [
+        "CustomersUnique_9"
+      ]
+    },
+    {
+      "name" : "CustomersUniqueRange",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"CustomersUniqueRange\"(\"email\", \"age\", \"ts\") AS SELECT \"email\", \"age\", \"ts\"\nFROM \"CustomersUniqueRange_10\"",
+      "fields" : [
+        {
+          "name" : "email",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "age",
+          "type" : "INTEGER",
+          "nullable" : false
+        },
+        {
+          "name" : "ts",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ],
+      "referencedTables" : [
+        "CustomersUniqueRange_10"
+      ]
+    },
+    {
+      "name" : "AddressesFewCities_1_hash_c0",
+      "type" : "INDEX",
+      "sql" : "CREATE INDEX IF NOT EXISTS \"AddressesFewCities_1_hash_c0\" ON \"AddressesFewCities_1\" USING hash (\"country\")"
+    },
+    {
+      "name" : "AddressesPair_2_btree_c0c1",
+      "type" : "INDEX",
+      "sql" : "CREATE INDEX IF NOT EXISTS \"AddressesPair_2_btree_c0c1\" ON \"AddressesPair_2\" USING btree (\"country\",\"city\")"
+    },
+    {
+      "name" : "AddressesPartial_3_btree_c0c2",
+      "type" : "INDEX",
+      "sql" : "CREATE INDEX IF NOT EXISTS \"AddressesPartial_3_btree_c0c2\" ON \"AddressesPartial_3\" USING btree (\"country\",\"zip\")"
+    },
+    {
+      "name" : "CustomersFewValues_6_hash_c0",
+      "type" : "INDEX",
+      "sql" : "CREATE INDEX IF NOT EXISTS \"CustomersFewValues_6_hash_c0\" ON \"CustomersFewValues_6\" USING hash (\"email\")"
+    },
+    {
+      "name" : "CustomersPlain_8_btree_c0c1",
+      "type" : "INDEX",
+      "sql" : "CREATE INDEX IF NOT EXISTS \"CustomersPlain_8_btree_c0c1\" ON \"CustomersPlain_8\" USING btree (\"email\",\"country\")"
+    },
+    {
+      "name" : "CustomersUniqueRange_10_hash_c0",
+      "type" : "INDEX",
+      "sql" : "CREATE INDEX IF NOT EXISTS \"CustomersUniqueRange_10_hash_c0\" ON \"CustomersUniqueRange_10\" USING hash (\"email\")"
+    },
+    {
+      "name" : "CustomersUnique_9_hash_c0",
+      "type" : "INDEX",
+      "sql" : "CREATE INDEX IF NOT EXISTS \"CustomersUnique_9_hash_c0\" ON \"CustomersUnique_9\" USING hash (\"email\")"
+    },
+    {
+      "name" : "CustomersUnique_9_hash_c1",
+      "type" : "INDEX",
+      "sql" : "CREATE INDEX IF NOT EXISTS \"CustomersUnique_9_hash_c1\" ON \"CustomersUnique_9\" USING hash (\"country\")"
+    }
+  ],
+  "standaloneExtensionStatements" : [ ]
+}
+>>>vertx.json
+{
+  "models" : {
+    "v1" : {
+      "queries" : [
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "AddressesFewCities",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"country\", \"city\", \"ts\"\nFROM \"AddressesFewCities_1\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "AddressesPair",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"country\", \"city\", \"zip\", \"ts\"\nFROM \"AddressesPair_2\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "AddressesPartial",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"country\", \"city\", \"zip\", \"ts\"\nFROM \"AddressesPartial_3\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "CustomerEvents",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"email\", \"country\", \"ts\"\nFROM \"CustomerEvents_4\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "CustomerTotals",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"CustomerTotals_5\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "CustomersFewValues",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"email\", \"gender\", \"ts\"\nFROM \"CustomersFewValues_6\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "CustomersOnlyFewValues",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"email\", \"gender\", \"ts\"\nFROM \"CustomersOnlyFewValues_7\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "CustomersPlain",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"email\", \"country\", \"ts\"\nFROM \"CustomersPlain_8\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "CustomersUnique",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"email\", \"country\", \"ts\"\nFROM \"CustomersUnique_9\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "CustomersUniqueRange",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"email\", \"age\", \"ts\"\nFROM \"CustomersUniqueRange_10\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "AddressesFewCitiesByCity",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "country"
+              },
+              {
+                "type" : "variable",
+                "path" : "city"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"country\", \"city\", \"ts\"\n  FROM \"AddressesFewCities_1\") AS \"t\"\nWHERE \"country\" = $1 AND \"city\" = $2",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "country",
+                  "sqlType" : "VARCHAR"
+                },
+                {
+                  "type" : "arg",
+                  "path" : "city",
+                  "sqlType" : "VARCHAR"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "AddressesPairByCity",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "country"
+              },
+              {
+                "type" : "variable",
+                "path" : "city"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"country\", \"city\", \"zip\", \"ts\"\n  FROM \"AddressesPair_2\") AS \"t\"\nWHERE \"country\" = $1 AND \"city\" = $2",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "country",
+                  "sqlType" : "VARCHAR"
+                },
+                {
+                  "type" : "arg",
+                  "path" : "city",
+                  "sqlType" : "VARCHAR"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "AddressesPairByZip",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "country"
+              },
+              {
+                "type" : "variable",
+                "path" : "city"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "zip"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"country\", \"city\", \"zip\", \"ts\"\n  FROM \"AddressesPair_2\") AS \"t\"\nWHERE \"country\" = $1 AND \"city\" = $2 AND \"zip\" = $3",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "country",
+                  "sqlType" : "VARCHAR"
+                },
+                {
+                  "type" : "arg",
+                  "path" : "city",
+                  "sqlType" : "VARCHAR"
+                },
+                {
+                  "type" : "arg",
+                  "path" : "zip",
+                  "sqlType" : "VARCHAR"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "AddressesPartialByZip",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "country"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "zip"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"country\", \"city\", \"zip\", \"ts\"\n  FROM \"AddressesPartial_3\") AS \"t\"\nWHERE \"country\" = $1 AND \"zip\" = $2",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "country",
+                  "sqlType" : "VARCHAR"
+                },
+                {
+                  "type" : "arg",
+                  "path" : "zip",
+                  "sqlType" : "VARCHAR"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "CustomerTotalsByEmail",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "email"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "country"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"CustomerTotals_5\"\nWHERE \"country\" = $1 AND \"email\" = $2",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "country",
+                  "sqlType" : "VARCHAR"
+                },
+                {
+                  "type" : "arg",
+                  "path" : "email",
+                  "sqlType" : "VARCHAR"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "CustomersFewValuesByEmail",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "email"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "gender"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"email\", \"gender\", \"ts\"\n  FROM \"CustomersFewValues_6\") AS \"t\"\nWHERE \"email\" = $1 AND \"gender\" = $2",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "email",
+                  "sqlType" : "VARCHAR"
+                },
+                {
+                  "type" : "arg",
+                  "path" : "gender",
+                  "sqlType" : "VARCHAR"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "CustomersOnlyFewValuesByGender",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "gender"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"email\", \"gender\", \"ts\"\n  FROM \"CustomersOnlyFewValues_7\") AS \"t\"\nWHERE \"gender\" = $1",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "gender",
+                  "sqlType" : "VARCHAR"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "CustomersPlainByEmail",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "email"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "country"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"email\", \"country\", \"ts\"\n  FROM \"CustomersPlain_8\") AS \"t\"\nWHERE \"email\" = $1 AND \"country\" = $2",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "email",
+                  "sqlType" : "VARCHAR"
+                },
+                {
+                  "type" : "arg",
+                  "path" : "country",
+                  "sqlType" : "VARCHAR"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "CustomersUniqueByCountry",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "country"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"email\", \"country\", \"ts\"\n  FROM \"CustomersUnique_9\") AS \"t\"\nWHERE \"country\" = $1",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "country",
+                  "sqlType" : "VARCHAR"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "CustomersUniqueByEmail",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "email"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "country"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"email\", \"country\", \"ts\"\n  FROM \"CustomersUnique_9\") AS \"t\"\nWHERE \"email\" = $1 AND \"country\" = $2",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "email",
+                  "sqlType" : "VARCHAR"
+                },
+                {
+                  "type" : "arg",
+                  "path" : "country",
+                  "sqlType" : "VARCHAR"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "CustomersUniqueRangeByEmail",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "minAge"
+              },
+              {
+                "type" : "variable",
+                "path" : "email"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"email\", \"age\", \"ts\"\n  FROM \"CustomersUniqueRange_10\") AS \"t\"\nWHERE \"email\" = $1 AND \"age\" > $2",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "email",
+                  "sqlType" : "VARCHAR"
+                },
+                {
+                  "type" : "arg",
+                  "path" : "minAge",
+                  "sqlType" : "INTEGER"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        }
+      ],
+      "mutations" : [ ],
+      "subscriptions" : [ ],
+      "operations" : [
+        {
+          "function" : {
+            "name" : "GetAddressesFewCities",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query AddressesFewCities($limit: Int = 10, $offset: Int = 0) {\nAddressesFewCities(limit: $limit, offset: $offset) {\ncountry\ncity\nts\n}\n\n}",
+            "queryName" : "AddressesFewCities",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/AddressesFewCities{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "country" : {
+                  "type" : "string"
+                },
+                "city" : {
+                  "type" : "string"
+                },
+                "ts" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetAddressesPair",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query AddressesPair($limit: Int = 10, $offset: Int = 0) {\nAddressesPair(limit: $limit, offset: $offset) {\ncountry\ncity\nzip\nts\n}\n\n}",
+            "queryName" : "AddressesPair",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/AddressesPair{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "country" : {
+                  "type" : "string"
+                },
+                "city" : {
+                  "type" : "string"
+                },
+                "zip" : {
+                  "type" : "string"
+                },
+                "ts" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetAddressesPartial",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query AddressesPartial($limit: Int = 10, $offset: Int = 0) {\nAddressesPartial(limit: $limit, offset: $offset) {\ncountry\ncity\nzip\nts\n}\n\n}",
+            "queryName" : "AddressesPartial",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/AddressesPartial{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "country" : {
+                  "type" : "string"
+                },
+                "city" : {
+                  "type" : "string"
+                },
+                "zip" : {
+                  "type" : "string"
+                },
+                "ts" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetCustomerEvents",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query CustomerEvents($limit: Int = 10, $offset: Int = 0) {\nCustomerEvents(limit: $limit, offset: $offset) {\nemail\ncountry\nts\n}\n\n}",
+            "queryName" : "CustomerEvents",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/CustomerEvents{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "email" : {
+                  "type" : "string"
+                },
+                "country" : {
+                  "type" : "string"
+                },
+                "ts" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetCustomerTotals",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query CustomerTotals($limit: Int = 10, $offset: Int = 0) {\nCustomerTotals(limit: $limit, offset: $offset) {\ncountry\nemail\ntotal\n}\n\n}",
+            "queryName" : "CustomerTotals",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/CustomerTotals{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "country" : {
+                  "type" : "string"
+                },
+                "email" : {
+                  "type" : "string"
+                },
+                "total" : {
+                  "type" : "integer"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetCustomersFewValues",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query CustomersFewValues($limit: Int = 10, $offset: Int = 0) {\nCustomersFewValues(limit: $limit, offset: $offset) {\nemail\ngender\nts\n}\n\n}",
+            "queryName" : "CustomersFewValues",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/CustomersFewValues{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "email" : {
+                  "type" : "string"
+                },
+                "gender" : {
+                  "type" : "string"
+                },
+                "ts" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetCustomersOnlyFewValues",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query CustomersOnlyFewValues($limit: Int = 10, $offset: Int = 0) {\nCustomersOnlyFewValues(limit: $limit, offset: $offset) {\nemail\ngender\nts\n}\n\n}",
+            "queryName" : "CustomersOnlyFewValues",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/CustomersOnlyFewValues{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "email" : {
+                  "type" : "string"
+                },
+                "gender" : {
+                  "type" : "string"
+                },
+                "ts" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetCustomersPlain",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query CustomersPlain($limit: Int = 10, $offset: Int = 0) {\nCustomersPlain(limit: $limit, offset: $offset) {\nemail\ncountry\nts\n}\n\n}",
+            "queryName" : "CustomersPlain",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/CustomersPlain{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "email" : {
+                  "type" : "string"
+                },
+                "country" : {
+                  "type" : "string"
+                },
+                "ts" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetCustomersUnique",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query CustomersUnique($limit: Int = 10, $offset: Int = 0) {\nCustomersUnique(limit: $limit, offset: $offset) {\nemail\ncountry\nts\n}\n\n}",
+            "queryName" : "CustomersUnique",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/CustomersUnique{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "email" : {
+                  "type" : "string"
+                },
+                "country" : {
+                  "type" : "string"
+                },
+                "ts" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetCustomersUniqueRange",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query CustomersUniqueRange($limit: Int = 10, $offset: Int = 0) {\nCustomersUniqueRange(limit: $limit, offset: $offset) {\nemail\nage\nts\n}\n\n}",
+            "queryName" : "CustomersUniqueRange",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/CustomersUniqueRange{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "email" : {
+                  "type" : "string"
+                },
+                "age" : {
+                  "type" : "integer"
+                },
+                "ts" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetAddressesFewCitiesByCity",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "country" : {
+                  "type" : "string"
+                },
+                "offset" : {
+                  "type" : "integer"
+                },
+                "city" : {
+                  "type" : "string"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [
+                "country",
+                "city"
+              ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query AddressesFewCitiesByCity($country: String!, $city: String!, $limit: Int = 10, $offset: Int = 0) {\nAddressesFewCitiesByCity(country: $country, city: $city, limit: $limit, offset: $offset) {\ncountry\ncity\nts\n}\n\n}",
+            "queryName" : "AddressesFewCitiesByCity",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/AddressesFewCitiesByCity{?country,offset,city,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "country" : {
+                  "type" : "string"
+                },
+                "city" : {
+                  "type" : "string"
+                },
+                "ts" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetAddressesPairByCity",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "country" : {
+                  "type" : "string"
+                },
+                "offset" : {
+                  "type" : "integer"
+                },
+                "city" : {
+                  "type" : "string"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [
+                "country",
+                "city"
+              ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query AddressesPairByCity($country: String!, $city: String!, $limit: Int = 10, $offset: Int = 0) {\nAddressesPairByCity(country: $country, city: $city, limit: $limit, offset: $offset) {\ncountry\ncity\nzip\nts\n}\n\n}",
+            "queryName" : "AddressesPairByCity",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/AddressesPairByCity{?country,offset,city,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "country" : {
+                  "type" : "string"
+                },
+                "city" : {
+                  "type" : "string"
+                },
+                "zip" : {
+                  "type" : "string"
+                },
+                "ts" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetAddressesPairByZip",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "zip" : {
+                  "type" : "string"
+                },
+                "country" : {
+                  "type" : "string"
+                },
+                "offset" : {
+                  "type" : "integer"
+                },
+                "city" : {
+                  "type" : "string"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [
+                "country",
+                "city",
+                "zip"
+              ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query AddressesPairByZip($country: String!, $city: String!, $zip: String!, $limit: Int = 10, $offset: Int = 0) {\nAddressesPairByZip(country: $country, city: $city, zip: $zip, limit: $limit, offset: $offset) {\ncountry\ncity\nzip\nts\n}\n\n}",
+            "queryName" : "AddressesPairByZip",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/AddressesPairByZip{?zip,country,offset,city,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "country" : {
+                  "type" : "string"
+                },
+                "city" : {
+                  "type" : "string"
+                },
+                "zip" : {
+                  "type" : "string"
+                },
+                "ts" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetAddressesPartialByZip",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "zip" : {
+                  "type" : "string"
+                },
+                "country" : {
+                  "type" : "string"
+                },
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [
+                "country",
+                "zip"
+              ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query AddressesPartialByZip($country: String!, $zip: String!, $limit: Int = 10, $offset: Int = 0) {\nAddressesPartialByZip(country: $country, zip: $zip, limit: $limit, offset: $offset) {\ncountry\ncity\nzip\nts\n}\n\n}",
+            "queryName" : "AddressesPartialByZip",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/AddressesPartialByZip{?zip,country,offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "country" : {
+                  "type" : "string"
+                },
+                "city" : {
+                  "type" : "string"
+                },
+                "zip" : {
+                  "type" : "string"
+                },
+                "ts" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetCustomerTotalsByEmail",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "country" : {
+                  "type" : "string"
+                },
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                },
+                "email" : {
+                  "type" : "string"
+                }
+              },
+              "required" : [
+                "country",
+                "email"
+              ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query CustomerTotalsByEmail($country: String!, $email: String!, $limit: Int = 10, $offset: Int = 0) {\nCustomerTotalsByEmail(country: $country, email: $email, limit: $limit, offset: $offset) {\ncountry\nemail\ntotal\n}\n\n}",
+            "queryName" : "CustomerTotalsByEmail",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/CustomerTotalsByEmail{?country,offset,limit,email}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "country" : {
+                  "type" : "string"
+                },
+                "email" : {
+                  "type" : "string"
+                },
+                "total" : {
+                  "type" : "integer"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetCustomersFewValuesByEmail",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "gender" : {
+                  "type" : "string"
+                },
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                },
+                "email" : {
+                  "type" : "string"
+                }
+              },
+              "required" : [
+                "email",
+                "gender"
+              ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query CustomersFewValuesByEmail($email: String!, $gender: String!, $limit: Int = 10, $offset: Int = 0) {\nCustomersFewValuesByEmail(email: $email, gender: $gender, limit: $limit, offset: $offset) {\nemail\ngender\nts\n}\n\n}",
+            "queryName" : "CustomersFewValuesByEmail",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/CustomersFewValuesByEmail{?gender,offset,limit,email}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "email" : {
+                  "type" : "string"
+                },
+                "gender" : {
+                  "type" : "string"
+                },
+                "ts" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetCustomersOnlyFewValuesByGender",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "gender" : {
+                  "type" : "string"
+                },
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [
+                "gender"
+              ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query CustomersOnlyFewValuesByGender($gender: String!, $limit: Int = 10, $offset: Int = 0) {\nCustomersOnlyFewValuesByGender(gender: $gender, limit: $limit, offset: $offset) {\nemail\ngender\nts\n}\n\n}",
+            "queryName" : "CustomersOnlyFewValuesByGender",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/CustomersOnlyFewValuesByGender{?gender,offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "email" : {
+                  "type" : "string"
+                },
+                "gender" : {
+                  "type" : "string"
+                },
+                "ts" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetCustomersPlainByEmail",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "country" : {
+                  "type" : "string"
+                },
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                },
+                "email" : {
+                  "type" : "string"
+                }
+              },
+              "required" : [
+                "email",
+                "country"
+              ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query CustomersPlainByEmail($email: String!, $country: String!, $limit: Int = 10, $offset: Int = 0) {\nCustomersPlainByEmail(email: $email, country: $country, limit: $limit, offset: $offset) {\nemail\ncountry\nts\n}\n\n}",
+            "queryName" : "CustomersPlainByEmail",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/CustomersPlainByEmail{?country,offset,limit,email}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "email" : {
+                  "type" : "string"
+                },
+                "country" : {
+                  "type" : "string"
+                },
+                "ts" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetCustomersUniqueByCountry",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "country" : {
+                  "type" : "string"
+                },
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [
+                "country"
+              ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query CustomersUniqueByCountry($country: String!, $limit: Int = 10, $offset: Int = 0) {\nCustomersUniqueByCountry(country: $country, limit: $limit, offset: $offset) {\nemail\ncountry\nts\n}\n\n}",
+            "queryName" : "CustomersUniqueByCountry",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/CustomersUniqueByCountry{?country,offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "email" : {
+                  "type" : "string"
+                },
+                "country" : {
+                  "type" : "string"
+                },
+                "ts" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetCustomersUniqueByEmail",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "country" : {
+                  "type" : "string"
+                },
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                },
+                "email" : {
+                  "type" : "string"
+                }
+              },
+              "required" : [
+                "email",
+                "country"
+              ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query CustomersUniqueByEmail($email: String!, $country: String!, $limit: Int = 10, $offset: Int = 0) {\nCustomersUniqueByEmail(email: $email, country: $country, limit: $limit, offset: $offset) {\nemail\ncountry\nts\n}\n\n}",
+            "queryName" : "CustomersUniqueByEmail",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/CustomersUniqueByEmail{?country,offset,limit,email}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "email" : {
+                  "type" : "string"
+                },
+                "country" : {
+                  "type" : "string"
+                },
+                "ts" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetCustomersUniqueRangeByEmail",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "minAge" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                },
+                "email" : {
+                  "type" : "string"
+                }
+              },
+              "required" : [
+                "email",
+                "minAge"
+              ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query CustomersUniqueRangeByEmail($email: String!, $minAge: Int!, $limit: Int = 10, $offset: Int = 0) {\nCustomersUniqueRangeByEmail(email: $email, minAge: $minAge, limit: $limit, offset: $offset) {\nemail\nage\nts\n}\n\n}",
+            "queryName" : "CustomersUniqueRangeByEmail",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/CustomersUniqueRangeByEmail{?offset,minAge,limit,email}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "email" : {
+                  "type" : "string"
+                },
+                "age" : {
+                  "type" : "integer"
+                },
+                "ts" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "schema" : {
+        "type" : "string",
+        "schema" : "type AddressesFewCities {\n  country: String!\n  city: String!\n  ts: DateTime!\n}\n\ntype AddressesPair {\n  country: String!\n  city: String!\n  zip: String!\n  ts: DateTime!\n}\n\ntype AddressesPartial {\n  country: String!\n  city: String!\n  zip: String!\n  ts: DateTime!\n}\n\ntype CustomerEvents {\n  email: String!\n  country: String!\n  ts: DateTime!\n}\n\ntype CustomerTotals {\n  country: String!\n  email: String!\n  total: Long!\n}\n\ntype CustomersFewValues {\n  email: String!\n  gender: String!\n  ts: DateTime!\n}\n\ntype CustomersOnlyFewValues {\n  email: String!\n  gender: String!\n  ts: DateTime!\n}\n\ntype CustomersPlain {\n  email: String!\n  country: String!\n  ts: DateTime!\n}\n\ntype CustomersUnique {\n  email: String!\n  country: String!\n  ts: DateTime!\n}\n\ntype CustomersUniqueRange {\n  email: String!\n  age: Int!\n  ts: DateTime!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Query {\n  AddressesFewCities(limit: Int = 10, offset: Int = 0): [AddressesFewCities!]\n  AddressesPair(limit: Int = 10, offset: Int = 0): [AddressesPair!]\n  AddressesPartial(limit: Int = 10, offset: Int = 0): [AddressesPartial!]\n  CustomerEvents(limit: Int = 10, offset: Int = 0): [CustomerEvents!]\n  CustomerTotals(limit: Int = 10, offset: Int = 0): [CustomerTotals!]\n  CustomersFewValues(limit: Int = 10, offset: Int = 0): [CustomersFewValues!]\n  CustomersOnlyFewValues(limit: Int = 10, offset: Int = 0): [CustomersOnlyFewValues!]\n  CustomersPlain(limit: Int = 10, offset: Int = 0): [CustomersPlain!]\n  CustomersUnique(limit: Int = 10, offset: Int = 0): [CustomersUnique!]\n  CustomersUniqueRange(limit: Int = 10, offset: Int = 0): [CustomersUniqueRange!]\n  AddressesFewCitiesByCity(country: String!, city: String!, limit: Int = 10, offset: Int = 0): [AddressesFewCities!]\n  AddressesPairByCity(country: String!, city: String!, limit: Int = 10, offset: Int = 0): [AddressesPair!]\n  AddressesPairByZip(country: String!, city: String!, zip: String!, limit: Int = 10, offset: Int = 0): [AddressesPair!]\n  AddressesPartialByZip(country: String!, zip: String!, limit: Int = 10, offset: Int = 0): [AddressesPartial!]\n  CustomerTotalsByEmail(country: String!, email: String!, limit: Int = 10, offset: Int = 0): [CustomerTotals!]\n  CustomersFewValuesByEmail(email: String!, gender: String!, limit: Int = 10, offset: Int = 0): [CustomersFewValues!]\n  CustomersOnlyFewValuesByGender(gender: String!, limit: Int = 10, offset: Int = 0): [CustomersOnlyFewValues!]\n  CustomersPlainByEmail(email: String!, country: String!, limit: Int = 10, offset: Int = 0): [CustomersPlain!]\n  CustomersUniqueByCountry(country: String!, limit: Int = 10, offset: Int = 0): [CustomersUnique!]\n  CustomersUniqueByEmail(email: String!, country: String!, limit: Int = 10, offset: Int = 0): [CustomersUnique!]\n  CustomersUniqueRangeByEmail(email: String!, minAge: Int!, limit: Int = 10, offset: Int = 0): [CustomersUniqueRange!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n}\n\nenum _McpVisibility {\n  MODEL\n  APP\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String, appName: String, visibility: [_McpVisibility!]) on QUERY | MUTATION | FIELD_DEFINITION\n"
+      }
+    }
+  }
+}

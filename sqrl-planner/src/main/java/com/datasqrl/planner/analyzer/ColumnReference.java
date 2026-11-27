@@ -81,7 +81,11 @@ public record ColumnReference(String name, boolean quoted) {
     return quoted ? quote(name) : name;
   }
 
-  private static String quote(String name) {
+  /**
+   * The name in backticks, with each backtick in it doubled, so it matches exactly one column, e.g.
+   * {@code `CNT`}.
+   */
+  public static String quote(String name) {
     return "`" + name.replace("`", "``") + "`";
   }
 }
