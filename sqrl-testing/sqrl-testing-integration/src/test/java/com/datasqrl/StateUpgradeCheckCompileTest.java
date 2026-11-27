@@ -19,6 +19,9 @@ import static com.datasqrl.SnapshotTestSupport.getResourcesDirectory;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datasqrl.cli.AssertStatusHook;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Map;
 import org.apache.flink.table.api.config.ExecutionConfigOptions;
@@ -176,6 +179,22 @@ class StateUpgradeCheckCompileTest {
                 + " Flink gives each operator another uid [unclaimed state]");
   }
 
+  @Test
+  void givenWatermarkMovedToOtherColumnOfRank_whenCheckStateUpgrade_thenPasses()
+      throws IOException {
+    var status =
+        compileAndCheckUpgrade("top-event-watermark-ts.sqrl", "top-event-watermark-ts2.sqrl");
+
+    assertThat(status.isSuccess()).as(status.getMessages()).isTrue();
+    assertThat(status.getMessages()).contains("The new Flink plan passes the state upgrade check");
+    // The Rank stores both columns, and both columns change their form in the plan. The plan
+    // writes a time attribute as an object with a "kind", and a regular timestamp as text.
+    assertThat(rankColumnType(OLD_BUILD_FOLDER, "ts").path("kind").asText()).isEqualTo("ROWTIME");
+    assertThat(rankColumnType(OLD_BUILD_FOLDER, "ts2").isTextual()).isTrue();
+    assertThat(rankColumnType(NEW_BUILD_FOLDER, "ts").isTextual()).isTrue();
+    assertThat(rankColumnType(NEW_BUILD_FOLDER, "ts2").path("kind").asText()).isEqualTo("ROWTIME");
+  }
+
   /** The values that a test writes into the package template for one compile. */
   private record PackageSettings(String scriptFile, String stateTtl, String uidFormat) {}
 
@@ -231,6 +250,28 @@ class StateUpgradeCheckCompileTest {
             packageSettings.stateTtl(),
             UID_FORMAT_TEMPLATE,
             packageSettings.uidFormat()));
+  }
+
+  /** Returns the type of a column of the Rank operator in the compiled plan of a build folder. */
+  private static JsonNode rankColumnType(String buildFolder, String columnName) throws IOException {
+    var compiledPlan =
+        new ObjectMapper()
+            .readTree(
+                PROJECT_DIR
+                    .resolve("build/" + buildFolder + "/deploy/plan/flink-compiled-plan.json")
+                    .toFile());
+    for (var operator : compiledPlan.path("nodes")) {
+      if (!operator.path("type").asText().startsWith("stream-exec-rank")) {
+        continue;
+      }
+      for (var column : operator.path("outputType").path("fields")) {
+        if (column.path("name").asText().equals(columnName)) {
+          return column.path("fieldType");
+        }
+      }
+    }
+    throw new AssertionError(
+        "The plan in " + buildFolder + " has no Rank operator with the column " + columnName);
   }
 
   private String tempPackageFile() {

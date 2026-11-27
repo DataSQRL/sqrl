@@ -18,7 +18,6 @@ package com.datasqrl.cli;
 import com.datasqrl.cli.StateUpgradeBreak.OldState;
 import com.datasqrl.error.ErrorCollector;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -29,8 +28,15 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.apache.flink.table.api.ValidationException;
 import org.apache.flink.table.api.config.ExecutionConfigOptions;
 import org.apache.flink.table.api.config.ExecutionConfigOptions.UidGeneration;
+import org.apache.flink.table.types.logical.LocalZonedTimestampType;
+import org.apache.flink.table.types.logical.LogicalType;
+import org.apache.flink.table.types.logical.RowType;
+import org.apache.flink.table.types.logical.TimestampKind;
+import org.apache.flink.table.types.logical.TimestampType;
+import org.apache.flink.table.types.logical.utils.LogicalTypeParser;
 
 /**
  * Checks if Flink can restore the state of an old build from a new build.
@@ -106,14 +112,6 @@ final class FlinkStateUpgradeCheck {
   private static final String SUM0_FUNCTION = "SUM0";
 
   private static final String SUM_FUNCTION = "SUM";
-
-  /**
-   * The names that Flink shows for the timestamp types of the object form of an {@code outputType}.
-   */
-  private static final Map<String, String> TIMESTAMP_TYPE_NAMES =
-      Map.of(
-          "TIMESTAMP_WITH_LOCAL_TIME_ZONE", "TIMESTAMP_LTZ",
-          "TIMESTAMP_WITHOUT_TIME_ZONE", "TIMESTAMP");
 
   /** The field of a {@code state} entry that holds the TTL, for example {@code "1 h"}. */
   private static final String TTL_FIELD = "ttl";
@@ -370,86 +368,81 @@ final class FlinkStateUpgradeCheck {
   }
 
   /**
-   * Returns the column types of a {@code ROW} output type in their order, without the column names,
-   * because a renamed column does not change the stored rows. A compiled plan writes the type as an
-   * object with {@code fields} when a column is a time attribute, and as text in the other cases.
-   * Returns the whole value for another type, and {@code null} for a missing output type.
+   * Returns the column types of a {@code ROW} output type in their order, without the column names.
+   * This is the rule of Flink for stored rows: {@code RowDataSerializer} restores when the {@code
+   * LogicalType} of each column is {@code equals}. That equality ignores the column names and the
+   * time attribute of a timestamp, and it keeps the names of a nested {@code ROW}. Returns the
+   * value as it is when Flink cannot read the type, and {@code null} for a missing output type.
    */
-  private static JsonNode columnTypes(JsonNode outputType) {
+  private static Object columnTypes(JsonNode outputType) {
     if (outputType == null) {
       return null;
     }
-    var columnTypes = JsonNodeFactory.instance.arrayNode();
-    if (outputType.path("fields").isArray()) {
-      outputType.path("fields").forEach(column -> columnTypes.add(column.path("fieldType")));
-      return columnTypes;
-    }
-    if (outputType.isTextual()) {
-      var columnTypeTexts = RowTypeText.columnTypes(outputType.asText());
-      if (columnTypeTexts.isPresent()) {
-        columnTypeTexts.get().forEach(columnTypes::add);
-        return columnTypes;
-      }
-    }
-    return outputType;
+    return rowType(outputType).<Object>map(RowType::getChildren).orElse(outputType);
   }
 
   /**
    * Returns the columns of a {@code ROW} output type as {@code [name type, ...]}, in the same form
-   * for the text form and the object form of the plan. Returns the value as it is when it is not a
-   * {@code ROW} type. This method only builds the text of a break line: {@link #columnTypes} gives
-   * the values that the check compares.
+   * for both forms of the plan. Returns the value as it is when Flink cannot read the type. This
+   * method only builds the text of a break line: {@link #columnTypes} gives the values that the
+   * check compares.
    */
   private static String outputTypeText(JsonNode outputType) {
-    if (outputType != null && outputType.isTextual()) {
-      return RowTypeText.columns(outputType.asText())
-          .map(
-              columns ->
-                  columns.stream()
-                      .map(column -> column.name() + " " + column.type())
-                      .collect(Collectors.joining(", ", "[", "]")))
-          .orElse(outputType.asText());
+    if (outputType == null) {
+      return MISSING_VALUE;
     }
-    if (outputType == null || !outputType.path("fields").isArray()) {
-      return valueText(outputType);
-    }
-    var columnTexts = new ArrayList<String>();
-    outputType
-        .path("fields")
-        .forEach(
-            column ->
-                columnTexts.add(
-                    column.path("name").asText() + " " + columnTypeText(column.path("fieldType"))));
-    return "[" + String.join(", ", columnTexts) + "]";
+    return rowType(outputType)
+        .map(
+            rowType ->
+                rowType.getFields().stream()
+                    .map(field -> field.getName() + " " + field.getType().asSummaryString())
+                    .collect(Collectors.joining(", ", "[", "]")))
+        .orElseGet(() -> outputType.isTextual() ? outputType.asText() : outputType.toString());
   }
 
   /**
-   * Returns the type of a column in the object form as text. A timestamp object, for example {@code
-   * {"type":"TIMESTAMP_WITH_LOCAL_TIME_ZONE","nullable":false,"precision":3,"kind":"ROWTIME"}},
-   * gives the text that Flink shows for it, for example {@code TIMESTAMP_LTZ(3) NOT NULL
-   * *ROWTIME*}. Another object stays compact JSON.
+   * Reads a {@code ROW} output type of the compiled plan. Flink writes it as the text of {@link
+   * LogicalType#asSerializableString}, or, when a column is a time attribute, as an object with
+   * {@code fields}, where the time attribute is an object such as {@code
+   * {"type":"TIMESTAMP_WITH_LOCAL_TIME_ZONE","nullable":false,"precision":3,"kind":"ROWTIME"}}.
+   * Returns empty for another type, and for a type that Flink cannot read, for example a {@code
+   * RAW} type whose class is not on the class path of the CLI.
    */
-  private static String columnTypeText(JsonNode columnType) {
-    if (columnType.isTextual()) {
-      return columnType.asText();
+  private static Optional<RowType> rowType(JsonNode outputType) {
+    try {
+      if (!outputType.path("fields").isArray()) {
+        return Optional.of(parseType(outputType.asText()))
+            .filter(RowType.class::isInstance)
+            .map(RowType.class::cast);
+      }
+      var fields = new ArrayList<RowType.RowField>();
+      for (var field : outputType.path("fields")) {
+        fields.add(
+            new RowType.RowField(field.path("name").asText(), fieldType(field.path("fieldType"))));
+      }
+      return Optional.of(new RowType(fields));
+    } catch (ValidationException | IllegalArgumentException exception) {
+      return Optional.empty();
     }
-    var timestampTypeName = TIMESTAMP_TYPE_NAMES.get(columnType.path("type").asText());
-    if (timestampTypeName == null || !columnType.has("precision")) {
-      return columnType.toString();
+  }
+
+  private static LogicalType fieldType(JsonNode fieldType) {
+    if (fieldType.isTextual()) {
+      return parseType(fieldType.asText());
     }
-    var columnTypeText =
-        new StringBuilder(timestampTypeName)
-            .append('(')
-            .append(columnType.path("precision").asInt())
-            .append(')');
-    if (!columnType.path("nullable").asBoolean(true)) {
-      columnTypeText.append(" NOT NULL");
-    }
-    var timestampKind = columnType.path("kind").asText("REGULAR");
-    if (!timestampKind.equals("REGULAR")) {
-      columnTypeText.append(" *").append(timestampKind).append('*');
-    }
-    return columnTypeText.toString();
+    var nullable = fieldType.path("nullable").asBoolean(true);
+    var kind = TimestampKind.valueOf(fieldType.path("kind").asText(TimestampKind.REGULAR.name()));
+    var precision = fieldType.path("precision").asInt();
+    return switch (fieldType.path("type").asText()) {
+      case "TIMESTAMP_WITH_LOCAL_TIME_ZONE" ->
+          new LocalZonedTimestampType(nullable, kind, precision);
+      case "TIMESTAMP_WITHOUT_TIME_ZONE" -> new TimestampType(nullable, kind, precision);
+      default -> throw new IllegalArgumentException("Unknown field type: " + fieldType);
+    };
+  }
+
+  private static LogicalType parseType(String typeText) {
+    return LogicalTypeParser.parse(typeText, FlinkStateUpgradeCheck.class.getClassLoader());
   }
 
   /**

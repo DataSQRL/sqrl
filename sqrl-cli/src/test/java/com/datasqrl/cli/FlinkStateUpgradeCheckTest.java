@@ -24,11 +24,14 @@ import com.datasqrl.error.ErrorMessage;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
+import org.apache.flink.api.common.typeutils.base.LocalDateSerializer;
+import org.apache.flink.table.api.DataTypes;
 import org.apache.flink.table.api.config.ExecutionConfigOptions;
 import org.apache.flink.table.api.config.ExecutionConfigOptions.UidGeneration;
 import org.junit.jupiter.api.Test;
@@ -255,7 +258,9 @@ class FlinkStateUpgradeCheckTest {
   }
 
   @Test
-  void givenTimeAttributeBecomesRegularTimestamp_whenCheck_thenChangedOutputType() {
+  void givenTimeAttributeBecomesRegularTimestamp_whenCheck_thenNoBreaks() {
+    // Flink stores a time attribute as a plain timestamp, and the equality of a timestamp type
+    // ignores the time attribute, so Flink restores the stored rows.
     var oldDeduplicateOperator = withTimeAttributeOutputType(deduplicateOperator("0 ms"));
     var newDeduplicateOperator =
         withOutputType(
@@ -263,11 +268,68 @@ class FlinkStateUpgradeCheckTest {
 
     var result = check(plan("2.3", oldDeduplicateOperator), plan("2.3", newDeduplicateOperator));
 
+    assertThat(result.breaks()).isEmpty();
+  }
+
+  @Test
+  void givenRenamedColumnWithDescriptionAndDecimal_whenCheck_thenNoBreaks() {
+    var result =
+        check(
+            plan(
+                "2.3",
+                deduplicateOperator("0 ms")
+                    .put("outputType", "ROW<`id` INT 'the id, unique', `price` DECIMAL(10, 2)>")),
+            plan(
+                "2.3",
+                deduplicateOperator("0 ms")
+                    .put("outputType", "ROW<`key` INT 'the id, unique', `price` DECIMAL(10, 2)>")));
+
+    assertThat(result.breaks()).isEmpty();
+  }
+
+  @Test
+  void givenRenamedColumnNextToRawTypeOnClassPath_whenCheck_thenNoBreaks() {
+    var rawType =
+        DataTypes.RAW(LocalDate.class, LocalDateSerializer.INSTANCE)
+            .getLogicalType()
+            .asSerializableString();
+
+    var result =
+        check(
+            plan(
+                "2.3",
+                deduplicateOperator("0 ms")
+                    .put("outputType", "ROW<`id` INT, `day` " + rawType + ">")),
+            plan(
+                "2.3",
+                deduplicateOperator("0 ms")
+                    .put("outputType", "ROW<`key` INT, `day` " + rawType + ">")));
+
+    assertThat(result.breaks()).isEmpty();
+  }
+
+  @Test
+  void givenRenamedColumnNextToRawTypeNotOnClassPath_whenCheck_thenChangedOutputType() {
+    // Flink cannot read the RAW type of a class that the CLI cannot load, so the check compares
+    // the text of the type, and the renamed column is a break.
+    var rawType = "RAW('com.example.NotOnTheClassPath', 'AAAA')";
+
+    var result =
+        check(
+            plan(
+                "2.3",
+                deduplicateOperator("0 ms")
+                    .put("outputType", "ROW<`id` INT, `doc` " + rawType + ">")),
+            plan(
+                "2.3",
+                deduplicateOperator("0 ms")
+                    .put("outputType", "ROW<`key` INT, `doc` " + rawType + ">")));
+
     assertThat(result.breaks())
         .singleElement()
         .extracting(StateUpgradeBreak::message)
         .asString()
-        .contains("*ROWTIME*] -> [id INT NOT NULL, ts TIMESTAMP_LTZ(3) NOT NULL]");
+        .contains("field 'outputType' differs");
   }
 
   @Test
