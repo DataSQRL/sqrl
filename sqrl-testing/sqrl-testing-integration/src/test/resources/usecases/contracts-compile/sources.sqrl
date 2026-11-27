@@ -1,7 +1,7 @@
 /** Customer master data @pii=raw @classification=confidential */
 CREATE TABLE Customers (
   id BIGINT NOT NULL,
-  email STRING COMMENT 'Contact email @gdpr',
+  email STRING COMMENT 'Contact email @gdpr @classification=confidential',
   name VARCHAR(100) NOT NULL,
   age SMALLINT,
   score FLOAT,

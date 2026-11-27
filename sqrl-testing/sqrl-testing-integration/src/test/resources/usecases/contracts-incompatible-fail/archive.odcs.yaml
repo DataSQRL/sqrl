@@ -10,7 +10,5 @@ schema:
       - name: id
         logicalType: integer
         required: true
-        classification: confidential
       - name: email
         logicalType: string
-        classification: confidential

@@ -11,8 +11,6 @@ schema:
       - name: customer_id
         logicalType: integer
         required: true
-        classification: internal
       - name: message
         logicalType: string
         required: true
-        classification: internal

@@ -58,8 +58,9 @@ import org.apache.commons.lang3.StringUtils;
  *   <li>A primary key or partition key that the contract declares must be the key of the table.
  *   <li>The tags that are defined in {@code compiler.tags} are compared for each column and for the
  *       table. A property must list the tags of its column, where its {@code classification} is the
- *       tag of that name and may be left out. And the tags of the schema object, together with the
- *       tags of its properties, must be the tags of the table.
+ *       tag of that name. And the tags of the schema object, together with the tags of its
+ *       properties, must be the tags of the table, so the classification of the table is a {@code
+ *       classification=<value>} tag of the schema object.
  * </ul>
  *
  * Everything else is ignored, e.g. {@code physicalType}, descriptions and {@code
@@ -380,11 +381,10 @@ public class OdcsCompatibilityChecker {
       private final DeclaredTags ofTable = new DeclaredTags();
 
       /**
-       * A property must list the tags of its column. Its classification is the tag of that name,
-       * and it may be left out.
+       * A property must list the tags of its column. Its classification is the tag of that name.
        *
-       * @param column the property generated for the column, with the tags that the column declares
-       *     and the classification of the column
+       * @param column the property generated for the column, with the tags and the classification
+       *     that the column declares
        */
       void column(Located property, OdcsProperty column) {
         var declared = new DeclaredTags();
@@ -409,12 +409,18 @@ public class OdcsCompatibilityChecker {
           }
         }
         for (var tag : tagsOfColumn.values()) {
-          if (contractTags.get(tag.name()).isEmpty() && !isClassification(tag)) {
+          if (contractTags.get(tag.name()).isEmpty()) {
             ofColumns.add(tag);
+            var classification = isClassification(tag);
             report(
-                property.pointer() + "/" + OdcsConstants.TAGS_FIELD,
-                "Tag [%s] of column [%s] of table [%s] is missing from property [%s]",
-                OdcsTags.write(tag),
+                property.pointer()
+                    + "/"
+                    + (classification
+                        ? OdcsConstants.CLASSIFICATION_FIELD
+                        : OdcsConstants.TAGS_FIELD),
+                "%s [%s] of column [%s] of table [%s] is missing from property [%s]",
+                classification ? "classification" : "Tag",
+                classification ? tag.value() : OdcsTags.write(tag),
                 column.name(),
                 subject.name(),
                 property.name());
@@ -470,14 +476,15 @@ public class OdcsCompatibilityChecker {
           String pointer,
           Located property,
           OdcsProperty column) {
-        if (isClassification(tag)) {
+        var classification = isClassification(tag);
+        if (ofColumn.isPresent() && classification) {
           report(
               pointer,
               "classification is [%s] in the contract, but column [%s] of table [%s] has [%s]",
               tag.value(),
               column.name(),
               subject.name(),
-              ofColumn.map(TagValue::value).orElse(null));
+              ofColumn.get().value());
         } else if (ofColumn.isPresent()) {
           report(
               pointer,
@@ -488,19 +495,22 @@ public class OdcsCompatibilityChecker {
               subject.name(),
               OdcsTags.write(ofColumn.get()));
         } else {
+          // The table has the tag, and the column does not declare it
           var tableTag = subject.tags().get(tag.name()).filter(ofTable -> !ofTable.equals(tag));
           report(
               pointer,
-              "Property [%s] declares tag [%s], but column [%s] of table [%s] does not declare"
-                  + " it%s. Declare it in the comment of the column, or list the tag of the table"
-                  + " on the schema object",
+              "Property [%s] declares %s, but column [%s] of table [%s] does not declare it%s."
+                  + " Declare it in the comment of the column, or list %s on the schema object",
               property.name(),
-              OdcsTags.write(tag),
+              classification
+                  ? "classification [%s]".formatted(tag.value())
+                  : "tag [%s]".formatted(OdcsTags.write(tag)),
               column.name(),
               subject.name(),
               tableTag
                   .map(ofTable -> " and the table has [%s]".formatted(OdcsTags.write(ofTable)))
-                  .orElse(""));
+                  .orElse(""),
+              classification ? "the classification of the table as a tag" : "the tag of the table");
         }
       }
 

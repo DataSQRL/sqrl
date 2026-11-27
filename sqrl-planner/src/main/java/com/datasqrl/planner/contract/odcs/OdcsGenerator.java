@@ -75,13 +75,10 @@ public class OdcsGenerator {
         .primaryKeyPosition(primaryKeyPosition.orElse(null))
         .partitioned(partitionKeyPosition.isPresent() ? Boolean.TRUE : null)
         .partitionKeyPosition(partitionKeyPosition.orElse(null))
+        // The classification field of the property says what the classification tag of the
+        // column says. The classification of the table is a tag of the schema object
         .classification(
-            columnTags
-                .get(OdcsConstants.CLASSIFICATION_TAG)
-                .or(() -> subject.tags().get(OdcsConstants.CLASSIFICATION_TAG))
-                .map(TagValue::value)
-                .orElse(null))
-        // The classification field of the property says what the classification tag says
+            columnTags.get(OdcsConstants.CLASSIFICATION_TAG).map(TagValue::value).orElse(null))
         .tags(OdcsTags.write(columnTags.without(Set.of(OdcsConstants.CLASSIFICATION_TAG))))
         .build();
   }

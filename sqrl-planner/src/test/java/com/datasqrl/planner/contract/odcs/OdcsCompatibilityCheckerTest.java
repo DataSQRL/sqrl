@@ -427,7 +427,6 @@ class OdcsCompatibilityCheckerTest {
                     - name: id
                       logicalType: integer
                       required: true
-                      classification: secret
                     - name: email
                       logicalType: string
                       classification: Secret
@@ -479,10 +478,17 @@ class OdcsCompatibilityCheckerTest {
     assertThat(messages())
         .extracting(ErrorMessage::getMessage, OdcsCompatibilityCheckerTest::line)
         .containsExactlyInAnyOrder(
+            // The table has the classification of its column email, and id declares none
             tuple(
-                "classification is [public] in the contract, but column [id] of table [Customers]"
-                    + " has [secret]",
+                "Property [id] declares classification [public], but column [id] of table"
+                    + " [Customers] does not declare it and the table has [classification=secret]."
+                    + " Declare it in the comment of the column, or list the classification of"
+                    + " the table as a tag on the schema object",
                 12),
+            tuple(
+                "classification [secret] of column [email] of table [Customers] is missing from"
+                    + " property [email]",
+                13),
             tuple(
                 "Contract tag [classification=top] is not a valid value of tag [classification]:"
                     + " allowed values are [public, secret]",
@@ -547,6 +553,10 @@ class OdcsCompatibilityCheckerTest {
     assertThat(messages())
         .extracting(ErrorMessage::getMessage, OdcsCompatibilityCheckerTest::line)
         .containsExactly(
+            tuple(
+                "classification [secret] of column [email] of table [Customers] is missing from"
+                    + " property [email]",
+                12),
             tuple(
                 "Tag [gdpr] of column [email] of table [Customers] is missing from property"
                     + " [email]",

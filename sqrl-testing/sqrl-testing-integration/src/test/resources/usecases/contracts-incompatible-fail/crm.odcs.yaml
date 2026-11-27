@@ -14,21 +14,19 @@ schema:
         logicalType: integer
         primaryKey: true
         partitioned: true
-        classification: confidential
       # required is set for a nullable column, and the classification differs
       - name: email
         logicalType: string
         required: true
         classification: public
         tags: [gdpr]
-      # another type
+      # another type, and a classification that the column does not declare
       - name: age
         logicalType: string
         classification: confidential
       # another type in a nested field
       - name: address
         logicalType: object
-        classification: confidential
         properties:
           - name: city
             logicalType: integer
@@ -38,7 +36,6 @@ schema:
       # another type of the array items
       - name: phones
         logicalType: array
-        classification: confidential
         items:
           logicalType: integer
       # a computed column and a metadata column
@@ -50,12 +47,10 @@ schema:
       - name: region
         logicalType: string
         required: true
-        classification: confidential
         tags: [pii=masked]
       - name: updated_at
         logicalType: timestamp
         required: true
-        classification: confidential
       # not a column of the table
       - name: nickname
         logicalType: string

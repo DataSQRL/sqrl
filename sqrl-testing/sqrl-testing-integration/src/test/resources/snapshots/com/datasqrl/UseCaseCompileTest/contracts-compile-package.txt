@@ -16,7 +16,7 @@ type CustomerCounts {
 "Customer master data @pii=raw @classification=confidential"
 type Customers {
   id: Long!
-  "Contact email @gdpr"
+  "Contact email @gdpr @classification=confidential"
   email: String
   name: String!
   age: Int
@@ -527,7 +527,7 @@ Inputs:
 >>>flink-sql-no-functions.sql
 CREATE TABLE `Customers` (
   `id` BIGINT NOT NULL,
-  `email` STRING COMMENT 'Contact email @gdpr',
+  `email` STRING COMMENT 'Contact email @gdpr @classification=confidential',
   `name` VARCHAR(100) NOT NULL,
   `age` SMALLINT,
   `score` FLOAT,
@@ -1616,7 +1616,7 @@ FROM "Products"
                 },
                 "email" : {
                   "type" : "string",
-                  "description" : "Contact email @gdpr"
+                  "description" : "Contact email @gdpr @classification=confidential"
                 },
                 "name" : {
                   "type" : "string"
@@ -2033,7 +2033,7 @@ FROM "Products"
       ],
       "schema" : {
         "type" : "string",
-        "schema" : "\"Clicks on the web site\"\ntype Clicks {\n  customer_id: Long!\n  ingested_at: DateTime!\n  url: String!\n  event_time: DateTime!\n}\n\n\"Customers per region @pii=raw @classification=confidential @gdpr\"\ntype CustomerCounts {\n  region: String!\n  num_customers: Long!\n}\n\n\"Customer master data @pii=raw @classification=confidential\"\ntype Customers {\n  id: Long!\n  \"Contact email @gdpr\"\n  email: String\n  name: String!\n  age: Int\n  score: Float\n  balance: Float\n  active: Boolean\n  birthday: Date\n  address: Customers_addressOutput\n  phones: [Customers_phonesOutput]\n  attributes: JSON\n  region: String!\n  loaded_at: DateTime!\n  updated_at: DateTime!\n}\n\ntype Customers_addressOutput {\n  street: String\n  city: String!\n  zip: String\n}\n\ntype Customers_phonesOutput {\n  kind: String!\n  number: String\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"Feedback that customers send @pii=masked @classification=internal\"\ntype Feedback {\n  customer_id: Long!\n  message: String!\n  event_time: DateTime\n}\n\ninput FeedbackInput {\n  customer_id: Long!\n  message: String!\n}\n\ntype FeedbackResultOutput {\n  customer_id: Long!\n  message: String!\n  event_time: DateTime\n}\n\n\"A JSON scalar\"\nscalar JSON\n\n\"Number of large orders\"\ntype LargeOrderCount {\n  num_orders: Long!\n}\n\n\"Orders above the review limit\"\ntype LargeOrders {\n  id: Long!\n  amount: Float!\n}\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Mutation {\n  \"Feedback that customers send @pii=masked @classification=internal\"\n  Feedback(event: FeedbackInput!): FeedbackResultOutput!\n}\n\n\"Events of the legacy system\"\ntype MyEvents {\n  id: Long!\n  kind: String!\n  payload: JSON\n  created_at: DateTime!\n}\n\n\"New feedback @pii=masked @classification=internal\"\ntype NewFeedback {\n  customer_id: Long!\n  message: String!\n}\n\n\"Total amount of the orders per customer\"\ntype OrderTotals {\n  customer_id: Long!\n  total: Float!\n}\n\ntype Orders {\n  id: Long!\n  customer_id: Long!\n  amount: Float!\n  ordered_at: DateTime!\n}\n\ntype Products {\n  id: Long!\n  title: String!\n  price: Float\n}\n\ntype Query {\n  \"Customers per region @pii=raw @classification=confidential @gdpr\"\n  CustomerCounts(limit: Int = 10, offset: Int = 0): [CustomerCounts!]\n  \"Total amount of the orders per customer\"\n  OrderTotals(limit: Int = 10, offset: Int = 0): [OrderTotals!]\n  \"Clicks on the web site\"\n  Clicks(limit: Int = 10, offset: Int = 0): [Clicks!]\n  \"Orders of the customers\"\n  CustomerOrders(limit: Int = 10, offset: Int = 0): [Orders!]\n  \"Customer master data @pii=raw @classification=confidential\"\n  Customers(limit: Int = 10, offset: Int = 0): [Customers!]\n  \"Feedback that customers send @pii=masked @classification=internal\"\n  Feedback(limit: Int = 10, offset: Int = 0): [Feedback!]\n  \"Number of large orders\"\n  LargeOrderCount(limit: Int = 10, offset: Int = 0): [LargeOrderCount!]\n  \"Orders above the review limit\"\n  LargeOrders(limit: Int = 10, offset: Int = 0): [LargeOrders!]\n  \"Events of the legacy system\"\n  MyEvents(limit: Int = 10, offset: Int = 0): [MyEvents!]\n  Orders(limit: Int = 10, offset: Int = 0): [Orders!]\n  \"Products by price\"\n  ProductPrices(limit: Int = 10, offset: Int = 0): [Products!]\n  Products(limit: Int = 10, offset: Int = 0): [Products!]\n}\n\ntype Subscription {\n  \"New feedback @pii=masked @classification=internal\"\n  NewFeedback: NewFeedback\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n}\n\nenum _McpVisibility {\n  MODEL\n  APP\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String, appName: String, visibility: [_McpVisibility!]) on QUERY | MUTATION | FIELD_DEFINITION\n"
+        "schema" : "\"Clicks on the web site\"\ntype Clicks {\n  customer_id: Long!\n  ingested_at: DateTime!\n  url: String!\n  event_time: DateTime!\n}\n\n\"Customers per region @pii=raw @classification=confidential @gdpr\"\ntype CustomerCounts {\n  region: String!\n  num_customers: Long!\n}\n\n\"Customer master data @pii=raw @classification=confidential\"\ntype Customers {\n  id: Long!\n  \"Contact email @gdpr @classification=confidential\"\n  email: String\n  name: String!\n  age: Int\n  score: Float\n  balance: Float\n  active: Boolean\n  birthday: Date\n  address: Customers_addressOutput\n  phones: [Customers_phonesOutput]\n  attributes: JSON\n  region: String!\n  loaded_at: DateTime!\n  updated_at: DateTime!\n}\n\ntype Customers_addressOutput {\n  street: String\n  city: String!\n  zip: String\n}\n\ntype Customers_phonesOutput {\n  kind: String!\n  number: String\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"Feedback that customers send @pii=masked @classification=internal\"\ntype Feedback {\n  customer_id: Long!\n  message: String!\n  event_time: DateTime\n}\n\ninput FeedbackInput {\n  customer_id: Long!\n  message: String!\n}\n\ntype FeedbackResultOutput {\n  customer_id: Long!\n  message: String!\n  event_time: DateTime\n}\n\n\"A JSON scalar\"\nscalar JSON\n\n\"Number of large orders\"\ntype LargeOrderCount {\n  num_orders: Long!\n}\n\n\"Orders above the review limit\"\ntype LargeOrders {\n  id: Long!\n  amount: Float!\n}\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Mutation {\n  \"Feedback that customers send @pii=masked @classification=internal\"\n  Feedback(event: FeedbackInput!): FeedbackResultOutput!\n}\n\n\"Events of the legacy system\"\ntype MyEvents {\n  id: Long!\n  kind: String!\n  payload: JSON\n  created_at: DateTime!\n}\n\n\"New feedback @pii=masked @classification=internal\"\ntype NewFeedback {\n  customer_id: Long!\n  message: String!\n}\n\n\"Total amount of the orders per customer\"\ntype OrderTotals {\n  customer_id: Long!\n  total: Float!\n}\n\ntype Orders {\n  id: Long!\n  customer_id: Long!\n  amount: Float!\n  ordered_at: DateTime!\n}\n\ntype Products {\n  id: Long!\n  title: String!\n  price: Float\n}\n\ntype Query {\n  \"Customers per region @pii=raw @classification=confidential @gdpr\"\n  CustomerCounts(limit: Int = 10, offset: Int = 0): [CustomerCounts!]\n  \"Total amount of the orders per customer\"\n  OrderTotals(limit: Int = 10, offset: Int = 0): [OrderTotals!]\n  \"Clicks on the web site\"\n  Clicks(limit: Int = 10, offset: Int = 0): [Clicks!]\n  \"Orders of the customers\"\n  CustomerOrders(limit: Int = 10, offset: Int = 0): [Orders!]\n  \"Customer master data @pii=raw @classification=confidential\"\n  Customers(limit: Int = 10, offset: Int = 0): [Customers!]\n  \"Feedback that customers send @pii=masked @classification=internal\"\n  Feedback(limit: Int = 10, offset: Int = 0): [Feedback!]\n  \"Number of large orders\"\n  LargeOrderCount(limit: Int = 10, offset: Int = 0): [LargeOrderCount!]\n  \"Orders above the review limit\"\n  LargeOrders(limit: Int = 10, offset: Int = 0): [LargeOrders!]\n  \"Events of the legacy system\"\n  MyEvents(limit: Int = 10, offset: Int = 0): [MyEvents!]\n  Orders(limit: Int = 10, offset: Int = 0): [Orders!]\n  \"Products by price\"\n  ProductPrices(limit: Int = 10, offset: Int = 0): [Products!]\n  Products(limit: Int = 10, offset: Int = 0): [Products!]\n}\n\ntype Subscription {\n  \"New feedback @pii=masked @classification=internal\"\n  NewFeedback: NewFeedback\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n}\n\nenum _McpVisibility {\n  MODEL\n  APP\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String, appName: String, visibility: [_McpVisibility!]) on QUERY | MUTATION | FIELD_DEFINITION\n"
       }
     }
   }
@@ -2059,14 +2059,12 @@ schema:
     logicalType: string
     physicalType: STRING
     required: true
-    classification: confidential
   - name: num_customers
     logicalType: integer
     logicalTypeOptions:
       format: i64
     physicalType: BIGINT
     required: true
-    classification: confidential
 - name: CustomerOrders
   physicalName: CustomerOrders
   physicalType: table
@@ -2136,10 +2134,8 @@ schema:
   - name: id
     logicalType: integer
     required: true
-    classification: confidential
   - name: email
     logicalType: string
-    classification: confidential
 - name: EventKinds
   physicalType: topic
   logicalType: object
@@ -2213,18 +2209,15 @@ schema:
     required: true
     primaryKey: true
     primaryKeyPosition: 1
-    classification: confidential
   - name: updated_at
     logicalType: timestamp
     required: true
     primaryKey: true
     primaryKeyPosition: 2
-    classification: confidential
   - name: name
     logicalType: string
     required: true
     description: Full name
-    classification: confidential
     logicalTypeOptions:
       maxLength: 255
   - name: email
@@ -2237,22 +2230,16 @@ schema:
     - jane@example.com
   - name: age
     logicalType: integer
-    classification: confidential
   - name: score
     logicalType: number
-    classification: confidential
   - name: balance
     logicalType: number
-    classification: confidential
   - name: active
     logicalType: boolean
-    classification: confidential
   - name: birthday
     logicalType: date
-    classification: confidential
   - name: address
     logicalType: object
-    classification: confidential
     properties:
     - name: city
       logicalType: string
@@ -2263,7 +2250,6 @@ schema:
       logicalType: string
   - name: phones
     logicalType: array
-    classification: confidential
     items:
       logicalType: object
       properties:
@@ -2274,7 +2260,6 @@ schema:
         logicalType: string
   - name: attributes
     logicalType: map
-    classification: confidential
     map:
       key:
         logicalType: string
@@ -2285,7 +2270,6 @@ schema:
     required: true
     partitioned: true
     partitionKeyPosition: 1
-    classification: confidential
 - name: Events
   properties:
   - name: id
@@ -2312,11 +2296,9 @@ schema:
   - name: customer_id
     logicalType: integer
     required: true
-    classification: internal
   - name: message
     logicalType: string
     required: true
-    classification: internal
 - name: LargeOrders
   physicalName: file:///tmp/contracts-compile/large-orders
   physicalType: file

@@ -176,7 +176,8 @@ class OdcsGeneratorTest {
             OdcsProperty::tags,
             OdcsProperty::classification)
         .containsExactly(
-            tuple("id", null, List.of(), "secret"),
+            // The classification of the table is a tag of the schema object, not of each property
+            tuple("id", null, List.of(), null),
             tuple(
                 "email",
                 "The contact email @gdpr @classification=secret",

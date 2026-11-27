@@ -6,7 +6,8 @@ version: 2.4.0
 status: active
 schema:
   # The name, the order of the properties and the fields that the compiler does not compare
-  # differ. The tag gdpr is on the column that it concerns
+  # differ. The tag gdpr and the classification of email are on the column that declares them.
+  # The classification of the table is a tag of the schema object
   - name: CUSTOMERS
     physicalName: crm.customers
     description: The customers as the data catalog describes them
@@ -21,18 +22,15 @@ schema:
         required: true
         primaryKey: true
         primaryKeyPosition: 1
-        classification: confidential
       - name: updated_at
         logicalType: timestamp
         required: true
         primaryKey: true
         primaryKeyPosition: 2
-        classification: confidential
       - name: name
         logicalType: string
         required: true
         description: Full name
-        classification: confidential
         logicalTypeOptions:
           maxLength: 255
       - name: email
@@ -42,22 +40,16 @@ schema:
         examples: [jane@example.com]
       - name: age
         logicalType: integer
-        classification: confidential
       - name: score
         logicalType: number
-        classification: confidential
       - name: balance
         logicalType: number
-        classification: confidential
       - name: active
         logicalType: boolean
-        classification: confidential
       - name: birthday
         logicalType: date
-        classification: confidential
       - name: address
         logicalType: object
-        classification: confidential
         properties:
           - name: city
             logicalType: string
@@ -68,7 +60,6 @@ schema:
             logicalType: string
       - name: phones
         logicalType: array
-        classification: confidential
         items:
           logicalType: object
           properties:
@@ -79,7 +70,6 @@ schema:
               logicalType: string
       - name: attributes
         logicalType: map
-        classification: confidential
         map:
           key:
             logicalType: string
@@ -90,7 +80,6 @@ schema:
         required: true
         partitioned: true
         partitionKeyPosition: 1
-        classification: confidential
   # The contract leaves out the watermark column, which the table reads from metadata
   - name: Clicks
     properties:

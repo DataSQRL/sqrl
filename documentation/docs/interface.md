@@ -80,11 +80,9 @@ schema:
     required: true
     primaryKey: true
     primaryKeyPosition: 1
-    classification: internal
   - name: price
     logicalType: number
     physicalType: "DECIMAL(10, 2)"
-    classification: internal
 ```
 
 * The properties are the **physical columns** of the table. Metadata columns and computed columns are not part of a contract.
@@ -126,7 +124,7 @@ When [tags](configuration#tags-compilertags) are configured, a contract lists th
 
 * The tags of a schema object are the tags of the table.
 * The tags of a property are the tags in the documentation of that column, except the classification.
-* The tag named `classification` sets the ODCS `classification` of each property: the value that the column declares, and otherwise the value of the table. Tags count toward the whole table, so a table with one `confidential` column is `confidential`.
+* The tag named `classification` is the ODCS `classification` of a property when its column declares it. The classification of the table is the `classification=<value>` tag of the schema object, because ODCS has the field only on properties. Tags count toward the whole table, so a table with one `confidential` column is `confidential`.
 
 ### Providing Contracts
 
@@ -171,7 +169,7 @@ The compiler compares a provided schema object with the `CREATE TABLE` on the fi
 | `required`                    | Equal at every level. A missing `required` is `false`.                                                                                                                                              |
 | `primaryKey`, `partitioned`   | Optional. A key that the contract declares must be the key of the table: the same columns, and the same order if the contract gives the position of each key column.                               |
 | `tags`                        | Compared for each column and for the table. The tags of a property, including those of its nested properties, must be the tags that the column declares in its documentation. The tags of the schema object and of its properties together must be the tags of the table, so a tag from the doc string of the table goes on the schema object. Only tags that are defined in `compiler.tags` are compared. Other tags are labels of the catalog and are ignored. |
-| `classification`              | The `classification` of a property is the tag of that name. A property can leave it out. A classification that the contract gives must be the one of the column: the value that the column declares, and otherwise the value of the table. |
+| `classification`              | The `classification` of a property is the tag of that name and follows the rule for tags: a property has it exactly when its column declares it. The classification that the table declares is the `classification=<value>` tag of the schema object. |
 | Everything else               | Ignored: `physicalType`, `physicalName`, descriptions, `logicalTypeOptions`, `quality`, `examples`, `customProperties`, and the top-level fields of the contract.                                   |
 
 Further rules:

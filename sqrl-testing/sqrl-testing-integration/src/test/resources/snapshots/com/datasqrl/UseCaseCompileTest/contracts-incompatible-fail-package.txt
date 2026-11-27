@@ -34,44 +34,51 @@ in script:crm.odcs.yaml [13:9]:
 --------^
 
 [FATAL] required is true in the contract, but column [email] is nullable
-in script:crm.odcs.yaml [21:19]:
+in script:crm.odcs.yaml [20:19]:
       - name: email
         logicalType: string
         required: true
 ------------------^
 
 [FATAL] classification is [public] in the contract, but column [email] of table [Customers] has [confidential]
-in script:crm.odcs.yaml [22:25]:
+in script:crm.odcs.yaml [21:25]:
         logicalType: string
         required: true
         classification: public
 ------------------------^
 
 [FATAL] Column [age] has logicalType [string] in the contract, but the table has [integer]
-in script:crm.odcs.yaml [26:22]:
-      # another type
+in script:crm.odcs.yaml [25:22]:
+      # another type, and a classification that the column does not declare
       - name: age
         logicalType: string
 ---------------------^
 
+[FATAL] Property [age] declares classification [confidential], but column [age] of table [Customers] does not declare it. Declare it in the comment of the column, or list the classification of the table as a tag on the schema object
+in script:crm.odcs.yaml [26:25]:
+      - name: age
+        logicalType: string
+        classification: confidential
+------------------------^
+
 [FATAL] Field [address.city] has logicalType [integer] in the contract, but the table has [string]
-in script:crm.odcs.yaml [34:26]:
+in script:crm.odcs.yaml [32:26]:
         properties:
           - name: city
             logicalType: integer
 -------------------------^
 
 [FATAL] Field [phones[]] has logicalType [integer] in the contract, but the table has [string]
-in script:crm.odcs.yaml [43:24]:
-        classification: confidential
+in script:crm.odcs.yaml [40:24]:
+        logicalType: array
         items:
           logicalType: integer
 -----------------------^
 
 [FATAL] Property [region] declares tag [pii=masked], but column [region] of table [Customers] does not declare it and the table has [pii=raw]. Declare it in the comment of the column, or list the tag of the table on the schema object
-in script:crm.odcs.yaml [54:16]:
+in script:crm.odcs.yaml [50:16]:
+        logicalType: string
         required: true
-        classification: confidential
         tags: [pii=masked]
 ---------------^
 
@@ -83,22 +90,22 @@ in script:crm.odcs.yaml [9:5]:
 ----^
 
 [FATAL] Contract property [loaded_at] is a computed column of table [Customers]. A contract contains physical columns only
-in script:crm.odcs.yaml [45:9]:
+in script:crm.odcs.yaml [42:9]:
           logicalType: integer
       # a computed column and a metadata column
       - name: loaded_at
 --------^
 
 [FATAL] Contract property [source_file] is a metadata column of table [Customers]. A contract contains physical columns only
-in script:crm.odcs.yaml [47:9]:
+in script:crm.odcs.yaml [44:9]:
       - name: loaded_at
         logicalType: timestamp
       - name: source_file
 --------^
 
 [FATAL] Contract property [nickname] does not match a column of table [Customers]; columns are: id, email, name, age, address, phones, region, updated_at
-in script:crm.odcs.yaml [60:9]:
-        classification: confidential
+in script:crm.odcs.yaml [55:9]:
+        required: true
       # not a column of the table
       - name: nickname
 --------^
@@ -117,7 +124,7 @@ in script:crm.odcs.yaml [16:22]:
         partitioned: true
 ---------------------^
 
-[FATAL] Table [Customers] differs from its data contract in 13 places
+[FATAL] Table [Customers] differs from its data contract in 14 places
 in script:crm.odcs.yaml [9:5]:
   # The column name is missing, and so is the tag pii of the table: the property region lists it
   # instead, see below. The tag gdpr is on the property of its column
@@ -131,21 +138,21 @@ declare. Change the contract or the table so that they match. The compiler write
 that it generates for each table to `build/deploy/contracts`.
 
 [FATAL] Column [id] has logicalType [string] in the contract, but the table has [integer]
-in script:crm.odcs.yaml [67:22]:
+in script:crm.odcs.yaml [62:22]:
     properties:
       - name: id
         logicalType: string
 ---------------------^
 
 [FATAL] The contract declares tag [gdpr] that table [_Leads] does not have
-in script:crm.odcs.yaml [64:12]:
+in script:crm.odcs.yaml [59:12]:
   # another type, and a tag that the table does not have
   - name: _Leads
     tags: [gdpr]
 -----------^
 
 [FATAL] Table [_Leads] differs from its data contract in 2 places
-in script:crm.odcs.yaml [63:5]:
+in script:crm.odcs.yaml [58:5]:
         logicalType: string
   # another type, and a tag that the table does not have
   - name: _Leads
