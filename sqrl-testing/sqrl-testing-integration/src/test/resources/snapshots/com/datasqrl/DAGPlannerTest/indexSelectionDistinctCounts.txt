@@ -432,6 +432,25 @@ WITH (
 Table CustomersUnique_9 (postgres):
  - primary key: __pk_hash (generated hash key)
  - index CustomersUnique_9_hash_c0 (hash): email
+ - index CustomersUnique_9_hash_c1 (hash): country
+
+=== CustomersUniqueByCountry
+ID:          default_catalog.default_database.CustomersUniqueByCountry
+Type:        query
+Stage:       postgres
+--- definition ---
+Inputs:
+ - default_catalog.default_database.CustomersUnique
+Annotations:
+ - parameters: country
+ - base-table: CustomersUnique
+Plan:
+LogicalProject(email=[$0], country=[$1], ts=[$2])
+  LogicalFilter(condition=[=($1, ?0)])
+    LogicalTableScan(table=[[default_catalog, default_database, CustomersUnique]])
+SQL:
+CREATE VIEW `CustomersUniqueByCountry` AS  SELECT * FROM CustomersUnique
+  WHERE country = ?       ;
 
 === CustomersUniqueByEmail
 ID:          default_catalog.default_database.CustomersUniqueByEmail
@@ -1480,6 +1499,11 @@ END
       "name" : "CustomersUnique_9_hash_c0",
       "type" : "INDEX",
       "sql" : "CREATE INDEX IF NOT EXISTS \"CustomersUnique_9_hash_c0\" ON \"CustomersUnique_9\" USING hash (\"email\")"
+    },
+    {
+      "name" : "CustomersUnique_9_hash_c1",
+      "type" : "INDEX",
+      "sql" : "CREATE INDEX IF NOT EXISTS \"CustomersUnique_9_hash_c1\" ON \"CustomersUnique_9\" USING hash (\"country\")"
     }
   ],
   "standaloneExtensionStatements" : [ ]
@@ -2079,6 +2103,41 @@ END
                   "path" : "email",
                   "sqlType" : "VARCHAR"
                 },
+                {
+                  "type" : "arg",
+                  "path" : "country",
+                  "sqlType" : "VARCHAR"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "CustomersUniqueByCountry",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "country"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"email\", \"country\", \"ts\"\n  FROM \"CustomersUnique_9\") AS \"t\"\nWHERE \"country\" = $1",
+              "parameters" : [
                 {
                   "type" : "arg",
                   "path" : "country",
@@ -3062,6 +3121,55 @@ END
         },
         {
           "function" : {
+            "name" : "GetCustomersUniqueByCountry",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "country" : {
+                  "type" : "string"
+                },
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [
+                "country"
+              ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query CustomersUniqueByCountry($country: String!, $limit: Int = 10, $offset: Int = 0) {\nCustomersUniqueByCountry(country: $country, limit: $limit, offset: $offset) {\nemail\ncountry\nts\n}\n\n}",
+            "queryName" : "CustomersUniqueByCountry",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/CustomersUniqueByCountry{?country,offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "email" : {
+                  "type" : "string"
+                },
+                "country" : {
+                  "type" : "string"
+                },
+                "ts" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
             "name" : "GetCustomersUniqueByEmail",
             "parameters" : {
               "type" : "object",
@@ -3169,7 +3277,7 @@ END
       ],
       "schema" : {
         "type" : "string",
-        "schema" : "type AddressesFewCities {\n  country: String!\n  city: String!\n  ts: DateTime!\n}\n\ntype AddressesPair {\n  country: String!\n  city: String!\n  zip: String!\n  ts: DateTime!\n}\n\ntype AddressesPartial {\n  country: String!\n  city: String!\n  zip: String!\n  ts: DateTime!\n}\n\ntype CustomerEvents {\n  email: String!\n  country: String!\n  ts: DateTime!\n}\n\ntype CustomerTotals {\n  country: String!\n  email: String!\n  total: Long!\n}\n\ntype CustomersFewValues {\n  email: String!\n  gender: String!\n  ts: DateTime!\n}\n\ntype CustomersOnlyFewValues {\n  email: String!\n  gender: String!\n  ts: DateTime!\n}\n\ntype CustomersPlain {\n  email: String!\n  country: String!\n  ts: DateTime!\n}\n\ntype CustomersUnique {\n  email: String!\n  country: String!\n  ts: DateTime!\n}\n\ntype CustomersUniqueRange {\n  email: String!\n  age: Int!\n  ts: DateTime!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Query {\n  AddressesFewCities(limit: Int = 10, offset: Int = 0): [AddressesFewCities!]\n  AddressesPair(limit: Int = 10, offset: Int = 0): [AddressesPair!]\n  AddressesPartial(limit: Int = 10, offset: Int = 0): [AddressesPartial!]\n  CustomerEvents(limit: Int = 10, offset: Int = 0): [CustomerEvents!]\n  CustomerTotals(limit: Int = 10, offset: Int = 0): [CustomerTotals!]\n  CustomersFewValues(limit: Int = 10, offset: Int = 0): [CustomersFewValues!]\n  CustomersOnlyFewValues(limit: Int = 10, offset: Int = 0): [CustomersOnlyFewValues!]\n  CustomersPlain(limit: Int = 10, offset: Int = 0): [CustomersPlain!]\n  CustomersUnique(limit: Int = 10, offset: Int = 0): [CustomersUnique!]\n  CustomersUniqueRange(limit: Int = 10, offset: Int = 0): [CustomersUniqueRange!]\n  AddressesFewCitiesByCity(country: String!, city: String!, limit: Int = 10, offset: Int = 0): [AddressesFewCities!]\n  AddressesPairByCity(country: String!, city: String!, limit: Int = 10, offset: Int = 0): [AddressesPair!]\n  AddressesPairByZip(country: String!, city: String!, zip: String!, limit: Int = 10, offset: Int = 0): [AddressesPair!]\n  AddressesPartialByZip(country: String!, zip: String!, limit: Int = 10, offset: Int = 0): [AddressesPartial!]\n  CustomerTotalsByEmail(country: String!, email: String!, limit: Int = 10, offset: Int = 0): [CustomerTotals!]\n  CustomersFewValuesByEmail(email: String!, gender: String!, limit: Int = 10, offset: Int = 0): [CustomersFewValues!]\n  CustomersOnlyFewValuesByGender(gender: String!, limit: Int = 10, offset: Int = 0): [CustomersOnlyFewValues!]\n  CustomersPlainByEmail(email: String!, country: String!, limit: Int = 10, offset: Int = 0): [CustomersPlain!]\n  CustomersUniqueByEmail(email: String!, country: String!, limit: Int = 10, offset: Int = 0): [CustomersUnique!]\n  CustomersUniqueRangeByEmail(email: String!, minAge: Int!, limit: Int = 10, offset: Int = 0): [CustomersUniqueRange!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n}\n\nenum _McpVisibility {\n  MODEL\n  APP\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String, appName: String, visibility: [_McpVisibility!]) on QUERY | MUTATION | FIELD_DEFINITION\n"
+        "schema" : "type AddressesFewCities {\n  country: String!\n  city: String!\n  ts: DateTime!\n}\n\ntype AddressesPair {\n  country: String!\n  city: String!\n  zip: String!\n  ts: DateTime!\n}\n\ntype AddressesPartial {\n  country: String!\n  city: String!\n  zip: String!\n  ts: DateTime!\n}\n\ntype CustomerEvents {\n  email: String!\n  country: String!\n  ts: DateTime!\n}\n\ntype CustomerTotals {\n  country: String!\n  email: String!\n  total: Long!\n}\n\ntype CustomersFewValues {\n  email: String!\n  gender: String!\n  ts: DateTime!\n}\n\ntype CustomersOnlyFewValues {\n  email: String!\n  gender: String!\n  ts: DateTime!\n}\n\ntype CustomersPlain {\n  email: String!\n  country: String!\n  ts: DateTime!\n}\n\ntype CustomersUnique {\n  email: String!\n  country: String!\n  ts: DateTime!\n}\n\ntype CustomersUniqueRange {\n  email: String!\n  age: Int!\n  ts: DateTime!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Query {\n  AddressesFewCities(limit: Int = 10, offset: Int = 0): [AddressesFewCities!]\n  AddressesPair(limit: Int = 10, offset: Int = 0): [AddressesPair!]\n  AddressesPartial(limit: Int = 10, offset: Int = 0): [AddressesPartial!]\n  CustomerEvents(limit: Int = 10, offset: Int = 0): [CustomerEvents!]\n  CustomerTotals(limit: Int = 10, offset: Int = 0): [CustomerTotals!]\n  CustomersFewValues(limit: Int = 10, offset: Int = 0): [CustomersFewValues!]\n  CustomersOnlyFewValues(limit: Int = 10, offset: Int = 0): [CustomersOnlyFewValues!]\n  CustomersPlain(limit: Int = 10, offset: Int = 0): [CustomersPlain!]\n  CustomersUnique(limit: Int = 10, offset: Int = 0): [CustomersUnique!]\n  CustomersUniqueRange(limit: Int = 10, offset: Int = 0): [CustomersUniqueRange!]\n  AddressesFewCitiesByCity(country: String!, city: String!, limit: Int = 10, offset: Int = 0): [AddressesFewCities!]\n  AddressesPairByCity(country: String!, city: String!, limit: Int = 10, offset: Int = 0): [AddressesPair!]\n  AddressesPairByZip(country: String!, city: String!, zip: String!, limit: Int = 10, offset: Int = 0): [AddressesPair!]\n  AddressesPartialByZip(country: String!, zip: String!, limit: Int = 10, offset: Int = 0): [AddressesPartial!]\n  CustomerTotalsByEmail(country: String!, email: String!, limit: Int = 10, offset: Int = 0): [CustomerTotals!]\n  CustomersFewValuesByEmail(email: String!, gender: String!, limit: Int = 10, offset: Int = 0): [CustomersFewValues!]\n  CustomersOnlyFewValuesByGender(gender: String!, limit: Int = 10, offset: Int = 0): [CustomersOnlyFewValues!]\n  CustomersPlainByEmail(email: String!, country: String!, limit: Int = 10, offset: Int = 0): [CustomersPlain!]\n  CustomersUniqueByCountry(country: String!, limit: Int = 10, offset: Int = 0): [CustomersUnique!]\n  CustomersUniqueByEmail(email: String!, country: String!, limit: Int = 10, offset: Int = 0): [CustomersUnique!]\n  CustomersUniqueRangeByEmail(email: String!, minAge: Int!, limit: Int = 10, offset: Int = 0): [CustomersUniqueRange!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n}\n\nenum _McpVisibility {\n  MODEL\n  APP\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String, appName: String, visibility: [_McpVisibility!]) on QUERY | MUTATION | FIELD_DEFINITION\n"
       }
     }
   }

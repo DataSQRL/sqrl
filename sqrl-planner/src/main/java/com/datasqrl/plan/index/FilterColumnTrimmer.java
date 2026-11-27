@@ -32,7 +32,8 @@ import lombok.AllArgsConstructor;
 /**
  * Removes the filter columns of a {@link QueryIndexSummary} that add too little to an index, before
  * {@link IndexSelector} generates the index candidates. It reads the distinct counts of the {@code
- * row_count} hints of the table, so a column without such a hint always stays.
+ * row_count} hints of the table, so a column without such a hint stays, unless a unique column set
+ * makes it unnecessary.
  */
 @AllArgsConstructor
 class FilterColumnTrimmer {

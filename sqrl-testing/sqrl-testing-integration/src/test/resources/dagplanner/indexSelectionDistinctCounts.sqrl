@@ -9,12 +9,15 @@ CREATE TABLE CustomersPlain (email STRING NOT NULL, country STRING NOT NULL, ts 
 CustomersPlainByEmail(email STRING NOT NULL, country STRING NOT NULL) := SELECT * FROM CustomersPlain
   WHERE email = :email AND country = :country;
 
-/* A unique column: an equality on email matches one row, so country adds nothing, and
-   CustomersUnique gets a hash index on email alone. */
+/* A unique column: an equality on email matches one row, so country adds nothing to the index of
+   CustomersUniqueByEmail. CustomersUniqueByCountry has no equality on email, so it keeps country,
+   and CustomersUnique gets a hash index on email and a hash index on country. */
 /*+row_count(1e6), row_count(email, 1e6) */
 CREATE TABLE CustomersUnique (email STRING NOT NULL, country STRING NOT NULL, ts TIMESTAMP_LTZ(3) NOT NULL, WATERMARK FOR ts AS ts) WITH ('connector' = 'datagen', 'number-of-rows' = '10');
 CustomersUniqueByEmail(email STRING NOT NULL, country STRING NOT NULL) := SELECT * FROM CustomersUnique
   WHERE email = :email AND country = :country;
+CustomersUniqueByCountry(country STRING NOT NULL) := SELECT * FROM CustomersUnique
+  WHERE country = :country;
 
 /* A distinct count of a column pair applies to an equality on both columns: the pair matches one
    row, so zip adds nothing. The index on country and city serves both queries, and AddressesPair

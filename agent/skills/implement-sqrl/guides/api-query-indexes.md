@@ -8,8 +8,7 @@ The compiler selects the indexes for most served queries. Fix only the queries t
 
 1. Find the SQRL definition of each query to fix:
    - A slow-query log names a query by its API field. A top-level path, such as `/OrdersByCustomer`, is the name of the SQRL table or table function. A nested path, such as `/Customers[0]/orders`, names the relationship `orders` of `Customers`. A client alias replaces the field name in the path.
-   - The full-table-scan warning names the table and the filter columns that no index serves. Fix the served queries of that table that filter on these columns.
-   - For every other index warning, read "Index warnings" first.
+   - For an index warning, including the filter patterns that it lists with a full table scan, read "Index warnings" first.
 2. Check the indexes of the query (see Checking the indexes).
 3. If no index fits a filter, fix the query in this order. Stop at the first step that gives the filter an index:
    1. Rewrite the query into the form in implement-sqrl `SKILL.md`, "Filters in API queries".
@@ -53,7 +52,7 @@ The compiler leaves an equality column out of the indexes when a distinct count 
 
 A distinct count of several columns, such as `row_count(country, city, 2e3)`, applies only to a filter with an equality on all of those columns. For a filter on `country` alone, also write `row_count(country, 200)`.
 
-These columns always stay in the indexes: a column without a distinct count, a column with `<`, `<=`, `>` or `>=`, and the leading primary key columns that the filter has an equality on.
+A column without a distinct count and a column with `<`, `<=`, `>` or `>=` stay in the indexes, unless a unique column set makes them unnecessary. The leading primary key columns that the filter has an equality on always stay.
 
 When a served query must have an index on a column that the compiler leaves out, add an `index` hint (see Index hints).
 
@@ -61,7 +60,7 @@ When a served query must have an index on a column that the compiler leaves out,
 
 The compiler warns when the filter patterns of a table need more indexes than it creates. Each of these warnings is about query speed only: the queries return the same rows with any set of indexes.
 
-- `Created the maximum of 8 indexes for table ...`: the table needs more indexes than `max-indexes`. The warning lists the indexes that the limit omits, in the form of the `index` hint, such as `index(HASH, currency)`, and the filter patterns that are left with a full table scan.
+- `Created the maximum of 8 indexes for table ...`: the table needs more indexes than `max-indexes`. The warning lists the indexes that the limit omits, in the form of the `index` hint, such as ``index(HASH, `currency`)``, and the filter patterns that are left with a full table scan.
 - `... need 12 indexes which exceeds the maximum of 8. Created a single-column index for each filtered column instead ...`: the table has one index for each filtered column and no composite index. The database combines these indexes at query time.
 - `Table ... is queried with 60 distinct filter patterns which exceeds the maximum of 50`: the same result, for a table with very many filter patterns.
 

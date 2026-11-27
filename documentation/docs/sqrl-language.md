@@ -483,9 +483,9 @@ A distinct count also tells the compiler which equality columns narrow the rows 
 - Every column beyond a unique column set. When the distinct count of some columns is at least the row count of the table, an equality on them matches at most one row, and the query needs no other column in the index, not even one with `<`, `<=`, `>` or `>=`. This takes both hints, the row count of the table and the distinct count of the columns: with `row_count(1e6), row_count(email, 1e6)`, the filter `email = :email AND age > :minAge` gets an index on `email` alone. A row count that the compiler estimates itself, without a `row_count` hint, does not count.
 - A column that multiplies the distinct values of the other equality columns by less than 20. With `row_count(country, 200), row_count(country, city, 2e3)`, `city` adds a factor of 10, so the filter `country = :country AND city = :city` gets an index on `country` alone.
 
-The limit of 20 is the [`min-distinct-count`](configuration-engine/postgres#index-selection) of the `postgres` engine. These columns always stay in the indexes:
+The limit of 20 is the [`min-distinct-count`](configuration-engine/postgres#index-selection) of the `postgres` engine. These columns stay in the indexes:
 
-- A column without a distinct count.
+- A column without a distinct count, unless a unique column set makes it unnecessary.
 - A column with `<`, `<=`, `>` or `>=`, or the sort column of a query with a `LIMIT`, unless a unique column set makes it unnecessary.
 - The leading columns of the primary key that the filter has an equality on, because the primary key index serves the query only with them.
 

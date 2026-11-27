@@ -81,7 +81,7 @@ The compiler first selects the indexes that the filter patterns of a table need,
 
 ```text
 Created the maximum of 8 indexes for table `Orders_1`. Its query filter patterns need 9 indexes.
-The limit omits these indexes: index(HASH, currency). These query filter patterns have no supporting index and require a full table scan: (currency). 
+The limit omits these indexes: index(HASH, `currency`). These query filter patterns have no supporting index and require a full table scan: (currency). 
 The query results are not affected.
 See the indexes of the table in `pipeline_explain.txt`. To select different indexes, either specify them explicitly with an `index` hint or reduce the number of distinct filter patterns on this table.
 ```

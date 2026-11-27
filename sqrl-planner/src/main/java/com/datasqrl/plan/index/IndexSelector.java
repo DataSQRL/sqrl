@@ -20,6 +20,7 @@ import com.datasqrl.engine.database.relational.CreateTableJdbcStatement;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.plan.index.QueryIndexSummary.IndexableFunctionCall;
 import com.datasqrl.planner.Sqrl2FlinkSQLTranslator;
+import com.datasqrl.planner.analyzer.ColumnReference;
 import com.datasqrl.planner.analyzer.TableAnalysis;
 import com.datasqrl.planner.hint.IndexHint;
 import com.datasqrl.util.ArrayUtil;
@@ -381,9 +382,19 @@ public class IndexSelector {
     errors.warn("%s %s", warning, INDEX_REMEDIATION);
   }
 
-  /** The form of the {@code index} hint that creates the given index. */
-  private static String toIndexHint(IndexDefinition index) {
-    return "index(%s, %s)".formatted(index.getType(), String.join(", ", index.getColumnNames()));
+  /**
+   * The form of the {@code index} hint that creates the given index. Each column name is in
+   * backticks, so the hint compiles for a name with whitespace or a name that differs from another
+   * column only in case.
+   */
+  @VisibleForTesting
+  static String toIndexHint(IndexDefinition index) {
+    return "index(%s, %s)"
+        .formatted(
+            index.getType(),
+            index.getColumnNames().stream()
+                .map(ColumnReference::quote)
+                .collect(Collectors.joining(", ")));
   }
 
   /**

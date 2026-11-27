@@ -96,6 +96,20 @@ class ColumnReferenceTest {
     assertThat(new ColumnReference("it`s", true)).hasToString("`it``s`");
   }
 
+  @Test
+  void givenName_whenQuote_thenWritesItInBackticksWithEachBacktickDoubled() {
+    assertThat(ColumnReference.quote("CNT")).isEqualTo("`CNT`");
+    assertThat(ColumnReference.quote("event time")).isEqualTo("`event time`");
+    assertThat(ColumnReference.quote("it`s")).isEqualTo("`it``s`");
+  }
+
+  @Test
+  void givenQuotedName_whenParse_thenMatchesOnlyTheColumnWithThatName() {
+    var reference = ColumnReference.parse(ColumnReference.quote("CNT"));
+
+    assertThat(names(reference)).containsExactly("CNT");
+  }
+
   private static List<String> names(ColumnReference reference) {
     return reference.matchingColumns(ROW_TYPE).stream().map(RelDataTypeField::getName).toList();
   }

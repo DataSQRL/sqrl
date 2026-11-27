@@ -27,12 +27,16 @@ import com.datasqrl.engine.database.relational.CreateTableJdbcStatement;
 import com.datasqrl.engine.database.relational.IndexSelectorConfigByDialect;
 import com.datasqrl.engine.database.relational.JdbcEngineCreateTable;
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.error.ErrorLocation.FileLocation;
 import com.datasqrl.error.ErrorMessage;
 import com.datasqrl.plan.index.IndexSelector.NamedTable;
 import com.datasqrl.plan.table.TableStatistic;
 import com.datasqrl.plan.util.PrimaryKeyMap;
 import com.datasqrl.planner.Sqrl2FlinkSQLTranslator;
 import com.datasqrl.planner.analyzer.TableAnalysis;
+import com.datasqrl.planner.hint.IndexHint;
+import com.datasqrl.planner.parser.ParsedObject;
+import com.datasqrl.planner.parser.SqrlHint;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -460,6 +464,24 @@ class IndexSelectorTest {
       assertThat(indexesForEqualityOn(customers, EMAIL, COUNTRY)).containsExactly("HASH[email]");
     }
 
+    /**
+     * The unique email column leaves the country column out of the index of the query that filters
+     * on both, but a query that filters on the country column alone still gets an index on it.
+     */
+    @Test
+    void givenUniqueColumnAndQueryOnOtherColumnAlone_whenOptimizeIndexes_thenIndexesEachColumn() {
+      var customers =
+          customersWith(
+              TableStatistic.fromHint(1e6).withDistinctCounts(Map.of(Set.of(EMAIL), 1e6)));
+      var queries =
+          List.of(
+              new QueryIndexSummary(customers, Set.of(EMAIL, COUNTRY), Set.of(), Set.of(), 1.0),
+              new QueryIndexSummary(customers, Set.of(COUNTRY), Set.of(), Set.of(), 1.0));
+
+      assertThat(selectIndexes(postgres(8, 50), queries))
+          .containsExactlyInAnyOrder("HASH[email]", "HASH[country]");
+    }
+
     @Test
     void givenUniqueColumnCombination_whenOptimizeIndexes_thenIndexesOnlyItsColumns() {
       var customers =
@@ -540,6 +562,64 @@ class IndexSelectorTest {
       var query = new QueryIndexSummary(table, Set.of(equalityColumns), Set.of(), Set.of(), 1.0);
 
       return selectIndexes(postgres(8, 50), List.of(query));
+    }
+  }
+
+  /**
+   * The index limit warning lists each omitted index in the form of the {@code index} hint, and the
+   * agent copies that hint as it is. So the hint must compile and match exactly the index columns.
+   */
+  @Nested
+  class IndexHintOfOmittedIndex {
+
+    private final FlinkTypeFactory typeFactory =
+        new FlinkTypeFactory(getClass().getClassLoader(), FlinkTypeSystem.INSTANCE);
+    private final RelDataType bigint = typeFactory.createSqlType(SqlTypeName.BIGINT);
+
+    @Test
+    void givenColumnNamesThatDifferOnlyInCase_whenToIndexHint_thenHintMatchesTheExactColumns() {
+      var rowType =
+          typeFactory.builder().add("cnt", bigint).add("CNT", bigint).add("city", bigint).build();
+      var index =
+          new IndexDefinition(
+              "Orders", List.of(1, 2), rowType.getFieldNames(), -1, IndexType.BTREE);
+
+      var indexHint = IndexSelector.toIndexHint(index);
+
+      assertThat(indexHint).isEqualTo("index(BTREE, `CNT`, `city`)");
+      assertThat(columnsThatHintMatches(indexHint, rowType)).containsExactly("CNT", "city");
+    }
+
+    @Test
+    void givenColumnNameWithWhitespace_whenToIndexHint_thenHintMatchesTheColumn() {
+      var rowType = typeFactory.builder().add("event time", bigint).build();
+      var index =
+          new IndexDefinition("Orders", List.of(0), rowType.getFieldNames(), -1, IndexType.HASH);
+
+      var indexHint = IndexSelector.toIndexHint(index);
+
+      assertThat(indexHint).isEqualTo("index(HASH, `event time`)");
+      assertThat(columnsThatHintMatches(indexHint, rowType)).containsExactly("event time");
+    }
+
+    @Test
+    void givenColumnNameWithBacktick_whenToIndexHint_thenHintMatchesTheColumn() {
+      var rowType = typeFactory.builder().add("it`s", bigint).build();
+      var index =
+          new IndexDefinition("Orders", List.of(0), rowType.getFieldNames(), -1, IndexType.HASH);
+
+      var indexHint = IndexSelector.toIndexHint(index);
+
+      assertThat(indexHint).isEqualTo("index(HASH, `it``s`)");
+      assertThat(columnsThatHintMatches(indexHint, rowType)).containsExactly("it`s");
+    }
+
+    /** Parses the hint as the compiler parses it in a script, and resolves it on the row type. */
+    private List<String> columnsThatHintMatches(String indexHint, RelDataType rowType) {
+      var parsedHint = SqrlHint.parse(new ParsedObject<>(indexHint, FileLocation.START)).get(0);
+      var hint = (IndexHint) new IndexHint.IndexHintFactory().create(parsedHint);
+      hint.validateAndUpdate(rowType);
+      return hint.getColumnNames();
     }
   }
 
@@ -629,7 +709,7 @@ class IndexSelectorTest {
           .singleElement(InstanceOfAssertFactories.STRING)
           .startsWith(
               "Created the maximum of 2 indexes for table `Customers`. Its query filter patterns "
-                  + "need 3 indexes. The limit omits these indexes: index(BTREE, email, city). "
+                  + "need 3 indexes. The limit omits these indexes: index(BTREE, `email`, `city`). "
                   + "The query results are not affected.")
           .doesNotContain("full table scan");
     }

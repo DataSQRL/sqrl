@@ -141,6 +141,17 @@ class FilterColumnTrimmerTest {
             });
   }
 
+  /** The unique column set applies only to a filter with an equality on each of its columns. */
+  @Test
+  void givenUniqueColumnThatTheFilterDoesNotUse_whenTrim_thenKeepsEveryColumn() {
+    var customers = customersWith(Map.of(Set.of(EMAIL), ROW_COUNT));
+    var countryAndSignupTime =
+        new QueryIndexSummary(customers, Set.of(COUNTRY), Set.of(SIGNUP_TIME), Set.of(), 1.0);
+
+    assertThat(filterColumnTrimmer.trim(countryAndSignupTime, NO_PRIMARY_KEY))
+        .containsSame(countryAndSignupTime);
+  }
+
   @Test
   void givenUniqueColumnCombination_whenTrim_thenKeepsOnlyItsColumns() {
     var customers = customersWith(Map.of(Set.of(COUNTRY, CITY), ROW_COUNT));

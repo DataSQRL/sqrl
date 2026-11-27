@@ -631,8 +631,7 @@ The compiler creates no index for a filter that wraps its column in an expressio
 The compiler selects the indexes for the tables that the API queries. An `index` hint replaces the automatic index selection for its whole table, so a hint that one query does not need can remove the indexes that other queries need. Leave the index selection to the compiler. Read [Indexes for API Queries](guides/api-query-indexes.md) and fix the query only in these cases:
 
 - The requirements, the plan or a review issue name a slow query or an index.
-- The compiler warns that query filter patterns of a table "have no supporting index and require a full table scan". Read the guide before you add the `index` hint that the warning suggests.
-- The compiler warns that it "Created the maximum of" indexes for a table, or names "a single-column index for each filtered column". Keep the served queries as they are, and read "Index warnings" in the guide.
+- The compiler warns that it "Created the maximum of" indexes for a table, or names "a single-column index for each filtered column". This includes the warning that query filter patterns "have no supporting index and require a full table scan". Read "Index warnings" in the guide to decide whether the warning needs a query change, an `index` hint, or no change.
 
 
 ### Constraints and mutual exclusions
