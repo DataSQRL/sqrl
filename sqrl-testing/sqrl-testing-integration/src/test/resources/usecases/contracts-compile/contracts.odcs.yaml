@@ -1,0 +1,16 @@
+# The contract of the tables that the main script defines
+apiVersion: v3.2.0
+kind: DataContract
+id: urn:catalog:feedback
+version: 1.0.0
+status: active
+schema:
+  - name: Feedback
+    tags: [pii=masked, classification=internal]
+    properties:
+      - name: customer_id
+        logicalType: integer
+        required: true
+      - name: message
+        logicalType: string
+        required: true

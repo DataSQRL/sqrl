@@ -1,0 +1,27 @@
+apiVersion: v3.2.0
+kind: DataContract
+id: urn:catalog:tickets
+version: 1.0.0
+status: active
+schema:
+  - name: Tickets
+    properties:
+      - name: id
+        logicalType: integer
+        required: true
+      - name: note
+        logicalType: string
+---
+apiVersion: v3.2.0
+kind: DataContract
+id: urn:catalog:tickets-2
+version: 1.0.0
+status: active
+schema:
+  - name: Tickets
+    properties:
+      - name: id
+        logicalType: integer
+        required: true
+      - name: note
+        logicalType: string

@@ -1,0 +1,11 @@
+/** Shipments of the orders */
+CREATE TABLE _Shipments_schema (
+  id BIGINT NOT NULL,
+  carrier STRING
+);
+
+/** Refunded shipments */
+CREATE TABLE _Refunds_schema (
+  id BIGINT NOT NULL,
+  refunded_at TIMESTAMP_LTZ(3) NOT NULL
+);

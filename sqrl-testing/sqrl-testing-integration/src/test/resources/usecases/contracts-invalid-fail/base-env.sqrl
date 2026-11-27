@@ -1,0 +1,6 @@
+IMPORT base.*;
+
+-- The table has a schema object in base-env.odcs.yaml and in base.odcs.yaml
+CREATE TABLE Parts WITH (
+  'connector' = 'datagen'
+) LIKE _Parts_schema;

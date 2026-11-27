@@ -1,0 +1,65 @@
+apiVersion: v3.2.0
+kind: DataContract
+id: urn:catalog:crm
+version: 1.0.0
+status: active
+schema:
+  # The column name is missing, and so is the tag pii of the table: the property region lists it
+  # instead, see below. The tag gdpr is on the property of its column
+  - name: Customers
+    tags: [classification=confidential]
+    properties:
+      # required is missing for a NOT NULL column, and the primary key is only a part of the key
+      - name: id
+        logicalType: integer
+        primaryKey: true
+        partitioned: true
+      # required is set for a nullable column, and the classification differs
+      - name: email
+        logicalType: string
+        required: true
+        classification: public
+        tags: [gdpr]
+      # another type, and a classification that the column does not declare
+      - name: age
+        logicalType: string
+        classification: confidential
+      # another type in a nested field
+      - name: address
+        logicalType: object
+        properties:
+          - name: city
+            logicalType: integer
+            required: true
+          - name: zip
+            logicalType: string
+      # another type of the array items
+      - name: phones
+        logicalType: array
+        items:
+          logicalType: integer
+      # a computed column and a metadata column
+      - name: loaded_at
+        logicalType: timestamp
+      - name: source_file
+        logicalType: string
+      # a tag that the column does not declare, with another value than the table has
+      - name: region
+        logicalType: string
+        required: true
+        tags: [pii=masked]
+      - name: updated_at
+        logicalType: timestamp
+        required: true
+      # not a column of the table
+      - name: nickname
+        logicalType: string
+  # another type, and a tag that the table does not have
+  - name: _Leads
+    tags: [gdpr]
+    properties:
+      - name: id
+        logicalType: string
+        required: true
+      - name: source
+        logicalType: string

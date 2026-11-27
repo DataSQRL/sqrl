@@ -1,0 +1,7 @@
+-- The contract of this script violates the ODCS schema
+CREATE TABLE Memos (
+  id BIGINT NOT NULL,
+  note STRING
+) WITH (
+  'connector' = 'datagen'
+);

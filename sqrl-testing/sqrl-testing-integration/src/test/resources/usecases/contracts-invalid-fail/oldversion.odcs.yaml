@@ -1,0 +1,13 @@
+apiVersion: v3.1.0
+kind: DataContract
+id: urn:catalog:letters
+version: 1.0.0
+status: active
+schema:
+  - name: Letters
+    properties:
+      - name: id
+        logicalType: integer
+        required: true
+      - name: note
+        logicalType: string

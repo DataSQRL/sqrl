@@ -35,6 +35,7 @@ import com.datasqrl.plan.global.PhysicalPlanRewriter;
 import com.datasqrl.plan.validate.ExecutionGoal;
 import com.datasqrl.planner.SqlScriptPlanner;
 import com.datasqrl.planner.Sqrl2FlinkSQLTranslator;
+import com.datasqrl.planner.contract.DataContractStage;
 import com.datasqrl.planner.dag.DAGPlanner;
 import com.datasqrl.planner.dag.plan.MutationDatabase;
 import com.datasqrl.planner.tables.SqrlTableFunction;
@@ -64,6 +65,7 @@ public class CompilationProcess {
   private final GraphqlSourceLoader graphqlSourceLoader;
   private final ServerModelManager serverModelManager;
   private final ExecutionGoal executionGoal;
+  private final DataContractStage dataContractStage;
   private final ErrorCollector errors;
 
   public Pair<PhysicalPlan, TestPlan> executeCompilation(Optional<Path> testsPath) {
@@ -82,12 +84,19 @@ public class CompilationProcess {
       Optional<Path> testsPath, Sqrl2FlinkSQLTranslator environment) {
 
     planner.planMain(mainScript, Optional.empty(), environment);
+    // The differences between the tables and their data contracts are recorded like tag
+    // violations, so that both are reported together
+    dataContractStage.check(environment);
     // Tag violations, including those in the tag configuration, are recorded without aborting so
     // that all of them are reported. Don't optimize or assemble a plan with known errors.
     errors.abortOnErrors();
     var dagBuilder = planner.getDagBuilder();
     var dag = dagPlanner.optimize(dagBuilder.getDag());
     var physicalPlan = dagPlanner.assemble(dag, environment);
+    // The contracts are generated from the plan, which has the public tables as the engines
+    // store them
+    physicalPlan =
+        physicalPlan.withDataContracts(dataContractStage.generate(dag, physicalPlan, environment));
     var mutationDatabase = physicalPlan.getMutationDatabase(environment);
 
     TestPlan testPlan = null;

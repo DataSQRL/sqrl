@@ -1,0 +1,6 @@
+CREATE TABLE Notes (
+  id BIGINT NOT NULL,
+  note STRING
+) WITH (
+  'connector' = 'datagen'
+);

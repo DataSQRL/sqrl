@@ -1,0 +1,23 @@
+IMPORT shipping.*;
+
+-- The contract may leave out the watermark column received_at, which only this environment has
+-- as a physical column. Any other column that the environment adds must be in the contract.
+CREATE TABLE Shipments (
+  received_at TIMESTAMP_LTZ(3) NOT NULL,
+  batch_id STRING,
+  WATERMARK FOR received_at AS received_at - INTERVAL '1' SECOND
+) WITH (
+  'connector' = 'filesystem',
+  'path' = 'file:///tmp/contracts-incompatible/shipments',
+  'format' = 'flexible-json'
+) LIKE _Shipments_schema;
+
+-- The watermark column refunded_at comes from the schema table, so it is data and the contract
+-- must list it
+CREATE TABLE Refunds (
+  WATERMARK FOR refunded_at AS refunded_at - INTERVAL '1' SECOND
+) WITH (
+  'connector' = 'filesystem',
+  'path' = 'file:///tmp/contracts-incompatible/refunds',
+  'format' = 'flexible-json'
+) LIKE _Refunds_schema;

@@ -1,0 +1,13 @@
+apiVersion: v3.2.0
+kind: DataContract
+id: urn:catalog:legacy
+version: 1.0.0
+status: active
+schema:
+  - name: Notes
+    properties:
+      - name: id
+        logicalType: integer
+        required: true
+      - name: note
+        logicalType: string

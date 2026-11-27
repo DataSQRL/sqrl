@@ -20,6 +20,7 @@ import static com.datasqrl.SnapshotTestSupport.getResourcesDirectory;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datasqrl.SnapshotTestSupport.TestNameModifier;
+import com.datasqrl.planner.contract.odcs.OdcsConstants;
 import com.datasqrl.util.ArgumentsProviders;
 import com.datasqrl.util.SnapshotTest.Snapshot;
 import java.nio.file.Path;
@@ -120,6 +121,8 @@ public class DAGPlannerTest {
           || path.getFileName().toString().contains("partman")
           || path.getFileName().toString().contains("openapi")
           || path.getFileName().toString().endsWith("ser")
+          // The data contracts are in the snapshots of the contracts use cases
+          || path.getFileName().toString().endsWith(OdcsConstants.FILE_EXTENSION)
           || path.getFileName().toString().startsWith("vertx-config.json")) {
         return false;
       }

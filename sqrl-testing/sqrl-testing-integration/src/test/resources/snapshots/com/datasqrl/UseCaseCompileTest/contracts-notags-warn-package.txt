@@ -1,0 +1,575 @@
+>>>messages
+[WARN] Contract file [crm.odcs.yaml] declares tags or a classification, which are not compared with the tables since compiler.tags is not configured
+in script:crm.odcs.yaml [7:3]:
+status: active
+schema:
+  - name: Customers
+--^
+
+>>>inferred_schema.graphqls
+"Names of the customers"
+type CustomerNames {
+  id: Long!
+  name: String!
+}
+
+"Customers of the CRM system"
+type Customers {
+  id: Long!
+  name: String!
+  email: String
+}
+
+"An RFC-3339 compliant Full Date Scalar"
+scalar Date
+
+"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats"
+scalar DateTime
+
+"Invoices of the billing system"
+type Invoices {
+  id: Long!
+  amount: Float!
+}
+
+"A JSON scalar"
+scalar JSON
+
+"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`."
+scalar LocalTime
+
+"A 64-bit signed integer"
+scalar Long
+
+type Query {
+  "Names of the customers"
+  CustomerNames(limit: Int = 10, offset: Int = 0): [CustomerNames!]
+  "Customers of the CRM system"
+  Customers(limit: Int = 10, offset: Int = 0): [Customers!]
+  "Amounts of the invoices"
+  InvoiceAmounts(limit: Int = 10, offset: Int = 0): [Invoices!]
+  "Invoices of the billing system"
+  Invoices(limit: Int = 10, offset: Int = 0): [Invoices!]
+}
+
+enum _McpMethodType {
+  NONE
+  TOOL
+}
+
+enum _McpVisibility {
+  MODEL
+  APP
+}
+
+enum _RestMethodType {
+  NONE
+  GET
+  POST
+}
+
+directive @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String, appName: String, visibility: [_McpVisibility!]) on QUERY | MUTATION | FIELD_DEFINITION
+
+>>>pipeline_explain.txt
+=== CustomerNames
+ID:          default_catalog.default_database.CustomerNames
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   -
+Row count:   ~1e8
+--- definition ---
+Schema:
+ - id: BIGINT NOT NULL
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+Inputs:
+ - default_catalog.default_database.Customers
+--- physical ---
+Table CustomerNames (postgres):
+ - primary key: __pk_hash (generated hash key)
+
+=== Customers
+ID:          default_catalog.default_database.Customers
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   -
+Row count:   ~1e8
+--- definition ---
+Schema:
+ - id: BIGINT NOT NULL
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+Inputs:
+ - default_catalog.default_database.Customers__base
+--- physical ---
+Table Customers (postgres):
+ - primary key: __pk_hash (generated hash key)
+
+=== InvoiceAmounts
+ID:          default_catalog.default_database.InvoiceAmounts
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   -
+Row count:   ~1e8
+--- definition ---
+Schema:
+ - id: BIGINT NOT NULL
+ - amount: DOUBLE NOT NULL
+Inputs:
+ - default_catalog.default_database.Invoices
+--- physical ---
+Table InvoiceAmounts (postgres):
+ - primary key: __pk_hash (generated hash key)
+
+=== Invoices
+ID:          default_catalog.default_database.Invoices
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   -
+Row count:   ~1e8
+--- definition ---
+Schema:
+ - id: BIGINT NOT NULL
+ - amount: DOUBLE NOT NULL
+Inputs:
+ - default_catalog.default_database.Invoices__base
+--- physical ---
+Table Invoices (postgres):
+ - primary key: __pk_hash (generated hash key)
+
+>>>flink-sql-no-functions.sql
+CREATE TABLE `Customers` (
+  `id` BIGINT NOT NULL,
+  `name` STRING NOT NULL,
+  `email` STRING
+)
+WITH (
+  'connector' = 'datagen'
+);
+CREATE TABLE `Invoices` (
+  `id` BIGINT NOT NULL,
+  `amount` DOUBLE NOT NULL
+)
+WITH (
+  'connector' = 'datagen'
+);
+CREATE VIEW `CustomerNames`
+AS
+SELECT `id`, `name`
+FROM `Customers`;
+CREATE VIEW `InvoiceAmounts`
+AS
+SELECT `id`, `amount`
+FROM `Invoices`;
+CREATE TABLE `CustomerNames_1` (
+  `id` BIGINT NOT NULL,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'CustomerNames',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `Customers_2` (
+  `id` BIGINT NOT NULL,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'Customers',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `InvoiceAmounts_3` (
+  `id` BIGINT NOT NULL,
+  `amount` DOUBLE NOT NULL,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'InvoiceAmounts',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `Invoices_4` (
+  `id` BIGINT NOT NULL,
+  `amount` DOUBLE NOT NULL,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'Invoices',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+EXECUTE STATEMENT SET BEGIN
+INSERT INTO `default_catalog`.`default_database`.`CustomerNames_1`
+SELECT `id`, `name`, `hash_key`(`id`, `name`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`CustomerNames`
+ON CONFLICT DO DEDUPLICATE
+;
+INSERT INTO `default_catalog`.`default_database`.`Customers_2`
+SELECT `id`, `name`, `email`, `hash_key`(`id`, `name`, `email`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`Customers`
+ON CONFLICT DO DEDUPLICATE
+;
+INSERT INTO `default_catalog`.`default_database`.`InvoiceAmounts_3`
+SELECT `id`, `amount`, `hash_key`(`id`, `amount`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`InvoiceAmounts`
+ON CONFLICT DO DEDUPLICATE
+;
+INSERT INTO `default_catalog`.`default_database`.`Invoices_4`
+SELECT `id`, `amount`, `hash_key`(`id`, `amount`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`Invoices`
+ON CONFLICT DO DEDUPLICATE
+;
+END
+>>>kafka.json
+{
+  "topics" : [ ],
+  "testRunnerTopics" : [ ]
+}
+>>>postgres-schema.sql
+CREATE TABLE IF NOT EXISTS "CustomerNames" ("id" BIGINT NOT NULL, "name" TEXT NOT NULL, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"));
+CREATE TABLE IF NOT EXISTS "Customers" ("id" BIGINT NOT NULL, "name" TEXT NOT NULL, "email" TEXT, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"));
+CREATE TABLE IF NOT EXISTS "InvoiceAmounts" ("id" BIGINT NOT NULL, "amount" DOUBLE PRECISION NOT NULL, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"));
+CREATE TABLE IF NOT EXISTS "Invoices" ("id" BIGINT NOT NULL, "amount" DOUBLE PRECISION NOT NULL, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"))
+>>>vertx.json
+{
+  "models" : {
+    "v1" : {
+      "queries" : [
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "CustomerNames",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"id\", \"name\"\nFROM \"CustomerNames\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "Customers",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"id\", \"name\", \"email\"\nFROM \"Customers\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "InvoiceAmounts",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"id\", \"amount\"\nFROM \"InvoiceAmounts\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "Invoices",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"id\", \"amount\"\nFROM \"Invoices\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        }
+      ],
+      "mutations" : [ ],
+      "subscriptions" : [ ],
+      "operations" : [
+        {
+          "function" : {
+            "name" : "GetCustomerNames",
+            "description" : "Names of the customers",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query CustomerNames($limit: Int = 10, $offset: Int = 0) {\nCustomerNames(limit: $limit, offset: $offset) {\nid\nname\n}\n\n}",
+            "queryName" : "CustomerNames",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/CustomerNames{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "integer"
+                },
+                "name" : {
+                  "type" : "string"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetCustomers",
+            "description" : "Customers of the CRM system",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query Customers($limit: Int = 10, $offset: Int = 0) {\nCustomers(limit: $limit, offset: $offset) {\nid\nname\nemail\n}\n\n}",
+            "queryName" : "Customers",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Customers{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "integer"
+                },
+                "name" : {
+                  "type" : "string"
+                },
+                "email" : {
+                  "type" : "string"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetInvoiceAmounts",
+            "description" : "Amounts of the invoices",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query InvoiceAmounts($limit: Int = 10, $offset: Int = 0) {\nInvoiceAmounts(limit: $limit, offset: $offset) {\nid\namount\n}\n\n}",
+            "queryName" : "InvoiceAmounts",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/InvoiceAmounts{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "integer"
+                },
+                "amount" : {
+                  "type" : "number"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetInvoices",
+            "description" : "Invoices of the billing system",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query Invoices($limit: Int = 10, $offset: Int = 0) {\nInvoices(limit: $limit, offset: $offset) {\nid\namount\n}\n\n}",
+            "queryName" : "Invoices",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Invoices{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "integer"
+                },
+                "amount" : {
+                  "type" : "number"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "schema" : {
+        "type" : "string",
+        "schema" : "\"Names of the customers\"\ntype CustomerNames {\n  id: Long!\n  name: String!\n}\n\n\"Customers of the CRM system\"\ntype Customers {\n  id: Long!\n  name: String!\n  email: String\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"Invoices of the billing system\"\ntype Invoices {\n  id: Long!\n  amount: Float!\n}\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Query {\n  \"Names of the customers\"\n  CustomerNames(limit: Int = 10, offset: Int = 0): [CustomerNames!]\n  \"Customers of the CRM system\"\n  Customers(limit: Int = 10, offset: Int = 0): [Customers!]\n  \"Amounts of the invoices\"\n  InvoiceAmounts(limit: Int = 10, offset: Int = 0): [Invoices!]\n  \"Invoices of the billing system\"\n  Invoices(limit: Int = 10, offset: Int = 0): [Invoices!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n}\n\nenum _McpVisibility {\n  MODEL\n  APP\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String, appName: String, visibility: [_McpVisibility!]) on QUERY | MUTATION | FIELD_DEFINITION\n"
+      }
+    }
+  }
+}
+>>>sources.odcs.yaml
+apiVersion: v3.2.0
+kind: DataContract
+id: sources
+name: sources
+version: 1.0.0
+schema:
+- name: Customers
+  tags:
+  - pii=raw
+  - gdpr
+  properties:
+  - name: id
+    logicalType: integer
+    required: true
+  - name: name
+    logicalType: string
+    required: true
+    classification: confidential
+  - name: email
+    logicalType: string
+    tags:
+    - gdpr
+- name: Invoices
+  properties:
+  - name: id
+    logicalType: integer
+    required: true
+  - name: amount
+    logicalType: number
+    required: true
+

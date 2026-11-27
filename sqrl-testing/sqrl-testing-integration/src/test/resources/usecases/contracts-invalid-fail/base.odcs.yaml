@@ -1,0 +1,13 @@
+apiVersion: v3.2.0
+kind: DataContract
+id: urn:catalog:parts
+version: 1.0.0
+status: active
+schema:
+  - name: Parts
+    properties:
+      - name: id
+        logicalType: integer
+        required: true
+      - name: note
+        logicalType: string

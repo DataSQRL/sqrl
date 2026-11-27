@@ -1,0 +1,24 @@
+IMPORT crm.*;
+
+-- Production reads the event time from the metadata of the record
+CREATE TABLE Customers (
+  ingested_at AS NOW(),
+  received_at TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp',
+  WATERMARK FOR received_at AS received_at - INTERVAL '1' SECOND
+) WITH (
+  'connector' = 'kafka-safe',
+  'topic' = 'crm-customers',
+  'properties.bootstrap.servers' = 'localhost:9092',
+  'properties.group.id' = 'contracts',
+  'format' = 'flexible-json'
+) LIKE _Customers_schema;
+
+CREATE TABLE Orders (
+  WATERMARK FOR updated_at AS updated_at - INTERVAL '1' SECOND
+) WITH (
+  'connector' = 'kafka-safe',
+  'topic' = 'crm-orders',
+  'properties.bootstrap.servers' = 'localhost:9092',
+  'properties.group.id' = 'contracts',
+  'format' = 'flexible-json'
+) LIKE _Orders_schema;

@@ -61,6 +61,7 @@ import com.datasqrl.planner.Sqrl2FlinkSQLTranslator.MutationBuilder;
 import com.datasqrl.planner.analyzer.TableAnalysis;
 import com.datasqrl.planner.analyzer.TableOrFunctionAnalysis;
 import com.datasqrl.planner.analyzer.cost.CostModel;
+import com.datasqrl.planner.contract.TableContracts;
 import com.datasqrl.planner.dag.DAGBuilder;
 import com.datasqrl.planner.dag.nodes.ExportNode;
 import com.datasqrl.planner.dag.nodes.PipelineNode;
@@ -128,6 +129,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import lombok.Getter;
+import lombok.With;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.schema.FunctionParameter;
@@ -136,6 +138,7 @@ import org.apache.commons.lang3.Strings;
 import org.apache.flink.sql.parser.ddl.catalog.SqlCreateCatalog;
 import org.apache.flink.sql.parser.ddl.table.SqlAlterTable;
 import org.apache.flink.sql.parser.ddl.table.SqlCreateTable;
+import org.apache.flink.sql.parser.ddl.table.SqlCreateTableLike;
 import org.apache.flink.sql.parser.ddl.table.SqlDropTable;
 import org.apache.flink.sql.parser.ddl.view.SqlAlterView;
 import org.apache.flink.sql.parser.ddl.view.SqlAlterViewAs;
@@ -168,6 +171,9 @@ public class SqlScriptPlanner {
 
   private final ErrorCollector errorCollector;
 
+  /** Where every created table is registered, so that its data contract is applied to it */
+  private final TableContracts tableContracts;
+
   /** Used to assemble the full script with imports as a string */
   @Getter private final SqlScriptWriter completeScript;
 
@@ -194,12 +200,19 @@ public class SqlScriptPlanner {
       SqrlStatementParser sqrlParser,
       PackageJson packageJson,
       ExecutionPipeline pipeline,
-      ExecutionGoal executionGoal) {
+      ExecutionGoal executionGoal,
+      TableContracts tableContracts) {
     this.errorCollector = errorCollector;
+    this.tableContracts = tableContracts;
     this.completeScript = new SqlScriptWriter();
     this.scriptContext =
         new ScriptContext(
-            moduleLoaders, FLINK_DEFAULT_DATABASE, true, Optional.empty(), new FailedObjects());
+            moduleLoaders,
+            FLINK_DEFAULT_DATABASE,
+            true,
+            Optional.empty(),
+            new FailedObjects(),
+            Optional.empty());
     this.sqrlParser = sqrlParser;
     this.packageJson = packageJson;
     this.pipeline = pipeline;
@@ -246,6 +259,7 @@ public class SqlScriptPlanner {
       Sqrl2FlinkSQLTranslator sqrlEnv) {
 
     var scriptErrors = errorCollector.withScript(mainScript.getPath(), mainScript.getContent());
+    scriptContext = scriptContext.withScriptPath(mainScript.getPath());
     var parsedScript = sqrlParser.parseScript(mainScript.getContent(), scriptErrors);
     var failures = scriptContext.failures();
     List<StackableStatement> statementStack = new ArrayList<>();
@@ -404,14 +418,7 @@ public class SqlScriptPlanner {
     } else if (stmt instanceof SqrlExportStatement statement) {
       addExport(statement, sqrlEnv, errors);
     } else if (stmt instanceof SqrlCreateTableStatement statement) {
-      sqrlEnv
-          .createTable(
-              statement.toSql(),
-              getMutationBuilder(hintsAndDocs),
-              scriptContext.mainModuleLoader().getSchemaLoader(),
-              hintsAndDocs,
-              errors)
-          .ifPresent(tableAnalysis -> addSourceToDag(tableAnalysis, hintsAndDocs, sqrlEnv));
+      addCreateTable(statement.toSql(), hintsAndDocs, sqrlEnv, errors);
     } else if (stmt instanceof SqrlDefinition sqrlDef) {
       var access = sqrlDef.getAccess();
       var tablePath = sqrlDef.getPath();
@@ -661,14 +668,7 @@ public class SqlScriptPlanner {
             errors,
             sqrlEnv);
       } else if (node instanceof SqlCreateTable) {
-        sqrlEnv
-            .createTable(
-                flinkStmt.sql().get(),
-                getMutationBuilder(hintsAndDocs),
-                scriptContext.mainModuleLoader().getSchemaLoader(),
-                hintsAndDocs,
-                errors)
-            .ifPresent(tableAnalysis -> addSourceToDag(tableAnalysis, hintsAndDocs, sqrlEnv));
+        addCreateTable(flinkStmt.sql().get(), hintsAndDocs, sqrlEnv, errors);
       } else if (node instanceof RichSqlInsert insert) {
         addInsert(insert, hintsAndDocs, sqrlEnv, errors);
       } else if (node instanceof SqlAlterTable || node instanceof SqlAlterView) {
@@ -927,6 +927,65 @@ public class SqlScriptPlanner {
         sqrlEnv);
   }
 
+  /** Plans a {@code CREATE TABLE} statement of the script that is planned. */
+  private void addCreateTable(
+      String createTableSql,
+      HintsAndDoc hintsAndDocs,
+      Sqrl2FlinkSQLTranslator sqrlEnv,
+      ErrorCollector errors) {
+
+    var created =
+        sqrlEnv.createTable(
+            createTableSql,
+            getMutationBuilder(hintsAndDocs),
+            scriptContext.mainModuleLoader().getSchemaLoader(),
+            hintsAndDocs,
+            errors);
+    registerCreatedTable(created, scriptContext.scriptPath(), sqrlEnv);
+    created
+        .sourceView()
+        .ifPresent(tableAnalysis -> addSourceToDag(tableAnalysis, hintsAndDocs, sqrlEnv));
+  }
+
+  /**
+   * Registers a created table with the file whose statement defines it, so that the data contract
+   * next to that file is applied to the table.
+   */
+  private void registerCreatedTable(
+      AddTableResult created, Optional<Path> definingFile, Sqrl2FlinkSQLTranslator sqrlEnv) {
+
+    var extendedTable =
+        created.createdTable() instanceof SqlCreateTableLike likeTable
+            ? Optional.of(sqrlEnv.qualifyIdentifier(likeTable.getTableLike().getSourceTable()))
+            : Optional.<ObjectIdentifier>empty();
+
+    tableContracts.register(created, definingFile, extendedTable);
+  }
+
+  /**
+   * Validates that a created table declares the tags of the data that is written into it. A table
+   * with a data contract must always declare them, since the contract lists the tags of its table.
+   * For the other tables see {@link Sqrl2FlinkSQLTranslator#checkWriteTags}.
+   */
+  private void checkWriteTags(
+      ObjectIdentifier sinkTableId,
+      List<? extends TableOrFunctionAnalysis> inputs,
+      Sqrl2FlinkSQLTranslator sqrlEnv,
+      ErrorCollector errors) {
+
+    var contractTable =
+        tableContracts.get(sinkTableId).filter(table -> table.contract().isPresent());
+
+    if (contractTable.isPresent()) {
+      var table = contractTable.get();
+      sqrlEnv
+          .getTagAnalyzer()
+          .checkWrite(table.name(), table.created().tableAnalysis().getTags(), inputs, errors);
+    } else {
+      sqrlEnv.checkWriteTags(sinkTableId, inputs, errors);
+    }
+  }
+
   /**
    * Adds a table to the DAG and plans the table access function based on the determined visibility
    * and provided hints.
@@ -1127,7 +1186,7 @@ public class SqlScriptPlanner {
                           flinkTable.errorCollector()))
               .orElse(hintsAndDoc);
       try {
-        var tableAnalysis =
+        var created =
             sqrlEnv.createTableWithSchema(
                 importNameModifier,
                 flinkTable.sqlCreateTable,
@@ -1138,6 +1197,8 @@ public class SqlScriptPlanner {
                     getStandaloneInclude(object.table())),
                 importedHintsAndDoc,
                 flinkTable.errorCollector());
+        registerCreatedTable(created, Optional.of(flinkTable.sourcePath()), sqrlEnv);
+        var tableAnalysis = created.sourceView().orElseThrow();
         importedHintsAndDoc.hints().updateColumnNamesHints(tableAnalysis.getRowType());
         addSourceToDag(tableAnalysis, importedHintsAndDoc, sqrlEnv);
         completeScript.append(tableAnalysis.getOriginalSql());
@@ -1383,7 +1444,7 @@ public class SqlScriptPlanner {
           errors)) {
         return;
       }
-      sqrlEnv.checkWriteTags(sinkTableId, List.of(inputNode.getTableAnalysis()), errors);
+      checkWriteTags(sinkTableId, List.of(inputNode.getTableAnalysis()), sqrlEnv, errors);
       exportNode =
           new ExportNode(
               stageAnalysis,
@@ -1465,9 +1526,10 @@ public class SqlScriptPlanner {
                 mutationBuilder,
                 sinkHintsAndDoc,
                 flinkTable.errorCollector());
+        registerCreatedTable(addTableResult, Optional.of(flinkTable.sourcePath()), sqrlEnv);
 
         var tableId = addTableResult.baseTableIdentifier();
-        sqrlEnv.checkWriteTags(tableId, List.of(inputNode.getTableAnalysis()), errors);
+        checkWriteTags(tableId, List.of(inputNode.getTableAnalysis()), sqrlEnv, errors);
 
         exportNode =
             new ExportNode(
@@ -1512,7 +1574,7 @@ public class SqlScriptPlanner {
                 sinkTableId.getObjectName() + INSERT_SUFFIX + insertTableCounter.incrementAndGet()),
             hintsAndDocs,
             errors);
-    sqrlEnv.checkWriteTags(sinkTableId, inputTable.getFromTables(), errors);
+    checkWriteTags(sinkTableId, inputTable.getFromTables(), sqrlEnv, errors);
     FlinkSqlNodes.qualifyIdentifier(
         (SqlIdentifier) insert.getTargetTableID(), sinkTableId.toList());
     var inputNode =
@@ -1596,7 +1658,8 @@ public class SqlScriptPlanner {
       String databaseName,
       boolean isRootContext,
       Optional<IncludedScript> includedScript,
-      FailedObjects failures) {
+      FailedObjects failures,
+      @With Optional<Path> scriptPath) {
 
     ScriptContext fromImport(
         ModuleLoader moduleLoader, boolean inline, String databaseName, Optional<Path> scriptPath) {
@@ -1606,13 +1669,14 @@ public class SqlScriptPlanner {
 
       return inline
           ? new ScriptContext(
-              importLoaders, this.databaseName, isRootContext, includedScript, failures)
+              importLoaders, this.databaseName, isRootContext, includedScript, failures, scriptPath)
           : new ScriptContext(
               importLoaders,
               databaseName,
               false,
               includedScript,
-              failures.forImportedScript(databaseName));
+              failures.forImportedScript(databaseName),
+              scriptPath);
     }
 
     ModuleLoader mainModuleLoader() {

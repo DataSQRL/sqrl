@@ -234,7 +234,7 @@ When you pass multiple package files, they are merged in order, with later files
 Upon successful compilation, the compiler writes:
 - Data processing DAG to `build/pipeline_explain.txt`
 - Visual representation to `build/pipeline_visual.html` (open in browser to inspect the DAG)
-- Deployment artifacts to the target folder
+- Deployment artifacts to the target folder: the plans of the engines in `plan`, and the [data contracts](interface#data-contracts) of the pipeline's tables in `contracts`
 
 See [Compilation Output](compilation-output) to learn more about the files the compiler produces and how to use them to validate a pipeline or learn how to [deploy those files](deployment).
 

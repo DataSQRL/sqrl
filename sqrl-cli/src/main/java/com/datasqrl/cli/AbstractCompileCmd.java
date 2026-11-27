@@ -253,6 +253,11 @@ public abstract class AbstractCompileCmd extends BasePackageConfCmd {
     formatter.info("Deployment artifacts: " + formatter.relativizeFromCliRoot(getTargetDir()));
     formatter.info("Pipeline DAG:         " + relBuildDir.resolve("pipeline_explain.txt"));
     formatter.info("Visual DAG:           " + relBuildDir.resolve("pipeline_visual.html"));
+    // A compile writes the folder of the data contracts only if it has contracts to write
+    var contractsDir = getTargetDir().resolve(SqrlConstants.CONTRACTS_DIR);
+    if (Files.isDirectory(contractsDir)) {
+      formatter.info("Data contracts:       " + formatter.relativizeFromCliRoot(contractsDir));
+    }
     formatter.newline();
     formatter.buildStatus(true, getElapsedTime(), LocalDateTime.now());
     formatter.newline();

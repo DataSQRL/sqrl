@@ -82,9 +82,11 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import javax.annotation.Nullable;
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.SneakyThrows;
+import lombok.With;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelShuttleImpl;
 import org.apache.calcite.rel.core.Sort;
@@ -882,17 +884,17 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
         String origTableName, FlinkTableBuilder tableBuilder, RelDataType dataType);
   }
 
-  public TableAnalysis createTableWithSchema(
+  public AddTableResult createTableWithSchema(
       Function<String, String> tableNameModifier,
       String tableDefinition,
       SchemaLoader schemaLoader,
       Optional<MutationBuilder> mutationBuilder,
       HintsAndDoc hintsAndDoc,
       ErrorCollector errors) {
-    return addSourceTable(
+    var result =
         addTable(
-            tableNameModifier, tableDefinition, schemaLoader, mutationBuilder, hintsAndDoc, errors),
-        errors);
+            tableNameModifier, tableDefinition, schemaLoader, mutationBuilder, hintsAndDoc, errors);
+    return result.withSourceView(Optional.of(addSourceTable(result, errors)));
   }
 
   public AddTableResult addExternalExport(
@@ -911,7 +913,7 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
     return result;
   }
 
-  public Optional<TableAnalysis> createTable(
+  public AddTableResult createTable(
       String tableDefinition,
       Optional<MutationBuilder> mutationBuilder,
       SchemaLoader schemaLoader,
@@ -926,10 +928,10 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
             hintsAndDoc,
             errors);
     if (result.isSourceTable()) {
-      return Optional.of(addSourceTable(result, errors));
+      return result.withSourceView(Optional.of(addSourceTable(result, errors)));
     }
     checkRequiredColumns(result, errors);
-    return Optional.empty();
+    return result;
   }
 
   /**
@@ -1024,6 +1026,8 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
    *     that its LIKE clause copies if it has none
    * @param documentation the documentation of the table: its doc string, with the comments of the
    *     columns that the doc string doesn't document
+   * @param sourceView the view that covers the table for the queries that read it, see {@link
+   *     #addSourceTable}; empty for a table that is only written
    */
   public record AddTableResult(
       String tableName,
@@ -1034,7 +1038,8 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
       SqlCreateTable createdTable,
       String completeCreateTableSql,
       HintsAndDoc hintsAndDoc,
-      Documentation documentation) {}
+      Documentation documentation,
+      @With(AccessLevel.PRIVATE) Optional<TableAnalysis> sourceView) {}
 
   /**
    * Adds a table to Flink and analyzes the table for schema and primary key definition. If the
@@ -1195,7 +1200,8 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
         fullTable,
         completeCreateTableSql,
         tableHintsAndDoc,
-        documentation);
+        documentation,
+        Optional.empty());
   }
 
   /**

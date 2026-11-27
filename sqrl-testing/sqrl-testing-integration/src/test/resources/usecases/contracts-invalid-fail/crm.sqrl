@@ -1,0 +1,7 @@
+-- The name of the contract file of this script differs in case
+CREATE TABLE Accounts (
+  id BIGINT NOT NULL,
+  note STRING
+) WITH (
+  'connector' = 'datagen'
+);

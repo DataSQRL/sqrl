@@ -1,0 +1,5 @@
+Invalid data contract file.
+
+A data contract is an ODCS v3.2 file next to the script that defines its tables:
+`mytables.odcs.yaml` belongs to `mytables.sqrl` in the same folder. A schema object describes the
+`CREATE TABLE` of the same name, ignoring case.

@@ -1,0 +1,56 @@
+/** Customer master data @pii=raw @classification=confidential */
+CREATE TABLE Customers (
+  id BIGINT NOT NULL,
+  email STRING COMMENT 'Contact email @gdpr @classification=confidential',
+  name VARCHAR(100) NOT NULL,
+  age SMALLINT,
+  score FLOAT,
+  balance DECIMAL(12, 2),
+  active BOOLEAN,
+  birthday DATE,
+  address ROW<street STRING, city STRING NOT NULL, zip CHAR(5)>,
+  phones ARRAY<ROW<kind STRING NOT NULL, number STRING>>,
+  attributes MAP<STRING, STRING>,
+  region STRING NOT NULL,
+  -- A computed column is not part of a contract, also when physical columns follow it
+  loaded_at AS NOW(),
+  updated_at TIMESTAMP_LTZ(3) NOT NULL,
+  PRIMARY KEY (id, updated_at) NOT ENFORCED,
+  WATERMARK FOR updated_at AS updated_at - INTERVAL '1' SECOND
+) PARTITIONED BY (region) WITH (
+  'connector' = 'filesystem',
+  'path' = 'file:///tmp/contracts-compile/customers',
+  'format' = 'flexible-json'
+);
+
+/** Clicks on the web site */
+CREATE TABLE Clicks (
+  customer_id BIGINT NOT NULL,
+  ingested_at AS NOW(),
+  url STRING NOT NULL,
+  -- A metadata column is not part of a contract
+  event_time TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp',
+  WATERMARK FOR event_time AS event_time - INTERVAL '1' SECOND
+) WITH (
+  'connector' = 'kafka-safe',
+  'topic' = 'web-clicks',
+  'properties.bootstrap.servers' = 'localhost:9092',
+  'properties.group.id' = 'contracts',
+  'format' = 'flexible-json'
+);
+
+-- Nothing reads this hidden table, so the pipeline does not deploy it and it has no contract
+CREATE TABLE _Unused (
+  id BIGINT NOT NULL,
+  note STRING
+) WITH (
+  'connector' = 'datagen'
+);
+
+-- Only a test table reads this hidden table, so it has no contract either
+CREATE TABLE _Audits (
+  id BIGINT NOT NULL,
+  action STRING NOT NULL
+) WITH (
+  'connector' = 'datagen'
+);

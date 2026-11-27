@@ -15,8 +15,12 @@
  */
 package com.datasqrl.planner.tables;
 
+import com.datasqrl.config.SqrlConstants;
+import com.datasqrl.engine.database.relational.AbstractJDBCDatabaseEngine;
+import com.datasqrl.engine.log.kafka.KafkaLogEngine;
 import com.datasqrl.io.tables.TableType;
 import com.google.common.collect.ImmutableMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -27,6 +31,11 @@ import org.apache.flink.table.catalog.GenericInMemoryCatalog;
 /**
  * A wrapper around Flink table options for analysis and access to specific options that we need to
  * evaluate during planning.
+ *
+ * <p>This class is the one place for what the compiler knows about a connector by its name: {@link
+ * #CONNECTORS}, {@link #CATALOG_CONNECTOR_MAP} and {@link #SINK_ONLY_CONNECTORS}. Add a connector,
+ * or a new fact about connectors, here and not in a map of another class, so that the mappings
+ * cannot drift apart.
  */
 @Slf4j
 public record FlinkConnectorConfigWrapper(Map<String, String> options, Optional<Catalog> catalog) {
@@ -36,22 +45,50 @@ public record FlinkConnectorConfigWrapper(Map<String, String> options, Optional<
   public static final String FORMAT_KEY = "format";
   public static final String VALUE_FORMAT_KEY = "value.format";
   public static final String KEY_FORMAT_KEY = "key.format";
+  public static final String PATH_KEY = "path";
 
-  public static Map<String, TableType> CONNECTOR_TYPE_MAP =
-      ImmutableMap.<String, TableType>builder()
-          .put("kafka", TableType.STREAM)
-          .put("kafka-safe", TableType.STREAM)
-          .put("file", TableType.STREAM)
-          .put("iceberg", TableType.STREAM)
-          .put("filesystem", TableType.STREAM)
-          .put("upsert-kafka", TableType.VERSIONED_STATE)
-          .put("upsert-kafka-safe", TableType.VERSIONED_STATE)
-          .put("jdbc", TableType.LOOKUP)
-          .put("jdbc-sqrl", TableType.LOOKUP)
-          .put("postgres-cdc", TableType.VERSIONED_STATE)
-          .put("mysql-cdc", TableType.VERSIONED_STATE)
-          .put("sqlserver-cdc", TableType.VERSIONED_STATE)
+  /**
+   * What the planner knows about the tables of a connector.
+   *
+   * @param tableType how the planner treats a table
+   * @param storageType the kind of object that stores a table
+   * @param storageNameKey the option that names that object
+   */
+  public record Connector(TableType tableType, StorageType storageType, String storageNameKey) {
+
+    private static Connector topic(TableType tableType) {
+      return new Connector(tableType, StorageType.TOPIC, KafkaLogEngine.CONNECTOR_TOPIC_KEY);
+    }
+
+    private static Connector file(TableType tableType) {
+      return new Connector(tableType, StorageType.FILE, PATH_KEY);
+    }
+
+    private static Connector table(TableType tableType, String tableNameKey) {
+      return new Connector(tableType, StorageType.TABLE, tableNameKey);
+    }
+  }
+
+  public static final Map<String, Connector> CONNECTORS =
+      ImmutableMap.<String, Connector>builder()
+          .put("kafka", Connector.topic(TableType.STREAM))
+          .put("kafka-safe", Connector.topic(TableType.STREAM))
+          .put("file", Connector.file(TableType.STREAM))
+          .put(
+              "iceberg", Connector.table(TableType.STREAM, SqrlConstants.ICEBERG_CATALOG_TABLE_KEY))
+          .put("filesystem", Connector.file(TableType.STREAM))
+          .put("upsert-kafka", Connector.topic(TableType.VERSIONED_STATE))
+          .put("upsert-kafka-safe", Connector.topic(TableType.VERSIONED_STATE))
+          .put("jdbc", jdbcTable(TableType.LOOKUP))
+          .put("jdbc-sqrl", jdbcTable(TableType.LOOKUP))
+          .put("postgres-cdc", jdbcTable(TableType.VERSIONED_STATE))
+          .put("mysql-cdc", jdbcTable(TableType.VERSIONED_STATE))
+          .put("sqlserver-cdc", jdbcTable(TableType.VERSIONED_STATE))
           .build();
+
+  private static Connector jdbcTable(TableType tableType) {
+    return Connector.table(tableType, AbstractJDBCDatabaseEngine.CONNECTOR_TABLENAME_KEY);
+  }
 
   public static Map<String, String> CATALOG_CONNECTOR_MAP =
       Map.of("org.apache.iceberg.flink.FlinkCatalog", "iceberg");
@@ -76,12 +113,26 @@ public record FlinkConnectorConfigWrapper(Map<String, String> options, Optional<
   public TableType getTableType() {
     var connectorName = getConnectorName();
     if (connectorName.isEmpty()) return TableType.RELATION;
-    var tableType = CONNECTOR_TYPE_MAP.get(connectorName.get().toLowerCase());
-    if (tableType == null) {
+    var connector = getConnector();
+    if (connector.isEmpty()) {
       log.debug("Defaulting '{}' connector to STREAM table for import.", connectorName.get());
-      tableType = TableType.STREAM;
+      return TableType.STREAM;
     }
-    return tableType;
+    return connector.get().tableType();
+  }
+
+  /** What stores the table: a topic, a table or files. Empty if the connector is not known. */
+  public Optional<StorageType> getStorageType() {
+    return getConnector().map(Connector::storageType);
+  }
+
+  /** The name of what stores the table, e.g. the topic, if the options of its connector name it. */
+  public Optional<String> getStorageName() {
+    return getConnector().map(Connector::storageNameKey).map(options::get);
+  }
+
+  private Optional<Connector> getConnector() {
+    return getConnectorName().map(name -> CONNECTORS.get(name.toLowerCase(Locale.ROOT)));
   }
 
   public boolean isSourceConnector() {

@@ -1,0 +1,101 @@
+apiVersion: v3.2.0
+kind: DataContract
+id: urn:catalog:crm
+name: CRM
+version: 2.4.0
+status: active
+schema:
+  # The name, the order of the properties and the fields that the compiler does not compare
+  # differ. The tag gdpr and the classification of email are on the column that declares them.
+  # The classification of the table is a tag of the schema object
+  - name: CUSTOMERS
+    physicalName: crm.customers
+    description: The customers as the data catalog describes them
+    tags: [pii=raw, classification=confidential, team=crm, golden-source]
+    quality:
+      - type: text
+        description: One row per customer and update
+    properties:
+      - name: ID
+        logicalType: integer
+        physicalType: int8
+        required: true
+        primaryKey: true
+        primaryKeyPosition: 1
+      - name: updated_at
+        logicalType: timestamp
+        required: true
+        primaryKey: true
+        primaryKeyPosition: 2
+      - name: name
+        logicalType: string
+        required: true
+        description: Full name
+        logicalTypeOptions:
+          maxLength: 255
+      - name: email
+        logicalType: string
+        classification: confidential
+        tags: [gdpr, contact]
+        examples: [jane@example.com]
+      - name: age
+        logicalType: integer
+      - name: score
+        logicalType: number
+      - name: balance
+        logicalType: number
+      - name: active
+        logicalType: boolean
+      - name: birthday
+        logicalType: date
+      - name: address
+        logicalType: object
+        properties:
+          - name: city
+            logicalType: string
+            required: true
+          - name: street
+            logicalType: string
+          - name: zip
+            logicalType: string
+      - name: phones
+        logicalType: array
+        items:
+          logicalType: object
+          properties:
+            - name: kind
+              logicalType: string
+              required: true
+            - name: number
+              logicalType: string
+      - name: attributes
+        logicalType: map
+        map:
+          key:
+            logicalType: string
+          value:
+            logicalType: string
+      - name: region
+        logicalType: string
+        required: true
+        partitioned: true
+        partitionKeyPosition: 1
+  # The contract leaves out the watermark column, which the table reads from metadata
+  - name: Clicks
+    properties:
+      - name: customer_id
+        logicalType: integer
+        required: true
+      - name: url
+        logicalType: string
+        required: true
+  # No table of the project has this name: the catalog describes more than the project reads
+  - name: Invoices
+    properties:
+      - name: id
+        logicalType: integer
+  # The project computes a table of this name, which a contract cannot describe
+  - name: CustomerCounts
+    properties:
+      - name: region
+        logicalType: string

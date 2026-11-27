@@ -1,0 +1,11 @@
+/** Emails of the customers for the mailing system @pii=raw @classification=confidential @gdpr */
+CREATE TABLE EmailTopic (
+  id BIGINT NOT NULL,
+  email STRING
+) WITH (
+  'connector' = 'kafka-safe',
+  'topic' = 'mailing-emails',
+  'properties.bootstrap.servers' = 'localhost:9092',
+  'properties.group.id' = 'contracts',
+  'format' = 'flexible-json'
+);

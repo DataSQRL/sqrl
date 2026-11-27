@@ -1,0 +1,220 @@
+/*
+ * Copyright © 2021 DataSQRL (contact@datasqrl.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.datasqrl.planner.contract;
+
+import com.datasqrl.config.WorkspacePaths;
+import com.datasqrl.error.ErrorCode;
+import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.loaders.ModuleLoaderImpl;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Stream;
+import lombok.AccessLevel;
+import lombok.Getter;
+import org.apache.commons.lang3.Strings;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.stereotype.Component;
+
+/**
+ * Finds and loads the data contract files of a project. A contract file sits next to the file that
+ * defines its tables: {@code mytables.sqrl} pairs with {@code mytables.odcs.yaml}, for the
+ * extension of each {@link DataContractFormat}. Every file is loaded once per compilation.
+ *
+ * <p>All errors of a contract file are recorded without aborting, so that the errors of all files
+ * are reported together. A file with errors is not applied to any table.
+ */
+@Component
+@Lazy
+public class DataContractLoader {
+
+  private final ErrorCollector errors;
+  private final WorkspacePaths workspacePaths;
+
+  @Getter private final List<DataContractFormat> formats = DataContractFormat.all();
+
+  /** The contract file of each file that defines tables, by the normalized path of that file */
+  private final Map<Path, Optional<DataContractFile>> byDefiningFile = new HashMap<>();
+
+  /** The contract files that were found, by path; empty for a file with errors */
+  private final Map<Path, Optional<DataContractFile>> contractFiles = new LinkedHashMap<>();
+
+  /** The contract files in the build folder, where preprocessing copied those of the project */
+  @Getter(value = AccessLevel.PRIVATE, lazy = true)
+  private final List<Path> projectFiles = contractFilesInBuildDir();
+
+  public DataContractLoader(ErrorCollector errors, WorkspacePaths workspacePaths) {
+    this.errors = errors.abortOnFatal(false);
+    this.workspacePaths = workspacePaths;
+  }
+
+  /**
+   * @param definingFile a file that defines tables, a script or a {@code .table.sql} file
+   * @return the contract file next to it, empty if there is none or it has errors
+   */
+  public Optional<DataContractFile> forScript(Path definingFile) {
+    return byDefiningFile.computeIfAbsent(definingFile.toAbsolutePath().normalize(), this::find);
+  }
+
+  /** The valid contract files that were loaded, in the order they were first used. */
+  public List<DataContractFile> getLoadedFiles() {
+    return contractFiles.values().stream().flatMap(Optional::stream).toList();
+  }
+
+  /**
+   * The contract files of the project that sit next to a script that this compilation does not
+   * plan, relative to the build folder and in the order of their paths, whatever order the folder
+   * is walked in.
+   */
+  public List<Path> getSkippedFiles() {
+    var buildDir = workspacePaths.buildDir().toAbsolutePath().normalize();
+    return getProjectFiles().stream()
+        .filter(file -> !contractFiles.containsKey(file))
+        .map(buildDir::relativize)
+        .sorted()
+        .toList();
+  }
+
+  /** Whether the project, or a project that it includes, has a contract file. */
+  public boolean hasContractFiles() {
+    return !contractFiles.isEmpty() || !getProjectFiles().isEmpty();
+  }
+
+  /**
+   * @return the name of a defining file without its extension, which is the name of its contract
+   *     file without the extension of the format; empty if the file cannot define tables
+   */
+  public static Optional<String> stemOf(String fileName) {
+    return Stream.of(ModuleLoaderImpl.TABLE_FILE_SUFFIX, ModuleLoaderImpl.SQRL_FILE_EXTENSION)
+        .filter(fileName::endsWith)
+        .map(suffix -> Strings.CS.removeEnd(fileName, suffix))
+        .findFirst();
+  }
+
+  private Optional<DataContractFile> find(Path definingFile) {
+    var stem = stemOf(definingFile.getFileName().toString());
+    if (stem.isEmpty()) {
+      return Optional.empty();
+    }
+    var names = fileNames(definingFile.getParent());
+    var found =
+        formats.stream()
+            .flatMap(
+                format ->
+                    findContractFile(definingFile, format.fileName(stem.get()), names).stream()
+                        .map(path -> Map.entry(path, format)))
+            .toList();
+    if (found.size() > 1) {
+      // A table has one contract
+      errors.fatal(
+          ErrorCode.INVALID_DATA_CONTRACT,
+          "[%s] has more than one contract file: %s. Keep one of them",
+          definingFile.getFileName(),
+          found.stream().map(entry -> entry.getKey().getFileName()).toList());
+      return Optional.empty();
+    }
+    // Two files that define tables can share a contract file: a script and a table file
+    return found.stream()
+        .findFirst()
+        .flatMap(
+            entry ->
+                contractFiles.computeIfAbsent(
+                    entry.getKey(), path -> load(path, entry.getValue())));
+  }
+
+  private List<String> fileNames(Path folder) {
+    try (var files = Files.list(folder)) {
+      return files.map(path -> path.getFileName().toString()).toList();
+    } catch (IOException e) {
+      errors.fatal("Could not list the files of [%s]: %s", folder, e);
+      return List.of();
+    }
+  }
+
+  /**
+   * Finds the contract file by comparing the names in the folder, so that the result does not
+   * depend on whether the file system is case-sensitive.
+   */
+  private Optional<Path> findContractFile(Path definingFile, String expected, List<String> names) {
+    if (names.contains(expected)) {
+      return Optional.of(definingFile.resolveSibling(expected));
+    }
+
+    names.stream()
+        .filter(name -> name.equalsIgnoreCase(expected))
+        .forEach(
+            name -> {
+              // Such a pair works on a case-insensitive file system and not on others
+              errors.fatal(
+                  ErrorCode.INVALID_DATA_CONTRACT,
+                  "Contract file [%s] differs from the name of [%s] only in case and is not"
+                      + " read. Rename it to [%s]",
+                  name,
+                  definingFile.getFileName(),
+                  expected);
+              // The file is reported, so it is not also one that no script uses
+              contractFiles.put(definingFile.resolveSibling(name), Optional.empty());
+            });
+
+    return Optional.empty();
+  }
+
+  /** Reports every error of the file, and then once that the file is not applied. */
+  private Optional<DataContractFile> load(Path path, DataContractFormat format) {
+    String content;
+    try {
+      content = Files.readString(path);
+    } catch (IOException e) {
+      errors.fatal("Could not read contract file [%s]: %s", path, e);
+      return Optional.empty();
+    }
+
+    var fileErrors = errors.withScript(path, content);
+    var entries = format.read(content, fileErrors);
+    if (entries.isEmpty()) {
+      errors.fatal(
+          ErrorCode.INVALID_DATA_CONTRACT,
+          "Contract file [%s] is not a valid data contract and is not applied",
+          path.getFileName());
+    }
+
+    return entries.map(read -> new DataContractFile(path, format, read, fileErrors));
+  }
+
+  private List<Path> contractFilesInBuildDir() {
+    var buildDir = workspacePaths.buildDir().toAbsolutePath().normalize();
+    if (!Files.isDirectory(buildDir)) {
+      return List.of();
+    }
+
+    try (var files = Files.walk(buildDir)) {
+      return files
+          .filter(
+              file ->
+                  formats.stream()
+                      .anyMatch(format -> format.hasFileExtension(file.getFileName().toString())))
+          .filter(Files::isRegularFile)
+          .toList();
+    } catch (IOException e) {
+      throw new IllegalStateException("Could not list the files in " + buildDir, e);
+    }
+  }
+}

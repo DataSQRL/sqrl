@@ -31,6 +31,7 @@ import java.util.stream.Stream;
 import lombok.Builder;
 import lombok.Singular;
 import lombok.Value;
+import lombok.With;
 
 @Value
 @Builder
@@ -39,6 +40,12 @@ public class PhysicalPlan {
   @Singular List<PhysicalStagePlan> stagePlans;
 
   @Singular Map<Name, MutationTable> mutationTables;
+
+  /**
+   * The data contracts of the tables that the pipeline reads, writes and publishes: the content of
+   * each contract file by its name. They are derived from the plan and no engine executes them.
+   */
+  @With @Builder.Default Map<String, String> dataContracts = Map.of();
 
   public <T extends EnginePhysicalPlan> Stream<T> getPlans(Class<T> clazz) {
     return StreamUtil.filterByClass(stagePlans.stream().map(PhysicalStagePlan::plan), clazz);
@@ -55,7 +62,8 @@ public class PhysicalPlan {
     if (rewriters.isEmpty()) {
       return this;
     }
-    var builder = PhysicalPlan.builder().mutationTables(mutationTables);
+    var builder =
+        PhysicalPlan.builder().mutationTables(mutationTables).dataContracts(dataContracts);
     for (PhysicalStagePlan stagePlan : stagePlans) {
       var enginePlan = stagePlan.plan;
       for (PhysicalPlanRewriter rewriter : rewriters) {

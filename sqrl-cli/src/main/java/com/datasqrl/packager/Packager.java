@@ -40,6 +40,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.SneakyThrows;
@@ -111,6 +112,8 @@ public class Packager {
 
   @SneakyThrows
   public void postprocess(Path targetDir, PhysicalPlan plan, TestPlan testPlan) {
+    writeDataContracts(targetDir.resolve(SqrlConstants.CONTRACTS_DIR), plan.getDataContracts());
+
     Path planDir = targetDir.resolve(SqrlConstants.PLAN_DIR);
     Files.createDirectories(planDir);
     // We'll write a single asset for each folder in the physical plan stage, plus any deployment
@@ -124,6 +127,18 @@ public class Packager {
       SqrlObjectMapper.INSTANCE
           .writerWithDefaultPrettyPrinter()
           .writeValue(path.toFile(), testPlan);
+    }
+  }
+
+  /** Writes one file per data contract. A compilation without tables writes none. */
+  private void writeDataContracts(Path contractsDir, Map<String, String> contracts)
+      throws IOException {
+    if (contracts.isEmpty()) {
+      return;
+    }
+    Files.createDirectories(contractsDir);
+    for (var contract : contracts.entrySet()) {
+      writeTextToFile(contractsDir.resolve(contract.getKey()), contract.getValue());
     }
   }
 
