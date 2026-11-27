@@ -406,15 +406,15 @@ class FlinkStateUpgradeCheckTest {
         .isEqualTo(OldState.UNCLAIMED);
   }
 
-  @Test
-  void givenNewColumnOnTumblingWindowTableFunction_whenCheck_thenNoBreaks() {
+  @ParameterizedTest
+  @ValueSource(strings = {"TumblingWindow", "HoppingWindow", "CumulativeWindow"})
+  void givenNewColumnOnAlignedWindowTableFunction_whenCheck_thenNoBreaks(String windowType) {
     var result =
         check(
-            plan("2.3", withOutputType(windowTableFunctionOperator("TumblingWindow"), "id INT")),
+            plan("2.3", withOutputType(windowTableFunctionOperator(windowType), "id INT")),
             plan(
                 "2.3",
-                withOutputType(
-                    windowTableFunctionOperator("TumblingWindow"), "id INT", "extra INT")));
+                withOutputType(windowTableFunctionOperator(windowType), "id INT", "extra INT")));
 
     assertThat(result.breaks()).isEmpty();
   }
