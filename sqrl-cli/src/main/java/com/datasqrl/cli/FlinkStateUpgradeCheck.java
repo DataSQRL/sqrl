@@ -29,6 +29,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.apache.flink.table.api.config.ExecutionConfigOptions;
+import org.apache.flink.table.api.config.ExecutionConfigOptions.UidGeneration;
 
 /**
  * Checks if Flink can restore the state of an old build from a new build.
@@ -37,11 +39,11 @@ import java.util.stream.Collectors;
  * new compiled plan with the same {@code id}, {@code type} and state fields. An operator with state
  * also needs the same column types in its {@code outputType}. An operator that only the new plan
  * has starts with empty state, so it is accepted. Both builds also need the same {@code
- * pipeline.max-parallelism}.
+ * pipeline.max-parallelism} and must give the operators the same uids.
  *
  * <p>A change that does not stop the restore goes to the {@link ErrorCollector} as a notice or a
- * warning: a new Flink version, a new TTL, and a {@code pipeline.max-parallelism} that only one
- * build sets.
+ * warning: a new Flink version, a new TTL, a {@code pipeline.max-parallelism} that only one build
+ * sets, and two builds that let Flink make the uids.
  */
 final class FlinkStateUpgradeCheck {
 
@@ -126,8 +128,16 @@ final class FlinkStateUpgradeCheck {
    * @param compiledPlan the content of {@code flink-compiled-plan.json}
    * @param maxParallelism the {@code pipeline.max-parallelism} of {@code flink-config.yaml}, empty
    *     when the project does not set it
+   * @param uidFormat the {@code table.exec.uid.format} of {@code flink-config.yaml}, or the Flink
+   *     default {@code <id>_<transformation>}
+   * @param uidGeneration the {@code table.exec.uid.generation} of {@code flink-config.yaml}, or the
+   *     Flink default {@code PLAN_ONLY}
    */
-  record FlinkJob(JsonNode compiledPlan, Optional<Integer> maxParallelism) {}
+  record FlinkJob(
+      JsonNode compiledPlan,
+      Optional<Integer> maxParallelism,
+      String uidFormat,
+      UidGeneration uidGeneration) {}
 
   /**
    * Returns all breaks for an upgrade from the old build to the new build, and reports the notices
@@ -139,11 +149,13 @@ final class FlinkStateUpgradeCheck {
         new ArrayList<>(operatorBreaks(oldFlinkJob.compiledPlan(), newFlinkJob.compiledPlan()));
     maxParallelismBreak(oldFlinkJob.maxParallelism(), newFlinkJob.maxParallelism())
         .ifPresent(stateUpgradeBreaks::add);
+    uidBreak(oldFlinkJob, newFlinkJob).ifPresent(stateUpgradeBreaks::add);
 
     reportChangedFlinkVersion(oldFlinkJob.compiledPlan(), newFlinkJob.compiledPlan(), errors);
     reportChangedStateTtls(oldFlinkJob.compiledPlan(), newFlinkJob.compiledPlan(), errors);
     reportMaxParallelismOnlyInOneBuild(
         oldFlinkJob.maxParallelism(), newFlinkJob.maxParallelism(), errors);
+    reportUidsFromJobGraph(oldFlinkJob, newFlinkJob, errors);
 
     return List.copyOf(stateUpgradeBreaks);
   }
@@ -545,6 +557,60 @@ final class FlinkStateUpgradeCheck {
           "Only the new build sets pipeline.max-parallelism (%d). Make sure that the running job"
               + " uses the same value, because a different value makes the restore fail.",
           newMaxParallelism.get());
+    }
+  }
+
+  /**
+   * Returns a break when the two builds give the operators different uids. Flink finds the old
+   * state of an operator by its uid, so with other uids no operator claims the old state. For a job
+   * that runs a compiled plan, {@code PLAN_ONLY} and {@code ALWAYS} set the same uids from {@code
+   * table.exec.uid.format}. {@code DISABLED} sets no uids, so Flink makes the uids from the shape
+   * of the job graph.
+   */
+  private static Optional<StateUpgradeBreak> uidBreak(FlinkJob oldFlinkJob, FlinkJob newFlinkJob) {
+    var oldBuildSetsUids = setsUids(oldFlinkJob);
+    var newBuildSetsUids = setsUids(newFlinkJob);
+    if (oldBuildSetsUids != newBuildSetsUids) {
+      return Optional.of(
+          uidOptionBreak(
+              ExecutionConfigOptions.TABLE_EXEC_UID_GENERATION.key(),
+              oldFlinkJob.uidGeneration().name(),
+              newFlinkJob.uidGeneration().name()));
+    }
+    if (oldBuildSetsUids && !oldFlinkJob.uidFormat().equals(newFlinkJob.uidFormat())) {
+      return Optional.of(
+          uidOptionBreak(
+              ExecutionConfigOptions.TABLE_EXEC_UID_FORMAT.key(),
+              oldFlinkJob.uidFormat(),
+              newFlinkJob.uidFormat()));
+    }
+    return Optional.empty();
+  }
+
+  private static boolean setsUids(FlinkJob flinkJob) {
+    return flinkJob.uidGeneration() != UidGeneration.DISABLED;
+  }
+
+  private static StateUpgradeBreak uidOptionBreak(
+      String optionKey, String oldValue, String newValue) {
+    return new StateUpgradeBreak(
+        "%s differs: %s -> %s, so Flink gives each operator another uid"
+            .formatted(optionKey, oldValue, newValue),
+        OldState.UNCLAIMED);
+  }
+
+  /**
+   * Reports a warning when both builds set {@code table.exec.uid.generation} to {@code DISABLED}.
+   * Flink then makes the uids from the shape of the job graph, and the check cannot see these uids.
+   */
+  private static void reportUidsFromJobGraph(
+      FlinkJob oldFlinkJob, FlinkJob newFlinkJob, ErrorCollector errors) {
+    if (!setsUids(oldFlinkJob) && !setsUids(newFlinkJob)) {
+      errors.warn(
+          "Both builds set %s to %s, so Flink makes the operator uids from the shape of the job"
+              + " graph. The check cannot see these uids, so it cannot decide if each operator gets"
+              + " its old state.",
+          ExecutionConfigOptions.TABLE_EXEC_UID_GENERATION.key(), UidGeneration.DISABLED.name());
     }
   }
 

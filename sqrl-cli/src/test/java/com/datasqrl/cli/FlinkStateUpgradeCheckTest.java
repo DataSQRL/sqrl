@@ -29,6 +29,8 @@ import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
+import org.apache.flink.table.api.config.ExecutionConfigOptions;
+import org.apache.flink.table.api.config.ExecutionConfigOptions.UidGeneration;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -36,6 +38,9 @@ import org.junit.jupiter.params.provider.ValueSource;
 class FlinkStateUpgradeCheckTest {
 
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+
+  private static final String DEFAULT_UID_FORMAT =
+      ExecutionConfigOptions.TABLE_EXEC_UID_FORMAT.defaultValue();
 
   @Test
   void givenSamePlan_whenCheck_thenNoBreaks() {
@@ -706,6 +711,65 @@ class FlinkStateUpgradeCheckTest {
         .startsWith("Only the new build sets pipeline.max-parallelism (144).");
   }
 
+  @Test
+  void givenDifferentUidFormat_whenCheck_thenUnclaimedStateBreak() {
+    var result =
+        check(
+            flinkJob(plan("2.3"), "<transformation>_<id>", UidGeneration.PLAN_ONLY),
+            flinkJob(plan("2.3"), "<id>_<transformation>", UidGeneration.PLAN_ONLY));
+
+    assertThat(result.breaks())
+        .containsExactly(
+            new StateUpgradeBreak(
+                "table.exec.uid.format differs: <transformation>_<id> -> <id>_<transformation>,"
+                    + " so Flink gives each operator another uid",
+                OldState.UNCLAIMED));
+    assertThat(result.noticesAndWarnings()).isEmpty();
+  }
+
+  @Test
+  void givenUidGenerationDisabledOnlyInNewBuild_whenCheck_thenUnclaimedStateBreak() {
+    var result =
+        check(
+            flinkJob(plan("2.3"), DEFAULT_UID_FORMAT, UidGeneration.PLAN_ONLY),
+            flinkJob(plan("2.3"), DEFAULT_UID_FORMAT, UidGeneration.DISABLED));
+
+    assertThat(result.breaks())
+        .containsExactly(
+            new StateUpgradeBreak(
+                "table.exec.uid.generation differs: PLAN_ONLY -> DISABLED, so Flink gives each"
+                    + " operator another uid",
+                OldState.UNCLAIMED));
+    assertThat(result.noticesAndWarnings()).isEmpty();
+  }
+
+  @Test
+  void givenUidGenerationPlanOnlyAndAlways_whenCheck_thenNoBreaksAndNoNotes() {
+    var result =
+        check(
+            flinkJob(plan("2.3"), DEFAULT_UID_FORMAT, UidGeneration.PLAN_ONLY),
+            flinkJob(plan("2.3"), DEFAULT_UID_FORMAT, UidGeneration.ALWAYS));
+
+    assertThat(result.breaks()).isEmpty();
+    assertThat(result.noticesAndWarnings()).isEmpty();
+  }
+
+  @Test
+  void givenUidGenerationDisabledInBothBuilds_whenCheck_thenWarningAndNoUidFormatBreak() {
+    var result =
+        check(
+            flinkJob(plan("2.3"), "<transformation>_<id>", UidGeneration.DISABLED),
+            flinkJob(plan("2.3"), DEFAULT_UID_FORMAT, UidGeneration.DISABLED));
+
+    assertThat(result.breaks()).isEmpty();
+    assertThat(result.notices()).isEmpty();
+    assertThat(result.warnings())
+        .singleElement()
+        .asString()
+        .startsWith("Both builds set table.exec.uid.generation to DISABLED")
+        .contains("The check cannot see these uids");
+  }
+
   /**
    * The breaks of one check, and the texts of the notices and the warnings that the check reports
    * to its {@link ErrorCollector}.
@@ -743,8 +807,15 @@ class FlinkStateUpgradeCheckTest {
         .toList();
   }
 
+  /** A Flink job with the Flink defaults for the uid options. */
   private static FlinkJob flinkJob(JsonNode compiledPlan, Optional<Integer> maxParallelism) {
-    return new FlinkJob(compiledPlan, maxParallelism);
+    return new FlinkJob(compiledPlan, maxParallelism, DEFAULT_UID_FORMAT, UidGeneration.PLAN_ONLY);
+  }
+
+  /** A Flink job without {@code pipeline.max-parallelism}. */
+  private static FlinkJob flinkJob(
+      JsonNode compiledPlan, String uidFormat, UidGeneration uidGeneration) {
+    return new FlinkJob(compiledPlan, Optional.empty(), uidFormat, uidGeneration);
   }
 
   private static ObjectNode sourceOperator() {

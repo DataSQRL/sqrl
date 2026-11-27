@@ -21,6 +21,7 @@ import com.datasqrl.config.ProjectPaths;
 import com.datasqrl.config.SqrlConstants;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.util.ConfigLoaderUtils;
+import com.fasterxml.jackson.databind.JsonNode;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -28,7 +29,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
+import org.apache.flink.configuration.Configuration;
 import org.apache.flink.configuration.PipelineOptions;
+import org.apache.flink.table.api.config.ExecutionConfigOptions;
 import picocli.CommandLine.Option;
 
 /**
@@ -120,24 +123,33 @@ public class CheckStateUpgradeOption {
   }
 
   /**
-   * Reads the Flink job of a plan folder: the compiled plan and its {@code
-   * pipeline.max-parallelism}. Returns empty when the folder has no compiled Flink plan. A Flink
-   * file that exists but cannot be read is a fatal error.
+   * Reads the Flink job of a plan folder: the compiled plan, and its {@code
+   * pipeline.max-parallelism}, {@code table.exec.uid.format} and {@code table.exec.uid.generation}.
+   * Returns empty when the folder has no compiled Flink plan. A Flink file that exists but cannot
+   * be read is a fatal error.
    */
   static Optional<FlinkJob> readFlinkJob(Path planDir, ErrorCollector errors) {
     return ConfigLoaderUtils.loadFlinkCompiledPlan(planDir, errors)
-        .map(compiledPlan -> new FlinkJob(compiledPlan, readMaxParallelism(planDir, errors)));
+        .map(compiledPlan -> readFlinkJob(planDir, compiledPlan, errors));
   }
 
-  private static Optional<Integer> readMaxParallelism(Path planDir, ErrorCollector errors) {
+  /**
+   * Reads the options of the Flink job from {@code flink-config.yaml}. An option that the file does
+   * not set, or a folder without the file, gives the Flink default. {@code
+   * pipeline.max-parallelism} then stays empty.
+   */
+  private static FlinkJob readFlinkJob(Path planDir, JsonNode compiledPlan, ErrorCollector errors) {
     var flinkConfigFile = planDir.resolve(SqrlConstants.FLINK_CONFIG_FILE);
-    if (!Files.isRegularFile(flinkConfigFile)) {
-      return Optional.empty();
-    }
-
     try {
-      return ConfigLoaderUtils.loadFlinkConfig(planDir)
-          .getOptional(PipelineOptions.MAX_PARALLELISM);
+      var flinkConfig =
+          Files.isRegularFile(flinkConfigFile)
+              ? ConfigLoaderUtils.loadFlinkConfig(planDir)
+              : new Configuration();
+      return new FlinkJob(
+          compiledPlan,
+          flinkConfig.getOptional(PipelineOptions.MAX_PARALLELISM),
+          flinkConfig.get(ExecutionConfigOptions.TABLE_EXEC_UID_FORMAT),
+          flinkConfig.get(ExecutionConfigOptions.TABLE_EXEC_UID_GENERATION));
     } catch (IOException | RuntimeException exception) {
       // Flink reports an invalid YAML file with a plain RuntimeException, and an invalid value
       // with an IllegalArgumentException.

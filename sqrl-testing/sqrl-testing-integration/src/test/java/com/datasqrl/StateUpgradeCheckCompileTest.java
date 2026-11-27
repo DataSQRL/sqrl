@@ -21,6 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.datasqrl.cli.AssertStatusHook;
 import java.nio.file.Path;
 import java.util.Map;
+import org.apache.flink.table.api.config.ExecutionConfigOptions;
 import org.apache.flink.table.planner.plan.nodes.exec.ExecNodeContext;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -42,6 +43,12 @@ class StateUpgradeCheckCompileTest {
 
   /** A state TTL of 0 keeps the state without a time limit, as the Flink default. */
   private static final String NO_STATE_TTL = "0 ms";
+
+  /** The text in the package template that the test replaces with the operator uid format. */
+  private static final String UID_FORMAT_TEMPLATE = "UID_FORMAT";
+
+  private static final String DEFAULT_UID_FORMAT =
+      ExecutionConfigOptions.TABLE_EXEC_UID_FORMAT.defaultValue();
 
   /**
    * The {@code -b} values of the two compiles. {@code -b} resolves against the build folder, which
@@ -155,29 +162,54 @@ class StateUpgradeCheckCompileTest {
     assertThat(status.getMessages()).contains("The new Flink plan passes the state upgrade check");
   }
 
+  @Test
+  void givenChangedUidFormat_whenCheckStateUpgrade_thenUnclaimedState() {
+    var status =
+        compileAndCheckUpgrade(
+            new PackageSettings("window-count.sqrl", NO_STATE_TTL, DEFAULT_UID_FORMAT),
+            new PackageSettings("window-count.sqrl", NO_STATE_TTL, "<transformation>_<id>"));
+
+    assertThat(status.isSuccess()).as(status.getMessages()).isFalse();
+    assertThat(status.getMessages())
+        .contains(
+            "table.exec.uid.format differs: <id>_<transformation> -> <transformation>_<id>, so"
+                + " Flink gives each operator another uid [unclaimed state]");
+  }
+
+  /** The values that a test writes into the package template for one compile. */
+  private record PackageSettings(String scriptFile, String stateTtl, String uidFormat) {}
+
   /** Compiles both scripts without a state TTL, see {@link #compileAndCheckUpgrade}. */
   private AssertStatusHook compileAndCheckUpgrade(String oldScriptFile, String newScriptFile) {
     return compileAndCheckUpgrade(oldScriptFile, NO_STATE_TTL, newScriptFile, NO_STATE_TTL);
   }
 
+  /** Compiles both scripts with the default operator uid format. */
+  private AssertStatusHook compileAndCheckUpgrade(
+      String oldScriptFile, String oldStateTtl, String newScriptFile, String newStateTtl) {
+    return compileAndCheckUpgrade(
+        new PackageSettings(oldScriptFile, oldStateTtl, DEFAULT_UID_FORMAT),
+        new PackageSettings(newScriptFile, newStateTtl, DEFAULT_UID_FORMAT));
+  }
+
   /**
-   * Compiles the old script into {@link #OLD_BUILD_FOLDER}. Then compiles the new script into
-   * {@link #NEW_BUILD_FOLDER} with the check against the old build, and returns that status. Each
-   * compile sets its {@code table.exec.state.ttl}.
+   * Compiles the old package settings into {@link #OLD_BUILD_FOLDER}. Then compiles the new package
+   * settings into {@link #NEW_BUILD_FOLDER} with the check against the old build, and returns that
+   * status.
    *
    * <p>Flink counts the operator ids in one counter for each JVM. A compile with the CLI runs in
    * its own JVM, so its ids start at 1. Both compiles of a test run in one JVM, so the test resets
    * the counter before each compile.
    */
   private AssertStatusHook compileAndCheckUpgrade(
-      String oldScriptFile, String oldStateTtl, String newScriptFile, String newStateTtl) {
-    writePackage(oldScriptFile, oldStateTtl);
+      PackageSettings oldPackageSettings, PackageSettings newPackageSettings) {
+    writePackage(oldPackageSettings);
     ExecNodeContext.resetIdCounter();
     var oldCompileStatus =
         compileExtension.execute(PROJECT_DIR, "compile", "-b", OLD_BUILD_FOLDER, tempPackageFile());
     assertThat(oldCompileStatus.isSuccess()).as(oldCompileStatus.getMessages()).isTrue();
 
-    writePackage(newScriptFile, newStateTtl);
+    writePackage(newPackageSettings);
     ExecNodeContext.resetIdCounter();
     return compileExtension.execute(
         PROJECT_DIR,
@@ -189,10 +221,16 @@ class StateUpgradeCheckCompileTest {
         tempPackageFile());
   }
 
-  private void writePackage(String scriptFile, String stateTtl) {
+  private void writePackage(PackageSettings packageSettings) {
     compileExtension.writeTempPackage(
-        PROJECT_DIR.resolve(scriptFile),
-        Map.of(SCRIPT_FILE_TEMPLATE, scriptFile, STATE_TTL_TEMPLATE, stateTtl));
+        PROJECT_DIR.resolve(packageSettings.scriptFile()),
+        Map.of(
+            SCRIPT_FILE_TEMPLATE,
+            packageSettings.scriptFile(),
+            STATE_TTL_TEMPLATE,
+            packageSettings.stateTtl(),
+            UID_FORMAT_TEMPLATE,
+            packageSettings.uidFormat()));
   }
 
   private String tempPackageFile() {

@@ -33,6 +33,8 @@ import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.StreamSupport;
 import lombok.SneakyThrows;
+import org.apache.flink.table.api.config.ExecutionConfigOptions;
+import org.apache.flink.table.api.config.ExecutionConfigOptions.UidGeneration;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -631,13 +633,42 @@ class CheckStateUpgradeOptionTest {
           .contains("Only the new build sets pipeline.max-parallelism (144)");
     }
 
+    @Test
+    void givenDifferentUidFormat_whenCompareFlinkJobs_thenFatalWithUnclaimedStateMark() {
+      var oldFlinkJob =
+          Optional.of(
+              new FlinkJob(
+                  json(plan("2.3", SOURCE_OPERATOR)),
+                  Optional.empty(),
+                  "<transformation>_<id>",
+                  UidGeneration.PLAN_ONLY));
+      var newFlinkJob = flinkJob(plan("2.3", SOURCE_OPERATOR), Optional.empty());
+
+      assertThatThrownBy(
+              () ->
+                  CheckStateUpgradeOption.compareFlinkJobs(
+                      OLD_PLAN_DIR, oldFlinkJob, newFlinkJob, ErrorCollector.root()))
+          .isInstanceOf(CollectedException.class)
+          .hasMessageContaining(
+              "table.exec.uid.format differs: <transformation>_<id> -> <id>_<transformation>, so"
+                  + " Flink gives each operator another uid [unclaimed state]")
+          .hasMessageContaining("execution.state-recovery.ignore-unclaimed-state");
+    }
+
     /**
-     * The Flink job of a build, or a build without a Flink job when {@code compiledPlan} is null.
+     * The Flink job of a build with the Flink defaults for the uid options, or a build without a
+     * Flink job when {@code compiledPlan} is null.
      */
     private static Optional<FlinkJob> flinkJob(
         String compiledPlan, Optional<Integer> maxParallelism) {
       return Optional.ofNullable(compiledPlan)
-          .map(plan -> new FlinkJob(json(plan), maxParallelism));
+          .map(
+              plan ->
+                  new FlinkJob(
+                      json(plan),
+                      maxParallelism,
+                      ExecutionConfigOptions.TABLE_EXEC_UID_FORMAT.defaultValue(),
+                      UidGeneration.PLAN_ONLY));
     }
   }
 
@@ -669,6 +700,45 @@ class CheckStateUpgradeOptionTest {
 
       assertThat(CheckStateUpgradeOption.readFlinkJob(planDir, ErrorCollector.root()))
           .hasValueSatisfying(flinkJob -> assertThat(flinkJob.maxParallelism()).isEmpty());
+    }
+
+    @Test
+    void givenFlinkConfigWithUidOptions_whenReadFlinkJob_thenReadsUidOptions() throws IOException {
+      writeCompiledPlan(EMPTY_COMPILED_PLAN);
+      writeFlinkConfig(
+          "table.exec.uid.format: <transformation>_<id>\ntable.exec.uid.generation: DISABLED\n");
+
+      assertThat(CheckStateUpgradeOption.readFlinkJob(planDir, ErrorCollector.root()))
+          .hasValueSatisfying(
+              flinkJob -> {
+                assertThat(flinkJob.uidFormat()).isEqualTo("<transformation>_<id>");
+                assertThat(flinkJob.uidGeneration()).isEqualTo(UidGeneration.DISABLED);
+              });
+    }
+
+    @Test
+    void givenCompiledPlanWithoutFlinkConfig_whenReadFlinkJob_thenFlinkDefaults()
+        throws IOException {
+      writeCompiledPlan(EMPTY_COMPILED_PLAN);
+
+      assertThat(CheckStateUpgradeOption.readFlinkJob(planDir, ErrorCollector.root()))
+          .hasValueSatisfying(
+              flinkJob -> {
+                assertThat(flinkJob.maxParallelism()).isEmpty();
+                assertThat(flinkJob.uidFormat()).isEqualTo("<id>_<transformation>");
+                assertThat(flinkJob.uidGeneration()).isEqualTo(UidGeneration.PLAN_ONLY);
+              });
+    }
+
+    @Test
+    void givenInvalidUidGeneration_whenReadFlinkJob_thenFatalWithFilePath() throws IOException {
+      writeCompiledPlan(EMPTY_COMPILED_PLAN);
+      writeFlinkConfig("table.exec.uid.generation: SOMETIMES\n");
+
+      assertThatThrownBy(() -> CheckStateUpgradeOption.readFlinkJob(planDir, ErrorCollector.root()))
+          .isInstanceOf(CollectedException.class)
+          .hasMessageContaining("Cannot read " + planDir.resolve("flink-config.yaml"))
+          .hasMessageContaining("SOMETIMES");
     }
 
     @Test

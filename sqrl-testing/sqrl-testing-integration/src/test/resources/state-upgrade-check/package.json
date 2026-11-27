@@ -6,7 +6,8 @@
   "engines": {
     "flink": {
       "config": {
-        "table.exec.state.ttl": "STATE_TTL"
+        "table.exec.state.ttl": "STATE_TTL",
+        "table.exec.uid.format": "UID_FORMAT"
       }
     }
   }
